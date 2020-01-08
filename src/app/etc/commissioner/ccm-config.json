@@ -1,0 +1,58 @@
+/*
+ * This is the configuration file for OT-commissioner.
+ */
+
+{
+    // Values presented here are default values. If the field
+    // is not included, the default value will be used.
+
+    // The readable commissioner ID.
+    "Id" : "OT-commissioner",
+
+    // The domain this commissioner is authorized to.
+    "DomainName" : "Thread",
+
+    // Controls if CCM mode is enabled.
+    "EnableCcm" : true,
+
+    // Controls if Dtls debug logging is enabled.
+    "EnableDtlsDebugLogging" : false,
+
+    // Controls the logging level. Values can be:
+    //   off;
+    //   critical;
+    //   error;
+    //   warn;
+    //   info;
+    //   debug;
+    "LogLevel" : "debug",
+
+    // The interval between two keep alive messages (in seconds).
+    // The maximum allowed value is 50, not recommend a value bigger than 45.
+    "KeepAliveInterval" : 40,
+
+    // The maximum parallel joiner connection to the commissioner.
+    "MaxConnectionNum" : 100,
+
+    // The file logs will be dumped to.
+    // If not specified, logs will be print to stdout.
+    "LogFile" : "./commissioner.log",
+
+    // The pre-shared key used to connect to the border agent.
+    // The maximum length is 16 bytes.
+    // Must be provided if 'EnabledCcm' == false.
+    "PSKc" : "deadface",
+
+    // The private key file in PEM format.
+    // Must be provided if 'EnableCcm' == true.
+    "PrivateKeyFile" : "/usr/local/etc/commissioner/credentials/private-key.pem",
+
+    // The certificate file in PEM format.
+    // Must be provided if 'EnableCcm' == true.
+    "CertificateFile" : "/usr/local/etc/commissioner/credentials/certificate.pem",
+
+    // The trust anchor certificate file in PEM format.
+    // It is assumed that the commissioner certificate is directly signed by this trust anchor.
+    // Must be provided if 'EnableCcm' == true.
+    "TrustAnchorFile" : "/usr/local/etc/commissioner/credentials/trust-anchor.pem"
+}

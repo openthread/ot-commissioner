@@ -1,0 +1,32 @@
+[submodule "third_party/mbedtls/repo"]
+	path = third_party/mbedtls/repo
+	url = https://github.com/ARMmbed/mbedtls.git
+	branch = master
+[submodule "third_party/Catch2/repo"]
+	path = third_party/Catch2/repo
+	url = https://github.com/catchorg/Catch2.git
+	branch = master
+[submodule "third_party/json/repo"]
+	path = third_party/json/repo
+	url = https://github.com/nlohmann/json.git
+	branch = develop
+[submodule "third_party/libevent/repo"]
+	path = third_party/libevent/repo
+	url = https://github.com/libevent/libevent
+	branch = master
+[submodule "third_party/COSE-C/repo"]
+	path = third_party/COSE-C/repo
+	url = https://github.com/wgtdkp/COSE-C.git
+	branch = master
+[submodule "third_party/cn-cbor/repo"]
+	path = third_party/cn-cbor/repo
+	url = https://github.com/jimsch/cn-cbor.git
+	branch = complete
+[submodule "third_party/mdns/repo"]
+	path = third_party/mdns/repo
+	url = https://github.com/wgtdkp/mdns.git
+	branch = master
+[submodule "third_party/fmtlib/repo"]
+	path = third_party/fmtlib/repo
+	url = https://github.com/fmtlib/fmt.git
+	branch = master

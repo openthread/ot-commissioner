@@ -1,0 +1,36 @@
+/**
+ * This is a JSON template of Pending Operational Dataset.
+ */
+
+ {
+    "DelayTimer": 60000, // in milliseconds
+    "PendingTimestamp": {
+        "Seconds": 57, // 48 bits
+        "Ticks": 44, // 15 bits
+        "U": 1 // 1 bit
+    },
+    "ActiveTimestamp": {
+        "Seconds": 56, // 48 bits
+        "Ticks": 44, // 15 bits
+        "U": 1 // 1 bit
+    },
+    "Channel": {
+        "Channel": 19,
+        "Page": 0
+    },
+    "ChannelMask": [
+        {
+            "Length": 4,
+            "Masks": "001fffe0",
+            "Page": 0
+        }
+    ],
+    "ExtendedPanId": "dead00beef00cafe",
+    "NetworkName": "test-pending",
+    "PSKc": "3aa55f91ca47d1e4e71a08cb35e91591",
+    "PanId": 64206, // 0xface
+    "SecurityPolicy": {
+        "Flags": 248, // 0xf8
+        "RotationTime": 672
+    }
+}

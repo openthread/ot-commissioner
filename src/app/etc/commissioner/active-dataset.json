@@ -1,0 +1,30 @@
+/**
+ * This is a JSON template of Active Operational Dataset.
+ */
+
+{
+    "ActiveTimestamp": {
+        "Seconds": 56, // 48 bits
+        "Ticks": 44, // 15 bits
+        "U": 1 // 1 bit
+    },
+    "Channel": {
+        "Channel": 19,
+        "Page": 0
+    },
+    "ChannelMask": [
+        {
+            "Length": 4,
+            "Masks": "001fffe0", // ByteArray in hex string.
+            "Page": 0
+        }
+    ],
+    "ExtendedPanId": "dead00beef00cafe",
+    "NetworkName": "test-active",
+    "PSKc": "3aa55f91ca47d1e4e71a08cb35e91591", // ByteArray in hex string.
+    "PanId": 64206, // 0xface
+    "SecurityPolicy": {
+        "Flags": 248, // 0xf8
+        "RotationTime": 672
+    }
+}
