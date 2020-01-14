@@ -51,7 +51,7 @@ setup_openthread() {
 
     cd ${OPENTHREAD}
 
-    ./script/bootstrap || true
+    #./script/bootstrap || true
     git clean -xfd
     ./bootstrap
 
