@@ -27,14 +27,13 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-CUR_DIR=$(dirname $0)
-. ${CUR_DIR}/common.sh
+[ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
 
 setup_otbr() {
     set -e
-    git clone ${OTBR_1_2_REPO} ${OTBR_1_2} --branch ${OTBR_1_2_BRANCH}
+    git clone ${OTBR_REPO} ${OTBR} --branch ${OTBR_BRANCH}
 
-    cd ${OTBR_1_2}
+    cd ${OTBR}
 
     ./script/bootstrap
     ./script/setup
@@ -48,47 +47,49 @@ setup_otbr() {
 
 setup_openthread() {
     set -e
-    git clone ${OPENTHREAD_CCM_REPO} ${OPENTHREAD_CCM} --branch ${OPENTHREAD_CCM_BRANCH}
+    git clone ${OPENTHREAD_REPO} ${OPENTHREAD} --branch ${OPENTHREAD_BRANCH}
 
-    cd ${OPENTHREAD_CCM}
+    cd ${OPENTHREAD}
 
-    #./script/bootstrap
-    rm -rf build output
+    ./script/bootstrap || true
+    git clean -xfd
     ./bootstrap
 
-    make -f examples/Makefile-posix \
-        CCM=1 \
-        COAP=1 \
-        COAPS=1 \
-        ECDSA=1 \
-        BORDER_ROUTER=1 \
-        SERVICE=1 \
-        DHCP6_CLIENT=1 \
-        DHCP6_SERVER=1 \
-        JOINER=1 \
-        COMMISSIONER=1 \
-        MAC_FILTER=1 \
-        REFERENCE_DEVICE=1 \
-        THREAD_VERSION=1.2 \
-        REFERENCE_DEVICE=1 \
-        CSL_RECEIVER=1 \
-        CSL_TRANSMITTER=1 \
-        LINK_PROBE=1 \
-        DUA=1 \
-        MLR=1 \
-        BBR=1 \
-        MTD=0 \
-        BORDER_AGENT=1 \
-        UDP_FORWARD=1 \
-        DEBUG=1
+    if [ "${TEST_SUITE}" = "1.2" ]; then
+        make -f examples/Makefile-posix \
+            CCM=1 \
+            COAP=1 \
+            COAPS=1 \
+            ECDSA=1 \
+            BORDER_ROUTER=1 \
+            SERVICE=1 \
+            DHCP6_CLIENT=1 \
+            DHCP6_SERVER=1 \
+            JOINER=1 \
+            COMMISSIONER=1 \
+            MAC_FILTER=1 \
+            REFERENCE_DEVICE=1 \
+            THREAD_VERSION=1.2 \
+            REFERENCE_DEVICE=1 \
+            CSL_RECEIVER=1 \
+            CSL_TRANSMITTER=1 \
+            LINK_PROBE=1 \
+            DUA=1 \
+            MLR=1 \
+            BBR=1 \
+            MTD=0 \
+            BORDER_AGENT=1 \
+            UDP_FORWARD=1 \
+            DEBUG=1
 
-    cp output/x86_64-unknown-linux-gnu/bin/ot-cli-ftd ${CCM_CLI}
-    cp output/x86_64-unknown-linux-gnu/bin/ot-ncp-ftd ${CCM_NCP}
+        cp output/x86_64-unknown-linux-gnu/bin/ot-cli-ftd ${CCM_CLI}
+        cp output/x86_64-unknown-linux-gnu/bin/ot-ncp-ftd ${CCM_NCP}
 
-    executable_or_die "${CCM_CLI}"
-    executable_or_die "${CCM_NCP}"
+        executable_or_die "${CCM_CLI}"
+        executable_or_die "${CCM_NCP}"
+    fi
 
-    rm -rf build output
+    git clean -xfd
     ./bootstrap
 
     make -f examples/Makefile-posix \
@@ -133,7 +134,7 @@ setup_registrar() {
 
     cd ${REGISTRAR}
 
-    ./scripts/bootstrap.sh
+    ./script/bootstrap.sh
 
     cd -
 }
@@ -147,16 +148,18 @@ main() {
     set -e
     mkdir -p ${RUNTIME_DIR}
 
-    if [ ! -d ${OTBR_1_2} ]; then
+    if [ ! -d ${OTBR} ]; then
         setup_otbr
     fi
 
-    if [ ! -d ${OPENTHREAD_CCM} ]; then
+    if [ ! -d ${OPENTHREAD} ]; then
         setup_openthread
     fi
 
-    if [ ! -d ${REGISTRAR} ]; then
-        setup_registrar
+    if [ "${TEST_SUITE}" = "1.2" ]; then
+        if [ ! -d ${REGISTRAR} ]; then
+            setup_registrar
+        fi
     fi
 
     setup_commissioner
