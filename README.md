@@ -1,4 +1,4 @@
-[![Build Status][ot-commissioner-travis-svg]][ot-commissioner-travis]
+[![Build Status][ot-comm-travis-svg]][ot-comm-travis]
 
 ---
 
@@ -22,8 +22,8 @@ More information about Thread can be found at [threadgroup.org](http://threadgro
 
 To learn more about OpenThread, visit [openthread.io](https://openthread.io).
 
-[ot-commissioner-travis]: https://travis-ci.org/openthread/ot-commissioner
-[ot-commissioner-travis-svg]: https://travis-ci.org/openthread/ot-commissioner.svg?branch=master
+[ot-comm-travis]: https://travis-ci.org/openthread/ot-commissioner
+[ot-comm-travis-svg]: https://travis-ci.org/openthread/ot-commissioner.svg?branch=master
 
 ## Getting started
 
