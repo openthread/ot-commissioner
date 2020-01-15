@@ -51,7 +51,7 @@ run_test_case() {
 
     echo "====== test case: [ ${test_case} ] ======"
 
-    rm -rf ./commissioner.log
+    rm -rf ${COMMISSIONER_LOG}
 
     ## we cannot declare output with `local`,
     ## because `local` is a command and its return value iwll override
@@ -82,16 +82,18 @@ run_test_case() {
         echo "------ commissioner daemon log end ------"
 
         echo "------ commissioner library log begin ------"
-        cat ./commissioner.log
+        cat ${COMMISSIONER_LOG}
         echo "------ commissioner library log end ------"
 
-        echo "------ registrar log begin ------"
-        cat ${REGISTRAR_LOG}
-        echo "------ registrarlog end ------"
+        if [ "${TEST_SUITE}" = "1.2" ]; then
+            echo "------ registrar log begin ------"
+            cat ${REGISTRAR_LOG}
+            echo "------ registrarlog end ------"
 
-        echo "------ TRI log begin ------"
-        cat ${TRI_LOG}
-        echo "------ TRI log end ------"
+            echo "------ TRI log begin ------"
+            cat ${TRI_LOG}
+            echo "------ TRI log end ------"
+        fi
     fi
 
     return ${result}

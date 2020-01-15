@@ -80,6 +80,7 @@ readonly COMMISSIONER_CLI=${TEST_ROOT_DIR}/../../build/src/app/cli/commissioner-
 readonly COMMISSIONER_DAEMON=${TEST_ROOT_DIR}/../../tools/commissioner_thci/commissionerd.py
 readonly COMMISSIONER_CTL=${TEST_ROOT_DIR}/../../tools/commissioner_thci/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
+readonly COMMISSIONER_LOG=./commissioner.log
 
 readonly CCM_CONFIG=${TEST_ROOT_DIR}/../../src/app/etc/commissioner/ccm-config.json
 readonly NON_CCM_CONFIG=${TEST_ROOT_DIR}/../../src/app/etc/commissioner/non-ccm-config.json
