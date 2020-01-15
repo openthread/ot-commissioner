@@ -45,7 +45,6 @@ import logging
 import binascii
 import sys
 import os
-import pexpect
 
 import commissioner
 
@@ -169,11 +168,12 @@ class OTCommissioner(ICommissioner):
 
     @classmethod
     def make_local_commissioner(config, simulator):
+        import pexpect
         handler = pexpect.spawn("/bin/bash")
         return OTCommissioner(config, handler, simulator)
 
     @classmethod
-    def make_remote_commissioner(config, serial_handler):
+    def make_harness_commissioner(config, serial_handler):
         if not isinstance(serial_handler, serial.Serial):
             raise commissioner.Error("expect a serial handler")
         return OTCommissioner(config, serial_handler)
