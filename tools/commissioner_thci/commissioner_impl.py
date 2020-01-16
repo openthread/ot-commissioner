@@ -166,13 +166,13 @@ class OTCommissioner(ICommissioner):
         else:
             self._handler.terminate(force=True)
 
-    @classmethod
+    @staticmethod
     def make_local_commissioner(config, simulator):
         import pexpect
         handler = pexpect.spawn("/bin/bash")
         return OTCommissioner(config, handler, simulator)
 
-    @classmethod
+    @staticmethod
     def make_harness_commissioner(config, serial_handler):
         if not isinstance(serial_handler, serial.Serial):
             raise commissioner.Error("expect a serial handler")
