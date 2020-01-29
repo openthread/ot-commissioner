@@ -70,7 +70,7 @@ public:
     using Seconds      = std::chrono::seconds;
 
     static std::shared_ptr<CommissionerApp> Create(const std::string &aConfigFile);
-    ~CommissionerApp();
+    ~CommissionerApp() = default;
 
     // Discover Border Agent on link-local network.
     Error Discover();
