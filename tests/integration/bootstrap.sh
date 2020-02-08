@@ -51,7 +51,6 @@ setup_openthread() {
 
     cd ${OPENTHREAD}
 
-    #./script/bootstrap || true
     git clean -xfd
     ./bootstrap
 
@@ -70,7 +69,6 @@ setup_openthread() {
             MAC_FILTER=1 \
             REFERENCE_DEVICE=1 \
             THREAD_VERSION=1.2 \
-            REFERENCE_DEVICE=1 \
             CSL_RECEIVER=1 \
             CSL_TRANSMITTER=1 \
             LINK_PROBE=1 \
@@ -105,7 +103,6 @@ setup_openthread() {
         MAC_FILTER=1 \
         REFERENCE_DEVICE=1 \
         THREAD_VERSION=1.2 \
-        REFERENCE_DEVICE=1 \
         CSL_RECEIVER=1 \
         CSL_TRANSMITTER=1 \
         LINK_PROBE=1 \
