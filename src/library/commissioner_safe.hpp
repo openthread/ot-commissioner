@@ -76,6 +76,7 @@ public:
     const Config &GetConfig() const override;
 
     void SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester) override;
+    void SetCommissioningHandler(CommissioningHandler aCommissioningHandler) override;
 
     uint16_t GetSessionId() const override;
 

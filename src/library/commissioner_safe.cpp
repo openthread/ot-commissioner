@@ -537,6 +537,12 @@ void CommissionerSafe::SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoReq
 }
 
 // It is not safe to call this after starting the commissioner.
+void CommissionerSafe::SetCommissioningHandler(CommissioningHandler aCommissioningHandler)
+{
+    mImpl.SetCommissioningHandler(aCommissioningHandler);
+}
+
+// It is not safe to call this after starting the commissioner.
 void CommissionerSafe::SetDatasetChangedHandler(ErrorHandler aHandler)
 {
     mImpl.SetDatasetChangedHandler(aHandler);

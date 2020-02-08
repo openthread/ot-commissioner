@@ -208,13 +208,22 @@ public:
     /**
      * The function request user information of given joiner.
      *
-     * @param[out] aInfo    A information of given joiner.
      * @param[in]  aType    A joiner type.
      * @param[in]  aId      A joiner ID.
      *
      * @return the associated joiner info.
      */
     using JoinerInfoRequester = std::function<const JoinerInfo *(JoinerType aType, const ByteArray &aId)>;
+
+    /**
+     * The callback indicates a joiner has been successfully commissioned (or not).
+     *
+     * @param[in]  aJoinerInfo    A joiner info.
+     * @param[in]  aError         An error indicates whether the commissioning has succeeded.
+     *
+     * @note This will be called when A JOIN_FIN.req has been received.
+     */
+    using CommissioningHandler = std::function<void(const JoinerInfo &aJoinerInfo, Error aError)>;
 
     /**
      * @brief Create an instance of the commissioner.
@@ -247,6 +256,14 @@ public:
      *                                  If null, it equals to always returning failure.
      */
     virtual void SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester) = 0;
+
+    /**
+     * @brief Set the joiner commissioning handler.
+     *
+     * @param[in] aCommissioningHandler  A joiner commissioning handler. nullable.
+     *
+     */
+    virtual void SetCommissioningHandler(CommissioningHandler aCommissioningHandler) = 0;
 
     /**
      * @brief Start the commissioner event loop.
