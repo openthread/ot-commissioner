@@ -198,6 +198,11 @@ exit:
 
     SendJoinFinResponse(aJoinFin, error == Error::kNone);
     LOG_INFO("sent JOIN_FIN.rsp: accepted={}", error == Error::kNone);
+
+    if (mCommImpl.mCommissioningHandler != nullptr)
+    {
+        mCommImpl.mCommissioningHandler(mJoinerInfo, error);
+    }
 }
 
 Error CommissioningSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
