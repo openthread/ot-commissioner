@@ -30,7 +30,7 @@
 ## This controls with which test suite to run.
 ## Set environment variable `OT_COMM_TEST_SUITE`
 ## to 1.1 or 1.2 to override this.
-readonly TEST_SUITE=${OT_COMM_TEST_SUITE:="1.2"}
+readonly TEST_SUITE=${OT_COMM_TEST_SUITE:="1.1"}
 
 readonly CUR_DIR=$(dirname "$(realpath -s $0)")
 readonly TEST_ROOT_DIR=${CUR_DIR}
