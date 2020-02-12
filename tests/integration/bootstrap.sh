@@ -54,42 +54,6 @@ setup_openthread() {
     git clean -xfd
     ./bootstrap
 
-    if [ "${TEST_SUITE}" = "1.2" ]; then
-        make -f examples/Makefile-posix \
-            CCM=1 \
-            COAP=1 \
-            COAPS=1 \
-            ECDSA=1 \
-            BORDER_ROUTER=1 \
-            SERVICE=1 \
-            DHCP6_CLIENT=1 \
-            DHCP6_SERVER=1 \
-            JOINER=1 \
-            COMMISSIONER=1 \
-            MAC_FILTER=1 \
-            REFERENCE_DEVICE=1 \
-            THREAD_VERSION=1.2 \
-            CSL_RECEIVER=1 \
-            CSL_TRANSMITTER=1 \
-            LINK_PROBE=1 \
-            DUA=1 \
-            MLR=1 \
-            BBR=1 \
-            MTD=0 \
-            BORDER_AGENT=1 \
-            UDP_FORWARD=1 \
-            DEBUG=1
-
-        cp output/x86_64-unknown-linux-gnu/bin/ot-cli-ftd ${CCM_CLI}
-        cp output/x86_64-unknown-linux-gnu/bin/ot-ncp-ftd ${CCM_NCP}
-
-        executable_or_die "${CCM_CLI}"
-        executable_or_die "${CCM_NCP}"
-    fi
-
-    git clean -xfd
-    ./bootstrap
-
     make -f examples/Makefile-posix \
         COAP=1 \
         COAPS=1 \
@@ -123,19 +87,6 @@ setup_openthread() {
     cd -
 }
 
-setup_registrar() {
-    set -e
-    ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
-
-    git clone ${REGISTRAR_REPO} ${REGISTRAR} --branch ${REGISTRAR_BRANCH}
-
-    cd ${REGISTRAR}
-
-    ./script/bootstrap.sh
-
-    cd -
-}
-
 setup_commissioner() {
     set -e
     pip install --user -r ../../tools/commissioner_thci/requirements.txt
@@ -151,12 +102,6 @@ main() {
 
     if [ ! -d ${OPENTHREAD} ]; then
         setup_openthread
-    fi
-
-    if [ "${TEST_SUITE}" = "1.2" ]; then
-        if [ ! -d ${REGISTRAR} ]; then
-            setup_registrar
-        fi
     fi
 
     setup_commissioner

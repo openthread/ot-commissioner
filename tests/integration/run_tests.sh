@@ -35,14 +35,6 @@
 . $(dirname $0)/test_pan_id_query.sh
 . $(dirname $0)/test_petition.sh
 
-if [ "${TEST_SUITE}" = "1.2" ]; then
-    . $(dirname $0)/test_bbr_dataset.sh
-    . $(dirname $0)/test_ccm_ae_joining.sh
-    . $(dirname $0)/test_ccm_nmkp_joining.sh
-    . $(dirname $0)/test_ccm_petition.sh
-    . $(dirname $0)/test_mlr.sh
-fi
-
 ## Run a test case and collect the result.
 ## Return: 0, test case succeed, 1, test case failed;
 ## Note: A test case must be started with 'test_' to make it runnable.
@@ -84,16 +76,6 @@ run_test_case() {
         echo "------ commissioner library log begin ------"
         cat ${COMMISSIONER_LOG}
         echo "------ commissioner library log end ------"
-
-        if [ "${TEST_SUITE}" = "1.2" ]; then
-            echo "------ registrar log begin ------"
-            cat ${REGISTRAR_LOG}
-            echo "------ registrarlog end ------"
-
-            echo "------ TRI log begin ------"
-            cat ${TRI_LOG}
-            echo "------ TRI log end ------"
-        fi
     fi
 
     return ${result}

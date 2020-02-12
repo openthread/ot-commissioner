@@ -57,7 +57,7 @@ if [ $TRAVIS_OS_NAME = 'linux' ]; then
     if [ $CC = gcc ]; then
         ## Integration tests
         cd ../tests/integration
-        OT_COMM_TEST_SUITE=1.1 ./bootstrap.sh
-        OT_COMM_TEST_SUITE=1.1 ./run_tests.sh
+        ./bootstrap.sh
+        ./run_tests.sh
     fi
 fi
