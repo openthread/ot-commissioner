@@ -297,7 +297,7 @@ private:
     PanIdConflictHandler mPanIdConflictHandler;
     EnergyReportHandler  mEnergyReportHandler;
 
-    JoinerInfoRequester mJoinerInfoRequester;
+    JoinerInfoRequester  mJoinerInfoRequester;
     CommissioningHandler mCommissioningHandler;
 };
 
