@@ -28,14 +28,9 @@
 #
 
 . $(dirname $0)/test_announce_begin.sh
-. $(dirname $0)/test_bbr_dataset.sh
-. $(dirname $0)/test_ccm_ae_joining.sh
-. $(dirname $0)/test_ccm_nmkp_joining.sh
-. $(dirname $0)/test_ccm_petition.sh
 . $(dirname $0)/test_discover.sh
 . $(dirname $0)/test_energy_scan.sh
 . $(dirname $0)/test_joining.sh
-. $(dirname $0)/test_mlr.sh
 . $(dirname $0)/test_operational_dataset.sh
 . $(dirname $0)/test_pan_id_query.sh
 . $(dirname $0)/test_petition.sh
@@ -48,7 +43,7 @@ run_test_case() {
 
     echo "====== test case: [ ${test_case} ] ======"
 
-    rm -rf ./commissioner.log
+    rm -rf ${COMMISSIONER_LOG}
 
     ## we cannot declare output with `local`,
     ## because `local` is a command and its return value iwll override
@@ -71,7 +66,7 @@ run_test_case() {
         echo "------ wpantund log end ------"
 
         echo "------ otbr log begin ------"
-        cat ${OTBR_1_2_LOG}
+        cat ${OTBR_LOG}
         echo "------ otbr log end ------"
 
         echo "------ commissioner daemon log begin ------"
@@ -79,16 +74,8 @@ run_test_case() {
         echo "------ commissioner daemon log end ------"
 
         echo "------ commissioner library log begin ------"
-        cat ./commissioner.log
+        cat ${COMMISSIONER_LOG}
         echo "------ commissioner library log end ------"
-
-        echo "------ registrar log begin ------"
-        cat ${REGISTRAR_LOG}
-        echo "------ registrarlog end ------"
-
-        echo "------ TRI log begin ------"
-        cat ${TRI_LOG}
-        echo "------ TRI log end ------"
     fi
 
     return ${result}
