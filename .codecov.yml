@@ -4,8 +4,8 @@ coverage:
     patch: off
 
 ignore:
-  - "tests/*"
-  - "third_party/*"
+  - "tests/**/*"
+  - "third_party/**/*"
 
 comment:
   layout: "diff, flags, files"
