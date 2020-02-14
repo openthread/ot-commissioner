@@ -143,6 +143,8 @@ class OTCommissioner(ICommissioner):
         self._handler = handler
         self._lines = []
 
+        self._command('stty cols {}'.format(TTY_COLS))
+
         config_path = '/tmp/commissioner.{}.json'.format(uuid.uuid4())
         self._write_config(config_path=config_path, config=config)
 
@@ -416,6 +418,7 @@ class OTCommissioner(ICommissioner):
                 return
 
             self._sleep(0.1)
+            timeout -= 0.1
 
         raise commissioner.Error(
             'Failed to find expected string [{}]'.format(expected))
@@ -491,6 +494,8 @@ class OTCommissioner(ICommissioner):
                 response.append(line)
 
             self._sleep(0.1)
+            timeout -= 0.1
+
         if timeout <= 0:
             raise Exception(
                 'Failed to find end of response'.format(self._port))
