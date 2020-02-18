@@ -87,11 +87,6 @@ exit:
     return error;
 }
 
-CommissionerApp::~CommissionerApp()
-{
-    mCommissioner->Stop();
-}
-
 Error CommissionerApp::Discover()
 {
     return mCommissioner->Discover(mBorderAgents);
