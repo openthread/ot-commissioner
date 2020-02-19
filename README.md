@@ -1,4 +1,5 @@
 [![Build Status][ot-comm-travis-svg]][ot-comm-travis]
+[![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
 
 ---
 
@@ -24,6 +25,8 @@ To learn more about OpenThread, visit [openthread.io](https://openthread.io).
 
 [ot-comm-travis]: https://travis-ci.org/openthread/ot-commissioner
 [ot-comm-travis-svg]: https://travis-ci.org/openthread/ot-commissioner.svg?branch=master
+[ot-comm-codecov]: https://codecov.io/gh/openthread/ot-commissioner
+[ot-comm-codecov-svg]: https://codecov.io/gh/openthread/ot-commissioner/branch/master/graph/badge.svg
 
 ## Getting started
 

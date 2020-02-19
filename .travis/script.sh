@@ -43,7 +43,7 @@ mkdir -p build && cd build
 cmake -GNinja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
-      -DOT_COMMISSIONER_COVERAGE=ON ..
+      -DOT_COMM_COVERAGE=ON ..
 ninja -j 10
 
 ## Tests
