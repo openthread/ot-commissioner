@@ -83,6 +83,9 @@ Error CommissionerApp::Init(const AppConfig &aAppConfig)
     mCommissioner->SetJoinerInfoRequester(
         [this](JoinerType aType, const ByteArray &aJoinerId) { return GetJoinerInfo(aType, aJoinerId); });
 
+    // Do not provide commissioning handler to always accept a joiner.
+    // This is the default behavior of OpenThread on-Mesh Commissioner.
+
 exit:
     return error;
 }
