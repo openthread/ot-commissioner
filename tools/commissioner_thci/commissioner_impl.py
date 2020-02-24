@@ -143,6 +143,8 @@ class OTCommissioner(ICommissioner):
         self._handler = handler
         self._lines = []
 
+        self._command('stty cols {}'.format(TTY_COLS))
+
         config_path = '/tmp/commissioner.{}.json'.format(uuid.uuid4())
         self._write_config(config_path=config_path, config=config)
 
@@ -414,8 +416,9 @@ class OTCommissioner(ICommissioner):
             if line == expected:
                 logging.info('Expected [{}]'.format(expected))
                 return
-
-            self._sleep(0.1)
+            elif line is None:
+                self._sleep(0.1)
+                timeout -= 0.1
 
         raise commissioner.Error(
             'Failed to find expected string [{}]'.format(expected))
@@ -431,9 +434,7 @@ class OTCommissioner(ICommissioner):
     def _read_line(self):
         logging.debug('Reading line')
         if len(self._lines) > 1:
-            line = self._lines.pop(0)
-            line = CONTROL_SEQUENCE.sub('', line)
-            return line
+            return CONTROL_SEQUENCE.sub('', self._lines.pop(0))
 
         tail = ''
         if len(self._lines):
@@ -445,6 +446,9 @@ class OTCommissioner(ICommissioner):
             logging.debug('No new data')
 
         self._lines += NEW_LINE.split(tail)
+
+        if len(self._lines) > 1:
+            return CONTROL_SEQUENCE.sub('', self._lines.pop(0))
 
     def _read(self, size=512):
         if isinstance(self._handler, serial.Serial):
@@ -489,8 +493,10 @@ class OTCommissioner(ICommissioner):
                 if re.match(COMMISSIONER_PROMPT, line):
                     break
                 response.append(line)
+            else:
+                self._sleep(0.1)
+                timeout -= 0.1
 
-            self._sleep(0.1)
         if timeout <= 0:
             raise Exception(
                 'Failed to find end of response'.format(self._port))
