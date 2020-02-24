@@ -230,7 +230,11 @@ public:
      *                                 service. Empty if the joiner doesn't provide it.
      * @param[in]  aVendorData         A product vendor-defined data structure to guide
      *                                 vendor-specific provisioning. Empty if the joiner doesn't provide it.
+     *
+     * @return  A boolean indicates whether the joiner is accepted.
+     *
      * @note This will be called when A well-formed JOIN_FIN.req has been received.
+     *
      */
     using CommissioningHandler = std::function<bool(const JoinerInfo & aJoinerInfo,
                                                     const std::string &aVendorName,
