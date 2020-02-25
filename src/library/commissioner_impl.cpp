@@ -213,7 +213,8 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
         VerifyOrExit(commissionerIdTlv.IsValid(), error = "invalid commissioner ID: " + aConfig.mId);
     }
 
-    VerifyOrExit(aConfig.mLogLevel <= 5, error = "invalid logging level: " + std::to_string(aConfig.mLogLevel));
+    VerifyOrExit(aConfig.mLogLevel <= LogLevel::kDebug,
+                 error = "invalid logging level: " + std::to_string(static_cast<int>(aConfig.mLogLevel)));
 
     VerifyOrExit(
         (aConfig.mKeepAliveInterval >= kMinKeepAliveInterval && aConfig.mKeepAliveInterval <= kMaxKeepAliveInterval),

@@ -50,97 +50,97 @@ namespace commissioner {
 /**
  * The minimum commissioner passphrase length.
  */
-static const size_t kMinCommissionerPassphraseLength = 6;
+static constexpr size_t kMinCommissionerPassphraseLength = 6;
 
 /**
  * The maximum commissioner passphrase length.
  */
-static const size_t kMaxCommissionerPassPhraseLength = 255;
+static constexpr size_t kMaxCommissionerPassPhraseLength = 255;
 
 /**
  * The maximum PSKc length.
  */
-static const size_t kMaxPSKcLength = 16;
+static constexpr size_t kMaxPSKcLength = 16;
 
 /**
  * The maximum network name length.
  */
-static const size_t kMaxNetworkNameLength = 16;
+static constexpr size_t kMaxNetworkNameLength = 16;
 
 /**
  * The extended PAN ID length.
  */
-static const size_t kExtendedPanIdLength = 8;
+static constexpr size_t kExtendedPanIdLength = 8;
 
 /**
  * The maximum steering data length.
  */
-static const size_t kMaxSteeringDataLength = 16;
+static constexpr size_t kMaxSteeringDataLength = 16;
 
 /**
  * The joiner ID length in bytes.
  */
-static const size_t kJoinerIdLength = 8;
+static constexpr size_t kJoinerIdLength = 8;
 
 /**
  * The Joiner Router KEK length.
  */
-static const size_t kJoinerRouterKekLength = 16;
+static constexpr size_t kJoinerRouterKekLength = 16;
 
 /**
  * The default Joiner UDP Port used by non-CCM Thread devices if not specified.
  */
-static const uint16_t kDefaultJoinerUdpPort = 1000;
+static constexpr uint16_t kDefaultJoinerUdpPort = 1000;
 
 /**
  * The default AE UDP Port used by CCM Thread devices if not specified.
  */
-static const uint16_t kDefaultAeUdpPort = 1001;
+static constexpr uint16_t kDefaultAeUdpPort = 1001;
 
 /**
  * The default NMKP UDP Port used by CCM Thread devices if not specified.
  */
-static const uint16_t kDefaultNmkpUdpPort = 1002;
+static constexpr uint16_t kDefaultNmkpUdpPort = 1002;
 
 /**
  * The fixed primary backbone router anycast locator.
  */
-static const uint16_t kPrimaryBbrAloc16 = 0xFC38;
+static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 
 /**
  * If using radio 915Mhz. Default radio freq of Thread is 2.4Ghz.
  *
  * Used to encoding ChannelMask TLV.
  */
-static const bool kRadio915Mhz = false;
+static constexpr bool kRadio915Mhz = false;
 
 /**
  * Channel mask for 915Mhz.
  *
  * Used to encoding ChannelMask TLV.
  */
-static const uint32_t kRadio915MhzOqpskChannelMask = 0x03FF << 1;
+static constexpr uint32_t kRadio915MhzOqpskChannelMask = 0x03FF << 1;
 
 /**
  * Channel mask for 2.4Ghz.
  *
  * Used to encoding ChannelMask TLV.
  */
-static const uint32_t kRadio2P4GhzOqpskChannelMask = 0xFFFF << 11;
+static constexpr uint32_t kRadio2P4GhzOqpskChannelMask = 0xFFFF << 11;
 
 /**
  * Channel page 0.
  *
  * Used to encoding ChannelMask TLV.
  */
-static const uint8_t kRadioChannelPage0 = 0;
+static constexpr uint8_t kRadioChannelPage0 = 0;
 
 /**
  * Channel page 2.
  *
  * Used to encoding ChannelMask TLV.
  */
-static const uint8_t kRadioChannelPage2 = 2;
+static constexpr uint8_t kRadioChannelPage2 = 2;
 
 /**
  * Type alias of raw byte array.

@@ -136,21 +136,21 @@ struct BorderAgent
 
     uint16_t mPresentFlags = 0;
 
-    static const uint16_t kAddrBit            = 1 << 0;
-    static const uint16_t kPortBit            = 1 << 1;
-    static const uint16_t kThreadVersionBit   = 1 << 2;
-    static const uint16_t kStateBit           = 1 << 3;
-    static const uint16_t kNetworkNameBit     = 1 << 4;
-    static const uint16_t kExtendedPanIdBit   = 1 << 5;
-    static const uint16_t kVendorNameBit      = 1 << 6;
-    static const uint16_t kModelNameBit       = 1 << 7;
-    static const uint16_t kActiveTimestampBit = 1 << 8;
-    static const uint16_t kPartitionIdBit     = 1 << 9;
-    static const uint16_t kVendorDataBit      = 1 << 10;
-    static const uint16_t kVendorOuiBit       = 1 << 11;
-    static const uint16_t kDomainNameBit      = 1 << 12;
-    static const uint16_t kBbrSeqNumberBit    = 1 << 13;
-    static const uint16_t kBbrPortBit         = 1 << 14;
+    static constexpr uint16_t kAddrBit            = 1 << 0;
+    static constexpr uint16_t kPortBit            = 1 << 1;
+    static constexpr uint16_t kThreadVersionBit   = 1 << 2;
+    static constexpr uint16_t kStateBit           = 1 << 3;
+    static constexpr uint16_t kNetworkNameBit     = 1 << 4;
+    static constexpr uint16_t kExtendedPanIdBit   = 1 << 5;
+    static constexpr uint16_t kVendorNameBit      = 1 << 6;
+    static constexpr uint16_t kModelNameBit       = 1 << 7;
+    static constexpr uint16_t kActiveTimestampBit = 1 << 8;
+    static constexpr uint16_t kPartitionIdBit     = 1 << 9;
+    static constexpr uint16_t kVendorDataBit      = 1 << 10;
+    static constexpr uint16_t kVendorOuiBit       = 1 << 11;
+    static constexpr uint16_t kDomainNameBit      = 1 << 12;
+    static constexpr uint16_t kBbrSeqNumberBit    = 1 << 13;
+    static constexpr uint16_t kBbrPortBit         = 1 << 14;
 };
 
 } // namespace commissioner
