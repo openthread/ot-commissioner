@@ -247,7 +247,7 @@ exit:
 
 Error MakeCoseKey(ByteArray &aEncodedCoseKey, const mbedtls_pk_context &aKey, const ByteArray &aKeyId)
 {
-    static const size_t kMaxCoseKeyLength = 1024;
+    static constexpr size_t kMaxCoseKeyLength = 1024;
 
     Error                             error = Error::kInvalidArgs;
     const struct mbedtls_ecp_keypair *eckey;

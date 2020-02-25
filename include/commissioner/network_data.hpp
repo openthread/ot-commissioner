@@ -46,11 +46,11 @@ namespace ot {
 namespace commissioner {
 
 // Should them be exposed to user?
-static const uint8_t kMlrStatusSuccess     = 0;
-static const uint8_t kMlrStatusInvalid     = 2;
-static const uint8_t kMlrStatusNoResources = 4;
-static const uint8_t kMlrStatusNotPrimary  = 5;
-static const uint8_t kMlrStatusFailure     = 6;
+static constexpr uint8_t kMlrStatusSuccess     = 0;
+static constexpr uint8_t kMlrStatusInvalid     = 2;
+static constexpr uint8_t kMlrStatusNoResources = 4;
+static constexpr uint8_t kMlrStatusNotPrimary  = 5;
+static constexpr uint8_t kMlrStatusFailure     = 6;
 
 /**
  * @brief The Commissioner Dataset of the Thread Network Data.

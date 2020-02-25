@@ -104,7 +104,7 @@ static const std::string kServerKey = "-----BEGIN PRIVATE KEY-----\r\n"
                                       "-----END PRIVATE KEY-----\r\n";
 
 static const char *   kServerAddr = "::";
-static const uint16_t kServerPort = 5683;
+static constexpr uint16_t kServerPort = 5683;
 
 TEST_CASE("coap-secure-basic", "[coaps]")
 {

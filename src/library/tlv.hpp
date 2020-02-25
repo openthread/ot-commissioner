@@ -52,7 +52,7 @@ namespace tlv {
 
 class Tlv;
 
-static const uint8_t kEscapeLength = 0xFF; ///< This length value indicates the actual length is of two-bytes length.
+static constexpr uint8_t kEscapeLength = 0xFF; ///< This length value indicates the actual length is of two-bytes length.
 static const int8_t  kStateReject  = -1;
 static const int8_t  kStateAccept  = 1;
 static const int8_t  kStatePending = 0;
