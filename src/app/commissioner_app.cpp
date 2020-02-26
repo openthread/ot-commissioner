@@ -55,7 +55,8 @@ static bool DefaultCommissioningHandler(const JoinerInfo & aJoinerInfo,
                                         const std::string &aVendorSwVersion,
                                         const ByteArray &  aVendorStackVersion,
                                         const std::string &aProvisioningUrl,
-                                        const ByteArray &  aVendorData) {
+                                        const ByteArray &  aVendorData)
+{
     (void)aJoinerInfo;
     (void)aVendorName;
     (void)aVendorModel;
