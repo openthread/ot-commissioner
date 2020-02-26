@@ -35,7 +35,7 @@ endif()
 
 option(OT_COMM_COVERAGE "Enable coverage reporting" OFF)
 option(OT_COMM_TEST     "Build tests" ON)
-
+option(OT_COMM_APP      "Build the CLI App" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -48,6 +48,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMBEDTLS_USER_CONFIG_FILE='<${MBEDTLS_U
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMBEDTLS_USER_CONFIG_FILE='<${MBEDTLS_USER_CONFIG}>'")
 
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if (OT_COMM_TEST)
+    add_subdirectory(tests)
+endif()
 add_subdirectory(tools)
 add_subdirectory(third_party EXCLUDE_FROM_ALL)
