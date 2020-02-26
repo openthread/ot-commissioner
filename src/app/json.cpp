@@ -137,12 +137,12 @@ static std::string StripComments(const std::string &aStr)
 // the first one in below map, that is LogLevel::kOff.
 NLOHMANN_JSON_SERIALIZE_ENUM(LogLevel,
                              {
-                                 {kOff, "off"},
-                                 {kCritical, "critical"},
-                                 {kError, "error"},
-                                 {kWarn, "warn"},
-                                 {kInfo, "info"},
-                                 {kDebug, "debug"},
+                                 {LogLevel::kOff, "off"},
+                                 {LogLevel::kCritical, "critical"},
+                                 {LogLevel::kError, "error"},
+                                 {LogLevel::kWarn, "warn"},
+                                 {LogLevel::kInfo, "info"},
+                                 {LogLevel::kDebug, "debug"},
                              });
 
 static void from_json(const Json &aJson, AppConfig &aAppConfig)

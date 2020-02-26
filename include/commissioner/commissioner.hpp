@@ -56,7 +56,7 @@ namespace commissioner {
 /**
  * @brief State of a commissioner.
  */
-enum State : uint8_t
+enum class State : uint8_t
 {
     kDisabled = 0,
     kPetitioning,
@@ -66,7 +66,7 @@ enum State : uint8_t
 /**
  * @brief Logging Level.
  */
-enum LogLevel : uint8_t
+enum class LogLevel : uint8_t
 {
     kOff = 0,
     kCritical,

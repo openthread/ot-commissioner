@@ -59,8 +59,8 @@ namespace ot {
 
 namespace commissioner {
 
-static const uint32_t kDtlsHandshakeTimeoutMin = 8;
-static const uint32_t kDtlsHandshakeTimeoutMax = 60;
+static constexpr uint32_t kDtlsHandshakeTimeoutMin = 8;
+static constexpr uint32_t kDtlsHandshakeTimeoutMax = 60;
 
 struct DtlsConfig
 {

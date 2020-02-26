@@ -51,6 +51,7 @@ build
 #tools
 .vscode
 .idea
+CMakeLists.txt.user
 
 #log
 *.log

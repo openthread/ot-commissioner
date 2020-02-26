@@ -49,12 +49,12 @@ namespace commissioner {
 
 // The port a 1.1 mesh commissioning server is listen on for
 // incoming DTLS connections from joiner.
-static const uint16_t kCommissioningPort = 9527;
+static constexpr uint16_t kCommissioningPort = 9527;
 
 // The commissioning session timeout value starting from connected. In seconds.
 // This is the time duration of waiting for JOIN_FIN.req. After that,
 // the commissioning session will be closed and removed.
-static const uint32_t kCommissioningTimeout = 20;
+static constexpr uint32_t kCommissioningTimeout = 20;
 
 class CommissionerImpl;
 class CommissioningSession;

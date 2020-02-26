@@ -48,7 +48,7 @@ namespace ot {
 
 namespace commissioner {
 
-static const uint8_t kLocalExternalAddrMask = 1 << 1;
+static constexpr uint8_t kLocalExternalAddrMask = 1 << 1;
 
 Error Commissioner::GeneratePSKc(ByteArray &        aPSKc,
                                  const std::string &aPassphrase,
@@ -214,7 +214,8 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
         VerifyOrExit(commissionerIdTlv.IsValid(), error = "invalid commissioner ID: " + aConfig.mId);
     }
 
-    VerifyOrExit(aConfig.mLogLevel <= 5, error = "invalid logging level: " + std::to_string(aConfig.mLogLevel));
+    VerifyOrExit(aConfig.mLogLevel <= LogLevel::kDebug,
+                 error = "invalid logging level: " + std::to_string(utils::to_underlying(aConfig.mLogLevel)));
 
     VerifyOrExit(
         (aConfig.mKeepAliveInterval >= kMinKeepAliveInterval && aConfig.mKeepAliveInterval <= kMaxKeepAliveInterval),
