@@ -281,7 +281,8 @@ public:
      *
      * @param[in] aCommissioningHandler  A joiner commissioning handler. nullable.
      *
-     * @note The default behavior of not providing this handler is always accepting.
+     * @note A joiner will be rejected if this handler is not provided
+     *       while the joiner requires vendor-specific provision.
      *
      */
     virtual void SetCommissioningHandler(CommissioningHandler aCommissioningHandler) = 0;
