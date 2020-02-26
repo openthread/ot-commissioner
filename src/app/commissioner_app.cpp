@@ -45,6 +45,28 @@ namespace ot {
 
 namespace commissioner {
 
+/**
+ * The default commissioning handler that always accepts any joiner.
+ *
+ */
+static bool DefaultCommissioningHandler(const JoinerInfo & aJoinerInfo,
+                                        const std::string &aVendorName,
+                                        const std::string &aVendorModel,
+                                        const std::string &aVendorSwVersion,
+                                        const ByteArray &  aVendorStackVersion,
+                                        const std::string &aProvisioningUrl,
+                                        const ByteArray &  aVendorData) {
+    (void)aJoinerInfo;
+    (void)aVendorName;
+    (void)aVendorModel;
+    (void)aVendorSwVersion;
+    (void)aVendorStackVersion;
+    (void)aProvisioningUrl;
+    (void)aVendorData;
+
+    return true;
+}
+
 std::shared_ptr<CommissionerApp> CommissionerApp::Create(const std::string &aConfigFile)
 {
     Error     error = Error::kNone;
@@ -83,8 +105,8 @@ Error CommissionerApp::Init(const AppConfig &aAppConfig)
     mCommissioner->SetJoinerInfoRequester(
         [this](JoinerType aType, const ByteArray &aJoinerId) { return GetJoinerInfo(aType, aJoinerId); });
 
-    // Do not provide commissioning handler to always accept a joiner.
     // This is the default behavior of OpenThread on-Mesh Commissioner.
+    mCommissioner->SetCommissioningHandler(DefaultCommissioningHandler);
 
 exit:
     return error;

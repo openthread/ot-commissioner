@@ -206,6 +206,7 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
     }
     else
     {
+        // Accepts a joiner if there is no vendor-specific provisioning.
         accepted = true;
     }
 
