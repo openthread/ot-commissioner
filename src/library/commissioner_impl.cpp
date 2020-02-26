@@ -159,6 +159,7 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     , mPanIdConflictHandler(nullptr)
     , mEnergyReportHandler(nullptr)
     , mJoinerInfoRequester(nullptr)
+    , mCommissioningHandler(nullptr)
 {
     mBrClient.AddResource(mResourceUdpRx);
     mBrClient.AddResource(mResourceRlyRx);
@@ -268,6 +269,11 @@ const Config &CommissionerImpl::GetConfig() const
 void CommissionerImpl::SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester)
 {
     mJoinerInfoRequester = aJoinerInfoRequester;
+}
+
+void CommissionerImpl::SetCommissioningHandler(CommissioningHandler aCommissioningHandler)
+{
+    mCommissioningHandler = aCommissioningHandler;
 }
 
 Error CommissionerImpl::Start()

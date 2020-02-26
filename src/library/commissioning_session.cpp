@@ -152,13 +152,17 @@ exit:
 
 void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
 {
-    Error       error = Error::kNone;
+    bool        accepted = false;
+    Error       error    = Error::kNone;
     tlv::TlvSet tlvSet;
     tlv::TlvPtr stateTlv              = nullptr;
     tlv::TlvPtr vendorNameTlv         = nullptr;
     tlv::TlvPtr vendorModelTlv        = nullptr;
     tlv::TlvPtr vendorSwVersionTlv    = nullptr;
     tlv::TlvPtr vendorStackVersionTlv = nullptr;
+
+    std::string provisioningUrl{};
+    ByteArray   vendorData{};
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aJoinFin));
 
@@ -188,6 +192,22 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         VerifyOrExit(vendorDataTlv != nullptr, error = Error::kNotFound);
         VerifyOrExit(vendorDataTlv->IsValid(), error = Error::kBadFormat);
         VerifyOrExit(provisioningUrlTlv->GetValueAsString() == mJoinerInfo.mProvisioningUrl, error = Error::kReject);
+
+        provisioningUrl = provisioningUrlTlv->GetValueAsString();
+        vendorData      = vendorDataTlv->GetValue();
+    }
+
+    // Validation done, request commissioning by user.
+    if (mCommImpl.mCommissioningHandler != nullptr)
+    {
+        accepted = mCommImpl.mCommissioningHandler(
+            mJoinerInfo, vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
+            vendorSwVersionTlv->GetValueAsString(), vendorStackVersionTlv->GetValue(), provisioningUrl, vendorData);
+    }
+    else
+    {
+        // Accepts a joiner if requirement on vendor-specific provisioning.
+        accepted = provisioningUrl.empty();
     }
 
 exit:
@@ -196,8 +216,8 @@ exit:
         LOG_WARN("handle JOIN_FIN.req failed: {}", ErrorToString(error));
     }
 
-    SendJoinFinResponse(aJoinFin, error == Error::kNone);
-    LOG_INFO("sent JOIN_FIN.rsp: accepted={}", error == Error::kNone);
+    SendJoinFinResponse(aJoinFin, accepted);
+    LOG_INFO("sent JOIN_FIN.rsp: accepted={}", accepted);
 }
 
 Error CommissioningSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
