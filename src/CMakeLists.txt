@@ -31,6 +31,8 @@ if (CMAKE_BUILD_TYPE AND OT_COMM_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU
     add_link_options(--coverage)
 endif()
 
-add_subdirectory(app)
+if (OT_COMM_APP)
+    add_subdirectory(app)
+endif()
 add_subdirectory(common)
 add_subdirectory(library)
