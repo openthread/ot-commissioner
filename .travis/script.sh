@@ -33,7 +33,7 @@ set -e
 ./script/bootstrap.sh
 
 ## Override default travis cmake
-export PATH="/usr/bin:$PATH"
+export PATH="${HOME}/.local/bin:$PATH"
 
 ## Check coding style
 ./script/check-pretty.sh
