@@ -78,8 +78,8 @@ if [ $(uname) = "Linux" ]; then
 
     ## Install newest CMake
     match_version $(cmake --version | egrep -o '[0-9].*') ${MIN_CMAKE_VERSION} || {
-        pip3 install --upgrade pip
-        pip3 install cmake
+        pip3 install -U pip
+        pip3 install -U cmake
         cmake --version
     }
 
