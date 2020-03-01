@@ -54,7 +54,7 @@ setup_openthread() {
     git clean -xfd
     ./bootstrap
 
-    make -f examples/Makefile-posix \
+    make -f examples/Makefile-simulation \
         COAP=1 \
         COAPS=1 \
         ECDSA=1 \
