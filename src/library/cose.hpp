@@ -73,6 +73,8 @@ static const int kUnprotectOnly      = COSE_UNPROTECT_ONLY;
 
 class Object
 {
+public:
+    virtual ~Object() = default;
 };
 
 class Sign1Message : public Object
