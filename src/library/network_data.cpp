@@ -41,33 +41,6 @@ namespace ot {
 
 namespace commissioner {
 
-const uint16_t CommissionerDataset::kBorderAgentLocatorBit = (1 << 15);
-const uint16_t CommissionerDataset::kSessionIdBit          = (1 << 14);
-const uint16_t CommissionerDataset::kSteeringDataBit       = (1 << 13);
-const uint16_t CommissionerDataset::kAeSteeringDataBit     = (1 << 12);
-const uint16_t CommissionerDataset::kNmkpSteeringDataBit   = (1 < 11);
-const uint16_t CommissionerDataset::kJoinerUdpPortBit(1 << 10);
-const uint16_t CommissionerDataset::kAeUdpPortBit   = (1 << 9);
-const uint16_t CommissionerDataset::kNmkpUdpPortBit = (1 << 8);
-
-const uint16_t ActiveOperationalDataset::kActiveTimestampBit  = (1 << 15);
-const uint16_t ActiveOperationalDataset::kChannelBit          = (1 << 14);
-const uint16_t ActiveOperationalDataset::kChannelMaskBit      = (1 << 13);
-const uint16_t ActiveOperationalDataset::kExtendedPanIdBit    = (1 << 12);
-const uint16_t ActiveOperationalDataset::kMeshLocalPrefixBit  = (1 << 11);
-const uint16_t ActiveOperationalDataset::kNetworkMasterKeyBit = (1 << 10);
-const uint16_t ActiveOperationalDataset::kNetworkNameBit      = (1 << 9);
-const uint16_t ActiveOperationalDataset::kPanIdBit            = (1 << 8);
-const uint16_t ActiveOperationalDataset::kPSKcBit             = (1 << 7);
-const uint16_t ActiveOperationalDataset::kSecurityPolicyBit   = (1 << 6);
-
-const uint16_t PendingOperationalDataset::kDelayTimerBit       = (1 << 5);
-const uint16_t PendingOperationalDataset::kPendingTimestampBit = (1 << 4);
-
-const uint16_t BbrDataset::kTriHostnameBit       = (1 << 15);
-const uint16_t BbrDataset::kRegistrarHostnameBit = (1 << 14);
-const uint16_t BbrDataset::kRegistrarIpv6AddrBit = (1 << 13);
-
 Timestamp Timestamp::Cur()
 {
     Timestamp cur;
