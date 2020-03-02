@@ -279,7 +279,7 @@ struct BbrDataset
     /**
      * Indicates which fields are included in the dataset.
      */
-    uint16_t              mPresentFlags = 0;
+    uint16_t mPresentFlags = 0;
 
     static constexpr uint16_t kTriHostnameBit       = (1 << 15);
     static constexpr uint16_t kRegistrarHostnameBit = (1 << 14);
