@@ -128,5 +128,5 @@ readonly CUR_DIR="$(dirname "$(realpath -s $0)")"
 readonly PROJECT_DIR=${CUR_DIR}/../
 
 cd ${PROJECT_DIR}
-git submodule update --init --recursive
+git submodule update --init --recursive --depth=1
 cd -
