@@ -51,6 +51,8 @@ namespace commissioner {
 class CborValue
 {
 public:
+    virtual ~CborValue() = default;
+
     // Init with default value.
     virtual Error Init() = 0;
     void          Free();
