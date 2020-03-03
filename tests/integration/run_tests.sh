@@ -27,6 +27,16 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+## This file is the integration tests driver.
+##
+## Usage:
+##   ./run_tests.sh                   Run all test cases.
+##   ./run_tests.sh <test-case-name>  Run only specific test case.
+##
+## Note: Test cases are functions starting with 'test_' which are located in
+##       'test_*.sh' files.
+##
+
 . $(dirname $0)/test_announce_begin.sh
 . $(dirname $0)/test_discover.sh
 . $(dirname $0)/test_energy_scan.sh

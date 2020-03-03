@@ -27,11 +27,20 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+## This file bootstrap dependencies of integration tests.
+##
+## Accepted environment variables:
+##   - OT_COMM_SKIP_BUILDING_OTBR  Control if skip building ot-br-posix from source,
+##                                 This is useful when ot-br-posix is pre-installed.
+##
+
 [ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
+
+readonly SKIP_BUILDING_OTBR=${OT_COMM_SKIP_BUILDING_OTBR:=0}
 
 setup_otbr() {
     set -e
-    git clone ${OTBR_REPO} ${OTBR} --branch ${OTBR_BRANCH}
+    git clone ${OTBR_REPO} ${OTBR} --branch ${OTBR_BRANCH} --depth=1
 
     cd ${OTBR}
 
@@ -47,7 +56,7 @@ setup_otbr() {
 
 setup_openthread() {
     set -e
-    git clone ${OPENTHREAD_REPO} ${OPENTHREAD} --branch ${OPENTHREAD_BRANCH}
+    git clone ${OPENTHREAD_REPO} ${OPENTHREAD} --branch ${OPENTHREAD_BRANCH} --depth=1
 
     cd ${OPENTHREAD}
 
@@ -96,7 +105,7 @@ main() {
     set -e
     mkdir -p ${RUNTIME_DIR}
 
-    if [ ! -d ${OTBR} ]; then
+    if [[ $SKIP_BUILDING_OTBR == 0 ]] && [ ! -d ${OTBR} ]; then
         setup_otbr
     fi
 
