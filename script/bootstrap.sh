@@ -72,14 +72,14 @@ if [ $(uname) = "Linux" ]; then
                          clang-format-6.0 \
                          cmake \
                          ninja-build \
-                         python3-setuptools \
-                         python3-pip \
+                         python-setuptools \
+                         python-pip \
                          lcov -y
 
     ## Install newest CMake
     match_version $(cmake --version | egrep -o '[0-9].*') ${MIN_CMAKE_VERSION} || {
-        pip3 install -U pip
-        pip3 install -U cmake
+        pip install -U pip
+        pip install -U cmake
     }
     match_version $(cmake --version | egrep -o '[0-9].*') ${MIN_CMAKE_VERSION} || {
         echo "error: cmake version($(cmake --version)) < ${MIN_CMAKE_VERSION}."
