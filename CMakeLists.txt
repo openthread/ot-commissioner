@@ -32,7 +32,6 @@ project(ot-commissioner VERSION 1.0.0)
 option(OT_COMM_COVERAGE         "Enable coverage reporting" OFF)
 option(OT_COMM_TEST             "Build tests" ON)
 option(OT_COMM_APP              "Build the CLI App" ON)
-option(OT_COMM_MAINTAINER_FLAGS "Build flags used by the maintainers" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -44,9 +43,7 @@ if(NOT "${CMAKE_CXX_STANDARD}")
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
-if(OT_COMM_MAINTAINER_FLAGS)
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces")
 
 # Defines for mbedtls
 set(MBEDTLS_USER_CONFIG ${PROJECT_SOURCE_DIR}/third_party/mbedtls/mbedtls_user_config.h)
