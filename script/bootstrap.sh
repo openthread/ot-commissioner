@@ -83,7 +83,7 @@ if [ $(uname) = "Linux" ]; then
     }
     match_version $(cmake --version | egrep -o '[0-9].*') ${MIN_CMAKE_VERSION} || {
         echo "error: cmake version($(cmake --version)) < ${MIN_CMAKE_VERSION}."
-        echo "did you forget to add '\$HOME/.local/bin' to beginning of your PATH?"
+        echo "Did you forget to add '\$HOME/.local/bin' to beginning of your PATH?"
         exit 1
     }
 
