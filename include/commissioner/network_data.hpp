@@ -126,15 +126,16 @@ struct CommissionerDataset
     /**
      * Indicates which fields are included in the dataset.
      */
-    uint16_t              mPresentFlags = 0;
-    static const uint16_t kBorderAgentLocatorBit;
-    static const uint16_t kSessionIdBit;
-    static const uint16_t kSteeringDataBit;
-    static const uint16_t kAeSteeringDataBit;
-    static const uint16_t kNmkpSteeringDataBit;
-    static const uint16_t kJoinerUdpPortBit;
-    static const uint16_t kAeUdpPortBit;
-    static const uint16_t kNmkpUdpPortBit;
+    uint16_t mPresentFlags = 0;
+
+    static constexpr uint16_t kBorderAgentLocatorBit = (1 << 15);
+    static constexpr uint16_t kSessionIdBit          = (1 << 14);
+    static constexpr uint16_t kSteeringDataBit       = (1 << 13);
+    static constexpr uint16_t kAeSteeringDataBit     = (1 << 12);
+    static constexpr uint16_t kNmkpSteeringDataBit   = (1 < 11);
+    static constexpr uint16_t kJoinerUdpPortBit      = (1 << 10);
+    static constexpr uint16_t kAeUdpPortBit          = (1 << 9);
+    static constexpr uint16_t kNmkpUdpPortBit        = (1 << 8);
 };
 
 /**
@@ -220,17 +221,18 @@ struct ActiveOperationalDataset
     /**
      * Indicates which fields are included in the dataset.
      */
-    uint16_t              mPresentFlags;
-    static const uint16_t kActiveTimestampBit;
-    static const uint16_t kChannelBit;
-    static const uint16_t kChannelMaskBit;
-    static const uint16_t kExtendedPanIdBit;
-    static const uint16_t kMeshLocalPrefixBit;
-    static const uint16_t kNetworkMasterKeyBit;
-    static const uint16_t kNetworkNameBit;
-    static const uint16_t kPanIdBit;
-    static const uint16_t kPSKcBit;
-    static const uint16_t kSecurityPolicyBit;
+    uint16_t mPresentFlags;
+
+    static constexpr uint16_t kActiveTimestampBit  = (1 << 15);
+    static constexpr uint16_t kChannelBit          = (1 << 14);
+    static constexpr uint16_t kChannelMaskBit      = (1 << 13);
+    static constexpr uint16_t kExtendedPanIdBit    = (1 << 12);
+    static constexpr uint16_t kMeshLocalPrefixBit  = (1 << 11);
+    static constexpr uint16_t kNetworkMasterKeyBit = (1 << 10);
+    static constexpr uint16_t kNetworkNameBit      = (1 << 9);
+    static constexpr uint16_t kPanIdBit            = (1 << 8);
+    static constexpr uint16_t kPSKcBit             = (1 << 7);
+    static constexpr uint16_t kSecurityPolicyBit   = (1 << 6);
 
     ActiveOperationalDataset()
         : mActiveTimestamp(Timestamp::Cur())
@@ -251,8 +253,8 @@ struct PendingOperationalDataset : ActiveOperationalDataset
     uint32_t  mDelayTimer; ///< Delay timer in milliseconds.
     Timestamp mPendingTimestamp;
 
-    static const uint16_t kDelayTimerBit;
-    static const uint16_t kPendingTimestampBit;
+    static constexpr uint16_t kDelayTimerBit       = (1 << 5);
+    static constexpr uint16_t kPendingTimestampBit = (1 << 4);
 
     PendingOperationalDataset()
         : mPendingTimestamp(mActiveTimestamp)
@@ -277,10 +279,11 @@ struct BbrDataset
     /**
      * Indicates which fields are included in the dataset.
      */
-    uint16_t              mPresentFlags = 0;
-    static const uint16_t kTriHostnameBit;
-    static const uint16_t kRegistrarHostnameBit;
-    static const uint16_t kRegistrarIpv6AddrBit;
+    uint16_t mPresentFlags = 0;
+
+    static constexpr uint16_t kTriHostnameBit       = (1 << 15);
+    static constexpr uint16_t kRegistrarHostnameBit = (1 << 14);
+    static constexpr uint16_t kRegistrarIpv6AddrBit = (1 << 13);
 };
 
 /**
