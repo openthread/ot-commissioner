@@ -26,28 +26,59 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner STATIC
+add_library(commissioner
     openthread/bloom_filter.cpp
+    openthread/bloom_filter.hpp
     openthread/crc16.cpp
+    openthread/crc16.hpp
     openthread/pbkdf2_cmac.cpp
+    openthread/pbkdf2_cmac.hpp
     openthread/random.cpp
+    openthread/random.hpp
+    openthread/README.md
     openthread/sha256.cpp
+    openthread/sha256.hpp
     cbor.cpp
+    cbor.hpp
     coap.cpp
+    coap.hpp
+    coap_secure.hpp
     commissioner_impl.cpp
+    commissioner_impl.hpp
     commissioner_safe.cpp
+    commissioner_safe.hpp
     commissioning_session.cpp
+    commissioning_session.hpp
     cose.cpp
+    cose.hpp
+    cwt.hpp
     dtls.cpp
+    dtls.hpp
+    endpoint.hpp
     error.cpp
+    event.hpp
     logging.cpp
+    logging.hpp
     multicast_dns.cpp
+    multicast_dns.hpp
     network_data.cpp
+    openthread
     socket.cpp
+    socket.hpp
+    time.hpp
+    timer.hpp
     tlv.cpp
+    tlv.hpp
     token_manager.cpp
-    udp_proxy.cpp)
-
+    token_manager.hpp
+    udp_proxy.cpp
+    udp_proxy.hpp
+    uri.hpp
+    ${PROJECT_SOURCE_DIR}/include/commissioner/border_agent.hpp
+    ${PROJECT_SOURCE_DIR}/include/commissioner/commissioner.hpp
+    ${PROJECT_SOURCE_DIR}/include/commissioner/network_data.hpp
+    ${PROJECT_SOURCE_DIR}/include/commissioner/error.hpp
+    ${PROJECT_SOURCE_DIR}/include/commissioner/defines.hpp)
 target_link_libraries(commissioner PRIVATE
     cose
     mdns
