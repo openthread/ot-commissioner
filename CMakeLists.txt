@@ -29,18 +29,21 @@
 cmake_minimum_required(VERSION 3.13.1)
 project(ot-commissioner VERSION 1.0.0)
 
+option(OT_COMM_COVERAGE         "Enable coverage reporting" OFF)
+option(OT_COMM_TEST             "Build tests" ON)
+option(OT_COMM_APP              "Build the CLI App" ON)
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-option(OT_COMM_COVERAGE "Enable coverage reporting" OFF)
-option(OT_COMM_TEST     "Build tests" ON)
-option(OT_COMM_APP      "Build the CLI App" ON)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(NOT "${CMAKE_CXX_STANDARD}")
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces")
 
 # Defines for mbedtls
 set(MBEDTLS_USER_CONFIG ${PROJECT_SOURCE_DIR}/third_party/mbedtls/mbedtls_user_config.h)
