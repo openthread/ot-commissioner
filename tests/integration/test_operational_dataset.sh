@@ -27,20 +27,20 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-[ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_active_dataset_set_network_name() {
     set -e
 
     start_otbr "${NON_CCM_NCP}" "eth0"
-    form_network ${PSKC}
+    form_network "${PSKC}"
 
-    start_commissioner ${NON_CCM_CONFIG}
+    start_commissioner "${NON_CCM_CONFIG}"
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "active"
     send_command_to_commissioner "opdataset set networkname test-network"
 
-    # TODO(wgtdkp): verify the result
+    ## TODO(wgtdkp): verify the result
     send_command_to_commissioner "opdataset get networkname"
     stop_commissioner
 }
@@ -49,19 +49,19 @@ test_pending_dataset_set_channel() {
     set -e
 
     start_otbr "${NON_CCM_NCP}" "eth0"
-    form_network ${PSKC}
+    form_network "${PSKC}"
 
-    start_commissioner ${NON_CCM_CONFIG}
+    start_commissioner "${NON_CCM_CONFIG}"
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "active"
     send_command_to_commissioner "opdataset set channel 0 17 60"
 
-    # TODO(wgtdkp): wait and verify the result
+    ## TODO(wgtdkp): wait and verify the result
     send_command_to_commissioner "opdataset get channel"
     stop_commissioner
 }
 
 test_secure_pending_dataset() {
-    # TODO(wgtdkp): openthread-ccm doesn't implement SEC_PEDNING_SET yet.
+    ## TODO(wgtdkp): openthread-ccm doesn't implement SEC_PEDNING_SET yet.
     echo "not implemented yet."
 }

@@ -27,11 +27,12 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-readonly CUR_DIR="$(dirname "$(realpath -s $0)")"
+readonly CUR_DIR="$(dirname "$(realpath -s "${0}")")"
+readonly PROJECT_DIR="${CUR_DIR}/.."
 readonly CLANG_FORMAT_BIN=clang-format-6.0
-FILES="$(find ${CUR_DIR}/../include -name "*.hpp")"
-FILES="${FILES} $(find ${CUR_DIR}/../tests \( -name "*.cpp" -o -name "*.hpp" \))"
-readonly FILES="${FILES} $(find ${CUR_DIR}/../src \( -name "*.cpp" -o -name "*.hpp" \))"
+FILES="$(find "${PROJECT_DIR}/include" -name "*.hpp")"
+FILES="${FILES} $(find "${PROJECT_DIR}/tests" \( -name "*.cpp" -o -name "*.hpp" \))"
+readonly FILES="${FILES} $(find "${PROJECT_DIR}/src" \( -name "*.cpp" -o -name "*.hpp" \))"
 
 check_clang_format_version() {
     if [ ! -x "$(command -v ${CLANG_FORMAT_BIN})" ]; then
@@ -43,7 +44,7 @@ check_clang_format_version() {
 check_pretty() {
     for file in ${FILES}; do
         echo "${file}"
-        ${CLANG_FORMAT_BIN} -style=file ${file} | diff ${file} -
+        ${CLANG_FORMAT_BIN} -style=file "${file}" | diff "${file}" -
     done
 }
 
@@ -51,12 +52,12 @@ make_pretty() {
     set -e
     for file in ${FILES}; do
         echo "${file}"
-        ${CLANG_FORMAT_BIN} -i -style=file ${file}
+        ${CLANG_FORMAT_BIN} -i -style=file "${file}"
     done
 }
 
-set -e
-if [ ${BASH_SOURCE[0]} = ${0} ]; then
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    set -e
     check_clang_format_version
     check_pretty
 fi

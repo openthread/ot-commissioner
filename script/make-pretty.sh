@@ -27,10 +27,10 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-. $(dirname $0)/check-pretty.sh
+. "$(dirname "$0")"/check-pretty.sh
 
 set -e
-if [ ${BASH_SOURCE[0]} = ${0} ]; then
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     check_clang_format_version
     make_pretty
 fi

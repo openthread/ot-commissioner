@@ -27,15 +27,15 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-[ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_discover() {
     set -e
 
     start_otbr "${NON_CCM_NCP}" "eth0"
-    form_network ${PSKC}
+    form_network "${PSKC}"
 
-    start_commissioner ${NON_CCM_CONFIG}
+    start_commissioner "${NON_CCM_CONFIG}"
     send_command_to_commissioner "borderagent discover"
 
     ## TODO(wgtdkp): verify the output

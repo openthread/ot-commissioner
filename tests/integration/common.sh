@@ -92,17 +92,16 @@ start_otbr() {
     pidof otbr-agent && die "killing otbr-agent failed"
 
     local ncp=$1
-    local backbone_if=$2
 
     sudo chmod 777 ${WPANTUND_CONF}
     sudo echo "Config:NCP:SocketPath \"system:${ncp} 1\"" > ${WPANTUND_CONF}
 
-    sudo wpantund -c ${WPANTUND_CONF} -d 7 > ${WPANTUND_LOG} 2>&1 &
+    sudo wpantund -c ${WPANTUND_CONF} -d 7 > "${WPANTUND_LOG}" 2>&1 &
     sleep 1
 
     pidof wpantund
 
-    sudo otbr-agent -I wpan0 -d 7 -v > ${OTBR_LOG} 2>&1 &
+    sudo otbr-agent -I wpan0 -d 7 -v > "${OTBR_LOG}" 2>&1 &
 
     sleep 1
 
@@ -113,17 +112,17 @@ start_otbr() {
 ## Args: $1: configuration file path.
 start_commissioner() {
     set -e
-    if [ $(pgrep -f ${COMMISSIONER_DAEMON}) > 0 ]; then
-        sudo kill -9 $(pgrep -f ${COMMISSIONER_DAEMON})
+    if [ -n "$(pgrep -f "${COMMISSIONER_DAEMON}")" ]; then
+        sudo kill -9 "$(pgrep -f "${COMMISSIONER_DAEMON}")"
     fi
 
     local config=$1
 
     echo "starting commissioner daemon: [ ${COMMISSIONER_DAEMON} --cli ${COMMISSIONER_CLI} ]"
-    python -u ${COMMISSIONER_DAEMON} --cli ${COMMISSIONER_CLI} --timeout 200 > ${COMMISSIONER_DAEMON_LOG} 2>&1 &
+    python -u "${COMMISSIONER_DAEMON}" --cli "${COMMISSIONER_CLI}" --timeout 200 > "${COMMISSIONER_DAEMON_LOG}" 2>&1 &
     sleep 1
 
-    pgrep -f ${COMMISSIONER_DAEMON}
+    pgrep -f "${COMMISSIONER_DAEMON}"
 
     init_commissioner "${config}"
 }
@@ -136,7 +135,7 @@ init_commissioner() {
     local config=$1
 
     echo "initializating commissioner daemon with configuration file: ${config}"
-    ${COMMISSIONER_CTL} init ${config}
+    ${COMMISSIONER_CTL} init "${config}"
 }
 
 ## Stop commissioner
@@ -150,11 +149,11 @@ stop_commissioner() {
 send_command_to_commissioner() {
     set -e
     local command=$1
-
-    local result=$(${COMMISSIONER_CTL} execute "${command}")
+    local result
+    result=$(${COMMISSIONER_CTL} execute "${command}")
 
     echo "${result}"
-    [ ! -z "${result}" ] || return 1
+    [ -n "${result}" ] || return 1
 
     echo "${result}" | grep -q "\[done\]" || return 1
 }
@@ -169,14 +168,15 @@ start_joiner() {
     local joiner_binary=""
     local joining_cmd=""
     local joiner_passphrase=""
-    if [ ${joiner_type} = "meshcop" ]; then
+
+    if [ "${joiner_type}" = "meshcop" ]; then
         joiner_binary=${NON_CCM_CLI}
         joining_cmd="start"
         joiner_passphrase=${JOINER_PASSPHRASE}
-    elif [ ${joiner_type} = "ae" ]; then
+    elif [ "${joiner_type}" = "ae" ]; then
         joiner_binary=${CCM_CLI}
         joining_cmd="startae"
-    elif [ ${joiner_type} = "nmkp" ]; then
+    elif [ "${joiner_type}" = "nmkp" ]; then
         joiner_binary=${CCM_CLI}
         joining_cmd="startnmkp"
     else
