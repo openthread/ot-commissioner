@@ -97,7 +97,7 @@ elif [ "$(uname)" = "Darwin" ]; then
     sudo ln -s "$(brew --prefix llvm@6)/bin/clang-format" /usr/local/bin/clang-format-6.0
 
     ## Install latest cmake
-    match_version "$(cmake --version | grep -E -o '[0-9].*')" ${MIN_CMAKE_VERSION} || {
+    match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         brew unlink cmake
         brew install cmake --HEAD
     }
