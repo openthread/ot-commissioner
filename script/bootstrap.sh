@@ -79,7 +79,7 @@ if [ "$(uname)" = "Linux" ]; then
                          lcov -y
 
     ## Install newest CMake
-    match_version "$(cmake --version | grep -E -o '[0-9].*')" ${MIN_CMAKE_VERSION} || {
+    match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         pip install -U pip
         pip install -U cmake
     }
