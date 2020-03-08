@@ -83,7 +83,7 @@ if [ "$(uname)" = "Linux" ]; then
         pip install -U pip
         pip install -U cmake
     }
-    match_version "$(cmake --version | grep -E -o '[0-9].*')" ${MIN_CMAKE_VERSION} || {
+    match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         echo "error: cmake version($(cmake --version)) < ${MIN_CMAKE_VERSION}."
         echo "Did you forget to add '\$HOME/.local/bin' to beginning of your PATH?"
         exit 1
