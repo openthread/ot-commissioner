@@ -50,13 +50,13 @@
         }                                   \
     } while (false)
 
-#define SuccessOrExit(aError)         \
-    do                                \
-    {                                 \
-        if ((aError) != Error::kNone) \
-        {                             \
-            goto exit;                \
-        }                             \
+#define SuccessOrExit(aError)                             \
+    do                                                    \
+    {                                                     \
+        if ((aError) != ::ot::commissioner::Error::kNone) \
+        {                                                 \
+            goto exit;                                    \
+        }                                                 \
     } while (false)
 
 #define VerifyOrExit(aCondition, ...) \
@@ -74,6 +74,14 @@
     {                \
         __VA_ARGS__; \
         goto exit;   \
+    } while (false)
+
+#define IgnoreError(aError)                               \
+    do                                                    \
+    {                                                     \
+        if ((aError) != ::ot::commissioner::Error::kNone) \
+        {                                                 \
+        }                                                 \
     } while (false)
 
 namespace ot {

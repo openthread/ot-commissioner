@@ -184,7 +184,7 @@ Address UdpSocket::GetLocalAddr() const
     ASSERT(getsockname(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
 
     Address ret;
-    ret.Set(addr);
+    ASSERT(ret.Set(addr) == Error::kNone);
     return ret;
 }
 
@@ -209,7 +209,7 @@ Address UdpSocket::GetPeerAddr() const
     ASSERT(getpeername(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
 
     Address ret;
-    ret.Set(addr);
+    ASSERT(ret.Set(addr) == Error::kNone);
     return ret;
 }
 

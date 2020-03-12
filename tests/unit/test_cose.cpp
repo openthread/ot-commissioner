@@ -112,7 +112,7 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
         msg.Free();
 
         REQUIRE(Sign1Message::Deserialize(msg, signature) == Error::kNone);
-        msg.SetExternalData(externalData);
+        REQUIRE(msg.SetExternalData(externalData) == Error::kNone);
         REQUIRE(msg.Validate(publicKey) == Error::kNone);
     }
 

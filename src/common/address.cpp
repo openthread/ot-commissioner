@@ -105,7 +105,8 @@ exit:
 Address Address::FromString(const std::string &aAddr)
 {
     Address ret;
-    ret.Set(aAddr);
+    auto    error = ret.Set(aAddr);
+    ASSERT(error == Error::kNone);
     return ret;
 }
 

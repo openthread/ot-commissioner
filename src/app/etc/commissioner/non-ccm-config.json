@@ -42,7 +42,8 @@
     // The pre-shared key used to connect to the border agent.
     // The maximum length is 16 bytes.
     // Must be provided if 'EnableCcm' == false.
-    "PSKc" : "3aa55f91ca47d1e4e71a08cb35e91591"
+    // "PSKc" : "3aa55f91ca47d1e4e71a08cb35e91591",
+    "PSKc" :    "00112233445566778899001122334455"
 
     // The private key file in PEM format.
     // Must be provided if 'EnableCcm' == true.

@@ -36,11 +36,13 @@
 
 #include <string>
 
+#include <commissioner/defines.hpp>
+
 namespace ot {
 
 namespace commissioner {
 
-enum class Error : int
+enum class OT_COMM_MUST_USE_RESULT Error : int
 {
     kNone = 0,        ///< No error.
     kAbort,           ///< A request is aborted.
