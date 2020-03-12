@@ -84,7 +84,6 @@ public:
         kOpen,
         kConnecting,
         kConnected,
-        kDisconnecting,
         kDisconnected,
     };
 
@@ -103,7 +102,7 @@ public:
 
     void  Connect(ConnectHandler aOnConnected);
     Error Bind(const std::string &aBindIp, uint16_t aPort);
-    void  Disconnect();
+    void  Disconnect(Error aError);
 
     State GetState() const { return mState; }
 
@@ -166,6 +165,9 @@ private:
     Error Handshake();
 
     Error SetClientTransportId();
+
+    // Decide if we should stop processing this session by given error.
+    static bool ShouldStop(Error aError);
 
     static int HandleMbedtlsExportKeys(void *               aDtlsSession,
                                        const unsigned char *aMasterSecret,
