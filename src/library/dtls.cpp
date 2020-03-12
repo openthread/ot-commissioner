@@ -99,10 +99,8 @@ static Error ErrorFromMbedtlsError(int mbedtlsError)
     {
         error = Error::kNone;
     }
-    else if (mbedtlsError == MBEDTLS_ERR_SSL_WANT_READ ||
-             mbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ||
-             mbedtlsError == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS ||
-             mbedtlsError == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS)
+    else if (mbedtlsError == MBEDTLS_ERR_SSL_WANT_READ || mbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ||
+             mbedtlsError == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS || mbedtlsError == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS)
     {
         error = Error::kTransportBusy;
     }
@@ -110,10 +108,14 @@ static Error ErrorFromMbedtlsError(int mbedtlsError)
     {
         // Low-level NET error.
         error = Error::kTransportFailed;
-    } else if (highLevelModuleId == 6 || highLevelModuleId == 7) {
+    }
+    else if (highLevelModuleId == 6 || highLevelModuleId == 7)
+    {
         // High-level SSL or CIPHER error.
         error = Error::kSecurity;
-    } else {
+    }
+    else
+    {
         error = Error::kFailed;
     }
 
@@ -413,8 +415,8 @@ exit:
 Error DtlsSession::SetClientTransportId()
 {
     ASSERT(mIsServer && !mIsClientIdSet);
-    Error error = Error::kNone;
-    int   rval = 0;
+    Error error    = Error::kNone;
+    int   rval     = 0;
     auto  peerAddr = GetPeerAddr();
 
     VerifyOrExit(peerAddr.IsValid(), error = Error::kInvalidAddr);
