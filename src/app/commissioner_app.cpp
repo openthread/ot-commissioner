@@ -1340,12 +1340,10 @@ void CommissionerApp::HandleEnergyReport(const std::string *aPeerAddr,
                                          const ByteArray *  aEnergyList,
                                          Error              aError)
 {
-    Error   error;
     Address addr;
 
-    SuccessOrExit(error = aError);
-
-    SuccessOrExit(error = addr.Set(*aPeerAddr));
+    SuccessOrExit(aError);
+    SuccessOrExit(addr.Set(*aPeerAddr));
 
     // Main thread will wait for updates to mPanIdConflicts,
     // which guarantees no concurrent access to it.
