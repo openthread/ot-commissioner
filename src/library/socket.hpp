@@ -63,10 +63,10 @@ public:
     virtual Address GetLocalAddr() const = 0;
 
     // Must only be called when the socket has been connect to a valid peer.
-    virtual uint16_t GetPeerPort() const  = 0;
+    virtual uint16_t GetPeerPort() const = 0;
 
     // Must only be called when the socket has been connect to a valid peer.
-    virtual Address GetPeerAddr() const  = 0;
+    virtual Address GetPeerAddr() const = 0;
 
     bool IsConnected() const { return mIsConnected; }
 
