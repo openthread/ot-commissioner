@@ -27,18 +27,20 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+## This file defines constants and common functions for test cases.
+
 readonly CUR_DIR=$(dirname "$(realpath -s $0)")
 readonly TEST_ROOT_DIR=${CUR_DIR}
 
+readonly RUNTIME_DIR=/tmp/test-ot-commissioner
+
 readonly OTBR_REPO=https://github.com/openthread/ot-br-posix
 readonly OTBR_BRANCH=master
-readonly OTBR=${TEST_ROOT_DIR}/ot-br-posix
+readonly OTBR=${RUNTIME_DIR}/ot-br-posix
 
 readonly OPENTHREAD_REPO=https://github.com/openthread/openthread
 readonly OPENTHREAD_BRANCH=master
-readonly OPENTHREAD=${TEST_ROOT_DIR}/openthread
-
-readonly RUNTIME_DIR=${TEST_ROOT_DIR}/tmp
+readonly OPENTHREAD=${RUNTIME_DIR}/openthread
 
 readonly NON_CCM_CLI=${RUNTIME_DIR}/ot-cli-ftd-non-ccm
 readonly NON_CCM_NCP=${RUNTIME_DIR}/ot-ncp-ftd-non-ccm
