@@ -290,12 +290,12 @@ void CommissionerImpl::Stop()
     event_base_loopbreak(mEventBase);
 }
 
-void CommissionerImpl::Petition(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)
+void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort)
 {
     auto onConnected = [this, aHandler](Error aError) {
         if (aError != Error::kNone)
         {
-            aHandler(aError);
+            aHandler(nullptr, aError);
         }
         else
         {
@@ -1101,7 +1101,7 @@ void CommissionerImpl::SetEnergyReportHandler(EnergyReportHandler aHandler)
     mEnergyReportHandler = aHandler;
 }
 
-void CommissionerImpl::SendPetition(ErrorHandler aHandler)
+void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 {
     Error         error = Error::kNone;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
@@ -1111,6 +1111,8 @@ void CommissionerImpl::SendPetition(ErrorHandler aHandler)
         tlv::TlvSet tlvSet;
         tlv::TlvPtr stateTlv     = nullptr;
         tlv::TlvPtr sessionIdTlv = nullptr;
+        tlv::TlvPtr commissionerIdTlv = nullptr;
+        std::string anotherCommissionerId;
 
         SuccessOrExit(error = aError);
 
@@ -1121,7 +1123,13 @@ void CommissionerImpl::SendPetition(ErrorHandler aHandler)
         VerifyOrExit(stateTlv != nullptr, error = Error::kNotFound);
         VerifyOrExit(stateTlv->IsValid(), error = Error::kBadFormat);
 
-        VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept, error = Error::kReject);
+        if (stateTlv->GetValueAsInt8() != tlv::kStateAccept) {
+            commissionerIdTlv = tlvSet[tlv::Type::kCommissionerId];
+            if (commissionerIdTlv != nullptr && commissionerIdTlv->IsValid()) {
+                anotherCommissionerId = commissionerIdTlv->GetValueAsString();
+            }
+            ExitNow(error = Error::kReject);
+        }
 
         sessionIdTlv = tlvSet[tlv::Type::kCommissionerSessionId];
         VerifyOrExit(sessionIdTlv != nullptr, error = Error::kNotFound);
@@ -1141,7 +1149,7 @@ void CommissionerImpl::SendPetition(ErrorHandler aHandler)
         {
             mState = State::kDisabled;
         }
-        aHandler(error);
+        aHandler(anotherCommissionerId.empty() ? nullptr : &anotherCommissionerId, error);
     };
 
     VerifyOrExit(mState == State::kDisabled, error = Error::kInvalidState);
@@ -1163,7 +1171,7 @@ void CommissionerImpl::SendPetition(ErrorHandler aHandler)
 exit:
     if (error != Error::kNone)
     {
-        aHandler(error);
+        aHandler(nullptr, error);
     }
 }
 

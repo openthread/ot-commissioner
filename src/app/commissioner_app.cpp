@@ -135,11 +135,12 @@ const BorderAgent *CommissionerApp::GetBorderAgent(const std::string &aNetworkNa
     return nullptr;
 }
 
-Error CommissionerApp::Start(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort)
+Error CommissionerApp::Start(std::string &aActiveCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort)
 {
     Error error = Error::kNone;
 
-    SuccessOrExit(error = mCommissioner->Petition(aBorderAgentAddr, aBorderAgentPort));
+    // We need to report the active commissioner ID even when pulling network data failed.
+    SuccessOrExit(error = mCommissioner->Petition(aActiveCommissionerId, aBorderAgentAddr, aBorderAgentPort));
     SuccessOrExit(error = PullNetworkData());
 
 exit:

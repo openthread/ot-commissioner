@@ -173,7 +173,18 @@ public:
      * @note @p aResponseData is guaranteed to be not null only when @p aError == Error::kNone.
      *       Otherwise, @p aResponseData should never be accessed.
      */
-    template <class T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
+    template <typename T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
+
+    /**
+     * The petition result handler.
+     *
+     * @param[in] aActiveCommissionerId  A active commissioner Id. nullable.
+     * @param[in] aError                 A error code.
+     *
+     * @note There is another active commissioner if @p aError != Error::kNone
+     *       and @p aActiveCommissionerId is not null.
+     */
+    using PetitionHandler = std::function<void(const std::string *aActiveCommissionerId, Error aError)>;
 
     /**
      * The MGMT_PANID_CONFLICT.ans handler.
@@ -422,7 +433,7 @@ public:
      *
      * @note The commissioner will be first connected to the network if it is not.
      */
-    virtual void Petition(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) = 0;
+    virtual void Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort) = 0;
 
     /**
      * @brief Synchronously petition to a Thread network.
@@ -431,12 +442,13 @@ public:
      * If succeed, a keep-alive message will be periodically sent to keep itself active.
      * It will not return until errors happened, timeouted or succeed.
      *
-     * @param[in] aAddr  A border agent address.
-     * @param[in] aPort  A border agent port.
+     * @param[out] aActiveCommissionerId  A Commissioner ID of an already active commissioner.
+     * @param[in]  aAddr                  A border agent address.
+     * @param[in]  aPort                  A border agent port.
      *
      * @return Error::kNone, succeed; otherwise, failed;
      */
-    virtual Error Petition(const std::string &aAddr, uint16_t aPort) = 0;
+    virtual Error Petition(std::string &aActiveCommissionerId, const std::string &aAddr, uint16_t aPort) = 0;
 
     /**
      * @brief Asynchronously resign from the commissioner role.
