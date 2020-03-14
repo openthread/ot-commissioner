@@ -122,8 +122,8 @@ private:
 
     bool mShouldExit = false;
 
-    static const std::map<std::string, std::string> mUsageMap;
-    static const std::map<std::string, Evaluator>   mEvaluatorMap;
+    static const std::map<std::string, std::string> &mUsageMap;
+    static const std::map<std::string, Evaluator> &  mEvaluatorMap;
 };
 
 std::string ToLower(const std::string &aStr);

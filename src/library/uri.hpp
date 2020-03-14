@@ -45,45 +45,45 @@ namespace uri {
 /*
  * Thread MeshCoP URIs
  */
-static const std::string kPetitioning         = "/c/cp";
-static const std::string kKeepAlive           = "/c/ca";
-static const std::string kUdpRx               = "/c/ur";
-static const std::string kUdpTx               = "/c/ut";
-static const std::string kRelayRx             = "/c/rx";
-static const std::string kRelayTx             = "/c/tx";
-static const std::string kMgmtGet             = "/c/mg";
-static const std::string kMgmtSet             = "/c/ms";
-static const std::string kMgmtCommissionerGet = "/c/cg";
-static const std::string kMgmtCommissionerSet = "/c/cs";
-static const std::string kMgmtBbrGet          = "/c/bg";
-static const std::string kMgmtBbrSet          = "/c/bs";
-static const std::string kMgmtActiveGet       = "/c/ag";
-static const std::string kMgmtActiveSet       = "/c/as";
-static const std::string kMgmtPendingGet      = "/c/pg";
-static const std::string kMgmtPendingSet      = "/c/ps";
-static const std::string kMgmtDatasetChanged  = "/c/dc";
-static const std::string kMgmtAnnounceBegin   = "/c/ab";
-static const std::string kMgmtPanidQuery      = "/c/pq";
-static const std::string kMgmtPanidConflict   = "/c/pc";
-static const std::string kMgmtEdScan          = "/c/es";
-static const std::string kMgmtEdReport        = "/c/er";
-static const std::string kMgmtReenroll        = "/c/re";
-static const std::string kMgmtDomainReset     = "/c/rt";
-static const std::string kMgmtNetMigrate      = "/c/nm";
-static const std::string kMgmtSecPendingSet   = "/c/sp";
-static const std::string kJoinEnt             = "/c/je";
-static const std::string kJoinFin             = "/c/jf";
-static const std::string kJoinApp             = "/c/ja";
+static const char *kPetitioning         = "/c/cp";
+static const char *kKeepAlive           = "/c/ca";
+static const char *kUdpRx               = "/c/ur";
+static const char *kUdpTx               = "/c/ut";
+static const char *kRelayRx             = "/c/rx";
+static const char *kRelayTx             = "/c/tx";
+static const char *kMgmtGet             = "/c/mg";
+static const char *kMgmtSet             = "/c/ms";
+static const char *kMgmtCommissionerGet = "/c/cg";
+static const char *kMgmtCommissionerSet = "/c/cs";
+static const char *kMgmtBbrGet          = "/c/bg";
+static const char *kMgmtBbrSet          = "/c/bs";
+static const char *kMgmtActiveGet       = "/c/ag";
+static const char *kMgmtActiveSet       = "/c/as";
+static const char *kMgmtPendingGet      = "/c/pg";
+static const char *kMgmtPendingSet      = "/c/ps";
+static const char *kMgmtDatasetChanged  = "/c/dc";
+static const char *kMgmtAnnounceBegin   = "/c/ab";
+static const char *kMgmtPanidQuery      = "/c/pq";
+static const char *kMgmtPanidConflict   = "/c/pc";
+static const char *kMgmtEdScan          = "/c/es";
+static const char *kMgmtEdReport        = "/c/er";
+static const char *kMgmtReenroll        = "/c/re";
+static const char *kMgmtDomainReset     = "/c/rt";
+static const char *kMgmtNetMigrate      = "/c/nm";
+static const char *kMgmtSecPendingSet   = "/c/sp";
+static const char *kJoinEnt             = "/c/je";
+static const char *kJoinFin             = "/c/jf";
+static const char *kJoinApp             = "/c/ja";
 
 /*
  * Thread Network Layer URIs
  */
-static const std::string kMlr = "/n/mr";
+static const char *kMlr = "/n/mr";
 
 /*
  * COM_TOK URI
  */
-static const std::string kComToken = "/.well-known/ccm";
+static const char *kComToken = "/.well-known/ccm";
 
 } // namespace uri
 
