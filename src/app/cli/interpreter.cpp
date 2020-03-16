@@ -57,7 +57,7 @@ namespace ot {
 
 namespace commissioner {
 
-const auto &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
+const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
     {"start", &Interpreter::ProcessStart},
     {"stop", &Interpreter::ProcessStop},
     {"active", &Interpreter::ProcessActive},
@@ -80,7 +80,7 @@ const auto &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
     {"help", &Interpreter::ProcessHelp},
 };
 
-const auto &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
+const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
     {"start", "start <border-agent-addr> <border-agent-port>"},
     {"stop", "stop"},
     {"active", "active"},
