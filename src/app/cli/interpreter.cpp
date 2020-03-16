@@ -57,7 +57,7 @@ namespace ot {
 
 namespace commissioner {
 
-const std::map<std::string, Interpreter::Evaluator> Interpreter::mEvaluatorMap{
+const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
     {"start", &Interpreter::ProcessStart},
     {"stop", &Interpreter::ProcessStop},
     {"active", &Interpreter::ProcessActive},
@@ -80,7 +80,7 @@ const std::map<std::string, Interpreter::Evaluator> Interpreter::mEvaluatorMap{
     {"help", &Interpreter::ProcessHelp},
 };
 
-const std::map<std::string, std::string> Interpreter::mUsageMap{
+const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
     {"start", "start <border-agent-addr> <border-agent-port>"},
     {"stop", "stop"},
     {"active", "active"},
@@ -226,8 +226,8 @@ Interpreter::Expression Interpreter::Read()
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 {
-    Value                                   value;
-    decltype(mEvaluatorMap)::const_iterator evaluator;
+    Value                                            value;
+    std::map<std::string, Evaluator>::const_iterator evaluator;
 
     VerifyOrExit(!aExpr.empty(), value = Error::kNone);
 
