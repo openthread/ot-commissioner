@@ -45,45 +45,45 @@ namespace uri {
 /*
  * Thread MeshCoP URIs
  */
-static const char *kPetitioning         = "/c/cp";
-static const char *kKeepAlive           = "/c/ca";
-static const char *kUdpRx               = "/c/ur";
-static const char *kUdpTx               = "/c/ut";
-static const char *kRelayRx             = "/c/rx";
-static const char *kRelayTx             = "/c/tx";
-static const char *kMgmtGet             = "/c/mg";
-static const char *kMgmtSet             = "/c/ms";
-static const char *kMgmtCommissionerGet = "/c/cg";
-static const char *kMgmtCommissionerSet = "/c/cs";
-static const char *kMgmtBbrGet          = "/c/bg";
-static const char *kMgmtBbrSet          = "/c/bs";
-static const char *kMgmtActiveGet       = "/c/ag";
-static const char *kMgmtActiveSet       = "/c/as";
-static const char *kMgmtPendingGet      = "/c/pg";
-static const char *kMgmtPendingSet      = "/c/ps";
-static const char *kMgmtDatasetChanged  = "/c/dc";
-static const char *kMgmtAnnounceBegin   = "/c/ab";
-static const char *kMgmtPanidQuery      = "/c/pq";
-static const char *kMgmtPanidConflict   = "/c/pc";
-static const char *kMgmtEdScan          = "/c/es";
-static const char *kMgmtEdReport        = "/c/er";
-static const char *kMgmtReenroll        = "/c/re";
-static const char *kMgmtDomainReset     = "/c/rt";
-static const char *kMgmtNetMigrate      = "/c/nm";
-static const char *kMgmtSecPendingSet   = "/c/sp";
-static const char *kJoinEnt             = "/c/je";
-static const char *kJoinFin             = "/c/jf";
-static const char *kJoinApp             = "/c/ja";
+static const char *const kPetitioning         = "/c/cp";
+static const char *const kKeepAlive           = "/c/ca";
+static const char *const kUdpRx               = "/c/ur";
+static const char *const kUdpTx               = "/c/ut";
+static const char *const kRelayRx             = "/c/rx";
+static const char *const kRelayTx             = "/c/tx";
+static const char *const kMgmtGet             = "/c/mg";
+static const char *const kMgmtSet             = "/c/ms";
+static const char *const kMgmtCommissionerGet = "/c/cg";
+static const char *const kMgmtCommissionerSet = "/c/cs";
+static const char *const kMgmtBbrGet          = "/c/bg";
+static const char *const kMgmtBbrSet          = "/c/bs";
+static const char *const kMgmtActiveGet       = "/c/ag";
+static const char *const kMgmtActiveSet       = "/c/as";
+static const char *const kMgmtPendingGet      = "/c/pg";
+static const char *const kMgmtPendingSet      = "/c/ps";
+static const char *const kMgmtDatasetChanged  = "/c/dc";
+static const char *const kMgmtAnnounceBegin   = "/c/ab";
+static const char *const kMgmtPanidQuery      = "/c/pq";
+static const char *const kMgmtPanidConflict   = "/c/pc";
+static const char *const kMgmtEdScan          = "/c/es";
+static const char *const kMgmtEdReport        = "/c/er";
+static const char *const kMgmtReenroll        = "/c/re";
+static const char *const kMgmtDomainReset     = "/c/rt";
+static const char *const kMgmtNetMigrate      = "/c/nm";
+static const char *const kMgmtSecPendingSet   = "/c/sp";
+static const char *const kJoinEnt             = "/c/je";
+static const char *const kJoinFin             = "/c/jf";
+static const char *const kJoinApp             = "/c/ja";
 
 /*
  * Thread Network Layer URIs
  */
-static const char *kMlr = "/n/mr";
+static const char *const kMlr = "/n/mr";
 
 /*
  * COM_TOK URI
  */
-static const char *kComToken = "/.well-known/ccm";
+static const char *const kComToken = "/.well-known/ccm";
 
 } // namespace uri
 
