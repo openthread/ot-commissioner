@@ -135,7 +135,9 @@ const BorderAgent *CommissionerApp::GetBorderAgent(const std::string &aNetworkNa
     return nullptr;
 }
 
-Error CommissionerApp::Start(std::string &aActiveCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort)
+Error CommissionerApp::Start(std::string &      aActiveCommissionerId,
+                             const std::string &aBorderAgentAddr,
+                             uint16_t           aBorderAgentPort)
 {
     Error error = Error::kNone;
 

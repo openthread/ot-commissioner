@@ -1109,8 +1109,8 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
     auto onResponse = [this, aHandler](const coap::Response *aResponse, Error aError) {
         Error       error = Error::kNone;
         tlv::TlvSet tlvSet;
-        tlv::TlvPtr stateTlv     = nullptr;
-        tlv::TlvPtr sessionIdTlv = nullptr;
+        tlv::TlvPtr stateTlv          = nullptr;
+        tlv::TlvPtr sessionIdTlv      = nullptr;
         tlv::TlvPtr commissionerIdTlv = nullptr;
         std::string anotherCommissionerId;
 
@@ -1123,9 +1123,11 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         VerifyOrExit(stateTlv != nullptr, error = Error::kNotFound);
         VerifyOrExit(stateTlv->IsValid(), error = Error::kBadFormat);
 
-        if (stateTlv->GetValueAsInt8() != tlv::kStateAccept) {
+        if (stateTlv->GetValueAsInt8() != tlv::kStateAccept)
+        {
             commissionerIdTlv = tlvSet[tlv::Type::kCommissionerId];
-            if (commissionerIdTlv != nullptr && commissionerIdTlv->IsValid()) {
+            if (commissionerIdTlv != nullptr && commissionerIdTlv->IsValid())
+            {
                 anotherCommissionerId = commissionerIdTlv->GetValueAsString();
             }
             ExitNow(error = Error::kReject);

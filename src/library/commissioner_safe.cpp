@@ -198,8 +198,7 @@ void CommissionerSafe::Petition(PetitionHandler aHandler, const std::string &aAd
 Error CommissionerSafe::Petition(std::string &aActiveCommissionerId, const std::string &aAddr, uint16_t aPort)
 {
     std::promise<Error> pro;
-    auto                wait = [&pro, &aActiveCommissionerId](const std::string *activeCommissionerId, Error error)
-    {
+    auto                wait = [&pro, &aActiveCommissionerId](const std::string *activeCommissionerId, Error error) {
         if (activeCommissionerId != nullptr)
         {
             aActiveCommissionerId = *activeCommissionerId;
