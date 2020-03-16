@@ -26,7 +26,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #   POSSIBILITY OF SUCH DAMAGE.
-
 """
 Commissioner daemon process
 """
@@ -43,7 +42,7 @@ import re
 import pexpect
 import signal
 
-SOCKET_DIR='/tmp/ot-commissioner'
+SOCKET_DIR = '/tmp/ot-commissioner'
 SOCKET_PATH = os.path.join(SOCKET_DIR, 'commissionerd.sock')
 
 
@@ -58,6 +57,7 @@ def main():
 
 
 class Application(object):
+
     def __init__(self, cli_path, timeout):
         self._cli_path = cli_path
         self._timeout = timeout
@@ -79,6 +79,7 @@ class Application(object):
             connection = self._listener.accept()
 
             class Closer:
+
                 def __enter__(self):
                     return self
 
@@ -96,9 +97,10 @@ class Application(object):
                         result = self._handle_message(message)
                     except self._AppException:
                         result = {
-                            'status': 'failure',
-                            'traceback': traceback.format_exception(
-                                *sys.exc_info()),
+                            'status':
+                                'failure',
+                            'traceback':
+                                traceback.format_exception(*sys.exc_info()),
                         }
 
                     print(result)
@@ -156,8 +158,10 @@ class Application(object):
         if self._process:
             self._exit()
 
-        self._process = pexpect.spawn(self._cli_path, args=[config_path],
-                                      timeout=self._timeout, echo=False)
+        self._process = pexpect.spawn(self._cli_path,
+                                      args=[config_path],
+                                      timeout=self._timeout,
+                                      echo=False)
         self._process.expect(r'> $')
         return self._process.before.decode()
 
@@ -177,9 +181,7 @@ class Application(object):
                 try:
                     self._process.expect(r'> $', timeout=1)
                     return 'Timed out executing "{}"\n{}'.format(
-                        command,
-                        self._process.before.decode()
-                    )
+                        command, self._process.before.decode())
                 except pexpect.exceptions.TIMEOUT as e:
                     raise self._AppException(e)
 

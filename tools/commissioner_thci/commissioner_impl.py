@@ -26,7 +26,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #   POSSIBILITY OF SUCH DAMAGE.
-
 """
 Thread 1.2 commissioner interface implementation
 """
@@ -85,13 +84,12 @@ COMMISSIONER_CTL = 'sudo commissioner_ctl.py'
 # Command line length cannot exceed this
 TTY_COLS = 4096
 
-CONTROL_SEQUENCE = re.compile(
-    r'\x1b'  # ESC
-    r'\['  # CSI
-    r'[0-?]*'  # Parameter bytes
-    r'[!-/]*'  # Intermediate bytes
-    r'[@-~]'  # Final byte
-)
+CONTROL_SEQUENCE = re.compile(r'\x1b'  # ESC
+                              r'\['  # CSI
+                              r'[0-?]*'  # Parameter bytes
+                              r'[!-/]*'  # Intermediate bytes
+                              r'[@-~]'  # Final byte
+                             )
 
 TLV_TYPE_TO_STRING = {
     TLV_TYPE_BORDER_AGENT_LOCATOR: 'BorderAgentLocator',
@@ -119,8 +117,9 @@ TLV_TYPE_TO_STRING = {
     TLV_TYPE_REGISTRAR_IPv6_ADDR: 'RegistrarIpv6Addr',
 }
 
-TLV_TYPE_FROM_STRING = {TLV_TYPE_TO_STRING[key]: key for key in
-                        TLV_TYPE_TO_STRING}
+TLV_TYPE_FROM_STRING = {
+    TLV_TYPE_TO_STRING[key]: key for key in TLV_TYPE_TO_STRING
+}
 
 JOINER_TYPE_TO_STRING = {
     JOINER_TYPE_MESHCOP: 'meshcop',
@@ -130,6 +129,7 @@ JOINER_TYPE_TO_STRING = {
 
 
 class OTCommissioner(ICommissioner):
+
     def __init__(self, config, handler, simulator=None):
         super(OTCommissioner, self).__init__(config)
 
@@ -148,11 +148,11 @@ class OTCommissioner(ICommissioner):
         config_path = '/tmp/commissioner.{}.json'.format(uuid.uuid4())
         self._write_config(config_path=config_path, config=config)
 
-        response = self._command(
-            '{} init "{}"'.format(COMMISSIONER_CTL, config_path))
+        response = self._command('{} init "{}"'.format(COMMISSIONER_CTL,
+                                                       config_path))
         if self._command('echo $?')[0] != '0':
-            raise commissioner.Error(
-                'Failed to init, error:\n{}'.format('\n'.join(response)))
+            raise commissioner.Error('Failed to init, error:\n{}'.format(
+                '\n'.join(response)))
 
     def __enter__(self):
         return self
@@ -196,8 +196,8 @@ class OTCommissioner(ICommissioner):
         elif response[0].startswith('false'):
             return False
         else:
-            raise commissioner.Error(
-                'Unrecognized result "{}"'.format(response[0]))
+            raise commissioner.Error('Unrecognized result "{}"'.format(
+                response[0]))
 
     def getSessionId(self):
         response = self._execute_and_check('sessionid')
@@ -215,9 +215,10 @@ class OTCommissioner(ICommissioner):
             result = json.loads(' '.join(response[:-1]))
             result = {TLV_TYPE_FROM_STRING[key]: result[key] for key in result}
 
-            for key in [TLV_TYPE_STEERING_DATA,
-                        TLV_TYPE_AE_STEERING_DATA,
-                        TLV_TYPE_NMKP_STEERING_DATA]:
+            for key in [
+                    TLV_TYPE_STEERING_DATA, TLV_TYPE_AE_STEERING_DATA,
+                    TLV_TYPE_NMKP_STEERING_DATA
+            ]:
                 if key in result:
                     result[key] = OTCommissioner._hex_to_bytes(result[key])
 
@@ -226,15 +227,17 @@ class OTCommissioner(ICommissioner):
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_COMMISSIONER_SET(self, commDataset):
-        for key in [TLV_TYPE_STEERING_DATA,
-                    TLV_TYPE_AE_STEERING_DATA,
-                    TLV_TYPE_NMKP_STEERING_DATA]:
+        for key in [
+                TLV_TYPE_STEERING_DATA, TLV_TYPE_AE_STEERING_DATA,
+                TLV_TYPE_NMKP_STEERING_DATA
+        ]:
             if key in commDataset:
                 commDataset[key] = OTCommissioner._bytes_to_hex(
                     commDataset[key])
 
-        dataset = {TLV_TYPE_TO_STRING[key]: commDataset[key] for key in
-                   commDataset}
+        dataset = {
+            TLV_TYPE_TO_STRING[key]: commDataset[key] for key in commDataset
+        }
         data = json.dumps(dataset)
         self._execute_and_check("commdataset set '{}'".format(data))
 
@@ -267,8 +270,8 @@ class OTCommissioner(ICommissioner):
             'opdataset get active {}'.format(types))
 
         try:
-            return OTCommissioner._active_op_dataset_from_json(
-                ' '.join(result[:-1]))
+            return OTCommissioner._active_op_dataset_from_json(' '.join(
+                result[:-1]))
         except Exception as e:
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
@@ -282,8 +285,8 @@ class OTCommissioner(ICommissioner):
             'opdataset get pending {}'.format(types))
 
         try:
-            return OTCommissioner._pending_op_dataset_from_json(
-                ' '.join(result[:-1]))
+            return OTCommissioner._pending_op_dataset_from_json(' '.join(
+                result[:-1]))
         except Exception as e:
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
@@ -302,8 +305,9 @@ class OTCommissioner(ICommissioner):
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_BBR_SET(self, bbrDataset):
-        dataset = {TLV_TYPE_TO_STRING[key]: bbrDataset[key] for key in
-                   bbrDataset}
+        dataset = {
+            TLV_TYPE_TO_STRING[key]: bbrDataset[key] for key in bbrDataset
+        }
         dataset = json.dumps(dataset)
         self._execute_and_check("bbrdataset set '{}'".format(dataset))
 
@@ -381,7 +385,7 @@ class OTCommissioner(ICommissioner):
         path_token = '/tmp/commissioner.token.{}'.format(uuid.uuid4())
         step = 40
         for i in range(0, len(signedCOM_TOK), step):
-            data = self._bytes_to_hex(signedCOM_TOK[i: i + step])
+            data = self._bytes_to_hex(signedCOM_TOK[i:i + step])
             self._command('echo {} >> "{}"'.format(data, path_token))
 
         path_cert = '/tmp/commissioner.token_cert.{}'.format(uuid.uuid4())
@@ -403,8 +407,8 @@ class OTCommissioner(ICommissioner):
         # Escape quotes for bash
         command = command.replace('"', r'"\""')
 
-        return OTCommissioner._check_response(self._command(
-            '{} execute "{}"'.format(COMMISSIONER_CTL, command)))
+        return OTCommissioner._check_response(
+            self._command('{} execute "{}"'.format(COMMISSIONER_CTL, command)))
 
     def _expect(self, expected, timeout=10):
         logging.info('Expecting [{}]'.format(expected))
@@ -498,8 +502,7 @@ class OTCommissioner(ICommissioner):
                 timeout -= 0.1
 
         if timeout <= 0:
-            raise Exception(
-                'Failed to find end of response'.format(self._port))
+            raise Exception('Failed to find end of response'.format(self._port))
 
         logging.info('Send command[{}] done!'.format(cmd))
         return response
@@ -536,14 +539,13 @@ class OTCommissioner(ICommissioner):
     def _send_file(self, local_path, remote_path):
         with open(local_path, 'rb') as f:
             b64 = base64.b64encode(f.read()).decode()
-        self._command('echo "{}" | base64 -d - > "{}"'.format(b64,
-                                                              remote_path))
+        self._command('echo "{}" | base64 -d - > "{}"'.format(b64, remote_path))
 
     @staticmethod
     def _check_response(response):
         if response[-1] != '[done]':
-            raise commissioner.Error(
-                'Error message:\n{}'.format('\n'.join(response)))
+            raise commissioner.Error('Error message:\n{}'.format(
+                '\n'.join(response)))
         return response
 
     @staticmethod
@@ -674,10 +676,11 @@ class OTCommissioner(ICommissioner):
     def _channel_mask_from_json_obj(json_obj):
         result = []
         for entry in json_obj:
-            result.append(OTCommissioner.ChannelMaskEntry(
-                masks=OTCommissioner._hex_to_bytes(entry['Masks']),
-                page=entry['Page'],
-            ))
+            result.append(
+                OTCommissioner.ChannelMaskEntry(
+                    masks=OTCommissioner._hex_to_bytes(entry['Masks']),
+                    page=entry['Page'],
+                ))
         return result
 
     @staticmethod

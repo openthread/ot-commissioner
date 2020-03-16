@@ -99,15 +99,9 @@ This will open up a text editor where you can specify which commits to squash.
 
 #### Coding conventions and style
 
-OT Commissioner uses and enforces the [OpenThread code format](./.clang-format) on all code, except for code located in [third_party](third_party).  Use the `script/make-pretty.sh` and `script/check-pretty.sh` scripts to automatically reformat code and check for code-style compliance, respectively. OpenThread currently requires [clang-format v6.0.0](http://releases.llvm.org/download.html#6.0.0) for `make-pretty.sh` and `check-pretty.sh`.
+OT Commissioner uses and enforces the [OpenThread code format](./.clang-format) on all code, except for code located in [third_party](third_party).  Use `script/make-pretty` and `script/make-pretty check` to automatically reformat code and check for code-style compliance, respectively. OpenThread currently requires [clang-format v6.0.0](http://releases.llvm.org/download.html#6.0.0) for C/C++ and [yapf](https://github.com/google/yapf) for Python.
 
-As part of the cleanup process, also run `script/check-pretty.sh` to ensure that your code passes the baseline code style checks.
-
-```bash
-./script/check-pretty.sh
-```
-
-Make sure to include any code format changes in your commits.
+As part of the cleanup process, also run `script/make-pretty check` to ensure that your code passes the baseline code style checks.
 
 #### Push and test
 

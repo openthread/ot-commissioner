@@ -26,7 +26,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #   POSSIBILITY OF SUCH DAMAGE.
-
 """
 Commissioner daemon controller
 """
@@ -74,10 +73,10 @@ def main():
     else:
         assert False
 
-    client = multiprocessing.connection.Client(SOCKET_PATH,
-                                               family='AF_UNIX')
+    client = multiprocessing.connection.Client(SOCKET_PATH, family='AF_UNIX')
 
     class Closer:
+
         def __enter__(self):
             return self
 

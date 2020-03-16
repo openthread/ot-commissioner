@@ -26,7 +26,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #   POSSIBILITY OF SUCH DAMAGE.
-
 """
 Example usage of sending MLR.req with OT-commissioner.
 
@@ -48,12 +47,13 @@ MLR.req (MLR.rsp verified as status=ST_MLR_SUCCESS).
 from commissioner import Configuration
 from commissioner_impl import OTCommissioner
 
-COMMISSIONER_SERVER="/dev/ttyUSB0"
-MA1="ff04::1234:777a:1"
-MA2="ff05::1234:777a:2"
+COMMISSIONER_SERVER = "/dev/ttyUSB0"
+MA1 = "ff04::1234:777a:1"
+MA2 = "ff05::1234:777a:2"
 
-BORDER_AGENT_ADDR="::"
-BORDER_AGENT_PORT=49191
+BORDER_AGENT_ADDR = "::"
+BORDER_AGENT_PORT = 49191
+
 
 def test_mlr():
 
@@ -71,12 +71,14 @@ def test_mlr():
         comm.start(BORDER_AGENT_ADDR, BORDER_AGENT_PORT)
         assert comm.isActive()
 
-        print("commissioner connected, session ID = {}".format(comm.getSessionId()))
+        print("commissioner connected, session ID = {}".format(
+            comm.getSessionId()))
 
         ## Send MLR.req
         comm.MLR([MA1, MA2], 60)
 
         print("send MLR.req to PBBR, [done]")
+
 
 if __name__ == "__main__":
     test_mlr()

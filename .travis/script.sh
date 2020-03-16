@@ -35,9 +35,6 @@ set -e
 ## Override default travis cmake
 export PATH="${HOME}/.local/bin:$PATH"
 
-## Check coding style
-./script/check-pretty.sh
-
 ## Build commissioner
 mkdir -p build && cd build
 cmake -GNinja \
