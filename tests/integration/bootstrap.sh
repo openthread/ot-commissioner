@@ -105,7 +105,7 @@ main() {
     set -e
     mkdir -p "${RUNTIME_DIR}"
 
-    if (( ${SKIP_BUILDING_OTBR} == 0 )) && [ ! -d "${OTBR}" ]; then
+    if (( SKIP_BUILDING_OTBR == 0 )) && [ ! -d "${OTBR}" ]; then
         setup_otbr
     fi
 
