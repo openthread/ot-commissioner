@@ -27,15 +27,15 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-[ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_energy_scan() {
     set -e
 
     start_otbr "${NON_CCM_NCP}" "eth0"
-    form_network ${PSKC}
+    form_network "${PSKC}"
 
-    start_commissioner ${NON_CCM_CONFIG}
+    start_commissioner "${NON_CCM_CONFIG}"
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "active"
     send_command_to_commissioner "energy scan 0xffffffff 2 10 30 ff02::2"

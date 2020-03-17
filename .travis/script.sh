@@ -44,14 +44,14 @@ cmake -GNinja \
 ninja -j 10
 
 ## Tests
-if [ $TRAVIS_OS_NAME = 'linux' ]; then
+if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
     ## Install
     sudo ninja install
 
     ## Unit tests
     ./tests/unit/commissioner-tests
 
-    if [ $CC = gcc ]; then
+    if [ "$CC" = gcc ]; then
         ## Integration tests
         cd ../tests/integration
         ./bootstrap.sh

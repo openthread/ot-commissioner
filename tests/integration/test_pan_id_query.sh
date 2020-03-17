@@ -27,21 +27,21 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-[ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_pan_id_query() {
     set -e
 
     start_otbr "${NON_CCM_NCP}" "eth0"
-    form_network ${PSKC}
+    form_network "${PSKC}"
 
-    start_commissioner ${NON_CCM_CONFIG}
+    start_commissioner "${NON_CCM_CONFIG}"
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "active"
     send_command_to_commissioner "panid query 0xffffffff 0xaabb ff02::2"
     sleep 1
 
-    # TODO(wgtdkp): verify the result
+    ## TODO(wgtdkp): verify the result
     send_command_to_commissioner "panid conflict 0xaabb"
     stop_commissioner
 }

@@ -34,15 +34,15 @@
 ##                                 This is useful when ot-br-posix is pre-installed.
 ##
 
-[ -z ${TEST_ROOT_DIR} ] && . $(dirname $0)/common.sh
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 readonly SKIP_BUILDING_OTBR=${OT_COMM_SKIP_BUILDING_OTBR:=0}
 
 setup_otbr() {
     set -e
-    git clone ${OTBR_REPO} ${OTBR} --branch ${OTBR_BRANCH} --depth=1
+    git clone "${OTBR_REPO}" "${OTBR}" --branch "${OTBR_BRANCH}" --depth=1
 
-    cd ${OTBR}
+    cd "${OTBR}"
 
     ./script/bootstrap
     ./script/setup
@@ -56,9 +56,9 @@ setup_otbr() {
 
 setup_openthread() {
     set -e
-    git clone ${OPENTHREAD_REPO} ${OPENTHREAD} --branch ${OPENTHREAD_BRANCH} --depth=1
+    git clone "${OPENTHREAD_REPO}" "${OPENTHREAD}" --branch "${OPENTHREAD_BRANCH}" --depth=1
 
-    cd ${OPENTHREAD}
+    cd "${OPENTHREAD}"
 
     git clean -xfd
     ./bootstrap
@@ -87,8 +87,8 @@ setup_openthread() {
         UDP_FORWARD=1 \
         DEBUG=1
 
-    cp output/x86_64-unknown-linux-gnu/bin/ot-cli-ftd ${NON_CCM_CLI}
-    cp output/x86_64-unknown-linux-gnu/bin/ot-ncp-ftd ${NON_CCM_NCP}
+    cp output/x86_64-unknown-linux-gnu/bin/ot-cli-ftd "${NON_CCM_CLI}"
+    cp output/x86_64-unknown-linux-gnu/bin/ot-ncp-ftd "${NON_CCM_NCP}"
 
     executable_or_die "${NON_CCM_CLI}"
     executable_or_die "${NON_CCM_NCP}"
@@ -103,13 +103,13 @@ setup_commissioner() {
 
 main() {
     set -e
-    mkdir -p ${RUNTIME_DIR}
+    mkdir -p "${RUNTIME_DIR}"
 
-    if (( $SKIP_BUILDING_OTBR == 0 )) && [ ! -d ${OTBR} ]; then
+    if (( SKIP_BUILDING_OTBR == 0 )) && [ ! -d "${OTBR}" ]; then
         setup_otbr
     fi
 
-    if [ ! -d ${OPENTHREAD} ]; then
+    if [ ! -d "${OPENTHREAD}" ]; then
         setup_openthread
     fi
 

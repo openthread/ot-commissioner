@@ -37,13 +37,13 @@
 ##       'test_*.sh' files.
 ##
 
-. $(dirname $0)/test_announce_begin.sh
-. $(dirname $0)/test_discover.sh
-. $(dirname $0)/test_energy_scan.sh
-. $(dirname $0)/test_joining.sh
-. $(dirname $0)/test_operational_dataset.sh
-. $(dirname $0)/test_pan_id_query.sh
-. $(dirname $0)/test_petition.sh
+. "$(dirname "$0")"/test_announce_begin.sh
+. "$(dirname "$0")"/test_discover.sh
+. "$(dirname "$0")"/test_energy_scan.sh
+. "$(dirname "$0")"/test_joining.sh
+. "$(dirname "$0")"/test_operational_dataset.sh
+. "$(dirname "$0")"/test_pan_id_query.sh
+. "$(dirname "$0")"/test_petition.sh
 
 ## Run a test case and collect the result.
 ## Return: 0, test case succeed, 1, test case failed;
@@ -53,7 +53,7 @@ run_test_case() {
 
     echo "====== test case: [ ${test_case} ] ======"
 
-    rm -rf ${COMMISSIONER_LOG}
+    rm -rf "${COMMISSIONER_LOG}"
 
     ## we cannot declare output with `local`,
     ## because `local` is a command and its return value iwll override
@@ -72,19 +72,19 @@ run_test_case() {
         echo "------ test output end ------"
 
         echo "------ wpantund log begin ------"
-        cat ${WPANTUND_LOG}
+        cat "${WPANTUND_LOG}"
         echo "------ wpantund log end ------"
 
         echo "------ otbr log begin ------"
-        cat ${OTBR_LOG}
+        cat "${OTBR_LOG}"
         echo "------ otbr log end ------"
 
         echo "------ commissioner daemon log begin ------"
-        cat ${COMMISSIONER_DAEMON_LOG}
+        cat "${COMMISSIONER_DAEMON_LOG}"
         echo "------ commissioner daemon log end ------"
 
         echo "------ commissioner library log begin ------"
-        cat ${COMMISSIONER_LOG}
+        cat "${COMMISSIONER_LOG}"
         echo "------ commissioner library log end ------"
     fi
 
@@ -94,7 +94,7 @@ run_test_case() {
 main () {
     local test_case_to_run=""
 
-    if [ ! -z "$#" ]; then
+    if [ -n "$#" ]; then
         test_case_to_run="$1"
     fi
 
@@ -103,11 +103,11 @@ main () {
 
     echo "###### integration tests begin ######"
     for test_case in $(declare -F | awk '{print $NF}' | grep "^test_"); do
-        if [ ! -z ${test_case_to_run} ] && [ ${test_case} != ${test_case_to_run} ]; then
+        if [ -n "${test_case_to_run}" ] && [ "${test_case}" != "${test_case_to_run}" ]; then
             continue
         fi
 
-        run_test_case ${test_case}
+        run_test_case "${test_case}"
         failed_case_count=$((failed_case_count + $?))
         total_case_count=$((total_case_count + 1))
     done
