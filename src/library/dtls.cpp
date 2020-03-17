@@ -87,29 +87,39 @@ static void HandleMbedtlsDebug(void *, int level, const char *file, int line, co
  * For the implementation details, please reference to <mbedtls/error.h>.
  *
  */
-static Error ErrorFromMbedtlsError(int mbedtlsError)
+static Error ErrorFromMbedtlsError(int aMbedtlsError)
 {
-    ASSERT(mbedtlsError <= 0);
+    // See <mbedtls/error.h> for the constants.
+    static constexpr int kMbedtlsErrorLowLevelNetBegin        = -0x0052;
+    static constexpr int kMbedtlsErrorLowLevelNetEnd          = -0x0042;
+    static constexpr int kMbedtlsErrorHighLevelModuleIdMask   = 0x7000;
+    static constexpr int kMbedtlsErrorHighLevelModuleIdOffset = 12;
+    static constexpr int kMbedtlsErrorHighLevelModuleIdCipher = 6;
+    static constexpr int kMbedtlsErrorHighLevelModuleIdSsl    = 7;
+
+    ASSERT(aMbedtlsError <= 0);
 
     Error error;
 
-    uint16_t highLevelModuleId = (static_cast<uint16_t>(-mbedtlsError) >> 12) & 0x07;
+    uint16_t highLevelModuleId = (static_cast<uint16_t>(-aMbedtlsError) & kMbedtlsErrorHighLevelModuleIdMask) >>
+                                 kMbedtlsErrorHighLevelModuleIdOffset;
 
-    if (mbedtlsError == 0)
+    if (aMbedtlsError == 0)
     {
         error = Error::kNone;
     }
-    else if (mbedtlsError == MBEDTLS_ERR_SSL_WANT_READ || mbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ||
-             mbedtlsError == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS || mbedtlsError == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS)
+    else if (aMbedtlsError == MBEDTLS_ERR_SSL_WANT_READ || aMbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ||
+             aMbedtlsError == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS || aMbedtlsError == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS)
     {
         error = Error::kTransportBusy;
     }
-    else if (mbedtlsError <= -0x0042 && mbedtlsError >= -0x0052)
+    else if (aMbedtlsError >= kMbedtlsErrorLowLevelNetBegin && aMbedtlsError <= kMbedtlsErrorLowLevelNetEnd)
     {
         // Low-level NET error.
         error = Error::kTransportFailed;
     }
-    else if (highLevelModuleId == 6 || highLevelModuleId == 7)
+    else if (highLevelModuleId == kMbedtlsErrorHighLevelModuleIdCipher ||
+             highLevelModuleId == kMbedtlsErrorHighLevelModuleIdSsl)
     {
         // High-level SSL or CIPHER error.
         error = Error::kSecurity;
