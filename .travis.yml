@@ -27,8 +27,7 @@
 #
 
 language: c++
-
-script: .travis/script.sh
+dist: bionic
 
 after_success: .travis/after_success.sh
 
@@ -37,12 +36,25 @@ sudo: required
 services:
   - docker
 
-os:
-  - linux
-  - osx
-
-dist: bionic
-
-compiler:
-  - clang
-  - gcc
+jobs:
+  include:
+    - name: "pretty check"
+      os: linux
+      addons:
+        apt:
+          packages:
+            - clang-format-6.0
+            - python3-pip
+      script: python3 -m pip install yapf && script/make-pretty check
+    - os: linux
+      compiler: clang
+      script: .travis/script.sh
+    - os: linux
+      compiler: gcc
+      script: .travis/script.sh
+    - os: osx
+      compiler: clang
+      script: .travis/script.sh
+    - os: osx
+      compiler: gcc
+      script: .travis/script.sh

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2018, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,44 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-. $(dirname $0)/check-pretty.sh
+CLANG_FORMAT_VERSION="clang-format version 6.0"
 
-set -e
-if [ ${BASH_SOURCE[0]} = ${0} ]; then
-    check_clang_format_version
-    make_pretty
+die() {
+    echo " *** ERROR: $*"
+    exit 1
+}
+
+if command -v clang-format-6.0 > /dev/null; then
+    alias clang-format=clang-format-6.0
+elif command -v clang-format > /dev/null; then
+    case "$(clang-format --version)" in
+        "$CLANG_FORMAT_VERSION"*)
+            ;;
+        *)
+            die "$(clang-format --version); clang-format 6.0 required"
+            ;;
+    esac
+else
+    die "clang-format 6.0 required"
 fi
+
+clang-format "$@" || die
+
+# ensure EOF newline
+REPLACE=no
+for arg
+do
+    case $arg in
+        -i)
+            REPLACE=yes
+            ;;
+    esac
+done
+
+file=$arg
+
+[ $REPLACE != yes ] || {
+    [ -n "$(tail -c1 "$file")" ] && echo >> "$file"
+}
+
+exit 0

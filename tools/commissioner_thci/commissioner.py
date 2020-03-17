@@ -26,7 +26,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #   POSSIBILITY OF SUCH DAMAGE.
-
 """This file defines the Thread 1.2 commissioner interface.
 """
 
@@ -431,7 +430,8 @@ class ICommissioner(object):
         pass
 
     @abstractmethod
-    def MGMT_ED_SCAN(self, channelMask, count, period, scanDuration, dstAddr, timeout):
+    def MGMT_ED_SCAN(self, channelMask, count, period, scanDuration, dstAddr,
+                     timeout):
         """Request devices to measure energy on one or more channels.
 
         Args:
