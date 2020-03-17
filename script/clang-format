@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2018, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,44 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-readonly CUR_DIR="$(dirname "$(realpath -s "${0}")")"
-readonly PROJECT_DIR="${CUR_DIR}/.."
-readonly CLANG_FORMAT_BIN=clang-format-6.0
-FILES="$(find "${PROJECT_DIR}/include" -name "*.hpp")"
-FILES="${FILES} $(find "${PROJECT_DIR}/tests" \( -name "*.cpp" -o -name "*.hpp" \))"
-readonly FILES="${FILES} $(find "${PROJECT_DIR}/src" \( -name "*.cpp" -o -name "*.hpp" \))"
+CLANG_FORMAT_VERSION="clang-format version 6.0"
 
-check_clang_format_version() {
-    if [ ! -x "$(command -v ${CLANG_FORMAT_BIN})" ]; then
-        echo "${CLANG_FORMAT_BIN} not found"
-        exit 1
-    fi
+die() {
+    echo " *** ERROR: $*"
+    exit 1
 }
 
-check_pretty() {
-    for file in ${FILES}; do
-        echo "${file}"
-        ${CLANG_FORMAT_BIN} -style=file "${file}" | diff "${file}" -
-    done
-}
-
-make_pretty() {
-    set -e
-    for file in ${FILES}; do
-        echo "${file}"
-        ${CLANG_FORMAT_BIN} -i -style=file "${file}"
-    done
-}
-
-if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-    set -e
-    check_clang_format_version
-    check_pretty
+if command -v clang-format-6.0 > /dev/null; then
+    alias clang-format=clang-format-6.0
+elif command -v clang-format > /dev/null; then
+    case "$(clang-format --version)" in
+        "$CLANG_FORMAT_VERSION"*)
+            ;;
+        *)
+            die "$(clang-format --version); clang-format 6.0 required"
+            ;;
+    esac
+else
+    die "clang-format 6.0 required"
 fi
+
+clang-format "$@" || die
+
+# ensure EOF newline
+REPLACE=no
+for arg
+do
+    case $arg in
+        -i)
+            REPLACE=yes
+            ;;
+    esac
+done
+
+file=$arg
+
+[ $REPLACE != yes ] || {
+    [ -n "$(tail -c1 "$file")" ] && echo >> "$file"
+}
+
+exit 0
