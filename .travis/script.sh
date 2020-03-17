@@ -38,7 +38,7 @@ export PATH="${HOME}/.local/bin:$PATH"
 ## Build commissioner
 mkdir -p build && cd build
 cmake -GNinja \
-      -DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
+      -DCMAKE_CXX_STANDARD=${OT_COMM_CXX_STANDARD} \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DOT_COMM_COVERAGE=ON ..
@@ -51,7 +51,7 @@ sudo ninja install
 ./tests/unit/commissioner-tests
 
 ## Integration Tests
-if [ $TRAVIS_OS_NAME = "linux" ] && [ ${CXX_STANDARD} = "11" ]; then
+if [ $TRAVIS_OS_NAME = "linux" ] && [ ${OT_COMM_CXX_STANDARD} = "11" ]; then
     if [ $CC = gcc ]; then
         ## Integration tests
         cd ../tests/integration
