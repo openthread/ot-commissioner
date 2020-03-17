@@ -33,6 +33,8 @@ after_success: .travis/after_success.sh
 
 sudo: required
 
+dist: bionic
+
 services:
   - docker
 
@@ -46,15 +48,27 @@ jobs:
             - clang-format-6.0
             - python3-pip
       script: python3 -m pip install yapf && script/make-pretty check
-    - os: linux
-      compiler: clang
-      script: .travis/script.sh
-    - os: linux
+    - env: CXX_STANDARD=14
+      os: linux
       compiler: gcc
       script: .travis/script.sh
-    - os: osx
+    - env: CXX_STANDARD=14
+      os: linux
       compiler: clang
       script: .travis/script.sh
-    - os: osx
+    - env: CXX_STANDARD=11
+      os: linux
       compiler: gcc
+      script: .travis/script.sh
+    - env: CXX_STANDARD=11
+      os: linux
+      compiler: clang
+      script: .travis/script.sh
+    - env: CXX_STANDARD=11
+      os: osx
+      compiler: gcc
+      script: .travis/script.sh
+    - env: CXX_STANDARD=11
+      os: osx
+      compiler: clang
       script: .travis/script.sh
