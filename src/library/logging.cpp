@@ -57,7 +57,8 @@ LogWriter GetLogWriter()
 
 void Log(LogLevel aLevel, const std::string &aMessage)
 {
-    if (aLevel <= GetLogLevel() && GetLogWriter()) {
+    if (aLevel <= GetLogLevel() && GetLogWriter())
+    {
         GetLogWriter()(aLevel, aMessage);
     }
 }
