@@ -38,14 +38,11 @@
 
 #include <commissioner/commissioner.hpp>
 
-#define LOG(level, fmt, ...)                          \
-    do                                                \
-    {                                                 \
-        if (level <= GetLogLevel() && GetLogWriter()) \
-        {                                             \
-            Log(level, fmt, ##__VA_ARGS__);           \
-        };                                            \
-    } while (0)
+#define LOG(aLevel, aFormat, ...)                                     \
+    do                                                                \
+    {                                                                 \
+        Log(aLevel, fmt::format(FMT_STRING(aFormat), ##__VA_ARGS__)); \
+    } while (false)
 
 #define LOG_DEBUG(fmt, ...) LOG(LogLevel::kDebug, fmt, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...) LOG(LogLevel::kInfo, fmt, ##__VA_ARGS__)
@@ -63,10 +60,7 @@ void      InitLogger(LogLevel aLevel, LogWriter aWriter);
 LogLevel  GetLogLevel();
 LogWriter GetLogWriter();
 
-template <typename... Args> void Log(LogLevel aLevel, const std::string &aFmt, const Args &... aArgs)
-{
-    GetLogWriter()(aLevel, fmt::format(aFmt, aArgs...));
-}
+void Log(LogLevel aLevel, const std::string &aMessage);
 
 } // namespace commissioner
 

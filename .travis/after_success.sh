@@ -33,6 +33,6 @@ upload_coverage() {
     bash <(curl -s https://codecov.io/bash)
 }
 
-if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$CC" = "gcc" ]; then
+if [ "$TRAVIS_OS_NAME" = "linux" ] && [ ${OT_COMM_CXX_STANDARD} = "11" ] && [ "$CC" = "gcc" ]; then
     upload_coverage
 fi

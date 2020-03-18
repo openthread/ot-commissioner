@@ -46,15 +46,27 @@ jobs:
             - clang-format-6.0
             - python3-pip
       script: python3 -m pip install yapf && script/make-pretty check
-    - os: linux
-      compiler: clang
-      script: .travis/script.sh
-    - os: linux
+    - env: OT_COMM_CXX_STANDARD=14
+      os: linux
       compiler: gcc
       script: .travis/script.sh
-    - os: osx
+    - env: OT_COMM_CXX_STANDARD=14
+      os: linux
       compiler: clang
       script: .travis/script.sh
-    - os: osx
+    - env: OT_COMM_CXX_STANDARD=11
+      os: linux
       compiler: gcc
+      script: .travis/script.sh
+    - env: OT_COMM_CXX_STANDARD=11
+      os: linux
+      compiler: clang
+      script: .travis/script.sh
+    - env: OT_COMM_CXX_STANDARD=11
+      os: osx
+      compiler: gcc
+      script: .travis/script.sh
+    - env: OT_COMM_CXX_STANDARD=11
+      os: osx
+      compiler: clang
       script: .travis/script.sh

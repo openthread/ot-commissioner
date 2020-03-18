@@ -55,6 +55,14 @@ LogWriter GetLogWriter()
     return sLogWriter;
 }
 
+void Log(LogLevel aLevel, const std::string &aMessage)
+{
+    if (aLevel <= GetLogLevel() && GetLogWriter())
+    {
+        GetLogWriter()(aLevel, aMessage);
+    }
+}
+
 } // namespace commissioner
 
 } // namespace ot

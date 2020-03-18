@@ -611,11 +611,12 @@ void Coap::Retransmit(Timer &)
 
             mRequestsCache.Put(requestHolder);
 
+            std::string uri;
+            requestHolder.mRequest->GetUriPath(uri);
+
             // Retransmit
             if (!requestHolder.mAcknowledged)
             {
-                std::string uri;
-                requestHolder.mRequest->GetUriPath(uri);
                 LOG_INFO("retransmit of request {}, retransmit count = {}", uri, requestHolder.mRetransmissionCount);
 
                 auto error = Send(*requestHolder.mRequest);
@@ -627,7 +628,7 @@ void Coap::Retransmit(Timer &)
             }
             else
             {
-                LOG_DEBUG("request to {} has been acknowledged, won't retransmit");
+                LOG_DEBUG("request to {} has been acknowledged, won't retransmit", uri);
             }
         }
         else
