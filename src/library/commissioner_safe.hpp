@@ -105,7 +105,7 @@ public:
     void Disconnect() override;
 
     void  Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
-    Error Petition(std::string &aActiveCommissionerId, const std::string &aAddr, uint16_t aPort) override;
+    Error Petition(std::string &aExistingCommissionerId, const std::string &aAddr, uint16_t aPort) override;
 
     void  Resign(ErrorHandler aHandler) override;
     Error Resign() override;

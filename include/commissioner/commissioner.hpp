@@ -160,7 +160,7 @@ public:
     /**
      * The response handler of a general TMF request.
      *
-     * @param[in] aError  A error code.
+     * @param[in] aError  An error code.
      */
     using ErrorHandler = std::function<void(Error aError)>;
 
@@ -168,7 +168,7 @@ public:
      * The response handler of a general TMF request.
      *
      * @param[in] aResponseData  A response data. nullable.
-     * @param[in] aError         A error code.
+     * @param[in] aError         An error code.
      *
      * @note @p aResponseData is guaranteed to be not null only when @p aError == Error::kNone.
      *       Otherwise, @p aResponseData should never be accessed.
@@ -178,13 +178,13 @@ public:
     /**
      * The petition result handler.
      *
-     * @param[in] aActiveCommissionerId  A active commissioner Id. nullable.
-     * @param[in] aError                 A error code.
+     * @param[in] aExistingCommissionerId  The Existing commissioner Id. nullable.
+     * @param[in] aError                   An error code.
      *
-     * @note There is another active commissioner if @p aError != Error::kNone
-     *       and @p aActiveCommissionerId is not null.
+     * @note There is an exiting active commissioner if @p aError != Error::kNone
+     *       and @p aExistingCommissionerId is not null.
      */
-    using PetitionHandler = std::function<void(const std::string *aActiveCommissionerId, Error aError)>;
+    using PetitionHandler = std::function<void(const std::string *aExistingCommissionerId, Error aError)>;
 
     /**
      * The MGMT_PANID_CONFLICT.ans handler.
@@ -192,7 +192,7 @@ public:
      * @param[in] aPeerAddr     A peer address that sent this MGMT_PANID_CONFLICT.ans request.
      * @param[in] aChannelMask  A channel mask the peer scanned at.
      * @param[in] aPanId        A PAN ID that has a conflict.
-     * @param[in] aError        A error code.
+     * @param[in] aError        An error code.
      *
      * @note @p aPeerAddr, aChannelMask and aPanId are guaranteed to
      *       be not null only when @p aError == Error::kNone. Otherwise,
@@ -207,7 +207,7 @@ public:
      * @param[in] aPeerAddr     A peer address that sent this MGMT_PANID_CONFLICT.ans request.
      * @param[in] aChannelMask  A channel mask the peer scanned at.
      * @param[in] aEnergyList   A list of measured energy level in dBm.
-     * @param[in] aError        A error code.
+     * @param[in] aError        An error code.
      *
      * @note @p aPeerAddr, aChannelMask and aEnergyList are guaranteed to
      *       be not null only when @p aError == Error::kNone. Otherwise,
@@ -442,13 +442,18 @@ public:
      * If succeed, a keep-alive message will be periodically sent to keep itself active.
      * It will not return until errors happened, timeouted or succeed.
      *
-     * @param[out] aActiveCommissionerId  A Commissioner ID of an already active commissioner.
-     * @param[in]  aAddr                  A border agent address.
-     * @param[in]  aPort                  A border agent port.
+     * @param[out] aExistingCommissionerId  The existing active commissioner ID.
+     * @param[in]  aAddr                    A border agent address.
+     * @param[in]  aPort                    A border agent port.
      *
      * @return Error::kNone, succeed; otherwise, failed;
+     *
+     * @note @p aExistingCommissionerId is valid only when return value
+     *       is not Error::kNone and itself is not empty. Otherwise,
+     *       its content should never be accessed.
+     *
      */
-    virtual Error Petition(std::string &aActiveCommissionerId, const std::string &aAddr, uint16_t aPort) = 0;
+    virtual Error Petition(std::string &aExistingCommissionerId, const std::string &aAddr, uint16_t aPort) = 0;
 
     /**
      * @brief Asynchronously resign from the commissioner role.

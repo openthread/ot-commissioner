@@ -1112,7 +1112,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         tlv::TlvPtr stateTlv          = nullptr;
         tlv::TlvPtr sessionIdTlv      = nullptr;
         tlv::TlvPtr commissionerIdTlv = nullptr;
-        std::string anotherCommissionerId;
+        std::string existingCommissionerId;
 
         SuccessOrExit(error = aError);
 
@@ -1128,7 +1128,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
             commissionerIdTlv = tlvSet[tlv::Type::kCommissionerId];
             if (commissionerIdTlv != nullptr && commissionerIdTlv->IsValid())
             {
-                anotherCommissionerId = commissionerIdTlv->GetValueAsString();
+                existingCommissionerId = commissionerIdTlv->GetValueAsString();
             }
             ExitNow(error = Error::kReject);
         }
@@ -1151,7 +1151,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         {
             mState = State::kDisabled;
         }
-        aHandler(anotherCommissionerId.empty() ? nullptr : &anotherCommissionerId, error);
+        aHandler(existingCommissionerId.empty() ? nullptr : &existingCommissionerId, error);
     };
 
     VerifyOrExit(mState == State::kDisabled, error = Error::kInvalidState);

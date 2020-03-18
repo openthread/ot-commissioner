@@ -195,13 +195,13 @@ void CommissionerSafe::Petition(PetitionHandler aHandler, const std::string &aAd
     PushAsyncRequest([=]() { mImpl.Petition(aHandler, aAddr, aPort); });
 }
 
-Error CommissionerSafe::Petition(std::string &aActiveCommissionerId, const std::string &aAddr, uint16_t aPort)
+Error CommissionerSafe::Petition(std::string &aExistingCommissionerId, const std::string &aAddr, uint16_t aPort)
 {
     std::promise<Error> pro;
-    auto                wait = [&pro, &aActiveCommissionerId](const std::string *activeCommissionerId, Error error) {
-        if (activeCommissionerId != nullptr)
+    auto wait = [&pro, &aExistingCommissionerId](const std::string *existingCommissionerId, Error error) {
+        if (existingCommissionerId != nullptr)
         {
-            aActiveCommissionerId = *activeCommissionerId;
+            aExistingCommissionerId = *existingCommissionerId;
         }
         pro.set_value(error);
     };

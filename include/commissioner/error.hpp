@@ -65,7 +65,7 @@ enum class Error : int
 /**
  * @brief Convert Error to printable string.
  *
- * @param aError  A error code.
+ * @param aError  An error code.
  *
  * @return The printable string of the error.
  */

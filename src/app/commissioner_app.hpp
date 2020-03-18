@@ -82,7 +82,7 @@ public:
     // Set @p aNetworkName to empty to match any network name.
     const BorderAgent *GetBorderAgent(const std::string &aNetworkName);
 
-    Error Start(std::string &aActiveCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
+    Error Start(std::string &aExistingCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
     void  Stop();
 
     void AbortRequests();
