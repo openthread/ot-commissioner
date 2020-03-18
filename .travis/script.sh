@@ -38,7 +38,8 @@ export PATH="${HOME}/.local/bin:$PATH"
 ## Build commissioner
 mkdir -p build && cd build
 cmake -GNinja \
-      -DCMAKE_CXX_STANDARD=${OT_COMM_CXX_STANDARD} \
+      -DCMAKE_CXX_STANDARD="${OT_COMM_CXX_STANDARD}" \
+      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DOT_COMM_COVERAGE=ON ..
