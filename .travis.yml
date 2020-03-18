@@ -33,8 +33,6 @@ after_success: .travis/after_success.sh
 
 sudo: required
 
-dist: bionic
-
 services:
   - docker
 
