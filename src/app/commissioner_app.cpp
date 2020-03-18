@@ -141,7 +141,7 @@ Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
 {
     Error error = Error::kNone;
 
-    // We need to report the active commissioner ID even when pulling network data failed.
+    // We need to report the already active commissioner ID if one exists.
     SuccessOrExit(error = mCommissioner->Petition(aExistingCommissionerId, aBorderAgentAddr, aBorderAgentPort));
     SuccessOrExit(error = PullNetworkData());
 
