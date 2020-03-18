@@ -108,8 +108,8 @@ public:
 
     void Disconnect() override;
 
-    void  Petition(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
-    Error Petition(const std::string &, uint16_t) override { return Error::kNotImplemented; }
+    void  Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
+    Error Petition(std::string &, const std::string &, uint16_t) override { return Error::kNotImplemented; }
 
     void  Resign(ErrorHandler aHandler) override;
     Error Resign() override { return Error::kNotImplemented; }
@@ -234,7 +234,7 @@ private:
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
 
-    void SendPetition(ErrorHandler aHandler);
+    void SendPetition(PetitionHandler aHandler);
 
     // Set @p aKeepAlive to false to resign the commissioner role.
     void SendKeepAlive(Timer &aTimer, bool aKeepAlive = true);

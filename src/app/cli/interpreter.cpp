@@ -316,13 +316,18 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
     Error       error = Error::kInvalidArgs;
     std::string msg;
+    std::string existingCommissionerId;
     uint16_t    port;
 
     VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
     SuccessOrExit(ParseInteger(port, aExpr[2]), msg = aExpr[2]);
-    SuccessOrExit(error = mCommissioner->Start(aExpr[1], port));
+    SuccessOrExit(error = mCommissioner->Start(existingCommissionerId, aExpr[1], port));
 
 exit:
+    if (!existingCommissionerId.empty())
+    {
+        msg = "there is an existing active commissioner: " + existingCommissionerId;
+    }
     return {error, msg};
 }
 
