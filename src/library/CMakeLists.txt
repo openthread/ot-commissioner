@@ -83,7 +83,6 @@ target_link_libraries(commissioner PRIVATE
     cose
     mdns
     mbedtls
-    pthread
     fmt::fmt
     event_core
     event_pthreads
