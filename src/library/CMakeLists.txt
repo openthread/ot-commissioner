@@ -85,8 +85,8 @@ target_link_libraries(commissioner PRIVATE
     mbedtls
     pthread
     fmt::fmt
-    event_core_static
-    event_pthreads_static
+    event_core
+    event_pthreads
     commissioner-common)
 
 target_include_directories(commissioner PUBLIC ${PROJECT_SOURCE_DIR}/include)

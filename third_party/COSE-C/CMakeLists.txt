@@ -27,7 +27,7 @@
 #
 
 file(GLOB COSE_SRCS "repo/src/*.c")
-add_library(cose STATIC ${COSE_SRCS})
+add_library(cose ${COSE_SRCS})
 
 target_compile_definitions(cose PUBLIC USE_MBED_TLS)
 target_compile_options(cose PRIVATE -std=gnu99 -Wall -Wextra -pedantic -Wfatal-errors)

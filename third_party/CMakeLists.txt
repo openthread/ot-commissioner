@@ -38,5 +38,7 @@ set(EVENT__DISABLE_REGRESS ON CACHE BOOL "libevent disable regression tests" FOR
 set(EVENT__DISABLE_TESTS ON CACHE BOOL "libevent disable tests" FORCE)
 set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "libevent disable benchmark" FORCE)
 add_subdirectory(libevent/repo)
+
+set(USE_SHARED_MBEDTLS_LIBRARY ${BUILD_SHARED_LIBS})
 add_subdirectory(mbedtls/repo)
 add_subdirectory(mdns/repo)
