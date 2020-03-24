@@ -96,7 +96,14 @@ start_otbr() {
     sudo chmod 777 ${WPANTUND_CONF}
     sudo echo "Config:NCP:SocketPath \"system:${ncp} 1\"" > ${WPANTUND_CONF}
 
+    ## Run wpantund in different directory, because it creates
+    ## intermediate sub-directory leading to permission issue when
+    ## creating flash file of CLI nodes which are started without
+    ## root privilege.
+    mkdir -p wpantund-tmp && cd wpantund-tmp
     sudo wpantund -c ${WPANTUND_CONF} -d 7 > "${WPANTUND_LOG}" 2>&1 &
+    cd -
+
     sleep 1
 
     pidof wpantund
