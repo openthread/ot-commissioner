@@ -34,6 +34,7 @@
 #ifndef OT_COMM_LIBRARY_COAP_SECURE_HPP_
 #define OT_COMM_LIBRARY_COAP_SECURE_HPP_
 
+#include "common/error_macros.hpp"
 #include "library/coap.hpp"
 #include "library/dtls.hpp"
 
@@ -59,33 +60,43 @@ public:
 
     Error Start(DtlsSession::ConnectHandler aOnConnected, const std::string &aLocalAddr, uint16_t aLocalPort)
     {
-        if (mSocket->Bind(aLocalAddr, aLocalPort) != 0)
+        Error error;
+
+        if (int fail = mSocket->Bind(aLocalAddr, aLocalPort))
         {
-            return Error::kTransportFailed;
+            ExitNow(error = ERROR_IO_ERROR("bind socket to local addr={}, port={} failed: {}", aLocalAddr, aLocalPort,
+                                           fail));
         }
         mDtlsSession.Connect(aOnConnected);
-        return Error::kNone;
+
+    exit:
+        return error;
     }
 
     void Connect(DtlsSession::ConnectHandler aOnConnected, const std::string &aPeerAddr, uint16_t aPeerPort)
     {
-        if (mSocket->Connect(aPeerAddr, aPeerPort) != 0)
+        if (int fail = mSocket->Connect(aPeerAddr, aPeerPort))
         {
             if (aOnConnected != nullptr)
             {
-                aOnConnected(mDtlsSession, Error::kTransportFailed);
-                return;
+                aOnConnected(mDtlsSession, ERROR_IO_ERROR("connect socket to peer addr={}, port={} failed: {}",
+                                                          aPeerAddr, aPeerPort, fail));
+                ExitNow();
             }
         }
         mDtlsSession.Connect(aOnConnected);
+
+    exit:
+        return;
     }
 
-    void Stop() { Disconnect(); }
+    void Stop() { Disconnect(ERROR_CANCELLED("the CoAPs server has been stopped")); }
 
-    void Disconnect()
+    void Disconnect(Error aError)
     {
-        mDtlsSession.Disconnect(Error::kAbort);
+        mDtlsSession.Disconnect(aError);
         mCoap.ClearRequestsAndResponses();
+        mSocket->Reset();
     }
 
     Error AddResource(const Resource &aResource) { return mCoap.AddResource(aResource); }

@@ -63,7 +63,7 @@ TokenManager::~TokenManager()
 
 Error TokenManager::Init(const Config &aConfig)
 {
-    Error              error = Error::kNone;
+    Error              error;
     mbedtls_pk_context publicKey;
     mbedtls_pk_context privateKey;
     mbedtls_pk_context trustAnchorPublicKey;
@@ -77,8 +77,6 @@ Error TokenManager::Init(const Config &aConfig)
     SuccessOrExit(error = ParsePublicKey(trustAnchorPublicKey, aConfig.mTrustAnchor));
 
     SuccessOrExit(error = mRegistrarClient.Init(GetDtlsConfig(aConfig)));
-
-    error = Error::kNone;
 
     mCommissionerId = aConfig.mId;
     mDomainName     = aConfig.mDomainName;
@@ -97,7 +95,7 @@ exit:
 
 Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
 {
-    Error              error = Error::kSecurity;
+    Error              error;
     cose::Sign1Message coseSign;
     CborMap            token;
     const uint8_t *    payload;
@@ -109,12 +107,13 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
 
     LOG_INFO("received token, length = {}, {}", aSignedToken.size(), utils::Hex(aSignedToken));
 
-    VerifyOrExit(!aSignedToken.empty(), error = Error::kInvalidArgs);
+    VerifyOrExit(!aSignedToken.empty(), error = ERROR_INVALID_ARGS("the signed COM_TOK is empty"));
     SuccessOrExit(error = cose::Sign1Message::Deserialize(coseSign, aSignedToken));
 
     SuccessOrExit(error = coseSign.Validate(aPublicKey));
 
-    VerifyOrExit((payload = coseSign.GetPayload(payloadLength)) != nullptr);
+    VerifyOrExit((payload = coseSign.GetPayload(payloadLength)) != nullptr,
+                 error = ERROR_BAD_FORMAT("cannot find payload in the signed COM_TOK"));
 
     SuccessOrExit(error = CborValue::Deserialize(token, payload, payloadLength));
 
@@ -126,9 +125,12 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
 
     // Ignore the "iss" (issuer) claim
 
-    VerifyOrExit((mDomainName == std::string{domainName, domainNameLength}), error = Error::kSecurity);
+    if (std::string{domainName, domainNameLength} != mDomainName)
+    {
+        ExitNow(error = ERROR_SECURITY("the Domain Name ({}) in COM_TOK doesn't match the configured Domain Name ({})",
+                                       std::string{domainName, domainNameLength}, mDomainName));
+    }
 
-    error = Error::kNone;
     CborValue::Move(aToken, token);
 
 exit:
@@ -140,7 +142,7 @@ exit:
 void TokenManager::RequestToken(Commissioner::Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
 {
     auto onConnected = [this, aHandler](const DtlsSession &, Error aError) {
-        if (aError != Error::kNone)
+        if (!aError.NoError())
         {
             aHandler(nullptr, aError);
         }
@@ -155,26 +157,30 @@ void TokenManager::RequestToken(Commissioner::Handler<ByteArray> aHandler, const
 
 void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
 {
-    Error     error = Error::kNone;
+    Error     error;
     ByteArray tokenRequest;
 
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [this, aHandler](const coap::Response *aResponse, Error aError) {
-        Error               error = Error::kFailed;
+        Error               error;
         coap::ContentFormat contentFormat;
 
         SuccessOrExit(error = aError);
         ASSERT(aResponse != nullptr);
 
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged, error = Error::kFailed);
-        VerifyOrExit(aResponse->GetContentFormat(contentFormat) == Error::kNone, error = Error::kBadFormat);
-        VerifyOrExit(contentFormat == coap::ContentFormat::kCoseSign1, error = Error::kBadFormat);
+        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
+                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        VerifyOrExit(aResponse->GetContentFormat(contentFormat).NoError(),
+                     error = ERROR_BAD_FORMAT("cannot find valid CoAP Content Format option"));
+        VerifyOrExit(
+            contentFormat == coap::ContentFormat::kCoseSign1,
+            error = ERROR_BAD_FORMAT("CoAP Content Format requires to be application/cose; cose-type=\"cose-sign1\""));
 
         SuccessOrExit(error = SetToken(aResponse->GetPayload(), mDomainCAPublicKey));
 
     exit:
-        if (error != Error::kNone)
+        if (!error.NoError())
         {
             aHandler(nullptr, error);
         }
@@ -184,7 +190,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
         }
 
         // Disconnect from the registrar.
-        mRegistrarClient.Disconnect();
+        mRegistrarClient.Disconnect(ERROR_NONE);
     };
 
     SuccessOrExit(error = request.SetUriPath(uri::kComToken));
@@ -195,7 +201,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
     mRegistrarClient.SendRequest(request, onResponse);
 
 exit:
-    if (error != Error::kNone)
+    if (!error.NoError())
     {
         aHandler(nullptr, error);
     }
@@ -203,7 +209,7 @@ exit:
 
 Error TokenManager::SetToken(const ByteArray &aSignedToken, const ByteArray &aCert)
 {
-    Error              error = Error::kNone;
+    Error              error;
     mbedtls_pk_context publicKey;
 
     mbedtls_pk_init(&publicKey);
@@ -219,7 +225,7 @@ exit:
 
 Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
 {
-    Error          error = Error::kInvalidArgs;
+    Error          error;
     CborMap        cnf;
     CborMap        coseKey;
     const uint8_t *kid       = nullptr;
@@ -232,14 +238,12 @@ Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_con
     SuccessOrExit(error = cnf.Get(cwt::kCoseKey, coseKey));
     SuccessOrExit(error = coseKey.Get(cose::kKeyId, kid, kidLength));
 
-    error = Error::kNone;
-
     // The mSequenceNumber is always associated with mToken & mSignedToken.
     mSequenceNumber = 0;
     mKeyId          = {kid, kid + kidLength};
 
 exit:
-    if (error != Error::kNone)
+    if (!error.NoError())
     {
         mToken.Free();
         mSignedToken.clear();
@@ -253,20 +257,23 @@ Error TokenManager::MakeTokenRequest(ByteArray &               aBuf,
                                      const std::string &       aId,
                                      const std::string &       aDomainName)
 {
-    static const size_t kMaxTokenRequestSize = 1024;
+    static constexpr size_t kMaxTokenRequestSize = 1024;
 
-    Error     error = Error::kNone;
+    Error     error;
     CborMap   tokenRequest;
     CborMap   reqCnf;
     ByteArray encodedCoseKey;
     CborMap   coseKey;
     size_t    encodedLength = 0;
+    uint8_t   tokenBuf[kMaxTokenRequestSize];
 
     // Use the commissioner Id as kid(truncated to kMaxCoseKeyIdLength)
     const ByteArray kid = {aId.begin(), aId.begin() + std::min(aId.size(), (size_t)kMaxCoseKeyIdLength)};
 
-    VerifyOrExit(mbedtls_pk_can_do(&aPublicKey, MBEDTLS_PK_ECDSA), error = Error::kInvalidArgs);
-    VerifyOrExit(!aId.empty() && !aDomainName.empty(), error = Error::kInvalidArgs);
+    VerifyOrExit(mbedtls_pk_can_do(&aPublicKey, MBEDTLS_PK_ECDSA),
+                 error = ERROR_INVALID_ARGS("the public key is not a ECDSA key"));
+    VerifyOrExit(!aId.empty(), error = ERROR_INVALID_ARGS("the ID is empty"));
+    VerifyOrExit(!aDomainName.empty(), error = ERROR_INVALID_ARGS("the Domain Name is empty"));
 
     SuccessOrExit(error = tokenRequest.Init());
 
@@ -286,9 +293,9 @@ Error TokenManager::MakeTokenRequest(ByteArray &               aBuf,
     SuccessOrExit(error = reqCnf.Put(cwt::kCoseKey, coseKey));
     SuccessOrExit(error = tokenRequest.Put(cwt::kReqCnf, reqCnf));
 
-    aBuf.resize(kMaxTokenRequestSize);
-    SuccessOrExit(error = tokenRequest.Serialize(&aBuf[0], encodedLength, aBuf.size()));
-    aBuf.resize(encodedLength);
+    SuccessOrExit(error = tokenRequest.Serialize(tokenBuf, encodedLength, sizeof(tokenBuf)));
+
+    aBuf.assign(tokenBuf, tokenBuf + encodedLength);
 
 exit:
     coseKey.Free();
@@ -317,11 +324,11 @@ static inline bool ShouldBeSerialized(tlv::Type aTlvType, bool aIsActiveSet, boo
 
 Error TokenManager::SignMessage(ByteArray &aSignature, const coap::Message &aMessage)
 {
-    Error              error = Error::kNone;
+    Error              error;
     ByteArray          externalData;
     cose::Sign1Message sign1Msg;
 
-    VerifyOrExit(IsValid(), error = Error::kInvalidState);
+    VerifyOrExit(IsValid(), error = ERROR_INVALID_STATE("has no valid Commissioner Token"));
 
     SuccessOrExit(error = PrepareSigningContent(externalData, aMessage));
 
@@ -349,7 +356,7 @@ exit:
 
 Error TokenManager::PrepareSigningContent(ByteArray &aContent, const coap::Message &aMessage)
 {
-    Error         error = Error::kNone;
+    Error         error;
     coap::Message message{aMessage.GetType(), aMessage.GetCode()};
     tlv::TlvSet   tlvSet;
     std::string   uri;
@@ -357,7 +364,8 @@ Error TokenManager::PrepareSigningContent(ByteArray &aContent, const coap::Messa
     bool          isPendingSet = false;
     ByteArray     content;
 
-    VerifyOrExit(aMessage.GetUriPath(uri) == Error::kNone, error = Error::kInvalidArgs);
+    VerifyOrExit(aMessage.GetUriPath(uri).NoError(),
+                 error = ERROR_INVALID_ARGS("the CoAP message has no valid URI Path option"));
 
     isActiveSet  = uri == uri::kMgmtActiveSet;
     isPendingSet = uri == uri::kMgmtPendingSet;
@@ -373,11 +381,10 @@ Error TokenManager::PrepareSigningContent(ByteArray &aContent, const coap::Messa
     {
         if (ShouldBeSerialized(tlv.first, isActiveSet, isPendingSet))
         {
-            SuccessOrExit(error = tlv.second->Serialize(content));
+            tlv.second->Serialize(content);
         }
     }
 
-    error    = Error::kNone;
     aContent = std::move(content);
 
 exit:
@@ -386,10 +393,11 @@ exit:
 
 Error TokenManager::GetPublicKey(CborMap &aPublicKey) const
 {
-    Error   error = Error::kNone;
+    Error   error;
     CborMap cnf;
 
-    VerifyOrExit(mToken.IsValid(), error = Error::kInvalidState);
+    VerifyOrExit(mToken.IsValid(), error = ERROR_INVALID_STATE("has no valid Commissioner Token"));
+
     SuccessOrExit(error = mToken.Get(cwt::kCnf, cnf));
     SuccessOrExit(error = cnf.Get(cwt::kCoseKey, aPublicKey));
 
@@ -404,6 +412,7 @@ Error TokenManager::VerifySignature(const ByteArray &aSignature, const coap::Mes
     cose::Sign1Message sign1Msg;
     CborMap            publicKey;
 
+    VerifyOrExit(!aSignature.empty());
     SuccessOrExit(error = cose::Sign1Message::Deserialize(sign1Msg, aSignature));
 
     SuccessOrExit(error = PrepareSigningContent(externalData, aSignedMessage));
@@ -412,8 +421,6 @@ Error TokenManager::VerifySignature(const ByteArray &aSignature, const coap::Mes
     SuccessOrExit(error = GetPublicKey(publicKey));
     SuccessOrExit(error = sign1Msg.Validate(publicKey));
 
-    error = Error::kNone;
-
 exit:
     sign1Msg.Free();
     return error;
@@ -421,15 +428,17 @@ exit:
 
 Error TokenManager::ParsePublicKey(mbedtls_pk_context &aPublicKey, const ByteArray &aCert)
 {
-    Error            error = Error::kInvalidArgs;
+    Error            error;
     mbedtls_x509_crt cert;
 
     mbedtls_x509_crt_init(&cert);
 
-    VerifyOrExit(!aCert.empty());
-    VerifyOrExit(mbedtls_x509_crt_parse(&cert, &aCert[0], aCert.size()) == 0);
-
-    error = Error::kNone;
+    VerifyOrExit(!aCert.empty(), error = ERROR_INVALID_ARGS("the raw certificate is empty"));
+    if (int fail = mbedtls_x509_crt_parse(&cert, aCert.data(), aCert.size()))
+    {
+        error = ErrorFromMbedtlsError(fail);
+        ExitNow(error = {ErrorCode::kInvalidArgs, error.GetMessage()});
+    }
 
     // Steal the public key from the 'cert' object.
     MoveMbedtlsKey(aPublicKey, cert.pk);
@@ -442,12 +451,14 @@ exit:
 
 Error TokenManager::ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteArray &aPrivateKeyRaw)
 {
-    Error error = Error::kInvalidArgs;
+    Error error;
 
-    VerifyOrExit(!aPrivateKeyRaw.empty());
-    VerifyOrExit(mbedtls_pk_parse_key(&aPrivateKey, &aPrivateKeyRaw[0], aPrivateKeyRaw.size(), nullptr, 0) == 0);
-
-    error = Error::kNone;
+    VerifyOrExit(!aPrivateKeyRaw.empty(), error = ERROR_INVALID_ARGS("the raw private key is empty"));
+    if (int fail = mbedtls_pk_parse_key(&aPrivateKey, aPrivateKeyRaw.data(), aPrivateKeyRaw.size(), nullptr, 0))
+    {
+        error = ErrorFromMbedtlsError(fail);
+        ExitNow(error = {ErrorCode::kInvalidArgs, error.GetMessage()});
+    }
 
 exit:
     return error;

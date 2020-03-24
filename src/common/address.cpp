@@ -30,35 +30,56 @@
 
 #include <arpa/inet.h>
 
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-Error Address::Set(const std::string &aIp)
+Error Address::Set(const ByteArray &aRawAddr)
 {
-    Error error = Error::kNone;
+    Error error;
 
-    mBytes.resize(4);
-    if (inet_pton(AF_INET, aIp.c_str(), &mBytes[0]) != 1)
+    if (aRawAddr.size() != kIpv4Size && aRawAddr.size() != kIpv6Size)
     {
-        mBytes.resize(16);
-        VerifyOrExit(inet_pton(AF_INET6, aIp.c_str(), &mBytes[0]) == 1, error = Error::kInvalidArgs);
+        ExitNow(error = ERROR_INVALID_ARGS("IP address must has length of 4(IPv4) or 16(IPv6)"));
     }
+
+    mBytes = aRawAddr;
 
 exit:
-    if (error != Error::kNone)
+    return error;
+}
+
+Error Address::Set(const std::string &aIp)
+{
+    Error     error;
+    ByteArray bytes;
+
+    bytes.resize(kIpv4Size);
+    if (inet_pton(AF_INET, aIp.c_str(), bytes.data()) != 1)
     {
-        mBytes.clear();
+        bytes.resize(kIpv6Size);
+        if (inet_pton(AF_INET6, aIp.c_str(), bytes.data()) != 1)
+        {
+            ExitNow(error = ERROR_INVALID_ARGS("{} is not a valid IP address", aIp));
+        }
     }
+
+    mBytes = bytes;
+
+exit:
     return error;
 }
 
 Error Address::Set(const sockaddr_storage &aSockAddr)
 {
-    Error error = Error::kNone;
-    VerifyOrExit(aSockAddr.ss_family == AF_INET || aSockAddr.ss_family == AF_INET6, error = Error::kInvalidArgs);
+    Error error;
+
+    VerifyOrExit(aSockAddr.ss_family == AF_INET || aSockAddr.ss_family == AF_INET6,
+                 error = ERROR_INVALID_ARGS("only AF_INET and AF_INET6 address families are supported"));
+
     if (aSockAddr.ss_family == AF_INET)
     {
         auto &addr4 = *reinterpret_cast<const sockaddr_in *>(&aSockAddr);
@@ -76,30 +97,32 @@ exit:
     return error;
 }
 
-Error Address::ToString(std::string &aAddr) const
+std::string Address::ToString() const
 {
-    Error error = Error::kNone;
-    if (mBytes.size() == 4)
+    static const char *kInvalidAddr = "INVALID_ADDR";
+    std::string        result;
+
+    if (mBytes.size() == kIpv4Size)
     {
         char ipv4[INET_ADDRSTRLEN];
-        auto ret = inet_ntop(AF_INET, &mBytes[0], ipv4, sizeof(ipv4));
-        VerifyOrExit(ret != nullptr, error = Error::kInvalidAddr);
-        aAddr = ret;
+        auto ret = inet_ntop(AF_INET, mBytes.data(), ipv4, sizeof(ipv4));
+        VerifyOrExit(ret != nullptr, result = kInvalidAddr);
+        result = ret;
     }
-    else if (mBytes.size() == 16)
+    else if (mBytes.size() == kIpv6Size)
     {
         char ipv6[INET6_ADDRSTRLEN];
-        auto ret = inet_ntop(AF_INET6, &mBytes[0], ipv6, sizeof(ipv6));
-        VerifyOrExit(ret != nullptr, error = Error::kInvalidAddr);
-        aAddr = ret;
+        auto ret = inet_ntop(AF_INET6, mBytes.data(), ipv6, sizeof(ipv6));
+        VerifyOrExit(ret != nullptr, result = kInvalidAddr);
+        result = ret;
     }
     else
     {
-        ExitNow(error = Error::kInvalidAddr);
+        ExitNow(result = kInvalidAddr);
     }
 
 exit:
-    return error;
+    return result;
 }
 
 Address Address::FromString(const std::string &aAddr)

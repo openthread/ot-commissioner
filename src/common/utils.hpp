@@ -50,13 +50,15 @@
         }                                   \
     } while (false)
 
-#define SuccessOrExit(aError)                             \
-    do                                                    \
-    {                                                     \
-        if ((aError) != ::ot::commissioner::Error::kNone) \
-        {                                                 \
-            goto exit;                                    \
-        }                                                 \
+#define ASSERT_SUCCESS(expr) ASSERT((expr).NoError())
+
+#define SuccessOrExit(aError)    \
+    do                           \
+    {                            \
+        if (!(aError).NoError()) \
+        {                        \
+            goto exit;           \
+        }                        \
     } while (false)
 
 #define VerifyOrExit(aCondition, ...) \

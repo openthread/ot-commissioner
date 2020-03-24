@@ -84,7 +84,7 @@ static void HandleSignalInterrupt(int)
 
 int main(int argc, const char *argv[])
 {
-    Error error = Error::kNone;
+    Error error;
 
     Config config;
 
@@ -108,9 +108,9 @@ int main(int argc, const char *argv[])
     gInterpreter.Run();
 
 exit:
-    if (error != Error::kNone)
+    if (!error.NoError())
     {
-        Console::Write("start OT-commissioner CLI failed: " + ErrorToString(error), Console::Color::kRed);
+        Console::Write("start OT-commissioner CLI failed: " + error.ToString(), Console::Color::kRed);
     }
-    return error == Error::kNone ? 0 : -1;
+    return error.NoError() ? 0 : -1;
 }

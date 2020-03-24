@@ -100,39 +100,39 @@ public:
     void Stop() override;
 
     void  Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
-    Error Connect(const std::string &, uint16_t) override { return Error::kNotImplemented; }
+    Error Connect(const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     void Disconnect() override;
 
     void  Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
-    Error Petition(std::string &, const std::string &, uint16_t) override { return Error::kNotImplemented; }
+    Error Petition(std::string &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  Resign(ErrorHandler aHandler) override;
-    Error Resign() override { return Error::kNotImplemented; }
+    Error Resign() override { return ERROR_UNIMPLEMENTED(""); }
 
     void  GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) override;
-    Error GetCommissionerDataset(CommissionerDataset &, uint16_t) override { return Error::kNotImplemented; }
+    Error GetCommissionerDataset(CommissionerDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  SetCommissionerDataset(ErrorHandler aHandler, const CommissionerDataset &aDataset) override;
-    Error SetCommissionerDataset(const CommissionerDataset &) override { return Error::kNotImplemented; }
+    Error SetCommissionerDataset(const CommissionerDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset) override;
-    Error SetBbrDataset(const BbrDataset &) override { return Error::kNotImplemented; }
+    Error SetBbrDataset(const BbrDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags) override;
-    Error GetBbrDataset(BbrDataset &, uint16_t) override { return Error::kNotImplemented; }
+    Error GetBbrDataset(BbrDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags) override;
-    Error GetActiveDataset(ActiveOperationalDataset &, uint16_t) override { return Error::kNotImplemented; }
+    Error GetActiveDataset(ActiveOperationalDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aActiveDataset) override;
-    Error SetActiveDataset(const ActiveOperationalDataset &) override { return Error::kNotImplemented; }
+    Error SetActiveDataset(const ActiveOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  GetPendingDataset(Handler<PendingOperationalDataset> aHandler, uint16_t aDatasetFlags) override;
-    Error GetPendingDataset(PendingOperationalDataset &, uint16_t) override { return Error::kNotImplemented; }
+    Error GetPendingDataset(PendingOperationalDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset) override;
-    Error SetPendingDataset(const PendingOperationalDataset &) override { return Error::kNotImplemented; }
+    Error SetPendingDataset(const PendingOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  SetSecurePendingDataset(ErrorHandler                     aHandler,
                                   const std::string &              aPbbrAddr,
@@ -140,19 +140,19 @@ public:
                                   const PendingOperationalDataset &aDataset) override;
     Error SetSecurePendingDataset(const std::string &, uint32_t, const PendingOperationalDataset &) override
     {
-        return Error::kNotImplemented;
+        return ERROR_UNIMPLEMENTED("");
     }
 
     void  CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr) override;
-    Error CommandReenroll(const std::string &) override { return Error::kNotImplemented; }
+    Error CommandReenroll(const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr) override;
-    Error CommandDomainReset(const std::string &) override { return Error::kNotImplemented; }
+    Error CommandDomainReset(const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,
                          const std::string &aDstNetworkName) override;
-    Error CommandMigrate(const std::string &, const std::string &) override { return Error::kNotImplemented; }
+    Error CommandMigrate(const std::string &, const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
                                     const std::string &             aPbbrAddr,
@@ -160,7 +160,7 @@ public:
                                     uint32_t                        aTimeout) override;
     Error RegisterMulticastListener(uint8_t &, const std::string &, const std::vector<std::string> &, uint32_t) override
     {
-        return Error::kNotImplemented;
+        return ERROR_UNIMPLEMENTED("");
     }
 
     void  AnnounceBegin(ErrorHandler       aHandler,
@@ -168,13 +168,13 @@ public:
                         uint8_t            aCount,
                         uint16_t           aPeriod,
                         const std::string &aDstAddr) override;
-    Error AnnounceBegin(uint32_t, uint8_t, uint16_t, const std::string &) override { return Error::kNotImplemented; }
+    Error AnnounceBegin(uint32_t, uint8_t, uint16_t, const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  PanIdQuery(ErrorHandler       aHandler,
                      uint32_t           aChannelMask,
                      uint16_t           aPanId,
                      const std::string &aDstAddr) override;
-    Error PanIdQuery(uint32_t, uint16_t, const std::string &) override { return Error::kNotImplemented; }
+    Error PanIdQuery(uint32_t, uint16_t, const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  EnergyScan(ErrorHandler       aHandler,
                      uint32_t           aChannelMask,
@@ -184,11 +184,11 @@ public:
                      const std::string &aDstAddr) override;
     Error EnergyScan(uint32_t, uint8_t, uint16_t, uint16_t, const std::string &) override
     {
-        return Error::kNotImplemented;
+        return ERROR_UNIMPLEMENTED("");
     }
 
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
-    Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return Error::kNotImplemented; }
+    Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
     Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) override;
 
@@ -252,9 +252,6 @@ private:
     void HandleCommissioningSessionTimer(Timer &aTimer);
 
 private:
-    static constexpr uint16_t kDefaultMmPort = 61631;
-    static constexpr uint16_t kDefaultMcPort = 49191;
-
     State    mState;
     uint16_t mSessionId; ///< The Commissioner Session ID.
 
@@ -262,9 +259,6 @@ private:
     /*
      * Implementation data.
      */
-
-    static constexpr uint32_t kMinKeepAliveInterval = 30;
-    static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
     struct event_base *mEventBase;
 

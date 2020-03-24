@@ -128,44 +128,45 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
 
     struct event_base *eventBase = event_base_new();
     CommissionerImpl   commImpl(eventBase);
-    REQUIRE(commImpl.Init(config) == Error::kNone);
+    REQUIRE(commImpl.Init(config).NoError());
 
     REQUIRE(commImpl.Connect("::1", 5684) == Error::kNotImplemented);
 
     std::string existingCommissionerId;
-    REQUIRE(commImpl.Petition(existingCommissionerId, "::1", 5684) == Error::kNotImplemented);
-    REQUIRE(commImpl.Resign() == Error::kNotImplemented);
+    REQUIRE(commImpl.Petition(existingCommissionerId, "::1", 5684).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.Resign().GetCode() == ErrorCode::kUnimplemented);
 
     CommissionerDataset commDataset;
-    REQUIRE(commImpl.GetCommissionerDataset(commDataset, 0xFFFF) == Error::kNotImplemented);
-    REQUIRE(commImpl.SetCommissionerDataset({}) == Error::kNotImplemented);
+    REQUIRE(commImpl.GetCommissionerDataset(commDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetCommissionerDataset({}).GetCode() == ErrorCode::kUnimplemented);
 
     BbrDataset bbrDataset;
-    REQUIRE(commImpl.GetBbrDataset(bbrDataset, 0xFFFF) == Error::kNotImplemented);
-    REQUIRE(commImpl.SetBbrDataset({}) == Error::kNotImplemented);
+    REQUIRE(commImpl.GetBbrDataset(bbrDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetBbrDataset({}).GetCode() == ErrorCode::kUnimplemented);
 
     ActiveOperationalDataset activeDataset;
-    REQUIRE(commImpl.GetActiveDataset(activeDataset, 0xFFFF) == Error::kNotImplemented);
-    REQUIRE(commImpl.SetActiveDataset({}) == Error::kNotImplemented);
+    REQUIRE(commImpl.GetActiveDataset(activeDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetActiveDataset({}).GetCode() == ErrorCode::kUnimplemented);
 
     PendingOperationalDataset pendingDataset;
-    REQUIRE(commImpl.GetPendingDataset(pendingDataset, 0xFFFF) == Error::kNotImplemented);
-    REQUIRE(commImpl.SetPendingDataset({}) == Error::kNotImplemented);
-    REQUIRE(commImpl.SetSecurePendingDataset(kDstAddr, 30, {}) == Error::kNotImplemented);
+    REQUIRE(commImpl.GetPendingDataset(pendingDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetPendingDataset({}).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetSecurePendingDataset(kDstAddr, 30, {}).GetCode() == ErrorCode::kUnimplemented);
 
-    REQUIRE(commImpl.CommandReenroll(kDstAddr) == Error::kNotImplemented);
-    REQUIRE(commImpl.CommandDomainReset(kDstAddr) == Error::kNotImplemented);
-    REQUIRE(commImpl.CommandMigrate(kDstAddr, "designated-net") == Error::kNotImplemented);
+    REQUIRE(commImpl.CommandReenroll(kDstAddr).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.CommandDomainReset(kDstAddr).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.CommandMigrate(kDstAddr, "designated-net").GetCode() == ErrorCode::kUnimplemented);
 
     uint8_t mlrStatus;
-    REQUIRE(commImpl.RegisterMulticastListener(mlrStatus, kDstAddr, {"ff02::9"}, 300) == Error::kNotImplemented);
+    REQUIRE(commImpl.RegisterMulticastListener(mlrStatus, kDstAddr, {"ff02::9"}, 300).GetCode() ==
+            ErrorCode::kUnimplemented);
 
-    REQUIRE(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr) == Error::kNotImplemented);
-    REQUIRE(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr) == Error::kNotImplemented);
-    REQUIRE(commImpl.EnergyScan(0xFFFFFFFF, 10, 10, 20, kDstAddr) == Error::kNotImplemented);
+    REQUIRE(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.EnergyScan(0xFFFFFFFF, 10, 10, 20, kDstAddr).GetCode() == ErrorCode::kUnimplemented);
 
     ByteArray signedToken;
-    REQUIRE(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684) == Error::kNotImplemented);
+    REQUIRE(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684).GetCode() == ErrorCode::kUnimplemented);
 
     event_base_free(eventBase);
 }

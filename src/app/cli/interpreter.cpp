@@ -157,10 +157,10 @@ template <typename T> static Error ParseInteger(T &aInteger, const std::string &
 
     integer = strtoull(aStr.c_str(), &endPtr, 0);
 
-    VerifyOrExit(endPtr != nullptr && endPtr > aStr.c_str(), error = Error::kFailed);
+    VerifyOrExit(endPtr != nullptr && endPtr > aStr.c_str(),
+                 error = ERROR_INVALID_ARGS("{} is not a valid integer", aStr));
 
     aInteger = integer;
-    error    = Error::kNone;
 
 exit:
     return error;
@@ -236,12 +236,12 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     Value                                            value;
     std::map<std::string, Evaluator>::const_iterator evaluator;
 
-    VerifyOrExit(!aExpr.empty(), value = Error::kNone);
+    VerifyOrExit(!aExpr.empty(), value = ERROR_NONE);
 
     evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
     if (evaluator == mEvaluatorMap.end())
     {
-        ExitNow(value = {Error::kInvalidArgs, "invalid commands: " + aExpr.front() + "; type 'help' for all commands"});
+        ExitNow(value = ERROR_INVALID_ARGS("invalid commands: {}; type 'help' for all commands", aExpr.front()));
     }
 
     value = evaluator->second(this, aExpr);
@@ -252,23 +252,26 @@ exit:
 
 void Interpreter::Print(const Value &aValue)
 {
-    std::string    output;
-    Console::Color color;
+    std::string output = aValue.ToString();
 
-    if (aValue.mError == Error::kNone)
+    if (!output.empty())
     {
-        output = aValue.mMessage.empty() ? "" : (aValue.mMessage + "\n");
-        output += "[done]";
-        color = Console::Color::kGreen;
+        output += "\n";
     }
-    else
-    {
-        output = aValue.mMessage.empty() ? "" : (aValue.mMessage + "\n");
-        output += "[failed]: " + ErrorToString(aValue.mError);
-        color = Console::Color::kRed;
-    }
+    output += aValue.NoError() ? "[done]" : "[failed]";
+    auto color = aValue.NoError() ? Console::Color::kGreen : Console::Color::kRed;
 
     mConsole.Write(output, color);
+}
+
+std::string Interpreter::Value::ToString() const
+{
+    return NoError() ? mData : mError.ToString();
+}
+
+bool Interpreter::Value::NoError() const
+{
+    return mError.NoError();
 }
 
 Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral)
@@ -321,99 +324,93 @@ Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral
 
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
-    std::string existingCommissionerId;
+    Error       error;
     uint16_t    port;
+    std::string existingCommissionerId;
 
-    VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-    SuccessOrExit(ParseInteger(port, aExpr[2]), msg = aExpr[2]);
+    VerifyOrExit(aExpr.size() >= 3, error = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(error = ParseInteger(port, aExpr[2]));
     SuccessOrExit(error = mCommissioner->Start(existingCommissionerId, aExpr[1], port));
 
 exit:
     if (!existingCommissionerId.empty())
     {
-        msg = "there is an existing active commissioner: " + existingCommissionerId;
+        ASSERT(!error.NoError());
+        error.SetMessage("there is an existing active commissioner: " + existingCommissionerId);
     }
-    return {error, msg};
+    return error;
 }
 
 Interpreter::Value Interpreter::ProcessStop(const Expression &)
 {
     mCommissioner->Stop();
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Interpreter::Value Interpreter::ProcessActive(const Expression &)
 {
-    return {Error::kNone, mCommissioner->IsActive() ? "true" : "false"};
+    return std::string{mCommissioner->IsActive() ? "true" : "false"};
 }
 
 Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "request"))
     {
         uint16_t port;
-        VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(port, aExpr[3]), msg = aExpr[3]);
-        SuccessOrExit(error = mCommissioner->RequestToken(aExpr[2], port));
+        VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(port, aExpr[3]));
+        SuccessOrExit(value = mCommissioner->RequestToken(aExpr[2], port));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "print"))
     {
         auto signedToken = mCommissioner->GetToken();
-        VerifyOrExit(!signedToken.empty(), {
-            error = Error::kNotFound;
-            msg   = "commissioner token not set";
-        });
-        error = Error::kNone;
-        msg   = utils::Hex(signedToken);
+        VerifyOrExit(!signedToken.empty(), value = ERROR_NOT_FOUND("no valid Commissioner Token found"));
+        value = utils::Hex(signedToken);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "set"))
     {
         ByteArray signedToken, signerCert;
-        VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-        SuccessOrExit(error = ReadHexStringFile(signedToken, aExpr[2]));
-        SuccessOrExit(error = ReadPemFile(signerCert, aExpr[3]));
+        VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ReadHexStringFile(signedToken, aExpr[2]));
+        SuccessOrExit(value = ReadPemFile(signerCert, aExpr[3]));
 
-        SuccessOrExit(error = mCommissioner->SetToken(signedToken, signerCert));
+        SuccessOrExit(value = mCommissioner->SetToken(signedToken, signerCert));
     }
     else
     {
-        ExitNow(msg = aExpr[1]);
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "save"))
     {
-        VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-        SuccessOrExit(error = mCommissioner->SaveNetworkData(aExpr[2]));
+        VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = mCommissioner->SaveNetworkData(aExpr[2]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "pull"))
     {
-        SuccessOrExit(error = mCommissioner->PullNetworkData());
+        SuccessOrExit(value = mCommissioner->PullNetworkData());
     }
     else
     {
-        ExitNow(msg = aExpr[1]);
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessSessionId(const Expression &)
@@ -421,8 +418,8 @@ Interpreter::Value Interpreter::ProcessSessionId(const Expression &)
     Value    value;
     uint16_t sessionId;
 
-    SuccessOrExit(value.mError = mCommissioner->GetSessionId(sessionId));
-    value.mMessage = std::to_string(sessionId);
+    SuccessOrExit(value = mCommissioner->GetSessionId(sessionId));
+    value = std::to_string(sessionId);
 
 exit:
     return value;
@@ -430,10 +427,9 @@ exit:
 
 Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "discover"))
     {
@@ -441,56 +437,52 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
 
         if (aExpr.size() >= 3)
         {
-            SuccessOrExit(ParseInteger(timeout, aExpr[2]), msg = aExpr[2]);
+            SuccessOrExit(value = ParseInteger(timeout, aExpr[2]));
         }
 
-        SuccessOrExit(error = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout)));
-
-        ExitNow(error = Error::kNone);
+        SuccessOrExit(value = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout)));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
-        VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
+        VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
 
         if (CaseInsensitiveEqual(aExpr[2], "locator"))
         {
             uint16_t locator;
-            SuccessOrExit(error = mCommissioner->GetBorderAgentLocator(locator));
-            msg = ToHex(locator);
+            SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
+            value = ToHex(locator);
         }
         else if (CaseInsensitiveEqual(aExpr[2], "meshlocaladdr"))
         {
             uint16_t    locator;
             std::string meshLocalPrefix;
             std::string meshLocalAddr;
-            SuccessOrExit(error = mCommissioner->GetBorderAgentLocator(locator));
-            SuccessOrExit(error = mCommissioner->GetMeshLocalPrefix(meshLocalPrefix));
-            SuccessOrExit(error = Commissioner::GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
-            msg = meshLocalAddr;
+            SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
+            SuccessOrExit(value = mCommissioner->GetMeshLocalPrefix(meshLocalPrefix));
+            SuccessOrExit(value = Commissioner::GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
+            value = meshLocalAddr;
         }
         else
         {
-            msg = aExpr[2];
+            value = ERROR_INVALID_ARGS("{} is not a valid border agent field", aExpr[2]);
         }
     }
     else
     {
-        msg = aExpr[1];
+        value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]);
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
-
+    Value      value;
     JoinerType type;
 
-    VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-    SuccessOrExit(GetJoinerType(type, aExpr[2]), msg = aExpr[2]);
+    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = GetJoinerType(type, aExpr[2]));
 
     if (CaseInsensitiveEqual(aExpr[1], "enable"))
     {
@@ -498,8 +490,9 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
         ByteArray   pskd;
         std::string provisioningUrl;
 
-        VerifyOrExit(aExpr.size() >= (type == JoinerType::kMeshCoP ? 5 : 4), msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(eui64, aExpr[3]), msg = aExpr[3]);
+        VerifyOrExit(aExpr.size() >= (type == JoinerType::kMeshCoP ? 5 : 4),
+                     value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(eui64, aExpr[3]));
         if (type == JoinerType::kMeshCoP)
         {
             pskd = {aExpr[4].begin(), aExpr[4].end()};
@@ -509,7 +502,7 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
             }
         }
 
-        SuccessOrExit(error = mCommissioner->EnableJoiner(type, eui64, pskd, provisioningUrl));
+        SuccessOrExit(value = mCommissioner->EnableJoiner(type, eui64, pskd, provisioningUrl));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "enableall"))
     {
@@ -517,7 +510,7 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
         std::string provisioningUrl;
         if (type == JoinerType::kMeshCoP)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             pskd = {aExpr[3].begin(), aExpr[3].end()};
             if (aExpr.size() >= 5)
             {
@@ -525,78 +518,75 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
             }
         }
 
-        SuccessOrExit(error = mCommissioner->EnableAllJoiners(type, pskd, provisioningUrl));
+        SuccessOrExit(value = mCommissioner->EnableAllJoiners(type, pskd, provisioningUrl));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "disable"))
     {
         uint64_t eui64;
-        VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(eui64, aExpr[3]), msg = aExpr[3]);
-        SuccessOrExit(error = mCommissioner->DisableJoiner(type, eui64));
+        VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(eui64, aExpr[3]));
+        SuccessOrExit(value = mCommissioner->DisableJoiner(type, eui64));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "disableall"))
     {
-        SuccessOrExit(error = mCommissioner->DisableAllJoiners(type));
+        SuccessOrExit(value = mCommissioner->DisableAllJoiners(type));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "getport"))
     {
         uint16_t port;
-        SuccessOrExit(error = mCommissioner->GetJoinerUdpPort(port, type));
-        msg = std::to_string(port);
+        SuccessOrExit(value = mCommissioner->GetJoinerUdpPort(port, type));
+        value = std::to_string(port);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "setport"))
     {
         uint16_t port;
-        VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(port, aExpr[3]), msg = aExpr[3]);
-        SuccessOrExit(error = mCommissioner->SetJoinerUdpPort(type, port));
+        VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(port, aExpr[3]));
+        SuccessOrExit(value = mCommissioner->SetJoinerUdpPort(type, port));
     }
     else
     {
-        msg = aExpr[1];
+        value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]);
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessCommDataset(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
         CommissionerDataset dataset;
-        SuccessOrExit(error = mCommissioner->GetCommissionerDataset(dataset, 0xFFFF));
-        msg = CommissionerDatasetToJson(dataset);
+        SuccessOrExit(value = mCommissioner->GetCommissionerDataset(dataset, 0xFFFF));
+        value = CommissionerDatasetToJson(dataset);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "set"))
     {
         CommissionerDataset dataset;
-        VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-        SuccessOrExit(error = CommissionerDatasetFromJson(dataset, aExpr[2]));
-        SuccessOrExit(error = mCommissioner->SetCommissionerDataset(dataset));
+        VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = CommissionerDatasetFromJson(dataset, aExpr[2]));
+        SuccessOrExit(value = mCommissioner->SetCommissionerDataset(dataset));
     }
     else
     {
-        msg = aExpr[1];
+        value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]);
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
+    bool  IsSet;
 
-    bool IsSet;
-
-    VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
         IsSet = false;
@@ -607,15 +597,15 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     }
     else
     {
-        ExitNow(msg = aExpr[1]);
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
     }
 
     if (CaseInsensitiveEqual(aExpr[2], "activetimestamp"))
     {
         Timestamp activeTimestamp;
-        VerifyOrExit(!IsSet, msg = "can't set activetimestamp");
-        SuccessOrExit(error = mCommissioner->GetActiveTimestamp(activeTimestamp));
-        msg = ToString(activeTimestamp);
+        VerifyOrExit(!IsSet, value = ERROR_INVALID_ARGS("cannot set activetimestamp"));
+        SuccessOrExit(value = mCommissioner->GetActiveTimestamp(activeTimestamp));
+        value = ToString(activeTimestamp);
     }
     else if (CaseInsensitiveEqual(aExpr[2], "channel"))
     {
@@ -623,16 +613,16 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         if (IsSet)
         {
             uint32_t delay;
-            VerifyOrExit(aExpr.size() >= 6, msg = Usage(aExpr));
-            SuccessOrExit(ParseInteger(channel.mPage, aExpr[3]), msg = aExpr[3]);
-            SuccessOrExit(ParseInteger(channel.mNumber, aExpr[4]), msg = aExpr[4]);
-            SuccessOrExit(ParseInteger(delay, aExpr[5]), msg = aExpr[5]);
-            SuccessOrExit(error = mCommissioner->SetChannel(channel, CommissionerApp::MilliSeconds(delay)));
+            VerifyOrExit(aExpr.size() >= 6, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = ParseInteger(channel.mPage, aExpr[3]));
+            SuccessOrExit(value = ParseInteger(channel.mNumber, aExpr[4]));
+            SuccessOrExit(value = ParseInteger(delay, aExpr[5]));
+            SuccessOrExit(value = mCommissioner->SetChannel(channel, CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetChannel(channel));
-            msg = ToString(channel);
+            SuccessOrExit(value = mCommissioner->GetChannel(channel));
+            value = ToString(channel);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "channelmask"))
@@ -640,13 +630,13 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         ChannelMask channelMask;
         if (IsSet)
         {
-            SuccessOrExit(ParseChannelMask(channelMask, aExpr, 3), msg = Usage(aExpr));
-            SuccessOrExit(error = mCommissioner->SetChannelMask(channelMask));
+            SuccessOrExit(value = ParseChannelMask(channelMask, aExpr, 3));
+            SuccessOrExit(value = mCommissioner->SetChannelMask(channelMask));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetChannelMask(channelMask));
-            msg = ToString(channelMask);
+            SuccessOrExit(value = mCommissioner->GetChannelMask(channelMask));
+            value = ToString(channelMask);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "xpanid"))
@@ -654,14 +644,14 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         ByteArray xpanid;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(utils::Hex(xpanid, aExpr[3]), msg = aExpr[3]);
-            SuccessOrExit(error = mCommissioner->SetExtendedPanId(xpanid));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = utils::Hex(xpanid, aExpr[3]));
+            SuccessOrExit(value = mCommissioner->SetExtendedPanId(xpanid));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetExtendedPanId(xpanid));
-            msg = utils::Hex(xpanid);
+            SuccessOrExit(value = mCommissioner->GetExtendedPanId(xpanid));
+            value = utils::Hex(xpanid);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "meshlocalprefix"))
@@ -670,14 +660,14 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         if (IsSet)
         {
             uint32_t delay;
-            VerifyOrExit(aExpr.size() >= 5, msg = Usage(aExpr));
-            SuccessOrExit(ParseInteger(delay, aExpr[4]), msg = aExpr[4]);
-            SuccessOrExit(error = mCommissioner->SetMeshLocalPrefix(aExpr[3], CommissionerApp::MilliSeconds(delay)));
+            VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
+            SuccessOrExit(value = mCommissioner->SetMeshLocalPrefix(aExpr[3], CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetMeshLocalPrefix(prefix));
-            msg = prefix;
+            SuccessOrExit(value = mCommissioner->GetMeshLocalPrefix(prefix));
+            value = prefix;
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "networkmasterkey"))
@@ -686,15 +676,15 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         if (IsSet)
         {
             uint32_t delay;
-            VerifyOrExit(aExpr.size() >= 5, msg = Usage(aExpr));
-            SuccessOrExit(utils::Hex(masterKey, aExpr[3]), msg = aExpr[3]);
-            SuccessOrExit(ParseInteger(delay, aExpr[4]), msg = aExpr[4]);
-            SuccessOrExit(error = mCommissioner->SetNetworkMasterKey(masterKey, CommissionerApp::MilliSeconds(delay)));
+            VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = utils::Hex(masterKey, aExpr[3]));
+            SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
+            SuccessOrExit(value = mCommissioner->SetNetworkMasterKey(masterKey, CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetNetworkMasterKey(masterKey));
-            msg = utils::Hex(masterKey);
+            SuccessOrExit(value = mCommissioner->GetNetworkMasterKey(masterKey));
+            value = utils::Hex(masterKey);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "networkname"))
@@ -702,13 +692,13 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         std::string networkName;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(error = mCommissioner->SetNetworkName(aExpr[3]));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = mCommissioner->SetNetworkName(aExpr[3]));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetNetworkName(networkName));
-            msg = networkName;
+            SuccessOrExit(value = mCommissioner->GetNetworkName(networkName));
+            value = networkName;
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "panid"))
@@ -717,15 +707,15 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         if (IsSet)
         {
             uint32_t delay;
-            VerifyOrExit(aExpr.size() >= 5, msg = Usage(aExpr));
-            SuccessOrExit(ParseInteger(panid, aExpr[3]), msg = aExpr[3]);
-            SuccessOrExit(ParseInteger(delay, aExpr[4]), msg = aExpr[4]);
-            SuccessOrExit(error = mCommissioner->SetPanId(panid, CommissionerApp::MilliSeconds(delay)));
+            VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = ParseInteger(panid, aExpr[3]));
+            SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
+            SuccessOrExit(value = mCommissioner->SetPanId(panid, CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetPanId(panid));
-            msg = std::to_string(panid);
+            SuccessOrExit(value = mCommissioner->GetPanId(panid));
+            value = std::to_string(panid);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "pskc"))
@@ -733,14 +723,14 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         ByteArray pskc;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(utils::Hex(pskc, aExpr[3]), msg = aExpr[3]);
-            SuccessOrExit(error = mCommissioner->SetPSKc(pskc));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = utils::Hex(pskc, aExpr[3]));
+            SuccessOrExit(value = mCommissioner->SetPSKc(pskc));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetPSKc(pskc));
-            msg = utils::Hex(pskc);
+            SuccessOrExit(value = mCommissioner->GetPSKc(pskc));
+            value = utils::Hex(pskc);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "securitypolicy"))
@@ -748,15 +738,15 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         SecurityPolicy policy;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 5, msg = Usage(aExpr));
-            SuccessOrExit(ParseInteger(policy.mRotationTime, aExpr[3]), msg = aExpr[3]);
-            SuccessOrExit(utils::Hex(policy.mFlags, aExpr[4]), msg = aExpr[4]);
-            SuccessOrExit(error = mCommissioner->SetSecurityPolicy(policy));
+            VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = ParseInteger(policy.mRotationTime, aExpr[3]));
+            SuccessOrExit(value = utils::Hex(policy.mFlags, aExpr[4]));
+            SuccessOrExit(value = mCommissioner->SetSecurityPolicy(policy));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetSecurityPolicy(policy));
-            msg = ToString(policy);
+            SuccessOrExit(value = mCommissioner->GetSecurityPolicy(policy));
+            value = ToString(policy);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "active"))
@@ -764,14 +754,14 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         ActiveOperationalDataset dataset;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(error = ActiveDatasetFromJson(dataset, aExpr[3]));
-            SuccessOrExit(error = mCommissioner->SetActiveDataset(dataset));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = ActiveDatasetFromJson(dataset, aExpr[3]));
+            SuccessOrExit(value = mCommissioner->SetActiveDataset(dataset));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetActiveDataset(dataset, 0xFFFF));
-            msg = ActiveDatasetToJson(dataset);
+            SuccessOrExit(value = mCommissioner->GetActiveDataset(dataset, 0xFFFF));
+            value = ActiveDatasetToJson(dataset);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "pending"))
@@ -779,33 +769,31 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         PendingOperationalDataset dataset;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(error = PendingDatasetFromJson(dataset, aExpr[3]));
-            SuccessOrExit(error = mCommissioner->SetPendingDataset(dataset));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = PendingDatasetFromJson(dataset, aExpr[3]));
+            SuccessOrExit(value = mCommissioner->SetPendingDataset(dataset));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetPendingDataset(dataset, 0xFFFF));
-            msg = PendingDatasetToJson(dataset);
+            SuccessOrExit(value = mCommissioner->GetPendingDataset(dataset, 0xFFFF));
+            value = PendingDatasetToJson(dataset);
         }
     }
     else
     {
-        ExitNow(msg = aExpr[2]);
+        value = ERROR_INVALID_ARGS("{} is not a valid Operational Dataset field", aExpr[2]);
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
+    bool  IsSet;
 
-    bool IsSet;
-
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
         IsSet = false;
@@ -816,30 +804,30 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
     }
     else
     {
-        ExitNow(msg = aExpr[1]);
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
     }
 
     if (aExpr.size() == 2 && !IsSet)
     {
         BbrDataset dataset;
-        SuccessOrExit(error = mCommissioner->GetBbrDataset(dataset, 0xFFFF));
-        ExitNow(msg = BbrDatasetToJson(dataset));
+        SuccessOrExit(value = mCommissioner->GetBbrDataset(dataset, 0xFFFF));
+        ExitNow(value = BbrDatasetToJson(dataset));
     }
 
-    VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[2], "trihostname"))
     {
         std::string triHostname;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(error = mCommissioner->SetTriHostname(aExpr[3]));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = mCommissioner->SetTriHostname(aExpr[3]));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetTriHostname(triHostname));
-            msg = triHostname;
+            SuccessOrExit(value = mCommissioner->GetTriHostname(triHostname));
+            value = triHostname;
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "reghostname"))
@@ -847,153 +835,145 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
         std::string regHostname;
         if (IsSet)
         {
-            VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            SuccessOrExit(error = mCommissioner->SetRegistrarHostname(aExpr[3]));
+            VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+            SuccessOrExit(value = mCommissioner->SetRegistrarHostname(aExpr[3]));
         }
         else
         {
-            SuccessOrExit(error = mCommissioner->GetRegistrarHostname(regHostname));
-            msg = regHostname;
+            SuccessOrExit(value = mCommissioner->GetRegistrarHostname(regHostname));
+            value = regHostname;
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "regaddr"))
     {
         std::string regAddr;
-        VerifyOrExit(!IsSet, msg = "cannot set registrar address");
-        SuccessOrExit(error = mCommissioner->GetRegistrarIpv6Addr(regAddr));
-        msg = regAddr;
+        VerifyOrExit(!IsSet, value = ERROR_INVALID_ARGS("cannot set  read-only Registrar Address"));
+        SuccessOrExit(value = mCommissioner->GetRegistrarIpv6Addr(regAddr));
+        value = regAddr;
     }
     else
     {
         if (IsSet)
         {
             BbrDataset dataset;
-            SuccessOrExit(error = BbrDatasetFromJson(dataset, aExpr[2]));
-            SuccessOrExit(error = mCommissioner->SetBbrDataset(dataset));
+            SuccessOrExit(value = BbrDatasetFromJson(dataset, aExpr[2]));
+            SuccessOrExit(value = mCommissioner->SetBbrDataset(dataset));
         }
         else
         {
-            ExitNow(msg = aExpr[2]);
+            value = ERROR_INVALID_ARGS("{} is not a valid BBR Dataset field", aExpr[2]);
         }
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessReenroll(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
-    SuccessOrExit(error = mCommissioner->Reenroll(aExpr[1]));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = mCommissioner->Reenroll(aExpr[1]));
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessDomainReset(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
-    SuccessOrExit(error = mCommissioner->DomainReset(aExpr[1]));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = mCommissioner->DomainReset(aExpr[1]));
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessMigrate(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-    SuccessOrExit(error = mCommissioner->Migrate(aExpr[1], aExpr[2]));
+    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = mCommissioner->Migrate(aExpr[1], aExpr[2]));
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessMlr(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
     uint32_t timeout;
 
-    VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-    SuccessOrExit(ParseInteger(timeout, aExpr.back()), msg = aExpr.back());
-    SuccessOrExit(error = mCommissioner->RegisterMulticastListener({aExpr.begin() + 1, aExpr.end() - 1},
+    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = ParseInteger(timeout, aExpr.back()));
+    SuccessOrExit(value = mCommissioner->RegisterMulticastListener({aExpr.begin() + 1, aExpr.end() - 1},
                                                                    CommissionerApp::Seconds(timeout)));
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessAnnounce(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
     uint32_t channelMask;
     uint8_t  count;
     uint16_t period;
 
-    VerifyOrExit(aExpr.size() >= 5, msg = Usage(aExpr));
-    SuccessOrExit(ParseInteger(channelMask, aExpr[1]), msg = aExpr[1]);
-    SuccessOrExit(ParseInteger(count, aExpr[2]), msg = aExpr[2]);
-    SuccessOrExit(ParseInteger(period, aExpr[3]), msg = aExpr[3]);
+    VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = ParseInteger(channelMask, aExpr[1]));
+    SuccessOrExit(value = ParseInteger(count, aExpr[2]));
+    SuccessOrExit(value = ParseInteger(period, aExpr[3]));
     SuccessOrExit(
-        error = mCommissioner->AnnounceBegin(channelMask, count, CommissionerApp::MilliSeconds(period), aExpr[4]));
+        value = mCommissioner->AnnounceBegin(channelMask, count, CommissionerApp::MilliSeconds(period), aExpr[4]));
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessPanId(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "query"))
     {
         uint32_t channelMask;
         uint16_t panId;
-        VerifyOrExit(aExpr.size() >= 5, msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(channelMask, aExpr[2]), msg = aExpr[2]);
-        SuccessOrExit(ParseInteger(panId, aExpr[3]), msg = aExpr[3]);
-        SuccessOrExit(error = mCommissioner->PanIdQuery(channelMask, panId, aExpr[4]));
+        VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(channelMask, aExpr[2]));
+        SuccessOrExit(value = ParseInteger(panId, aExpr[3]));
+        SuccessOrExit(value = mCommissioner->PanIdQuery(channelMask, panId, aExpr[4]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "conflict"))
     {
         uint16_t panId;
         bool     conflict;
-        VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(panId, aExpr[2]), msg = aExpr[2]);
+        VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(panId, aExpr[2]));
         conflict = mCommissioner->HasPanIdConflict(panId);
-        error    = Error::kNone;
-        msg      = std::to_string(conflict);
+        value    = std::to_string(conflict);
     }
     else
     {
-        msg = aExpr[1];
+        value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]);
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
 {
-    Error       error = Error::kInvalidArgs;
-    std::string msg;
+    Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, msg = Usage(aExpr));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "scan"))
     {
@@ -1001,12 +981,12 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
         uint8_t  count;
         uint16_t period;
         uint16_t scanDuration;
-        VerifyOrExit(aExpr.size() >= 7, msg = Usage(aExpr));
-        SuccessOrExit(ParseInteger(channelMask, aExpr[2]), msg = aExpr[2]);
-        SuccessOrExit(ParseInteger(count, aExpr[3]), msg = aExpr[3]);
-        SuccessOrExit(ParseInteger(period, aExpr[4]), msg = aExpr[4]);
-        SuccessOrExit(ParseInteger(scanDuration, aExpr[5]), msg = aExpr[5]);
-        SuccessOrExit(error = mCommissioner->EnergyScan(channelMask, count, period, scanDuration, aExpr[6]));
+        VerifyOrExit(aExpr.size() >= 7, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = ParseInteger(channelMask, aExpr[2]));
+        SuccessOrExit(value = ParseInteger(count, aExpr[3]));
+        SuccessOrExit(value = ParseInteger(period, aExpr[4]));
+        SuccessOrExit(value = ParseInteger(scanDuration, aExpr[5]));
+        SuccessOrExit(value = mCommissioner->EnergyScan(channelMask, count, period, scanDuration, aExpr[6]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "report"))
     {
@@ -1014,39 +994,23 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
         {
             const EnergyReport *report = nullptr;
             Address             dstAddr;
-            SuccessOrExit(dstAddr.Set(aExpr[2]), msg = aExpr[2]);
+            SuccessOrExit(value = dstAddr.Set(aExpr[2]));
             report = mCommissioner->GetEnergyReport(dstAddr);
-            error  = Error::kNone;
-            if (report == nullptr)
-            {
-                msg = "null";
-            }
-            else
-            {
-                msg = EnergyReportToJson(*report);
-            }
+            value  = report == nullptr ? "null" : EnergyReportToJson(*report);
         }
         else
         {
-            error        = Error::kNone;
             auto reports = mCommissioner->GetAllEnergyReports();
-            if (reports.empty())
-            {
-                msg = "null";
-            }
-            else
-            {
-                msg = EnergyReportMapToJson(reports);
-            }
+            value        = reports.empty() ? "null" : EnergyReportMapToJson(reports);
         }
     }
     else
     {
-        msg = aExpr[1];
+        value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]);
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
@@ -1055,34 +1019,31 @@ Interpreter::Value Interpreter::ProcessExit(const Expression &)
 
     mShouldExit = true;
 
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
 {
-    Error       error = Error::kNone;
-    std::string msg;
+    Value value;
 
     if (aExpr.size() == 1)
     {
+        std::string data;
         for (auto &kv : mEvaluatorMap)
         {
-            msg += kv.first + "\n";
+            data += kv.first + "\n";
         }
-        msg += "\ntype 'help <command>' for help of specific command.";
+        data += "\ntype 'help <command>' for help of specific command.";
     }
     else
     {
         std::string usage = Usage({aExpr[1]});
-        VerifyOrExit(!usage.empty(), {
-            error = Error::kInvalidArgs;
-            msg   = aExpr[1];
-        });
-        msg = "usage:\n" + usage;
+        VerifyOrExit(!usage.empty(), value = ERROR_INVALID_ARGS("{} is not a valid command", aExpr[1]));
+        value = "usage:\n" + usage;
     }
 
 exit:
-    return {error, msg};
+    return value;
 }
 
 void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage)
@@ -1107,7 +1068,8 @@ const std::string Interpreter::Usage(Expression aExpr)
 
 Error Interpreter::GetJoinerType(JoinerType &aType, const std::string &aStr)
 {
-    Error error = Error::kNone;
+    Error error;
+
     if (CaseInsensitiveEqual(aStr, "meshcop"))
     {
         aType = JoinerType::kMeshCoP;
@@ -1122,23 +1084,24 @@ Error Interpreter::GetJoinerType(JoinerType &aType, const std::string &aStr)
     }
     else
     {
-        error = Error::kInvalidArgs;
+        error = ERROR_INVALID_ARGS("{} is not a valid joiner type", aStr);
     }
+
     return error;
 }
 
 Error Interpreter::ParseChannelMask(ChannelMask &aChannelMask, const Expression &aExpr, size_t aIndex)
 {
-    Error error = Error::kNone;
+    Error error;
 
-    VerifyOrExit(aExpr.size() >= aIndex && ((aExpr.size() - aIndex) % 2 == 0), error = Error::kInvalidArgs);
+    VerifyOrExit(aExpr.size() >= aIndex && ((aExpr.size() - aIndex) % 2 == 0),
+                 error = ERROR_INVALID_ARGS("too few arguments"));
 
     for (size_t i = aIndex; i < aExpr.size(); i += 2)
     {
         ChannelMaskEntry entry;
-        SuccessOrExit(error = ParseInteger(entry.mPage, aExpr[i]), error = Error::kInvalidArgs);
-        SuccessOrExit(error = utils::Hex(entry.mMasks, aExpr[i + 1]), error = Error::kInvalidArgs);
-        VerifyOrExit(entry.mMasks.size() <= std::numeric_limits<uint8_t>::max(), error = Error::kInvalidArgs);
+        SuccessOrExit(error = ParseInteger(entry.mPage, aExpr[i]));
+        SuccessOrExit(error = utils::Hex(entry.mMasks, aExpr[i + 1]));
         aChannelMask.emplace_back(entry);
     }
 

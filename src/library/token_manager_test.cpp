@@ -104,22 +104,22 @@ TEST_CASE("signing-message", "[token]")
 
     TokenManager tokenManager{eventBase};
 
-    REQUIRE(tokenManager.Init(config) == Error::kNone);
+    REQUIRE(tokenManager.Init(config).NoError());
 
     ByteArray signedToken;
-    REQUIRE(utils::Hex(signedToken, kSignedToken) == Error::kNone);
+    REQUIRE(utils::Hex(signedToken, kSignedToken).NoError());
     REQUIRE(!tokenManager.IsValid());
-    REQUIRE(tokenManager.SetToken(signedToken, config.mTrustAnchor) == Error::kNone);
+    REQUIRE(tokenManager.SetToken(signedToken, config.mTrustAnchor).NoError());
     REQUIRE(tokenManager.IsValid());
     REQUIRE(tokenManager.GetToken() == signedToken);
 
     coap::Message pet{coap::Type::kConfirmable, coap::Code::kPost};
-    REQUIRE(pet.SetUriPath(uri::kPetitioning) == Error::kNone);
-    REQUIRE(AppendTlv(pet, {tlv::Type::kCommissionerId, config.mId}) == Error::kNone);
+    REQUIRE(pet.SetUriPath(uri::kPetitioning).NoError());
+    REQUIRE(AppendTlv(pet, {tlv::Type::kCommissionerId, config.mId}).NoError());
 
     ByteArray signature;
-    REQUIRE(tokenManager.SignMessage(signature, pet) == Error::kNone);
-    REQUIRE(tokenManager.VerifySignature(signature, pet) == Error::kNone);
+    REQUIRE(tokenManager.SignMessage(signature, pet).NoError());
+    REQUIRE(tokenManager.VerifySignature(signature, pet).NoError());
 }
 
 } // namespace commissioner

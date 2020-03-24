@@ -69,7 +69,7 @@ CommissioningSession::CommissioningSession(CommissionerImpl &aCommImpl,
 
 Error CommissioningSession::Start(ConnectHandler aOnConnected)
 {
-    Error error = Error::kNone;
+    Error error;
 
     auto dtlsConfig = GetDtlsConfig(mCommImpl.GetConfig());
     dtlsConfig.mPSK = mJoinerInfo.mPSKd;
@@ -89,20 +89,23 @@ exit:
 
 void CommissioningSession::Stop()
 {
-    mDtlsSession->Disconnect(Error::kAbort);
+    mDtlsSession->Disconnect(ERROR_ABORTED("the joiner commissioning session was aborted"));
 }
 
 Error CommissioningSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
 {
+    Error error;
+
     if (!aRecords.empty())
     {
-        int rval = mJoinerSocket->Send(&aRecords[0], aRecords.size());
-        if (rval < 0)
+        if (int fail = mJoinerSocket->Send(&aRecords[0], aRecords.size()))
         {
-            return Error::kTransportFailed;
+            ExitNow(error = ERROR_IO_ERROR("forwarding Joiner DTLS records failed: {}", fail));
         }
     }
-    return Error::kNone;
+
+exit:
+    return error;
 }
 
 void CommissioningSession::HandleJoinerSocketEvent(short aFlags)
@@ -110,16 +113,16 @@ void CommissioningSession::HandleJoinerSocketEvent(short aFlags)
     if (aFlags & EV_READ)
     {
         ByteArray buf;
-        if (mJoinerSocket->Receive(buf) != 0)
+        if (int fail = mJoinerSocket->Receive(buf))
         {
-            LOG_ERROR("forward joiner DTLS records to joiner failed");
+            LOG_ERROR("receiving DTLS records to joiner failed: {}", fail);
         }
         else
         {
             Error error = SendRlyTx(buf);
-            if (error != Error::kNone)
+            if (!error.NoError())
             {
-                LOG_ERROR("sending RLY_TX.ntf failed: {}", ErrorToString(error));
+                LOG_ERROR("sending RLY_TX.ntf failed: {}", error.ToString());
             }
         }
     }
@@ -127,7 +130,7 @@ void CommissioningSession::HandleJoinerSocketEvent(short aFlags)
 
 Error CommissioningSession::SendRlyTx(const ByteArray &aBuf)
 {
-    Error         error = Error::kNone;
+    Error         error;
     coap::Request rlyTx{coap::Type::kNonConfirmable, coap::Code::kPost};
 
     SuccessOrExit(error = rlyTx.SetUriPath(uri::kRelayTx));
@@ -144,7 +147,7 @@ Error CommissioningSession::SendRlyTx(const ByteArray &aBuf)
 
     mCommImpl.mBrClient.SendRequest(rlyTx, nullptr);
 
-    LOG_DEBUG("sent RLY_TX.ntf: joinerIID={}, length={}", utils::Hex(GetJoinerIid()), aBuf.size());
+    LOG_DEBUG("sent RLY_TX.ntf: joinerIID={}, dtlsMessagelength={}", utils::Hex(GetJoinerIid()), aBuf.size());
 
 exit:
     return error;
@@ -153,7 +156,7 @@ exit:
 void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
 {
     bool        accepted = false;
-    Error       error    = Error::kNone;
+    Error       error;
     tlv::TlvSet tlvSet;
     tlv::TlvPtr stateTlv              = nullptr;
     tlv::TlvPtr vendorNameTlv         = nullptr;
@@ -166,26 +169,25 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aJoinFin));
 
-    VerifyOrExit((stateTlv = tlvSet[tlv::Type::kState]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(stateTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((stateTlv = tlvSet[tlv::Type::kState]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid State TLV found"));
 
-    VerifyOrExit((vendorNameTlv = tlvSet[tlv::Type::kVendorName]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorNameTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorNameTlv = tlvSet[tlv::Type::kVendorName]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor Name TLV found"));
 
-    VerifyOrExit((vendorModelTlv = tlvSet[tlv::Type::kVendorModel]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorModelTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorModelTlv = tlvSet[tlv::Type::kVendorModel]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor Model TLV found"));
 
-    VerifyOrExit((vendorSwVersionTlv = tlvSet[tlv::Type::kVendorSWVersion]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorSwVersionTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorSwVersionTlv = tlvSet[tlv::Type::kVendorSWVersion]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor SW Version TLV found"));
 
-    VerifyOrExit((vendorStackVersionTlv = tlvSet[tlv::Type::kVendorStackVersion]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorStackVersionTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorStackVersionTlv = tlvSet[tlv::Type::kVendorStackVersion]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor Stack Version TLV found"));
 
     if (auto provisioningUrlTlv = tlvSet[tlv::Type::kProvisioningURL])
     {
         auto vendorDataTlv = tlvSet[tlv::Type::kVendorData];
-        VerifyOrExit(vendorDataTlv != nullptr, error = Error::kNotFound);
-        VerifyOrExit(vendorDataTlv->IsValid(), error = Error::kBadFormat);
+        VerifyOrExit(vendorDataTlv != nullptr, error = ERROR_BAD_FORMAT("no valid Vendor Data TLV found"));
 
         provisioningUrl = provisioningUrlTlv->GetValueAsString();
         vendorData      = vendorDataTlv->GetValue();
@@ -212,9 +214,9 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
     VerifyOrExit(accepted, error = Error::kReject);
 
 exit:
-    if (error != Error::kNone)
+    if (!error.NoError())
     {
-        LOG_WARN("handle JOIN_FIN.req failed: {}", ErrorToString(error));
+        LOG_WARN("handle JOIN_FIN.req failed: {}", error.ToString());
     }
 
     IgnoreError(SendJoinFinResponse(aJoinFin, accepted));
@@ -223,7 +225,7 @@ exit:
 
 Error CommissioningSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
 {
-    Error          error = Error::kNone;
+    Error          error;
     coap::Response joinFin{coap::Type::kAcknowledgment, coap::Code::kChanged};
     SuccessOrExit(error = AppendTlv(joinFin, {tlv::Type::kState, aAccept ? tlv::kStateAccept : tlv::kStateReject}));
 

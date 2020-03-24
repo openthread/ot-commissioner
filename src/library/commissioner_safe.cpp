@@ -50,12 +50,14 @@ std::shared_ptr<Commissioner> Commissioner::Create(const Config &aConfig, struct
     if (aEventBase == nullptr)
     {
         auto comm = std::make_shared<CommissionerSafe>();
-        return (comm->Init(aConfig) == Error::kNone) ? comm : nullptr;
+
+        // TODO(wgtdkp): pass the error to caller.
+        return comm->Init(aConfig).NoError() ? comm : nullptr;
     }
     else
     {
         auto comm = std::make_shared<CommissionerImpl>(aEventBase);
-        return (comm->Init(aConfig) == Error::kNone) ? comm : nullptr;
+        return comm->Init(aConfig).NoError() ? comm : nullptr;
     }
 }
 
@@ -67,16 +69,19 @@ CommissionerSafe::CommissionerSafe()
 
 Error CommissionerSafe::Init(const Config &aConfig)
 {
-    Error error = Error::kFailed;
+    Error error;
 
     SuccessOrExit(error = mImpl.Init(aConfig));
 
+    error = ERROR_IO_ERROR("init libevent failed");
     VerifyOrExit(mEventBase.Get() != nullptr);
     VerifyOrExit(evthread_use_pthreads() == 0);
     VerifyOrExit(evthread_make_base_notifiable(mEventBase.Get()) == 0);
 
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
+    error = ERROR_NONE;
+
 exit:
     return error;
 }
@@ -94,9 +99,9 @@ const Config &CommissionerSafe::GetConfig() const
 
 Error CommissionerSafe::Start()
 {
-    Error error = Error::kNone;
+    Error error;
 
-    VerifyOrExit(mEventThread == nullptr, error = Error::kAlready);
+    VerifyOrExit(mEventThread == nullptr, error = ERROR_INVALID_STATE("the commissioner is running"));
 
     mEventThread = std::make_shared<std::thread>([this]() { IgnoreError(mImpl.Start()); });
 

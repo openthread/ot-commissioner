@@ -67,7 +67,7 @@ public:
     using MilliSeconds = std::chrono::milliseconds;
     using Seconds      = std::chrono::seconds;
 
-    static std::shared_ptr<CommissionerApp> Create(const Config &aConfig);
+    static Error Create(std::shared_ptr<CommissionerApp> &aCommApp, const std::string &aConfigFile);
     ~CommissionerApp() = default;
 
     Error Start(std::string &aExistingCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);

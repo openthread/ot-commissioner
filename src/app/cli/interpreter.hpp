@@ -57,16 +57,29 @@ public:
     void AbortCommand();
 
 private:
-    struct Value
+    class Value
     {
-        Error       mError;
-        std::string mMessage;
+    public:
+        Value() = default;
 
-        Value(Error aError = Error::kNotImplemented, const std::string &aMessage = "")
-            : mError(aError)
-            , mMessage(aMessage)
+        // Allow implicit conversion from std::string to Value.
+        Value(std::string aData)
+            : mData(aData)
         {
         }
+
+        // Allow implicit conversion from Error to Value.
+        Value(Error aError)
+            : mError(aError)
+        {
+        }
+
+        std::string ToString() const;
+        bool        NoError() const;
+
+    private:
+        Error       mError;
+        std::string mData;
     };
 
     using Expression = std::vector<std::string>;

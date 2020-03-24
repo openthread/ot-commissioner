@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,12 +28,13 @@
 
 /**
  * @file
- *   The file defines errors.
+ *   The file includes definition of commissioner status.
  */
 
 #ifndef OT_COMM_ERROR_HPP_
 #define OT_COMM_ERROR_HPP_
 
+#include <memory>
 #include <string>
 
 #include <commissioner/defines.hpp>
@@ -42,36 +43,211 @@ namespace ot {
 
 namespace commissioner {
 
-enum class OT_COMM_MUST_USE_RESULT Error : int
+/**
+ * The canonical error codes for OT Commissioner APIs.
+ *
+ */
+enum class ErrorCode : int
 {
-    kNone = 0,        ///< No error.
-    kAbort,           ///< A request is aborted.
-    kAlready,         ///< Operation has already be executed.
-    kBadFormat,       ///< Request/Response is in bad format.
-    kBadOption,       ///< Request/Response has bad options.
-    kBusy,            ///< The commissioner is now busy.
-    kFailed,          ///< Generic failure.
-    kInvalidArgs,     ///< Invalid arguments.
-    kInvalidAddr,     ///< Invalid address.
-    kInvalidState,    ///< The commissioner is currently in invalid state.
-    kNotFound,        ///< Things not found.
-    kNotImplemented,  ///< Feature not implemented.
-    kOutOfMemory,     ///< Running out of memory.
-    kReject,          ///< Request is rejected.
-    kSecurity,        ///< Security related errors.
-    kTimeout,         ///< Request timeouted.
-    kTransportBusy,   ///< Transport level is now busy.
-    kTransportFailed, ///< Transport level failure.
+    /**
+     * Not an error; returned on success.
+     */
+    kNone = 0,
+
+    /**
+     * The operation was cancelled (typically by the caller).
+     */
+    kCancelled = 1,
+
+    /**
+     * Client specified invalid arguments that are problematic
+     * regardless of the state of the system (e.g., a malformed file name).
+     */
+    kInvalidArgs = 2,
+
+    /**
+     * Invalid CLI command.
+     */
+    kInvalidCommand = 3,
+
+    /**
+     * Timeout before operation could complete.  For operations
+     * that change the state of the system, this error may be returned
+     * even if the operation has completed successfully. For example, a
+     * successful response from a server could have been delayed long
+     * enough for the deadline to expire.
+     */
+    kTimeout = 4,
+
+    /**
+     * Some requested entity (e.g., TLV) was not found.
+     * For privacy reasons, this code *may* be returned when the client
+     * does not have the access right to the entity.
+     */
+    kNotFound = 5,
+
+    /**
+     * Security failures, such as signature validation, message signing
+     * and (D)TLS handshake failure.
+     */
+    kSecurity = 6,
+
+    /**
+     * Operation is not implemented or not supported/enabled in this service.
+     */
+    kUnimplemented = 7,
+
+    /**
+     * Message, TLV or encoded data is in bad format.
+     */
+    kBadFormat = 8,
+
+    /**
+     * The commissioner is busy that current request cannot be processed.
+     * It is mostly that the commissioner is receiving duplicate requests
+     * before finishing the previous one.
+     */
+    kBusy = 9,
+
+    /**
+     * Running out of memory.
+     */
+    kOutOfMemory = 10,
+
+    /**
+     * Read/write to file/socket failed.
+     */
+    kIOError = 11,
+
+    /**
+     * The file/socket is busy and read/write to file/socket will be blocked.
+     */
+    kIOBusy = 12,
+
+    /**
+     * Some entity that we attempted to create (e.g., CoAP resource)
+     * already exists.
+     */
+    kAlreadyExists = 13,
+
+    /**
+     * The operation, transaction or message exchange was aborted.
+     */
+    kAborted = 14,
+
+    /**
+     * The commissioner is not in a valid state that the operation can be processed.
+     */
+
+    kInvalidState = 15,
+
+    /**
+     * The operational has been rejected. For example, petition could be rejected
+     * because of existing active commissioner.
+     */
+    kRejected = 16,
+
+    /**
+     * The error is out of the address space of OT Commissioner/
+     */
+    kUnknown = 17,
 };
 
 /**
- * @brief Convert Error to printable string.
+ * Denotes error of a call in OT Commissioner.
  *
- * @param aError  An error code.
- *
- * @return The printable string of the error.
  */
-const std::string ErrorToString(const Error &aError);
+class OT_COMM_MUST_USE_RESULT Error
+{
+public:
+    /**
+     * The default error is none error.
+     *
+     */
+    Error() {}
+
+    /**
+     * Creates a error with the specified error code and message as a
+     * human-readable string containing more detailed information.
+     *
+     */
+    Error(ErrorCode aErrorCode, std::string aErrorMessage);
+
+    // Copy the specified status.
+    Error(const Error &aError);
+    Error &operator=(const Error &aError);
+    Error(Error &&aError) noexcept;
+    Error &operator=(Error &&aError) noexcept;
+
+    /**
+     * Returns true if there is no error.
+     *
+     */
+    bool NoError() const { return (mState == nullptr); }
+
+    ErrorCode GetCode() const { return NoError() ? ErrorCode::kNone : mState->mCode; }
+
+    const std::string &GetMessage() const { return NoError() ? EmptyString() : mState->mMessage; }
+
+    void SetMessage(const std::string &aMessage);
+
+    /**
+     * Returns a string representation of this error suitable for
+     * printing. Returns the string `"NONE"` for success.
+     *
+     */
+    std::string ToString() const;
+
+    /**
+     * Ignores any errors. This method does nothing except potentially suppress
+     * complaints from any tools that are checking that errors are not dropped on
+     * the floor.
+     *
+     */
+    void IgnoreError() const {}
+
+private:
+    static const std::string &EmptyString();
+
+    struct State
+    {
+        ErrorCode   mCode;
+        std::string mMessage;
+    };
+
+    // `None` error has a `NULL` mState. Otherwise, `mState` points to
+    // a `State` structure containing the error code and message(s).
+    // This is for performance, because a `None` error is the usual case.
+    std::unique_ptr<State> mState;
+};
+
+inline Error::Error(const Error &aError)
+    : mState((aError.mState == nullptr) ? nullptr : new State(*aError.mState))
+{
+}
+
+inline Error &Error::operator=(const Error &aError)
+{
+    if (mState != aError.mState)
+    {
+        mState.reset((aError.mState == nullptr) ? nullptr : new State(*aError.mState));
+    }
+    return *this;
+}
+
+inline Error::Error(Error &&aError) noexcept
+    : mState(std::move(aError.mState))
+{
+}
+
+inline Error &Error::operator=(Error &&aError) noexcept
+{
+    if (mState != aError.mState)
+    {
+        mState = std::move(aError.mState);
+    }
+    return *this;
+}
 
 } // namespace commissioner
 

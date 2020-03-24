@@ -129,18 +129,18 @@ TEST_CASE("coap-secure-basic", "[coaps]")
 
                           Response response{Type::kAcknowledgment, Code::kChanged};
                           response.Append("world");
-                          REQUIRE(coapsServer.SendResponse(aRequest, response) == Error::kNone);
+                          REQUIRE(coapsServer.SendResponse(aRequest, response).NoError());
                       }};
     REQUIRE(coapsServer.AddResource(resHello) == Error::kNone);
 
     auto onServerConnected = [&coapsServer](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError == Error::kNone);
+        REQUIRE(aError.NoError());
         REQUIRE(&aSession == &coapsServer.GetDtlsSession());
         REQUIRE(aSession.GetLocalPort() == kServerPort);
     };
 
-    REQUIRE(coapsServer.Init(config) == Error::kNone);
-    REQUIRE(coapsServer.Start(onServerConnected, kServerAddr, kServerPort) == Error::kNone);
+    REQUIRE(coapsServer.Init(config).NoError());
+    REQUIRE(coapsServer.Start(onServerConnected, kServerAddr, kServerPort).NoError());
 
     // Setup coap secure client
     config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
@@ -152,15 +152,15 @@ TEST_CASE("coap-secure-basic", "[coaps]")
     config.mOwnKey.push_back(0);
 
     CoapSecure coapsClient{eventBase, false};
-    REQUIRE(coapsClient.Init(config) == Error::kNone);
+    REQUIRE(coapsClient.Init(config).NoError());
     auto onClientConnected = [&coapsClient, eventBase](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError == Error::kNone);
+        REQUIRE(aError.NoError());
         REQUIRE(aSession.GetPeerPort() == kServerPort);
 
         Request request{Type::kConfirmable, Code::kPost};
-        REQUIRE(request.SetUriPath("/hello") == Error::kNone);
+        REQUIRE(request.SetUriPath("/hello").NoError());
         auto onResponse = [eventBase](const Response *aResponse, Error aError) {
-            REQUIRE(aError == Error::kNone);
+            REQUIRE(aError.NoError());
             REQUIRE(aResponse != nullptr);
             REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
             REQUIRE(aResponse->GetCode() == Code::kChanged);

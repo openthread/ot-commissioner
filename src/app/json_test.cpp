@@ -50,13 +50,13 @@ TEST_CASE("active-operational-dataset-encoding-decoding", "[json]")
 
     SECTION("network master key serialization & deserialization")
     {
-        REQUIRE(utils::Hex(dataset.mNetworkMasterKey, kNetworkMasterKey) == Error::kNone);
+        REQUIRE(utils::Hex(dataset.mNetworkMasterKey, kNetworkMasterKey).NoError());
         dataset.mPresentFlags |= ActiveOperationalDataset::kNetworkMasterKeyBit;
 
         std::string json = ActiveDatasetToJson(dataset);
 
         ActiveOperationalDataset dataset1;
-        REQUIRE(ActiveDatasetFromJson(dataset1, json) == Error::kNone);
+        REQUIRE(ActiveDatasetFromJson(dataset1, json).NoError());
 
         REQUIRE((dataset1.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit));
         REQUIRE(utils::Hex(dataset1.mNetworkMasterKey) == kNetworkMasterKey);
@@ -72,7 +72,7 @@ TEST_CASE("active-operational-dataset-encoding-decoding", "[json]")
         std::string              json = ActiveDatasetToJson(dataset);
         ActiveOperationalDataset dataset1;
         INFO(json);
-        REQUIRE(ActiveDatasetFromJson(dataset1, json) == Error::kNone);
+        REQUIRE(ActiveDatasetFromJson(dataset1, json).NoError());
 
         REQUIRE((dataset1.mPresentFlags & ActiveOperationalDataset::kSecurityPolicyBit));
         REQUIRE(dataset1.mSecurityPolicy.mFlags == ByteArray{0x05, 0xff});
@@ -85,7 +85,7 @@ TEST_CASE("active-operational-dataset-encoding-decoding", "[json]")
 
         std::string              json = ActiveDatasetToJson(dataset);
         ActiveOperationalDataset dataset1;
-        REQUIRE(ActiveDatasetFromJson(dataset1, json) == Error::kNone);
+        REQUIRE(ActiveDatasetFromJson(dataset1, json).NoError());
 
         REQUIRE((dataset1.mPresentFlags & ActiveOperationalDataset::kChannelMaskBit));
         REQUIRE(dataset1.mChannelMask.size() == 1);
