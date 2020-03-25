@@ -26,7 +26,10 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_subdirectory(Catch2/repo)
+if (OT_COMM_TEST)
+    add_subdirectory(Catch2/repo)
+endif()
+
 add_subdirectory(cn-cbor)
 add_subdirectory(COSE-C)
 add_subdirectory(fmtlib/repo)
