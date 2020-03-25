@@ -57,7 +57,6 @@ public:
     void AbortCommand();
 
 private:
-
     /**
      * The result value of an Expression processed by the Interpreter.
      * Specifically, it is an union of Error and std::string.
