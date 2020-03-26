@@ -53,11 +53,15 @@ target_link_libraries(commissioner-tests PRIVATE
 
 target_include_directories(commissioner-tests PRIVATE
     ${PROJECT_SOURCE_DIR}/src/app
-    ${PROJECT_SOURCE_DIR}/src/library
-    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-    ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-    ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
-    ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include)
+    ${PROJECT_SOURCE_DIR}/src/library)
+
+if(OT_COMM_USE_VENDORED_LIBS)
+    target_include_directories(commissioner-tests PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include)
+endif()
 
 add_custom_target(test-commissioner
     COMMAND ./commissioner-tests

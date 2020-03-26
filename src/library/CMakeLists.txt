@@ -85,15 +85,21 @@ target_link_libraries(commissioner PRIVATE
     mbedtls
     pthread
     fmt::fmt
+    libevent::libevent
+    cn-cbor::cn-cbor
+    cose-c::cose-c
     event_core_static
     event_pthreads_static
     commissioner-common)
 
 target_include_directories(commissioner PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(commissioner PRIVATE
-    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-    ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-    ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include)
+
+if(OT_COMM_USE_VENDORED_LIBS)
+    target_include_directories(commissioner PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include)
+endif()
 
 install(TARGETS commissioner
         LIBRARY DESTINATION lib

@@ -44,6 +44,9 @@ if(NOT "${CMAKE_CXX_STANDARD}")
 endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces")
 
 # Defines for mbedtls
@@ -66,7 +69,7 @@ else()
     find_package(mdns REQUIRED)
     find_package(mbedtls REQUIRED)
     find_package(libevent REQUIRED)
-    find_package(COSE-C REQUIRED)
+    find_package(cose-c REQUIRED)
     find_package(cn-cbor REQUIRED)
     if (OT_COMM_TEST)
         find_package(Catch2 REQUIRED)

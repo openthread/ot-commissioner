@@ -37,8 +37,12 @@ target_link_libraries(commissioner-app PUBLIC
 target_include_directories(commissioner-app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(commissioner-app PRIVATE
-    ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include)
+if(OT_COMM_USE_VENDORED_LIBS)
+    target_include_directories(commissioner-app PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include)
+else()
+    target_link_libraries(commissioner-app PRIVATE nlohmann_json::nlohmann_json)
+endif()
 
 install(DIRECTORY etc/commissioner
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ

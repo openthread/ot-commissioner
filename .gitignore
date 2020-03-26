@@ -63,3 +63,4 @@ doc
 __pycache__/
 venv/
 *.py[cod]
+/_build/
