@@ -43,3 +43,7 @@ set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "libevent disable benchmark" FORCE)
 add_subdirectory(libevent/repo)
 add_subdirectory(mbedtls/repo)
 add_subdirectory(mdns/repo)
+
+if(NOT TARGET mdns::mdns)
+add_library(mdns::mdns ALIAS mdns)
+endif()

@@ -48,6 +48,7 @@ target_link_libraries(commissioner-tests PRIVATE
     mbedtls
     pthread
     fmt::fmt
+    Catch2::Catch2
     event_core_static
     event_pthreads_static)
 

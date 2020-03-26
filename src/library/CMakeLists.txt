@@ -81,16 +81,17 @@ add_library(commissioner
     ${PROJECT_SOURCE_DIR}/include/commissioner/defines.hpp)
 target_link_libraries(commissioner PRIVATE
     cose
-    mdns
+    mdns::mdns
     mbedtls
     pthread
     fmt::fmt
-    libevent::libevent
     cn-cbor::cn-cbor
     cose-c::cose-c
-    event_core_static
+    event_core
     event_pthreads_static
-    commissioner-common)
+    commissioner-common
+    PUBLIC 
+    libevent::libevent mdns::mdns)
 
 target_include_directories(commissioner PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
