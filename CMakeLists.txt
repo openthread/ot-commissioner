@@ -46,25 +46,27 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wfatal-errors -Wno-missing-braces")
 
-# Defines for mbedtls
-set(MBEDTLS_USER_CONFIG ${PROJECT_SOURCE_DIR}/third_party/mbedtls/mbedtls_user_config.h)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMBEDTLS_USER_CONFIG_FILE='<${MBEDTLS_USER_CONFIG}>'")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMBEDTLS_USER_CONFIG_FILE='<${MBEDTLS_USER_CONFIG}>'")
-
 if(OT_COMM_USE_VENDORED_LIBS)
+    # Defines for mbedtls
+    set(MBEDTLS_USER_CONFIG ${PROJECT_SOURCE_DIR}/third_party/mbedtls/mbedtls_user_config.h)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMBEDTLS_USER_CONFIG_FILE='<${MBEDTLS_USER_CONFIG}>'")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMBEDTLS_USER_CONFIG_FILE='<${MBEDTLS_USER_CONFIG}>'")
     add_subdirectory(third_party EXCLUDE_FROM_ALL)
 else()
     find_package(fmt REQUIRED)
     find_package(nlohmann_json REQUIRED)
     find_package(mdns REQUIRED)
-    find_package(mbedtls REQUIRED)
-    find_package(libevent REQUIRED)
+    find_package(MbedTLS REQUIRED)
+    find_package(Libevent REQUIRED)
     find_package(cose-c REQUIRED)
     find_package(cn-cbor REQUIRED)
-    find_package(Catch2 REQUIRED)
+    if (OT_COMM_TEST)
+        find_package(Catch2 REQUIRED)
+    endif()
 endif()
 
 add_subdirectory(src)

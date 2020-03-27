@@ -45,5 +45,5 @@ add_subdirectory(mbedtls/repo)
 add_subdirectory(mdns/repo)
 
 if(NOT TARGET mdns::mdns)
-add_library(mdns::mdns ALIAS mdns)
+    add_library(mdns::mdns ALIAS mdns)
 endif()
