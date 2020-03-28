@@ -44,4 +44,10 @@ install(DIRECTORY etc/commissioner
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
         DESTINATION etc)
 
+if (BUILD_SHARED_LIBS)
+    install(TARGETS commissioner-app
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib)
+endif()
+
 add_subdirectory(cli)

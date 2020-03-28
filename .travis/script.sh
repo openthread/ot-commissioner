@@ -38,6 +38,7 @@ export PATH="${HOME}/.local/bin:$PATH"
 ## Build commissioner
 mkdir -p build && cd build
 cmake -GNinja \
+      -DBUILD_SHARED_LIBS="${OT_COMM_SHARED_LIB:=OFF}" \
       -DCMAKE_CXX_STANDARD="${OT_COMM_CXX_STANDARD}" \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_BUILD_TYPE=Release \
@@ -47,6 +48,8 @@ ninja
 
 ## Install
 sudo ninja install
+
+commissioner-cli -h
 
 ## Unit tests
 ./tests/unit/commissioner-tests
