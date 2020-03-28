@@ -79,10 +79,14 @@ add_library(commissioner
     ${PROJECT_SOURCE_DIR}/include/commissioner/network_data.hpp
     ${PROJECT_SOURCE_DIR}/include/commissioner/error.hpp
     ${PROJECT_SOURCE_DIR}/include/commissioner/defines.hpp)
+
 target_link_libraries(commissioner PRIVATE
+    cn-cbor
     cose
     mdns
     mbedtls
+    mbedx509
+    mbedcrypto
     fmt::fmt
     event_core
     event_pthreads
@@ -97,6 +101,30 @@ target_include_directories(commissioner PRIVATE
 install(TARGETS commissioner
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
+
+## Install third-party shared libraries. We need to install
+## those shared libraries to enable commissioner-cli.
+##
+## We here install the built .so files directly
+## because those third-party libraries are included
+## as EXCLUDE_FROM_ALL, which means `install()` is
+## not disabled for them (intended).
+if (BUILD_SHARED_LIBS)
+    install(FILES
+                $<TARGET_FILE:cn-cbor>
+                $<TARGET_FILE:cose>
+                $<TARGET_FILE:mdns>
+                $<TARGET_FILE:mbedtls>
+                $<TARGET_FILE:mbedx509>
+                $<TARGET_FILE:mbedcrypto>
+                $<TARGET_FILE:fmt::fmt>
+                $<TARGET_FILE:event_core_shared>
+                $<TARGET_FILE:event_pthreads_shared>
+            DESTINATION lib)
+
+    ## Update ldconfig links and caches.
+    install(CODE "execute_process(COMMAND sudo ldconfig)")
+endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
         DESTINATION include)

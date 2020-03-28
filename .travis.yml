@@ -54,7 +54,7 @@ jobs:
       os: linux
       compiler: clang
       script: .travis/script.sh
-    - env: OT_COMM_CXX_STANDARD=11
+    - env: OT_COMM_CXX_STANDARD=11 OT_COMM_SHARED_LIB=ON
       os: linux
       compiler: gcc
       script: .travis/script.sh

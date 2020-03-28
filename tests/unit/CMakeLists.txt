@@ -41,15 +41,18 @@ add_executable(commissioner-tests
     test_token_manager.cpp)
 
 target_link_libraries(commissioner-tests PRIVATE
-    commissioner-app
-    commissioner-common
+    cn-cbor
     cose
     mdns
     mbedtls
+    mbedx509
+    mbedcrypto
     pthread
     fmt::fmt
-    event_core_static
-    event_pthreads_static)
+    event_core
+    event_pthreads
+    commissioner-app
+    commissioner-common)
 
 target_include_directories(commissioner-tests PRIVATE
     ${PROJECT_SOURCE_DIR}/src/app
