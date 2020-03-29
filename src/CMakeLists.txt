@@ -31,6 +31,10 @@ if (CMAKE_BUILD_TYPE AND OT_COMM_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU
     add_link_options(--coverage)
 endif()
 
+## We don't use target-based functions for enforcing any targets
+## under this directory be compiled with the options.
+add_compile_options(-Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces)
+
 if (OT_COMM_APP)
     add_subdirectory(app)
 endif()

@@ -26,28 +26,42 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-app
-    commissioner_app.cpp
-    json.cpp)
+add_library(commissioner-app)
 
-target_link_libraries(commissioner-app PUBLIC
-    commissioner
-    commissioner-common)
+target_sources(commissioner-app
+    PRIVATE
+        commissioner_app.cpp
+        commissioner_app.hpp
+        json.cpp
+        json.hpp
+)
 
-target_include_directories(commissioner-app PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(commissioner-app
+    PUBLIC
+        commissioner
+        commissioner-common
+)
 
-target_include_directories(commissioner-app PRIVATE
-    ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include)
+target_include_directories(commissioner-app
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_include_directories(commissioner-app
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include
+)
 
 install(DIRECTORY etc/commissioner
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-        DESTINATION etc)
+        DESTINATION etc
+)
 
 if (BUILD_SHARED_LIBS)
     install(TARGETS commissioner-app
             LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib)
+            ARCHIVE DESTINATION lib
+    )
 endif()
 
 add_subdirectory(cli)

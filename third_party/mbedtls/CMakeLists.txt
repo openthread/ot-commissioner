@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,13 +26,26 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-if (CMAKE_BUILD_TYPE AND OT_COMM_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-g -O0 --coverage)
-    add_link_options(--coverage)
+## Mbedtls builds static libraries by default.
+if (BUILD_SHARED_LIBS)
+    set(USE_STATIC_MBEDTLS_LIBRARY OFF CACHE BOOL "disable static mbedtls library")
+    set(USE_SHARED_MBEDTLS_LIBRARY ON  CACHE BOOL "enable shared mbedtls libary")
 endif()
 
-## We don't use target-based functions for enforcing any targets
-## under this directory be compiled with the options.
-add_compile_options(-Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces)
+## We cannot use target-based functions before the targets are added.
+add_compile_definitions(MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h")
 
-add_subdirectory(unit)
+add_subdirectory(repo)
+
+## Include the user config file by absolute path to avoid exposing current directory.
+target_compile_definitions(mbedtls
+    PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)
+
+target_compile_definitions(mbedx509
+    PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)
+
+target_compile_definitions(mbedcrypto
+    PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)

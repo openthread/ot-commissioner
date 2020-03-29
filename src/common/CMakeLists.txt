@@ -26,16 +26,25 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-common
-    address.cpp
-    utils.cpp)
+add_library(commissioner-common)
 
-target_include_directories(commissioner-common PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR})
+target_sources(commissioner-common
+    PRIVATE
+        address.cpp
+        address.hpp
+        utils.cpp
+        utils.hpp
+)
+
+target_include_directories(commissioner-common
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 if (BUILD_SHARED_LIBS)
     install(TARGETS commissioner-common
             LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib)
+            ARCHIVE DESTINATION lib
+    )
 endif()

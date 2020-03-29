@@ -26,43 +26,52 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_executable(commissioner-tests
-    main.cpp
-    test_address.cpp
-    test_coap_secure.cpp
-    test_coap.cpp
-    test_commissioner_impl.cpp
-    test_cose.cpp
-    test_dtls.cpp
-    test_json.cpp
-    test_mesh_local_addr.cpp
-    test_pskc.cpp
-    test_socket.cpp
-    test_token_manager.cpp)
+add_executable(commissioner-tests)
 
-target_link_libraries(commissioner-tests PRIVATE
-    cn-cbor
-    cose
-    mdns
-    mbedtls
-    mbedx509
-    mbedcrypto
-    pthread
-    fmt::fmt
-    event_core
-    event_pthreads
-    commissioner-app
-    commissioner-common)
+target_sources(commissioner-tests
+    PRIVATE
+        main.cpp
+        test_address.cpp
+        test_coap_secure.cpp
+        test_coap.cpp
+        test_commissioner_impl.cpp
+        test_cose.cpp
+        test_dtls.cpp
+        test_json.cpp
+        test_mesh_local_addr.cpp
+        test_pskc.cpp
+        test_socket.cpp
+        test_token_manager.cpp
+)
 
-target_include_directories(commissioner-tests PRIVATE
-    ${PROJECT_SOURCE_DIR}/src/app
-    ${PROJECT_SOURCE_DIR}/src/library
-    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-    ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-    ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
-    ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include)
+target_link_libraries(commissioner-tests
+    PRIVATE
+        cn-cbor
+        cose
+        mdns
+        mbedtls
+        mbedx509
+        mbedcrypto
+        pthread
+        fmt::fmt
+        event_core
+        event_pthreads
+        commissioner-app
+        commissioner-common
+)
+
+target_include_directories(commissioner-tests
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/app
+        ${PROJECT_SOURCE_DIR}/src/library
+        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+)
 
 add_custom_target(test-commissioner
     COMMAND ./commissioner-tests
     DEPENDS commissioner-tests
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

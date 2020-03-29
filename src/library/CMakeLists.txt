@@ -26,81 +26,86 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner
-    openthread/bloom_filter.cpp
-    openthread/bloom_filter.hpp
-    openthread/crc16.cpp
-    openthread/crc16.hpp
-    openthread/pbkdf2_cmac.cpp
-    openthread/pbkdf2_cmac.hpp
-    openthread/random.cpp
-    openthread/random.hpp
-    openthread/README.md
-    openthread/sha256.cpp
-    openthread/sha256.hpp
-    cbor.cpp
-    cbor.hpp
-    coap.cpp
-    coap.hpp
-    coap_secure.hpp
-    commissioner_impl.cpp
-    commissioner_impl.hpp
-    commissioner_safe.cpp
-    commissioner_safe.hpp
-    commissioning_session.cpp
-    commissioning_session.hpp
-    cose.cpp
-    cose.hpp
-    cwt.hpp
-    dtls.cpp
-    dtls.hpp
-    endpoint.hpp
-    error.cpp
-    event.hpp
-    logging.cpp
-    logging.hpp
-    multicast_dns.cpp
-    multicast_dns.hpp
-    network_data.cpp
-    openthread
-    socket.cpp
-    socket.hpp
-    time.hpp
-    timer.hpp
-    tlv.cpp
-    tlv.hpp
-    token_manager.cpp
-    token_manager.hpp
-    udp_proxy.cpp
-    udp_proxy.hpp
-    uri.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/border_agent.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/commissioner.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/network_data.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/error.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/defines.hpp)
+add_library(commissioner)
 
-target_link_libraries(commissioner PRIVATE
-    cn-cbor
-    cose
-    mdns
-    mbedtls
-    mbedx509
-    mbedcrypto
-    fmt::fmt
-    event_core
-    event_pthreads
-    commissioner-common)
+target_sources(commissioner
+    PRIVATE
+        openthread/bloom_filter.cpp
+        openthread/bloom_filter.hpp
+        openthread/crc16.cpp
+        openthread/crc16.hpp
+        openthread/pbkdf2_cmac.cpp
+        openthread/pbkdf2_cmac.hpp
+        openthread/random.cpp
+        openthread/random.hpp
+        openthread/README.md
+        openthread/sha256.cpp
+        openthread/sha256.hpp
+        cbor.cpp
+        cbor.hpp
+        coap.cpp
+        coap.hpp
+        coap_secure.hpp
+        commissioner_impl.cpp
+        commissioner_impl.hpp
+        commissioner_safe.cpp
+        commissioner_safe.hpp
+        commissioning_session.cpp
+        commissioning_session.hpp
+        cose.cpp
+        cose.hpp
+        cwt.hpp
+        dtls.cpp
+        dtls.hpp
+        endpoint.hpp
+        error.cpp
+        event.hpp
+        logging.cpp
+        logging.hpp
+        multicast_dns.cpp
+        multicast_dns.hpp
+        network_data.cpp
+        openthread
+        socket.cpp
+        socket.hpp
+        time.hpp
+        timer.hpp
+        tlv.cpp
+        tlv.hpp
+        token_manager.cpp
+        token_manager.hpp
+        udp_proxy.cpp
+        udp_proxy.hpp
+        uri.hpp
+)
 
-target_include_directories(commissioner PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(commissioner PRIVATE
-    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-    ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-    ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include)
+target_link_libraries(commissioner
+    PRIVATE
+        cn-cbor
+        cose
+        mdns
+        mbedtls
+        mbedx509
+        mbedcrypto
+        fmt::fmt
+        event_core
+        event_pthreads
+        commissioner-common
+)
+
+target_include_directories(commissioner
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+)
 
 install(TARGETS commissioner
         LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+        ARCHIVE DESTINATION lib
+)
 
 ## Install third-party shared libraries. We need to install
 ## those shared libraries to enable commissioner-cli.
@@ -108,7 +113,7 @@ install(TARGETS commissioner
 ## We here install the built .so files directly
 ## because those third-party libraries are included
 ## as EXCLUDE_FROM_ALL, which means `install()` is
-## not disabled for them (intended).
+## disabled for them (intended).
 if (BUILD_SHARED_LIBS)
     install(FILES
                 $<TARGET_FILE:cn-cbor>
@@ -120,11 +125,13 @@ if (BUILD_SHARED_LIBS)
                 $<TARGET_FILE:fmt::fmt>
                 $<TARGET_FILE:event_core_shared>
                 $<TARGET_FILE:event_pthreads_shared>
-            DESTINATION lib)
+            DESTINATION lib
+    )
 
     ## Update ldconfig links and caches.
     install(CODE "execute_process(COMMAND sudo ldconfig)")
 endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
-        DESTINATION include)
+        DESTINATION include
+)
