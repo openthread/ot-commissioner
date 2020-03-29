@@ -70,16 +70,6 @@ public:
     static std::shared_ptr<CommissionerApp> Create(const Config &aConfig);
     ~CommissionerApp() = default;
 
-    // Discover Border Agent on link-local network.
-    Error Discover();
-
-    // Return all Border Agent ranked by the order they are discovered.
-    const std::list<BorderAgent> &GetBorderAgentList() const;
-
-    // Return the discovered Border Agent matching the given Thread network name.
-    // Set @p aNetworkName to empty to match any network name.
-    const BorderAgent *GetBorderAgent(const std::string &aNetworkName);
-
     Error Start(std::string &aExistingCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
     void  Stop();
 
@@ -265,7 +255,6 @@ private:
     PendingOperationalDataset mPendingDataset;
     CommissionerDataset       mCommDataset;
     BbrDataset                mBbrDataset;
-    std::list<BorderAgent>    mBorderAgents;
 };
 
 } // namespace commissioner

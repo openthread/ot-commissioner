@@ -96,9 +96,6 @@ public:
     // Stop the commissioner running in background.
     void Stop() override;
 
-    void  Discover(Handler<std::list<BorderAgent>> aHandler) override;
-    Error Discover(std::list<BorderAgent> &aBorderAgentList) override;
-
     void  Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error Connect(const std::string &aAddr, uint16_t aPort) override;
 

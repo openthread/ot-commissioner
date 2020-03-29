@@ -32,6 +32,8 @@ target_sources(commissioner-app
     PRIVATE
         commissioner_app.cpp
         commissioner_app.hpp
+        border_agent.cpp
+        border_agent.hpp
         file_logger.cpp
         file_logger.hpp
         file_util.cpp

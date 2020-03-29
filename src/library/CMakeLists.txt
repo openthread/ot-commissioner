@@ -51,8 +51,6 @@ target_sources(commissioner
         event.hpp
         logging.cpp
         logging.hpp
-        multicast_dns.cpp
-        multicast_dns.hpp
         network_data.cpp
         openthread/bloom_filter.cpp
         openthread/bloom_filter.hpp
