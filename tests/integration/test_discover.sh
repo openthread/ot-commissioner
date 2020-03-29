@@ -39,6 +39,6 @@ test_discover() {
     send_command_to_commissioner "borderagent discover"
 
     ## TODO(wgtdkp): verify the output
-    send_command_to_commissioner "borderagent list"
+
     stop_commissioner
 }
