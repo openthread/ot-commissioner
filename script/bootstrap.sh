@@ -81,6 +81,7 @@ if [ "$(uname)" = "Linux" ]; then
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         pip install -U pip
+        pip install -U scikit-build
         pip install -U cmake
     }
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
