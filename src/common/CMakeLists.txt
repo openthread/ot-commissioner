@@ -38,7 +38,7 @@ target_sources(commissioner-common
 )
 
 target_link_libraries(commissioner-common
-    PRIVATE fmt::fmt
+    PUBLIC fmt::fmt
 )
 
 target_include_directories(commissioner-common
