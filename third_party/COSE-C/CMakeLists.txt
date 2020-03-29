@@ -68,6 +68,5 @@ target_link_libraries(cose
 )
 
 target_include_directories(cose
-    PUBLIC  repo/include
-    PRIVATE ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
 )

@@ -94,12 +94,7 @@ target_link_libraries(commissioner
 )
 
 target_include_directories(commissioner
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/include
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
 
 install(TARGETS commissioner

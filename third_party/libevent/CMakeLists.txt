@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,50 +26,19 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_executable(commissioner-tests)
+if (BUILD_SHARED_LIBS)
+    set(EVENT__LIBRARY_TYPE "SHARED" CACHE BOOL "libevent build shared libraries" FORCE)
+else()
+    set(EVENT__LIBRARY_TYPE "STATIC" CACHE BOOL "libevent build static libraries" FORCE)
+endif()
+set(EVENT__DISABLE_OPENSSL ON CACHE BOOL "libevent disable OpenSSL" FORCE)
+set(EVENT__DISABLE_SAMPLES ON CACHE BOOL "libevent disable samples" FORCE)
+set(EVENT__DISABLE_REGRESS ON CACHE BOOL "libevent disable regression tests" FORCE)
+set(EVENT__DISABLE_TESTS ON CACHE BOOL "libevent disable tests" FORCE)
+set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "libevent disable benchmark" FORCE)
+add_subdirectory(repo)
 
-target_sources(commissioner-tests
-    PRIVATE
-        main.cpp
-        test_address.cpp
-        test_coap_secure.cpp
-        test_coap.cpp
-        test_commissioner_impl.cpp
-        test_cose.cpp
-        test_dtls.cpp
-        test_json.cpp
-        test_mesh_local_addr.cpp
-        test_pskc.cpp
-        test_socket.cpp
-        test_token_manager.cpp
-)
-
-target_link_libraries(commissioner-tests
-    PRIVATE
-        cn-cbor
-        cose
-        mdns
-        mbedtls
-        mbedx509
-        mbedcrypto
-        pthread
-        fmt::fmt
-        event_core
-        event_pthreads
-        commissioner
-        commissioner-app
-        commissioner-common
-)
-
-target_include_directories(commissioner-tests
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/app
-        ${PROJECT_SOURCE_DIR}/src/library
-        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-)
-
-add_custom_target(test-commissioner
-    COMMAND ./commissioner-tests
-    DEPENDS commissioner-tests
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+target_include_directories(event_core
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
 )

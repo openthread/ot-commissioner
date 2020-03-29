@@ -41,11 +41,20 @@ add_subdirectory(repo)
 target_compile_definitions(mbedtls
     PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
 )
+target_include_directories(mbedtls
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)
 
 target_compile_definitions(mbedx509
     PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
 )
+target_include_directories(mbedx509
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)
 
 target_compile_definitions(mbedcrypto
     PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)
+target_include_directories(mbedcrypto
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
 )
