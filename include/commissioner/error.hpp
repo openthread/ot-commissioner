@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   The file includes definition of commissioner status.
+ *   The file includes definition of commissioner error.
  */
 
 #ifndef OT_COMM_ERROR_HPP_
@@ -173,7 +173,7 @@ public:
      */
     Error(ErrorCode aErrorCode, std::string aErrorMessage);
 
-    // Copy the specified status.
+    // Copy the specified error.
     Error(const Error &aError);
     Error &operator=(const Error &aError);
     Error(Error &&aError) noexcept;
