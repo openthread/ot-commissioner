@@ -162,6 +162,7 @@ if (OT_COMM_TEST)
             fmt::fmt
             event_core
             event_pthreads
+            commissioner
             commissioner-common
             commissioner-app-test
             commissioner-common-test

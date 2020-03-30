@@ -79,9 +79,7 @@ if (OT_COMM_TEST)
     )
 
     target_link_libraries(commissioner-app-test
-        PRIVATE
-            commissioner
-            commissioner-common
+        PRIVATE commissioner-app
     )
 
     target_include_directories(commissioner-app-test
