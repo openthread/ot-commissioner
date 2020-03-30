@@ -60,9 +60,9 @@ static int HandleRecord(const struct sockaddr *from,
 
 Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout)
 {
-    static constexpr size_t kDefaultBufferSize = 1024 * 16;
-    static constexpr mdns_record_type_t kMdnsQueryType = MDNS_RECORDTYPE_PTR;
-    static const char *        kServiceName   = "_meshcop._udp.local";
+    static constexpr size_t             kDefaultBufferSize = 1024 * 16;
+    static constexpr mdns_record_type_t kMdnsQueryType     = MDNS_RECORDTYPE_PTR;
+    static const char *                 kServiceName       = "_meshcop._udp.local";
 
     Error   error = Error::kNone;
     uint8_t buf[kDefaultBufferSize];
@@ -116,15 +116,15 @@ static inline std::string ToString(const mdns_string_t &aString)
  *
  */
 static int HandleRecord(const struct sockaddr *from,
-                                     mdns_entry_type_t      entry,
-                                     uint16_t               type,
-                                     uint16_t               rclass,
-                                     uint32_t               ttl,
-                                     const void *           data,
-                                     size_t                 size,
-                                     size_t                 offset,
-                                     size_t                 length,
-                                     void *                 border_agent)
+                        mdns_entry_type_t      entry,
+                        uint16_t               type,
+                        uint16_t               rclass,
+                        uint32_t               ttl,
+                        const void *           data,
+                        size_t                 size,
+                        size_t                 offset,
+                        size_t                 length,
+                        void *                 border_agent)
 {
     Error                   error = Error::kNone;
     struct sockaddr_storage fromAddrStorage;
@@ -133,16 +133,15 @@ static int HandleRecord(const struct sockaddr *from,
     std::string             entryType;
     char                    nameBuffer[256];
 
-    BorderAgentOrErrorMsg &borderAgentOrErrorMsg = *reinterpret_cast<BorderAgentOrErrorMsg*>(border_agent);
-    BorderAgent &borderAgent = borderAgentOrErrorMsg.mBorderAgent;
-    std::string &errorMsg = borderAgentOrErrorMsg.mErrorMsg;
+    BorderAgentOrErrorMsg &borderAgentOrErrorMsg = *reinterpret_cast<BorderAgentOrErrorMsg *>(border_agent);
+    BorderAgent &          borderAgent           = borderAgentOrErrorMsg.mBorderAgent;
+    std::string &          errorMsg              = borderAgentOrErrorMsg.mErrorMsg;
 
     (void)rclass;
     (void)ttl;
 
     *reinterpret_cast<struct sockaddr *>(&fromAddrStorage) = *from;
-    if (fromAddr.Set(fromAddrStorage) != Error::kNone ||
-        fromAddr.ToString(fromAddrStr) != Error::kNone)
+    if (fromAddr.Set(fromAddrStorage) != Error::kNone || fromAddr.ToString(fromAddrStr) != Error::kNone)
     {
         ExitNow(errorMsg = "invalid source address of mDNS response");
     }
@@ -171,8 +170,7 @@ static int HandleRecord(const struct sockaddr *from,
         mdns_record_parse_a(data, size, offset, length, &addr);
 
         *reinterpret_cast<struct sockaddr_in *>(&addrStorage) = addr;
-        if (fromAddr.Set(addrStorage) != Error::kNone ||
-            fromAddr.ToString(addrStr) != Error::kNone)
+        if (fromAddr.Set(addrStorage) != Error::kNone || fromAddr.ToString(addrStr) != Error::kNone)
         {
             ExitNow(errorMsg = "invalid IPv4 address in A record");
         }
@@ -193,8 +191,7 @@ static int HandleRecord(const struct sockaddr *from,
         mdns_record_parse_aaaa(data, size, offset, length, &addr);
 
         *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
-        if (fromAddr.Set(addrStorage) != Error::kNone ||
-            fromAddr.ToString(addrStr) != Error::kNone)
+        if (fromAddr.Set(addrStorage) != Error::kNone || fromAddr.ToString(addrStr) != Error::kNone)
         {
             ExitNow(errorMsg = "invalid IPv6 address in AAAA record");
         }
@@ -207,7 +204,8 @@ static int HandleRecord(const struct sockaddr *from,
         mdns_record_txt_t txtBuffer[128];
         size_t            parsed;
 
-        parsed = mdns_record_parse_txt(data, size, offset, length, txtBuffer, sizeof(txtBuffer) / sizeof(mdns_record_txt_t));
+        parsed =
+            mdns_record_parse_txt(data, size, offset, length, txtBuffer, sizeof(txtBuffer) / sizeof(mdns_record_txt_t));
 
         for (size_t i = 0; i < parsed; ++i)
         {
