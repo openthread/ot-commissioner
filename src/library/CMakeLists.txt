@@ -168,7 +168,11 @@ if (OT_COMM_TEST)
     )
 
     target_include_directories(commissioner-test
-        PRIVATE ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+            ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
+            ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
     )
 
     set_target_properties(commissioner-test
