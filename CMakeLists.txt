@@ -46,8 +46,5 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(src)
 
-if (OT_COMM_TEST)
-    add_subdirectory(tests)
-endif()
 add_subdirectory(tools)
 add_subdirectory(third_party EXCLUDE_FROM_ALL)

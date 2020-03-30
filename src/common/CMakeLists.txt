@@ -48,3 +48,21 @@ if (BUILD_SHARED_LIBS)
             ARCHIVE DESTINATION lib
     )
 endif()
+
+if (OT_COMM_TEST)
+    add_library(commissioner-common-test)
+
+    target_sources(commissioner-common-test
+        PRIVATE
+            address.hpp
+            address_test.cpp
+    )
+
+    target_link_libraries(commissioner-common-test
+        PRIVATE commissioner-common
+    )
+
+    target_include_directories(commissioner-common-test
+        PRIVATE ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+    )
+endif()
