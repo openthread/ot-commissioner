@@ -69,24 +69,22 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
-if (OT_COMM_TEST)
-    add_library(commissioner-app-test)
+add_library(commissioner-app-test EXCLUDE_FROM_ALL)
 
-    target_sources(commissioner-app-test
-        PRIVATE
-            json.hpp
-            json_test.cpp
-    )
+target_sources(commissioner-app-test
+    PRIVATE
+        json.hpp
+        json_test.cpp
+)
 
-    target_link_libraries(commissioner-app-test
-        PRIVATE commissioner-app
-    )
+target_link_libraries(commissioner-app-test
+    PRIVATE commissioner-app
+)
 
-    target_include_directories(commissioner-app-test
-        PRIVATE
-            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-            ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include
-    )
-endif()
+target_include_directories(commissioner-app-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+        ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include
+)
 
 add_subdirectory(cli)

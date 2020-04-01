@@ -130,54 +130,52 @@ endif()
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
         DESTINATION include)
 
-if (OT_COMM_TEST)
-    add_executable(commissioner-test)
+add_executable(commissioner-test $<$<NOT:OT_COMM_TEST>:EXCLUDE_FROM_ALL>)
 
-    target_sources(commissioner-test
-        PRIVATE
-            coap_secure.hpp
-            coap_secure_test.cpp
-            coap.hpp
-            coap_test.cpp
-            commissioner_impl.hpp
-            commissioner_impl_test.cpp
-            cose.hpp
-            cose_test.cpp
-            dtls.hpp
-            dtls_test.cpp
-            socket.hpp
-            socket_test.cpp
-            token_manager.hpp
-            token_manager_test.cpp
-    )
+target_sources(commissioner-test
+    PRIVATE
+        coap_secure.hpp
+        coap_secure_test.cpp
+        coap.hpp
+        coap_test.cpp
+        commissioner_impl.hpp
+        commissioner_impl_test.cpp
+        cose.hpp
+        cose_test.cpp
+        dtls.hpp
+        dtls_test.cpp
+        socket.hpp
+        socket_test.cpp
+        token_manager.hpp
+        token_manager_test.cpp
+)
 
-    target_link_libraries(commissioner-test
-        PRIVATE
-            cn-cbor
-            cose
-            mdns
-            mbedtls
-            mbedx509
-            mbedcrypto
-            fmt::fmt
-            event_core
-            event_pthreads
-            commissioner
-            commissioner-common
-            commissioner-app-test
-            commissioner-common-test
-    )
+target_link_libraries(commissioner-test
+    PRIVATE
+        cn-cbor
+        cose
+        mdns
+        mbedtls
+        mbedx509
+        mbedcrypto
+        fmt::fmt
+        event_core
+        event_pthreads
+        commissioner
+        commissioner-common
+        commissioner-app-test
+        commissioner-common-test
+)
 
-    target_include_directories(commissioner-test
-        PRIVATE
-            ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-            ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-            ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
-            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-    )
+target_include_directories(commissioner-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+)
 
-    set_target_properties(commissioner-test
-        PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
-    )
-endif()
+set_target_properties(commissioner-test
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+)
