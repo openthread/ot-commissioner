@@ -610,7 +610,7 @@ void Coap::Retransmit(Timer &)
             mRequestsCache.Put(requestHolder);
 
             std::string uri;
-            requestHolder.mRequest->GetUriPath(uri);
+            IgnoreError(requestHolder.mRequest->GetUriPath(uri));
 
             // Retransmit
             if (!requestHolder.mAcknowledged)

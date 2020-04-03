@@ -76,13 +76,10 @@
         goto exit;   \
     } while (false)
 
-#define IgnoreError(aError)                               \
-    do                                                    \
-    {                                                     \
-        if ((aError) != ::ot::commissioner::Error::kNone) \
-        {                                                 \
-        }                                                 \
-    } while (false)
+static inline void IgnoreError(ot::commissioner::Error aError)
+{
+    (void)aError;
+}
 
 namespace ot {
 
