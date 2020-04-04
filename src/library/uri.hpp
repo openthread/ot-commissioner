@@ -44,7 +44,9 @@ namespace uri {
  * Thread MeshCoP URIs
  */
 static const char *const kPetitioning         = "/c/cp";
+static const char *const kLeaderPetitioning   = "/c/lp";
 static const char *const kKeepAlive           = "/c/ca";
+static const char *const kLeaderKeepAlive     = "/c/la";
 static const char *const kUdpRx               = "/c/ur";
 static const char *const kUdpTx               = "/c/ut";
 static const char *const kRelayRx             = "/c/rx";

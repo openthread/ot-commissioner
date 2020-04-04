@@ -369,19 +369,25 @@ Error TokenManager::PrepareSigningContent(ByteArray &aContent, const coap::Messa
     Error         error;
     coap::Message message{aMessage.GetType(), aMessage.GetCode()};
     tlv::TlvSet   tlvSet;
-    std::string   uri;
+    std::string   signingUri;
     bool          isActiveSet  = false;
     bool          isPendingSet = false;
     ByteArray     content;
 
-    VerifyOrExit(aMessage.GetUriPath(uri) == ErrorCode::kNone,
+    VerifyOrExit(aMessage.GetUriPath(signingUri) == ErrorCode::kNone,
                  error = ERROR_INVALID_ARGS("the CoAP message has no valid URI Path option"));
 
-    isActiveSet  = uri == uri::kMgmtActiveSet;
-    isPendingSet = uri == uri::kMgmtPendingSet;
+    isActiveSet  = signingUri == uri::kMgmtActiveSet;
+    isPendingSet = signingUri == uri::kMgmtPendingSet;
+
+    if (signingUri == uri::kPetitioning) {
+        signingUri = uri::kLeaderPetitioning;
+    } else if (signingUri == uri::kKeepAlive) {
+        signingUri = uri::kLeaderKeepAlive;
+    }
 
     // Prepare serialized URI
-    SuccessOrExit(error = message.SetUriPath(uri));
+    SuccessOrExit(error = message.SetUriPath(signingUri));
     SuccessOrExit(error = message.Serialize(content));
     content.erase(content.begin(), content.begin() + message.GetHeaderLength());
 
