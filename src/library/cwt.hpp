@@ -51,7 +51,7 @@ static const int kGrantType           = 33;
 static const int kGrantTypeClientCred = 2;
 static const int kClientId            = 24;
 static const int kReqAud              = 3;
-static const int kReqCnf              = 12;
+static const int kReqCnf              = 4;
 static const int kCoseKey             = 1;
 
 } // namespace cwt
