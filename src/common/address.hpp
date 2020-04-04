@@ -77,6 +77,7 @@ public:
 
     Error ToString(std::string &aAddr) const;
 
+    // Invalid address string is not acceptable.
     static Address FromString(const std::string &aAddr);
 
 private:

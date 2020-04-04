@@ -39,6 +39,12 @@
 #include <cstddef>
 #include <vector>
 
+#if defined(__clang__)
+#define OT_COMM_MUST_USE_RESULT __attribute__((warn_unused_result))
+#else
+#define OT_COMM_MUST_USE_RESULT
+#endif
+
 namespace ot {
 
 namespace commissioner {

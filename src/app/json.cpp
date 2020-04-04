@@ -55,7 +55,7 @@ template <> struct adl_serializer<ot::commissioner::ByteArray>
     static void from_json(const json &aJson, ot::commissioner::ByteArray &aBuf)
     {
         // FIXME(wgtdkp): handle the failure
-        ot::commissioner::utils::Hex(aBuf, aJson.get<std::string>());
+        IgnoreError(::ot::commissioner::utils::Hex(aBuf, aJson.get<std::string>()));
     }
 };
 } // namespace nlohmann

@@ -161,11 +161,11 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     , mJoinerInfoRequester(nullptr)
     , mCommissioningHandler(nullptr)
 {
-    mBrClient.AddResource(mResourceUdpRx);
-    mBrClient.AddResource(mResourceRlyRx);
-    mProxyClient.AddResource(mResourceDatasetChanged);
-    mProxyClient.AddResource(mResourcePanIdConflict);
-    mProxyClient.AddResource(mResourceEnergyReport);
+    ASSERT(mBrClient.AddResource(mResourceUdpRx) == Error::kNone);
+    ASSERT(mBrClient.AddResource(mResourceRlyRx) == Error::kNone);
+    ASSERT(mProxyClient.AddResource(mResourceDatasetChanged) == Error::kNone);
+    ASSERT(mProxyClient.AddResource(mResourcePanIdConflict) == Error::kNone);
+    ASSERT(mProxyClient.AddResource(mResourceEnergyReport) == Error::kNone);
 }
 
 CommissionerImpl::~CommissionerImpl()
@@ -416,7 +416,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
     // If Get TLV is not present, get all Commissioner Dataset TLVs.
     if (!tlvTypes.empty())
     {
-        AppendTlv(request, {tlv::Type::kGet, tlvTypes});
+        SuccessOrExit(AppendTlv(request, {tlv::Type::kGet, tlvTypes}));
     }
 
     error = Error::kNone;
@@ -1236,8 +1236,8 @@ Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
 
     SuccessOrExit(error = mTokenManager.SignMessage(signature, aRequest));
 
-    AppendTlv(aRequest, {tlv::Type::kCommissionerToken, mTokenManager.GetToken(), aScope});
-    AppendTlv(aRequest, {tlv::Type::kCommissionerSignature, signature, aScope});
+    SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kCommissionerToken, mTokenManager.GetToken(), aScope}));
+    SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kCommissionerSignature, signature, aScope}));
 
 exit:
     return error;
@@ -1928,8 +1928,9 @@ exit:
 
 void CommissionerImpl::HandleDatasetChanged(const coap::Request &aRequest)
 {
-    std::string peerAddr;
-    aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr);
+    std::string peerAddr = "unknown address";
+
+    IgnoreError(aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr));
 
     LOG_INFO("received MGMT_DATASET_CHANGED.ntf from {}", peerAddr);
 
@@ -1947,8 +1948,9 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
     tlv::TlvSet tlvSet;
     ChannelMask channelMask;
     uint16_t    panId;
-    std::string peerAddr;
-    aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr);
+    std::string peerAddr = "unknown address";
+
+    IgnoreError(aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr));
 
     LOG_INFO("received MGMT_PANID_CONFLICT.ans from {}", peerAddr);
 
@@ -1988,8 +1990,9 @@ void CommissionerImpl::HandleEnergyReport(const coap::Request &aRequest)
     tlv::TlvSet tlvSet;
     ChannelMask channelMask;
     ByteArray   energyList;
-    std::string peerAddr;
-    aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr);
+    std::string peerAddr = "unknown address";
+
+    IgnoreError(aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr));
 
     LOG_INFO("received MGMT_ED_REPORT.ans from {}", peerAddr);
 
@@ -2122,8 +2125,8 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
                      .first;
             auto &session = it->second;
 
-            std::string peerAddr = "unknown";
-            session.GetPeerAddr().ToString(peerAddr);
+            std::string peerAddr = "unknown address";
+            IgnoreError(session.GetPeerAddr().ToString(peerAddr));
 
             LOG_DEBUG("received a new joiner(IID={}) DTLS connection from [{}]:{}", utils::Hex(session.GetJoinerIid()),
                       peerAddr, session.GetPeerPort());
@@ -2156,7 +2159,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
         ASSERT(it != mCommissioningSessions.end());
         auto &session = it->second;
-        session.RecvJoinerDtlsRecords(dtlsRecords);
+        SuccessOrExit(error = session.RecvJoinerDtlsRecords(dtlsRecords));
     }
 
 exit:

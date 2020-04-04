@@ -131,7 +131,7 @@ TEST_CASE("coap-secure-basic", "[coaps]")
                           response.Append("world");
                           REQUIRE(coapsServer.SendResponse(aRequest, response) == Error::kNone);
                       }};
-    coapsServer.AddResource(resHello);
+    REQUIRE(coapsServer.AddResource(resHello) == Error::kNone);
 
     auto onServerConnected = [&coapsServer](const DtlsSession &aSession, Error aError) {
         REQUIRE(aError == Error::kNone);
