@@ -47,6 +47,33 @@ match_version() {
     fi
 }
 
+## Args: $1 CMake Version. for example, "3.16.1". Reference to
+##       https://cmake.org/files/ for all available versions.
+install_cmake() {
+    local version=$1
+    local short_version=${version%.*}
+
+    if [ ! -d cmake-${version} ]; then
+        wget "https://cmake.org/files/v${short_version}/cmake-${version}.tar.gz"
+        tar -xvzf cmake-${version}.tar.gz
+    fi
+
+    local cpu_num=$(grep -c ^processor /proc/cpuinfo)
+    if [ ${cpu_num} -gt 1 ]; then
+        concurrency=$((cpu_num/2))
+    else
+        concurrency=1
+    fi
+
+    cd cmake-${version}
+    ./bootstrap --prefix=/usr --parallel=${concurrency} -- -DCMAKE_BUILD_TYPE:STRING=Release
+    make -j${concurrency}
+    sudo make install
+    cd -
+
+    rm -rf cmake-${version}.tar.gz cmake-${version}
+}
+
 ## Install packages
 if [ "$(uname)" = "Linux" ]; then
     echo "OS is Linux"
@@ -67,13 +94,12 @@ if [ "$(uname)" = "Linux" ]; then
 
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
-        sudo apt-get install -y pytho3-setuptools python3-pip
-        pip3 install -U scikit-build
-        pip3 install -U cmake
+        install_cmake "3.16.1"
+        cmake --version
     }
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         echo "error: cmake version($(cmake --version)) < ${MIN_CMAKE_VERSION}."
-        echo "Did you forget to add '\$HOME/.local/bin' to beginning of your PATH?"
+        echo "Did you forget to add '/usr/bin' to beginning of your PATH?"
         exit 1
     }
 
