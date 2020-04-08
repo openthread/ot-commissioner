@@ -31,8 +31,8 @@
  *   This file includes definitions for handling UDP proxy commands.
  */
 
-#ifndef UDP_PROXY_HPP_
-#define UDP_PROXY_HPP_
+#ifndef OT_COMM_LIBRARY_UDP_PROXY_HPP_
+#define OT_COMM_LIBRARY_UDP_PROXY_HPP_
 
 #include <commissioner/error.hpp>
 
@@ -110,4 +110,4 @@ private:
 
 } // namespace ot
 
-#endif // UDP_PROXY_HPP_
+#endif // OT_COMM_LIBRARY_UDP_PROXY_HPP_

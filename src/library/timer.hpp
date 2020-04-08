@@ -26,8 +26,8 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TIMER_HPP_
-#define TIMER_HPP_
+#ifndef OT_COMM_LIBRARY_TIMER_HPP_
+#define OT_COMM_LIBRARY_TIMER_HPP_
 
 #include <functional>
 
@@ -118,4 +118,4 @@ private:
 
 } // namespace ot
 
-#endif // TIMER_HPP_
+#endif // OT_COMM_LIBRARY_TIMER_HPP_

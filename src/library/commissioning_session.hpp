@@ -31,8 +31,8 @@
  *   This file includes definition of 1.1 mesh Commissioning Session.
  */
 
-#ifndef COMMISSIONING_SESSION_HPP_
-#define COMMISSIONING_SESSION_HPP_
+#ifndef OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
+#define OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
 
 #include <commissioner/error.hpp>
 
@@ -127,4 +127,4 @@ private:
 
 } // namespace ot
 
-#endif // COMMISSIONING_SESSION_HPP_
+#endif // OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_

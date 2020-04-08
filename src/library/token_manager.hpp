@@ -26,8 +26,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TOKEN_MANAGER_HPP_
-#define TOKEN_MANAGER_HPP_
+#ifndef OT_COMM_LIBRARY_TOKEN_MANAGER_HPP_
+#define OT_COMM_LIBRARY_TOKEN_MANAGER_HPP_
 
 #include <mbedtls/pk.h>
 
@@ -139,4 +139,4 @@ private:
 
 } // namespace ot
 
-#endif // TOKEN_MANAGER_HPP_
+#endif // OT_COMM_LIBRARY_TOKEN_MANAGER_HPP_

@@ -31,8 +31,8 @@
  *   The file defines the config json parser;
  */
 
-#ifndef JSON_HPP_
-#define JSON_HPP_
+#ifndef OT_COMM_APP_JSON_HPP_
+#define OT_COMM_APP_JSON_HPP_
 
 #include <string>
 
@@ -81,4 +81,4 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
 } // namespace ot
 
-#endif // JSON_HPP_
+#endif // OT_COMM_APP_JSON_HPP_

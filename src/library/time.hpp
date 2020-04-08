@@ -31,8 +31,8 @@
  *   This file includes definition for time measurements.
  */
 
-#ifndef TIME_HPP_
-#define TIME_HPP_
+#ifndef OT_COMM_LIBRARY_TIME_HPP_
+#define OT_COMM_LIBRARY_TIME_HPP_
 
 #include <chrono>
 
@@ -55,4 +55,4 @@ template <typename D> D NowSinceEpoch()
 
 } // namespace ot
 
-#endif // TIME_HPP_
+#endif // OT_COMM_LIBRARY_TIME_HPP_

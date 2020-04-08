@@ -34,8 +34,8 @@
  * @note This file originates from the OpenThread implementation.
  */
 
-#ifndef COSE_HPP_
-#define COSE_HPP_
+#ifndef OT_COMM_LIBRARY_COSE_HPP_
+#define OT_COMM_LIBRARY_COSE_HPP_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -119,4 +119,4 @@ Error MakeCoseKey(ByteArray &aEncodedCoseKey, const mbedtls_pk_context &aKey, co
 
 } // namespace ot
 
-#endif // COSE_HPP_
+#endif // OT_COMM_LIBRARY_COSE_HPP_

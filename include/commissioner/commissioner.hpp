@@ -31,8 +31,8 @@
  *   The file defines the interface of a Thread Commissioner.
  */
 
-#ifndef COMMISSIONER_INCLUDE_COMMISSIONER_HPP_
-#define COMMISSIONER_INCLUDE_COMMISSIONER_HPP_
+#ifndef OT_COMM_INCLUDE_COMMISSIONER_HPP_
+#define OT_COMM_INCLUDE_COMMISSIONER_HPP_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -1141,4 +1141,4 @@ public:
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_COMMISSIONER_HPP_
+#endif // OT_COMM_INCLUDE_COMMISSIONER_HPP_

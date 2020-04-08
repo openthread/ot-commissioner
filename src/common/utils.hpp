@@ -31,8 +31,8 @@
  *   This file includes definitions of utilities.
  */
 
-#ifndef UTILS_HPP_
-#define UTILS_HPP_
+#ifndef OT_COMM_COMMON_UTILS_HPP_
+#define OT_COMM_COMMON_UTILS_HPP_
 
 #include <string>
 
@@ -150,4 +150,4 @@ Error Hex(ByteArray &aBuf, const std::string &aHexStr);
 
 } // namespace ot
 
-#endif // UTILS_HPP_
+#endif // OT_COMM_COMMON_UTILS_HPP_
