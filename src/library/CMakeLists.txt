@@ -92,7 +92,9 @@ target_link_libraries(commissioner
 )
 
 target_include_directories(commissioner
-    PUBLIC ${PROJECT_SOURCE_DIR}/include
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 install(TARGETS commissioner
