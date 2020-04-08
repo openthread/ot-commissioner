@@ -43,14 +43,15 @@ add_executable(commissioner-tests
 target_link_libraries(commissioner-tests PRIVATE
     commissioner-app
     commissioner-common
-    cose
-    mdns
+    cose-c::cose-c
+    mdns::mdns
     mbedtls
     pthread
     fmt::fmt
     Catch2::Catch2
-    event_core_static
-    event_pthreads_static)
+    event_core
+    event_pthreads
+    Libevent::Libevent)
 
 target_include_directories(commissioner-tests PRIVATE
     ${PROJECT_SOURCE_DIR}/src/app

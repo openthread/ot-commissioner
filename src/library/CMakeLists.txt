@@ -80,7 +80,6 @@ add_library(commissioner
     ${PROJECT_SOURCE_DIR}/include/commissioner/error.hpp
     ${PROJECT_SOURCE_DIR}/include/commissioner/defines.hpp)
 target_link_libraries(commissioner PRIVATE
-    cose
     mdns::mdns
     mbedtls
     pthread
@@ -88,10 +87,11 @@ target_link_libraries(commissioner PRIVATE
     cn-cbor::cn-cbor
     cose-c::cose-c
     event_core
-    event_pthreads_static
+    event_pthreads
     commissioner-common
     PUBLIC 
-    libevent::libevent mdns::mdns)
+    Libevent::Libevent
+    mdns::mdns)
 
 target_include_directories(commissioner PUBLIC ${PROJECT_SOURCE_DIR}/include)
 

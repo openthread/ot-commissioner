@@ -39,3 +39,15 @@ else()
 endif()
 
 mark_as_advanced(LIBEVENT_LIB LIBEVENT_INCLUDE_DIR)
+
+add_library(event_pthreads IMPORTED UNKNOWN)
+set_target_properties(event_pthreads PROPERTIES IMPORTED_LOCATION
+                                                ${LIBEVENT_INCLUDE_DIR})
+set_target_properties(event_pthreads PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                                                "${LIBEVENT_PTHREAD_LIB}")
+
+add_library(event_core IMPORTED UNKNOWN)
+set_target_properties(event_core PROPERTIES IMPORTED_LOCATION
+                                            ${LIBEVENT_INCLUDE_DIR})
+set_target_properties(event_core PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                                            "${LIBEVENT_LIB}")
