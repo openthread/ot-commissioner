@@ -31,7 +31,6 @@
  *   The file includes definitions of Socket.
  */
 
-
 #ifndef SOCKET_HPP_
 #define SOCKET_HPP_
 
