@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,39 +26,19 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-app)
-
-target_sources(commissioner-app
-    PRIVATE
-        commissioner_app.cpp
-        commissioner_app.hpp
-        json.cpp
-        json.hpp
-)
-
-target_link_libraries(commissioner-app
-    PUBLIC
-        commissioner
-        commissioner-common
-    PRIVATE
-        nlohmann_json::nlohmann_json
-)
-
-target_include_directories(commissioner-app
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-install(DIRECTORY etc/commissioner
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-        DESTINATION etc
-)
-
 if (BUILD_SHARED_LIBS)
-    install(TARGETS commissioner-app
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-    )
+    set(EVENT__LIBRARY_TYPE "SHARED" CACHE BOOL "libevent build shared libraries" FORCE)
+else()
+    set(EVENT__LIBRARY_TYPE "STATIC" CACHE BOOL "libevent build static libraries" FORCE)
 endif()
+set(EVENT__DISABLE_OPENSSL ON CACHE BOOL "libevent disable OpenSSL" FORCE)
+set(EVENT__DISABLE_SAMPLES ON CACHE BOOL "libevent disable samples" FORCE)
+set(EVENT__DISABLE_REGRESS ON CACHE BOOL "libevent disable regression tests" FORCE)
+set(EVENT__DISABLE_TESTS ON CACHE BOOL "libevent disable tests" FORCE)
+set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "libevent disable benchmark" FORCE)
+add_subdirectory(repo)
 
-add_subdirectory(cli)
+target_include_directories(event_core
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)

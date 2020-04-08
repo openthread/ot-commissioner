@@ -26,12 +26,47 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-file(GLOB COSE_SRCS "repo/src/*.c")
-add_library(cose ${COSE_SRCS})
+add_library(cose)
 
-target_compile_definitions(cose PUBLIC USE_MBED_TLS)
-target_compile_options(cose PRIVATE -std=gnu99 -Wall -Wextra -pedantic -Wfatal-errors)
+target_sources(cose
+    PRIVATE
+        repo/src/bcrypt.c
+        repo/src/cbor.c
+        repo/src/cose_int.h
+        repo/src/Cose.c
+        repo/src/crypto.h
+        repo/src/Encrypt.c
+        repo/src/Encrypt0.c
+        repo/src/key.c
+        repo/src/MacMessage.c
+        repo/src/MacMessage0.c
+        repo/src/mbedtls.c
+        repo/src/openssl.c
+        repo/src/Recipient.c
+        repo/src/Sign.c
+        repo/src/Sign0.c
+        repo/src/SignerInfo.c
+)
 
-target_link_libraries(cose cn-cbor mbedtls)
-target_include_directories(cose PUBLIC repo/include)
-target_include_directories(cose PRIVATE ../mbedtls/repo/include)
+target_compile_definitions(cose
+    PUBLIC USE_MBED_TLS
+)
+
+target_compile_options(cose
+    PRIVATE
+        -std=gnu99
+        -Wall
+        -Wextra
+        -Wfatal-errors
+        -pedantic
+)
+
+target_link_libraries(cose
+    PUBLIC
+        cn-cbor
+        mbedtls
+)
+
+target_include_directories(cose
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)

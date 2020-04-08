@@ -28,12 +28,15 @@
 
 set(SCRIPTS
     commissioner_thci/commissionerd.py
-    commissioner_thci/commissioner_ctl.py)
+    commissioner_thci/commissioner_ctl.py
+)
 
 install(FILES ${SCRIPTS}
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-        DESTINATION bin)
+        DESTINATION bin
+)
 
 install(FILES commissioner_thci/commissionerd.service
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-        DESTINATION /etc/systemd/system)
+        DESTINATION /etc/systemd/system
+)

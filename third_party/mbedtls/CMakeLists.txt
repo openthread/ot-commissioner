@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,39 +26,38 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-app)
-
-target_sources(commissioner-app
-    PRIVATE
-        commissioner_app.cpp
-        commissioner_app.hpp
-        json.cpp
-        json.hpp
-)
-
-target_link_libraries(commissioner-app
-    PUBLIC
-        commissioner
-        commissioner-common
-    PRIVATE
-        nlohmann_json::nlohmann_json
-)
-
-target_include_directories(commissioner-app
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-install(DIRECTORY etc/commissioner
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-        DESTINATION etc
-)
-
+## Mbedtls builds static libraries by default.
 if (BUILD_SHARED_LIBS)
-    install(TARGETS commissioner-app
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-    )
+    set(USE_STATIC_MBEDTLS_LIBRARY OFF CACHE BOOL "Disable static mbedtls library")
+    set(USE_SHARED_MBEDTLS_LIBRARY ON  CACHE BOOL "Enable shared mbedtls library")
 endif()
 
-add_subdirectory(cli)
+set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls test")
+set(ENABLE_PROGRAMS OFF CACHE BOOL "Disable mbetls program")
+
+## We cannot use target-based functions before the targets are added.
+add_compile_definitions(MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h")
+
+add_subdirectory(repo)
+
+## Include the user config file by absolute path to avoid exposing current directory.
+target_compile_definitions(mbedtls
+    PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)
+target_include_directories(mbedtls
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)
+
+target_compile_definitions(mbedx509
+    PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)
+target_include_directories(mbedx509
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)
+
+target_compile_definitions(mbedcrypto
+    PUBLIC MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h"
+)
+target_include_directories(mbedcrypto
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)
