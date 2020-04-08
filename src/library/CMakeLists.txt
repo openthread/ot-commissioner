@@ -38,7 +38,6 @@ target_sources(commissioner
         openthread/pbkdf2_cmac.hpp
         openthread/random.cpp
         openthread/random.hpp
-        openthread/README.md
         openthread/sha256.cpp
         openthread/sha256.hpp
         cbor.cpp
