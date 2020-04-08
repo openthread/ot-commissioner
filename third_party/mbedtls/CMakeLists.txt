@@ -32,6 +32,9 @@ if (BUILD_SHARED_LIBS)
     set(USE_SHARED_MBEDTLS_LIBRARY ON  CACHE BOOL "enable shared mbedtls libary")
 endif()
 
+set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls test")
+set(ENABLE_PROGRAMS OFF CACHE BOOL "Disable mbetls program")
+
 ## We cannot use target-based functions before the targets are added.
 add_compile_definitions(MBEDTLS_USER_CONFIG_FILE="${CMAKE_CURRENT_SOURCE_DIR}/mbedtls_user_config.h")
 
