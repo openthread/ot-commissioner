@@ -31,8 +31,8 @@
  *   The file defines constants and type aliases.
  */
 
-#ifndef OT_COMM_INCLUDE_DEFINES_HPP_
-#define OT_COMM_INCLUDE_DEFINES_HPP_
+#ifndef OT_COMM_DEFINES_HPP_
+#define OT_COMM_DEFINES_HPP_
 
 #include <stdint.h>
 
@@ -157,4 +157,4 @@ using ByteArray = std::vector<uint8_t>;
 
 } // namespace ot
 
-#endif // OT_COMM_INCLUDE_DEFINES_HPP_
+#endif // OT_COMM_DEFINES_HPP_
