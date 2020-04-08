@@ -28,8 +28,8 @@
 
 ## Mbedtls builds static libraries by default.
 if (BUILD_SHARED_LIBS)
-    set(USE_STATIC_MBEDTLS_LIBRARY OFF CACHE BOOL "disable static mbedtls library")
-    set(USE_SHARED_MBEDTLS_LIBRARY ON  CACHE BOOL "enable shared mbedtls libary")
+    set(USE_STATIC_MBEDTLS_LIBRARY OFF CACHE BOOL "Disable static mbedtls library")
+    set(USE_SHARED_MBEDTLS_LIBRARY ON  CACHE BOOL "Enable shared mbedtls library")
 endif()
 
 set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls test")
