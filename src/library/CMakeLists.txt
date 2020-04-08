@@ -130,7 +130,7 @@ endif()
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
         DESTINATION include)
 
-add_executable(commissioner-test $<$<NOT:OT_COMM_TEST>:EXCLUDE_FROM_ALL>)
+add_executable(commissioner-test $<$<NOT:$<BOOL:${OT_COMM_TEST}>>:EXCLUDE_FROM_ALL>)
 
 target_sources(commissioner-test
     PRIVATE
