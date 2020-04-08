@@ -30,16 +30,6 @@ add_library(commissioner)
 
 target_sources(commissioner
     PRIVATE
-        openthread/bloom_filter.cpp
-        openthread/bloom_filter.hpp
-        openthread/crc16.cpp
-        openthread/crc16.hpp
-        openthread/pbkdf2_cmac.cpp
-        openthread/pbkdf2_cmac.hpp
-        openthread/random.cpp
-        openthread/random.hpp
-        openthread/sha256.cpp
-        openthread/sha256.hpp
         cbor.cpp
         cbor.hpp
         coap.cpp
@@ -64,7 +54,16 @@ target_sources(commissioner
         multicast_dns.cpp
         multicast_dns.hpp
         network_data.cpp
-        openthread
+        openthread/bloom_filter.cpp
+        openthread/bloom_filter.hpp
+        openthread/crc16.cpp
+        openthread/crc16.hpp
+        openthread/pbkdf2_cmac.cpp
+        openthread/pbkdf2_cmac.hpp
+        openthread/random.cpp
+        openthread/random.hpp
+        openthread/sha256.cpp
+        openthread/sha256.hpp
         socket.cpp
         socket.hpp
         time.hpp
