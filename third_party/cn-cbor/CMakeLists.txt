@@ -26,8 +26,29 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-file(GLOB CN_CBOR_SRCS "repo/src/*.c")
+add_library(cn-cbor)
 
-add_library(cn-cbor ${CN_CBOR_SRCS})
-target_compile_options(cn-cbor PRIVATE -std=gnu99 -Wall -Wextra -pedantic -Werror -Wfatal-errors)
-target_include_directories(cn-cbor PUBLIC repo/include)
+target_sources(cn-cbor
+    PRIVATE
+        repo/src/cbor.h
+        repo/src/cn-cbor.c
+        repo/src/cn-create.c
+        repo/src/cn-encoder.c
+        repo/src/cn-error.c
+        repo/src/cn-get.c
+        repo/src/cn-print.c
+        repo/src/dll-export.h)
+
+target_compile_options(cn-cbor
+    PRIVATE
+        -std=gnu99
+        -Wall
+        -Wextra
+        -Werror
+        -Wfatal-errors
+        -pedantic
+)
+
+target_include_directories(cn-cbor
+    PUBLIC repo/include
+)
