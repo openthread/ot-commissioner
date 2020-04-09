@@ -31,8 +31,8 @@
  *   The file defines errors.
  */
 
-#ifndef COMMISSIONER_INCLUDE_ERROR_HPP_
-#define COMMISSIONER_INCLUDE_ERROR_HPP_
+#ifndef OT_COMM_ERROR_HPP_
+#define OT_COMM_ERROR_HPP_
 
 #include <string>
 
@@ -77,4 +77,4 @@ const std::string ErrorToString(const Error &aError);
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_ERROR_HPP_
+#endif // OT_COMM_ERROR_HPP_

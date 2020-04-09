@@ -31,8 +31,8 @@
  *   This file includes definitions for CoAP with DTLS.
  */
 
-#ifndef COAP_SECURE_HPP_
-#define COAP_SECURE_HPP_
+#ifndef OT_COMM_LIBRARY_COAP_SECURE_HPP_
+#define OT_COMM_LIBRARY_COAP_SECURE_HPP_
 
 #include "coap.hpp"
 #include "dtls.hpp"
@@ -114,4 +114,4 @@ private:
 
 } // namespace ot
 
-#endif // COAP_SECURE_HPP_
+#endif // OT_COMM_LIBRARY_COAP_SECURE_HPP_

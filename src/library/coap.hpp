@@ -31,8 +31,8 @@
  *   This file includes definitions for CoAP.
  */
 
-#ifndef COAP_HPP_
-#define COAP_HPP_
+#ifndef OT_COMM_LIBRARY_COAP_HPP_
+#define OT_COMM_LIBRARY_COAP_HPP_
 
 #include <algorithm>
 #include <functional>
@@ -805,4 +805,4 @@ private:
 
 } // namespace ot
 
-#endif // COAP_HPP_
+#endif // OT_COMM_LIBRARY_COAP_HPP_

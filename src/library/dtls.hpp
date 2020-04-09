@@ -31,8 +31,8 @@
  *   This file includes wrapper of mbedtls.
  */
 
-#ifndef DTLS_HPP_
-#define DTLS_HPP_
+#ifndef OT_COMM_LIBRARY_DTLS_HPP_
+#define OT_COMM_LIBRARY_DTLS_HPP_
 
 #include <functional>
 #include <list>
@@ -214,4 +214,4 @@ using DtlsSessionPtr = std::shared_ptr<DtlsSession>;
 
 } // namespace ot
 
-#endif // DTLS_HPP_
+#endif // OT_COMM_LIBRARY_DTLS_HPP_

@@ -26,8 +26,8 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMMISSIONER_IMPL_HPP_
-#define COMMISSIONER_IMPL_HPP_
+#ifndef OT_COMM_LIBRARY_COMMISSIONER_IMPL_HPP_
+#define OT_COMM_LIBRARY_COMMISSIONER_IMPL_HPP_
 
 #include "tlv.hpp"
 #include <commissioner/commissioner.hpp>
@@ -312,4 +312,4 @@ tlv::TlvPtr GetTlv(tlv::Type aTlvType, const coap::Message &aMessage, tlv::Scope
 
 } // namespace ot
 
-#endif // COMMISSIONER_IMPL_HPP_
+#endif // OT_COMM_LIBRARY_COMMISSIONER_IMPL_HPP_

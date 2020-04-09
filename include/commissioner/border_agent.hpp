@@ -31,8 +31,8 @@
  *   The file includes definition of Thread Border Agent.
  */
 
-#ifndef COMMISSIONER_INCLUDE_BORDER_AGENT_HPP_
-#define COMMISSIONER_INCLUDE_BORDER_AGENT_HPP_
+#ifndef OT_COMM_BORDER_AGENT_HPP_
+#define OT_COMM_BORDER_AGENT_HPP_
 
 #include <string>
 
@@ -157,4 +157,4 @@ struct BorderAgent
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_BORDER_AGENT_HPP_
+#endif // OT_COMM_BORDER_AGENT_HPP_

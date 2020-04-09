@@ -31,8 +31,8 @@
  *   This file includes definitions of logging module.
  */
 
-#ifndef LOGGING_HPP_
-#define LOGGING_HPP_
+#ifndef OT_COMM_LIBRARY_LOGGING_HPP_
+#define OT_COMM_LIBRARY_LOGGING_HPP_
 
 #include <fmt/format.h>
 
@@ -66,4 +66,4 @@ void Log(LogLevel aLevel, const std::string &aMessage);
 
 } // namespace ot
 
-#endif // LOGGING_HPP_
+#endif // OT_COMM_LIBRARY_LOGGING_HPP_

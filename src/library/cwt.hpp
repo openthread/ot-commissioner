@@ -32,8 +32,8 @@
  *   Ref: https://tools.ietf.org/html/rfc8392
  */
 
-#ifndef CWT_HPP_
-#define CWT_HPP_
+#ifndef OT_COMM_LIBRARY_CWT_HPP_
+#define OT_COMM_LIBRARY_CWT_HPP_
 
 namespace ot {
 
@@ -58,4 +58,4 @@ static const int kCoseKey             = 1;
 
 } // namespace ot
 
-#endif // CWT_HPP_
+#endif // OT_COMM_LIBRARY_CWT_HPP_

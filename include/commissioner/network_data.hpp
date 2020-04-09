@@ -31,8 +31,8 @@
  *   The file includes definition of Thread Network Data.
  */
 
-#ifndef COMMISSIONER_INCLUDE_NETWORK_DATA_HPP_
-#define COMMISSIONER_INCLUDE_NETWORK_DATA_HPP_
+#ifndef OT_COMM_NETWORK_DATA_HPP_
+#define OT_COMM_NETWORK_DATA_HPP_
 
 #include <stdint.h>
 
@@ -311,4 +311,4 @@ std::string Ipv6PrefixToString(ByteArray aPrefix);
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_NETWORK_DATA_HPP_
+#endif // OT_COMM_NETWORK_DATA_HPP_

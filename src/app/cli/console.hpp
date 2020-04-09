@@ -31,8 +31,8 @@
  *   The file defines Console.
  */
 
-#ifndef CONSOLE_HPP_
-#define CONSOLE_HPP_
+#ifndef OT_COMM_APP_CLI_CONSOLE_HPP_
+#define OT_COMM_APP_CLI_CONSOLE_HPP_
 
 #include <string>
 
@@ -68,4 +68,4 @@ public:
 
 } // namespace ot
 
-#endif // CONSOLE_HPP_
+#endif // OT_COMM_APP_CLI_CONSOLE_HPP_
