@@ -21,7 +21,7 @@
 [submodule "third_party/cn-cbor/repo"]
 	path = third_party/cn-cbor/repo
 	url = https://github.com/jimsch/cn-cbor.git
-	branch = complete
+	branch = master
 [submodule "third_party/mdns/repo"]
 	path = third_party/mdns/repo
 	url = https://github.com/wgtdkp/mdns.git
