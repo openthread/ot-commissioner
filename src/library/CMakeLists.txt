@@ -128,7 +128,8 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
-        DESTINATION include)
+        DESTINATION include
+)
 
 add_executable(commissioner-test $<$<NOT:$<BOOL:${OT_COMM_TEST}>>:EXCLUDE_FROM_ALL>)
 
