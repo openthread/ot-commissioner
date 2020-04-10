@@ -120,7 +120,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                   "opdataset get pskc\n"
                   "opdataset set pskc <PSKc>\n"
                   "opdataset get securitypolicy\n"
-                  "opdataset set securitypolicy <security-policy>\n"
+                  "opdataset set securitypolicy <rotation-timer> <flags-hex>\n"
                   "opdataset get active\n"
                   "opdataset set active '<active-dataset-in-json-string>'\n"
                   "opdataset get pending\n"
