@@ -46,7 +46,7 @@ target_sources(commissioner-tests
 
 target_link_libraries(commissioner-tests
     PRIVATE
-        cn-cbor
+        cn-cbor::cn-cbor
         cose
         mdns
         mbedtls

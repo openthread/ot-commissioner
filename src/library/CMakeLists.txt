@@ -79,7 +79,7 @@ target_sources(commissioner
 
 target_link_libraries(commissioner
     PRIVATE
-        cn-cbor
+        cn-cbor::cn-cbor
         cose
         mdns
         mbedtls
@@ -111,7 +111,7 @@ install(TARGETS commissioner
 ## disabled for them (intended).
 if (BUILD_SHARED_LIBS)
     install(FILES
-                $<TARGET_FILE:cn-cbor>
+                $<TARGET_FILE:cn-cbor::cn-cbor>
                 $<TARGET_FILE:cose>
                 $<TARGET_FILE:mdns>
                 $<TARGET_FILE:mbedtls>

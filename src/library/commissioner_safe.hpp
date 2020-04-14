@@ -31,8 +31,8 @@
  *   The file defines the thread safe commissioner implementation.
  */
 
-#ifndef COMMISSIONER_SAFE_HPP_
-#define COMMISSIONER_SAFE_HPP_
+#ifndef OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
+#define OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 
 #include "tlv.hpp"
 #include <commissioner/commissioner.hpp>
@@ -242,4 +242,4 @@ private:
 
 } // namespace ot
 
-#endif // COMMISSIONER_SAFE_HPP_
+#endif // OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_

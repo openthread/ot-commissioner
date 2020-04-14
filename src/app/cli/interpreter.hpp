@@ -31,8 +31,8 @@
  *   The file defines CLI interpreter.
  */
 
-#ifndef INTERPRETER_HPP_
-#define INTERPRETER_HPP_
+#ifndef OT_COMM_APP_CLI_INTERPRETER_HPP_
+#define OT_COMM_APP_CLI_INTERPRETER_HPP_
 
 #include <map>
 
@@ -132,4 +132,4 @@ std::string ToLower(const std::string &aStr);
 
 } // namespace ot
 
-#endif // INTERPRETER_HPP_
+#endif // OT_COMM_APP_CLI_INTERPRETER_HPP_

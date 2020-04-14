@@ -31,8 +31,8 @@
  *   This file includes definitions for Thread TLVs.
  */
 
-#ifndef TLV_HPP_
-#define TLV_HPP_
+#ifndef OT_COMM_LIBRARY_TLV_HPP_
+#define OT_COMM_LIBRARY_TLV_HPP_
 
 #include <stdint.h>
 
@@ -192,4 +192,4 @@ bool   IsDatasetParameter(bool aIsActiveDataset, tlv::Type aTlvType);
 
 } // namespace ot
 
-#endif // TLV_HPP_
+#endif // OT_COMM_LIBRARY_TLV_HPP_

@@ -31,8 +31,8 @@
  *   This file includes definitions of all CoAP resources.
  */
 
-#ifndef URI_HPP_
-#define URI_HPP_
+#ifndef OT_COMM_LIBRARY_URI_HPP_
+#define OT_COMM_LIBRARY_URI_HPP_
 
 #include <string>
 
@@ -91,4 +91,4 @@ static const char *const kComToken = "/.well-known/ccm";
 
 } // namespace ot
 
-#endif // URI_HPP_
+#endif // OT_COMM_LIBRARY_URI_HPP_

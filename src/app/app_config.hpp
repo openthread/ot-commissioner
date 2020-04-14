@@ -31,8 +31,8 @@
  *   The file defines the interface of a commissioner application.
  */
 
-#ifndef APP_CONFIG_HPP_
-#define APP_CONFIG_HPP_
+#ifndef OT_COMM_APP_APP_CONFIG_HPP_
+#define OT_COMM_APP_APP_CONFIG_HPP_
 
 #include <commissioner/commissioner.hpp>
 
@@ -56,4 +56,4 @@ struct AppConfig
 
 } // namespace ot
 
-#endif // APP_CONFIG_HPP_
+#endif // OT_COMM_APP_APP_CONFIG_HPP_
