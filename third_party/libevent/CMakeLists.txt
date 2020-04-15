@@ -1,6 +1,5 @@
-#!/bin/bash
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -27,39 +26,19 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -e
+if (BUILD_SHARED_LIBS)
+    set(EVENT__LIBRARY_TYPE "SHARED" CACHE BOOL "libevent build shared libraries" FORCE)
+else()
+    set(EVENT__LIBRARY_TYPE "STATIC" CACHE BOOL "libevent build static libraries" FORCE)
+endif()
+set(EVENT__DISABLE_OPENSSL ON CACHE BOOL "libevent disable OpenSSL" FORCE)
+set(EVENT__DISABLE_SAMPLES ON CACHE BOOL "libevent disable samples" FORCE)
+set(EVENT__DISABLE_REGRESS ON CACHE BOOL "libevent disable regression tests" FORCE)
+set(EVENT__DISABLE_TESTS ON CACHE BOOL "libevent disable tests" FORCE)
+set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "libevent disable benchmark" FORCE)
+add_subdirectory(repo)
 
-## Bootstrap
-./script/bootstrap.sh
-
-## Override default travis cmake
-export PATH="${HOME}/.local/bin:$PATH"
-
-## Build commissioner
-mkdir -p build && cd build
-cmake -GNinja \
-      -DBUILD_SHARED_LIBS="${OT_COMM_SHARED_LIB:=OFF}" \
-      -DCMAKE_CXX_STANDARD="${OT_COMM_CXX_STANDARD}" \
-      -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX=/usr/local \
-      -DOT_COMM_COVERAGE=ON ..
-ninja
-
-## Install
-sudo ninja install
-
-commissioner-cli -h
-
-## Unit tests
-./tests/unit/commissioner-tests
-
-## Integration Tests
-if [ $TRAVIS_OS_NAME = "linux" ] && [ ${OT_COMM_CXX_STANDARD} = "11" ]; then
-    if [ $CC = gcc ]; then
-        ## Integration tests
-        cd ../tests/integration
-        ./bootstrap.sh
-        ./run_tests.sh
-    fi
-fi
+target_include_directories(event_core
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+)

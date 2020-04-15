@@ -31,6 +31,9 @@
  *   The file includes definitions of Socket.
  */
 
+#ifndef OT_COMM_LIBRARY_SOCKET_HPP_
+#define OT_COMM_LIBRARY_SOCKET_HPP_
+
 #include <memory>
 #include <string>
 
@@ -55,10 +58,18 @@ public:
     Socket &operator=(const Socket &aOther) = delete;
     virtual ~Socket();
 
+    // Must only be called when the socket has valid local port.
+    // For example, it has been bind to a local address and port.
     virtual uint16_t GetLocalPort() const = 0;
-    virtual Address  GetLocalAddr() const = 0;
-    virtual uint16_t GetPeerPort() const  = 0;
-    virtual Address  GetPeerAddr() const  = 0;
+
+    // Must only be called when the socket has valid local address.
+    virtual Address GetLocalAddr() const = 0;
+
+    // Must only be called when the socket has been connect to a valid peer.
+    virtual uint16_t GetPeerPort() const = 0;
+
+    // Must only be called when the socket has been connect to a valid peer.
+    virtual Address GetPeerAddr() const = 0;
 
     bool IsConnected() const { return mIsConnected; }
 
@@ -150,3 +161,5 @@ private:
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_LIBRARY_SOCKET_HPP_

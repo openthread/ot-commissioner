@@ -50,9 +50,10 @@ readonly WPANTUND_CONF=/etc/wpantund.conf
 readonly WPANTUND_LOG=${RUNTIME_DIR}/wpantund.log
 readonly OTBR_LOG=${RUNTIME_DIR}/otbr.log
 
-readonly COMMISSIONER_CLI=${TEST_ROOT_DIR}/../../build/src/app/cli/commissioner-cli
-readonly COMMISSIONER_DAEMON=${TEST_ROOT_DIR}/../../tools/commissioner_thci/commissionerd.py
-readonly COMMISSIONER_CTL=${TEST_ROOT_DIR}/../../tools/commissioner_thci/commissioner_ctl.py
+## '/usr/local' is the by default installing directory.
+readonly COMMISSIONER_CLI=/usr/local/bin/commissioner-cli
+readonly COMMISSIONER_DAEMON=/usr/local/bin/commissionerd.py
+readonly COMMISSIONER_CTL=/usr/local/bin/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
 readonly COMMISSIONER_LOG=./commissioner.log
 

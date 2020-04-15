@@ -86,7 +86,7 @@ void ProxyClient::SendEmptyChanged(const coap::Request &aRequest)
     mEndpoint.SetPeerAddr(aRequest.GetEndpoint()->GetPeerAddr());
     mEndpoint.SetPeerPort(aRequest.GetEndpoint()->GetPeerPort());
 
-    mCoap.SendEmptyChanged(aRequest);
+    IgnoreError(mCoap.SendEmptyChanged(aRequest));
 }
 
 /**

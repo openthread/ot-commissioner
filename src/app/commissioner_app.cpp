@@ -155,7 +155,7 @@ exit:
 
 void CommissionerApp::Stop()
 {
-    mCommissioner->Resign();
+    IgnoreError(mCommissioner->Resign());
 }
 
 void CommissionerApp::AbortRequests()
@@ -1340,18 +1340,17 @@ void CommissionerApp::HandleEnergyReport(const std::string *aPeerAddr,
                                          const ByteArray *  aEnergyList,
                                          Error              aError)
 {
-    if (aError != Error::kNone)
-    {
-        return;
-    }
-
     Address addr;
-    addr.Set(*aPeerAddr);
-    ASSERT(addr.IsValid());
+
+    SuccessOrExit(aError);
+    SuccessOrExit(addr.Set(*aPeerAddr));
 
     // Main thread will wait for updates to mPanIdConflicts,
     // which guarantees no concurrent access to it.
     mEnergyReports[addr] = {*aChannelMask, *aEnergyList};
+
+exit:
+    return;
 }
 
 void CommissionerApp::HandleDatasetChanged(Error error)

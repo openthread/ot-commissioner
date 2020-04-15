@@ -31,16 +31,18 @@
  *   The file defines errors.
  */
 
-#ifndef COMMISSIONER_INCLUDE_ERROR_HPP_
-#define COMMISSIONER_INCLUDE_ERROR_HPP_
+#ifndef OT_COMM_ERROR_HPP_
+#define OT_COMM_ERROR_HPP_
 
 #include <string>
+
+#include <commissioner/defines.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-enum class Error : int
+enum class OT_COMM_MUST_USE_RESULT Error : int
 {
     kNone = 0,        ///< No error.
     kAbort,           ///< A request is aborted.
@@ -75,4 +77,4 @@ const std::string ErrorToString(const Error &aError);
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_ERROR_HPP_
+#endif // OT_COMM_ERROR_HPP_

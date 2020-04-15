@@ -31,8 +31,8 @@
  *   This file includes wrapper of libevent.
  */
 
-#ifndef EVENT_HPP_
-#define EVENT_HPP_
+#ifndef OT_COMM_LIBRARY_EVENT_HPP_
+#define OT_COMM_LIBRARY_EVENT_HPP_
 
 #include <event2/event.h>
 #include <event2/event_struct.h>
@@ -50,4 +50,4 @@ using EventHandler = std::function<void(short aFlags)>;
 
 } // namespace ot
 
-#endif // EVENT_HPP_
+#endif // OT_COMM_LIBRARY_EVENT_HPP_

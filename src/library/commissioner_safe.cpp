@@ -99,7 +99,7 @@ Error CommissionerSafe::Start()
 
     VerifyOrExit(mEventThread == nullptr, error = Error::kAlready);
 
-    mEventThread = std::make_shared<std::thread>([this]() { mImpl.Start(); });
+    mEventThread = std::make_shared<std::thread>([this]() { IgnoreError(mImpl.Start()); });
 
 exit:
     return error;

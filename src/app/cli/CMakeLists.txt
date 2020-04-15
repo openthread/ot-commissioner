@@ -26,18 +26,29 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_executable(commissioner-cli
-    console.cpp
-    interpreter.cpp
-    main.cpp)
+add_executable(commissioner-cli)
 
-target_link_libraries(commissioner-cli PRIVATE
-    commissioner-app
-    readline
-    ncurses)
+target_sources(commissioner-cli
+    PRIVATE
+        console.cpp
+        console.hpp
+        interpreter.cpp
+        interpreter.hpp
+        main.cpp
+)
 
-target_compile_definitions(commissioner-cli PUBLIC
-    OT_COMM_VERSION="${PROJECT_VERSION}")
+target_link_libraries(commissioner-cli
+    PRIVATE
+        commissioner-app
+        readline
+        ncurses
+)
+
+target_compile_definitions(commissioner-cli
+    PUBLIC
+        OT_COMM_VERSION="${PROJECT_VERSION}"
+)
 
 install(TARGETS commissioner-cli
-        RUNTIME DESTINATION bin)
+        RUNTIME DESTINATION bin
+)

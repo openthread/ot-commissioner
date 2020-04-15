@@ -32,8 +32,8 @@
  *   link-local network.
  */
 
-#ifndef MULTICAST_DNS_HPP_
-#define MULTICAST_DNS_HPP_
+#ifndef OT_COMM_LIBRARY_MULTICAST_DNS_HPP_
+#define OT_COMM_LIBRARY_MULTICAST_DNS_HPP_
 
 #include <functional>
 
@@ -103,4 +103,4 @@ private:
 
 } // namespace ot
 
-#endif // MULTICAST_DNS_HPP_
+#endif // OT_COMM_LIBRARY_MULTICAST_DNS_HPP_

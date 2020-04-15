@@ -31,8 +31,8 @@
  *   The file includes definition of Thread Network Data.
  */
 
-#ifndef COMMISSIONER_INCLUDE_NETWORK_DATA_HPP_
-#define COMMISSIONER_INCLUDE_NETWORK_DATA_HPP_
+#ifndef OT_COMM_NETWORK_DATA_HPP_
+#define OT_COMM_NETWORK_DATA_HPP_
 
 #include <stdint.h>
 
@@ -132,7 +132,7 @@ struct CommissionerDataset
     static constexpr uint16_t kSessionIdBit          = (1 << 14);
     static constexpr uint16_t kSteeringDataBit       = (1 << 13);
     static constexpr uint16_t kAeSteeringDataBit     = (1 << 12);
-    static constexpr uint16_t kNmkpSteeringDataBit   = (1 < 11);
+    static constexpr uint16_t kNmkpSteeringDataBit   = (1 << 11);
     static constexpr uint16_t kJoinerUdpPortBit      = (1 << 10);
     static constexpr uint16_t kAeUdpPortBit          = (1 << 9);
     static constexpr uint16_t kNmkpUdpPortBit        = (1 << 8);
@@ -311,4 +311,4 @@ std::string Ipv6PrefixToString(ByteArray aPrefix);
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_NETWORK_DATA_HPP_
+#endif // OT_COMM_NETWORK_DATA_HPP_

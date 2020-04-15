@@ -35,8 +35,8 @@
  *   of the connecting Thread network.
  */
 
-#ifndef COMMISSIONER_APP_HPP_
-#define COMMISSIONER_APP_HPP_
+#ifndef OT_COMM_APP_COMMISSIONER_APP_HPP_
+#define OT_COMM_APP_COMMISSIONER_APP_HPP_
 
 #include <chrono>
 #include <fstream>
@@ -294,4 +294,4 @@ private:
 
 } // namespace ot
 
-#endif // COMMISSIONER_APP_HPP_
+#endif // OT_COMM_APP_COMMISSIONER_APP_HPP_

@@ -26,8 +26,8 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ADDRESS_HPP_
-#define ADDRESS_HPP_
+#ifndef OT_COMM_COMMON_ADDRESS_HPP_
+#define OT_COMM_COMMON_ADDRESS_HPP_
 
 #include <sys/socket.h>
 
@@ -77,6 +77,7 @@ public:
 
     Error ToString(std::string &aAddr) const;
 
+    // Invalid address string is not acceptable.
     static Address FromString(const std::string &aAddr);
 
 private:
@@ -87,4 +88,4 @@ private:
 
 } // namespace ot
 
-#endif // ADDRESS_HPP_
+#endif // OT_COMM_COMMON_ADDRESS_HPP_

@@ -82,8 +82,6 @@ Error Message::AppendOption(OptionType aNumber, const OptionValue &aValue)
 {
     Error error = Error::kNone;
 
-    // This will silently ignore options with unrecognized
-    // option number and elective options with bad value.
     VerifyOrExit(IsValidOption(aNumber, aValue), error = Error::kInvalidArgs);
 
     if (aNumber == OptionType::kUriPath)
@@ -514,7 +512,7 @@ void Coap::HandleRequest(const Request &aRequest)
     }
     else
     {
-        SendNotFound(aRequest);
+        IgnoreError(SendNotFound(aRequest));
         ExitNow(error = Error::kNotFound);
     }
 
@@ -535,7 +533,7 @@ void Coap::HandleResponse(const Response &aResponse)
     {
         if (aResponse.IsConfirmable() || aResponse.IsNonConfirmable())
         {
-            SendReset(aResponse);
+            IgnoreError(SendReset(aResponse));
         }
         ExitNow();
     }
@@ -578,7 +576,7 @@ void Coap::HandleResponse(const Response &aResponse)
 
     case Type::kConfirmable:
         // Send empty ACK if it is a CON message.
-        SendAck(aResponse);
+        IgnoreError(SendAck(aResponse));
 
         // fall through
 
@@ -612,7 +610,7 @@ void Coap::Retransmit(Timer &)
             mRequestsCache.Put(requestHolder);
 
             std::string uri;
-            requestHolder.mRequest->GetUriPath(uri);
+            IgnoreError(requestHolder.mRequest->GetUriPath(uri));
 
             // Retransmit
             if (!requestHolder.mAcknowledged)
@@ -996,11 +994,30 @@ std::shared_ptr<Message> Message::Deserialize(Error &aError, const ByteArray &aB
 
         SuccessOrExit(error = Deserialize(number, value, lastOptionNumber, aBuf, offset));
 
-        // Stop if any unrecognized option is critical.
-        // Otherwise, we need to proceed to decoding following options.
-        VerifyOrExit(IsValidOption(number, value) || !IsCriticalOption(number), error = Error::kBadOption);
+        if (IsValidOption(number, value))
+        {
+            // AppendOption will do further validation before adding the option.
+            error = message->AppendOption(number, value);
+        }
+        else
+        {
+            error = Error::kBadFormat;
+        }
 
-        message->AppendOption(number, value);
+        if (error != Error::kNone)
+        {
+            if (IsCriticalOption(number))
+            {
+                // Stop if any unrecognized option is critical.
+                ExitNow(error = Error::kBadOption);
+            }
+            else
+            {
+                // Ignore non-critical option error.
+                error = Error::kNone;
+            }
+        }
+
         lastOptionNumber = utils::to_underlying(number);
     }
 

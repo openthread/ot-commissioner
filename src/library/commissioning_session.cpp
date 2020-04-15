@@ -64,7 +64,7 @@ CommissioningSession::CommissioningSession(CommissionerImpl &aCommImpl,
 
     ASSERT(mJoinerSocket->Connect(mSocket) == 0);
     ASSERT(mSocket->Connect(mJoinerSocket) == 0);
-    mCoap.AddResource(mResourceJoinFin);
+    ASSERT(mCoap.AddResource(mResourceJoinFin) == Error::kNone);
 }
 
 Error CommissioningSession::Start(ConnectHandler aOnConnected)
@@ -89,7 +89,7 @@ exit:
 
 void CommissioningSession::Stop()
 {
-    mDtlsSession->Disconnect();
+    mDtlsSession->Disconnect(Error::kAbort);
 }
 
 Error CommissioningSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
@@ -216,7 +216,7 @@ exit:
         LOG_WARN("handle JOIN_FIN.req failed: {}", ErrorToString(error));
     }
 
-    SendJoinFinResponse(aJoinFin, accepted);
+    IgnoreError(SendJoinFinResponse(aJoinFin, accepted));
     LOG_INFO("sent JOIN_FIN.rsp: accepted={}", accepted);
 }
 
@@ -226,7 +226,7 @@ Error CommissioningSession::SendJoinFinResponse(const coap::Request &aJoinFinReq
     coap::Response joinFin{coap::Type::kAcknowledgment, coap::Code::kChanged};
     SuccessOrExit(error = AppendTlv(joinFin, {tlv::Type::kState, aAccept ? tlv::kStateAccept : tlv::kStateReject}));
 
-    mCoap.SendResponse(aJoinFinReq, joinFin);
+    SuccessOrExit(error = mCoap.SendResponse(aJoinFinReq, joinFin));
 
 exit:
     return error;

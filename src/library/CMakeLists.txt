@@ -26,85 +26,107 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner
-    openthread/bloom_filter.cpp
-    openthread/bloom_filter.hpp
-    openthread/crc16.cpp
-    openthread/crc16.hpp
-    openthread/pbkdf2_cmac.cpp
-    openthread/pbkdf2_cmac.hpp
-    openthread/random.cpp
-    openthread/random.hpp
-    openthread/README.md
-    openthread/sha256.cpp
-    openthread/sha256.hpp
-    cbor.cpp
-    cbor.hpp
-    coap.cpp
-    coap.hpp
-    coap_secure.hpp
-    commissioner_impl.cpp
-    commissioner_impl.hpp
-    commissioner_safe.cpp
-    commissioner_safe.hpp
-    commissioning_session.cpp
-    commissioning_session.hpp
-    cose.cpp
-    cose.hpp
-    cwt.hpp
-    dtls.cpp
-    dtls.hpp
-    endpoint.hpp
-    error.cpp
-    event.hpp
-    logging.cpp
-    logging.hpp
-    multicast_dns.cpp
-    multicast_dns.hpp
-    network_data.cpp
-    openthread
-    socket.cpp
-    socket.hpp
-    time.hpp
-    timer.hpp
-    tlv.cpp
-    tlv.hpp
-    token_manager.cpp
-    token_manager.hpp
-    udp_proxy.cpp
-    udp_proxy.hpp
-    uri.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/border_agent.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/commissioner.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/network_data.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/error.hpp
-    ${PROJECT_SOURCE_DIR}/include/commissioner/defines.hpp)
-target_link_libraries(commissioner PRIVATE
-    mdns::mdns
-    mbedtls
-    pthread
-    fmt::fmt
-    cn-cbor::cn-cbor
-    cose-c::cose-c
-    event_core
-    event_pthreads
-    commissioner-common
-    PUBLIC 
-    Libevent::Libevent
-    mdns::mdns)
+add_library(commissioner)
 
-target_include_directories(commissioner PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_sources(commissioner
+    PRIVATE
+        cbor.cpp
+        cbor.hpp
+        coap.cpp
+        coap.hpp
+        coap_secure.hpp
+        commissioner_impl.cpp
+        commissioner_impl.hpp
+        commissioner_safe.cpp
+        commissioner_safe.hpp
+        commissioning_session.cpp
+        commissioning_session.hpp
+        cose.cpp
+        cose.hpp
+        cwt.hpp
+        dtls.cpp
+        dtls.hpp
+        endpoint.hpp
+        error.cpp
+        event.hpp
+        logging.cpp
+        logging.hpp
+        multicast_dns.cpp
+        multicast_dns.hpp
+        network_data.cpp
+        openthread/bloom_filter.cpp
+        openthread/bloom_filter.hpp
+        openthread/crc16.cpp
+        openthread/crc16.hpp
+        openthread/pbkdf2_cmac.cpp
+        openthread/pbkdf2_cmac.hpp
+        openthread/random.cpp
+        openthread/random.hpp
+        openthread/sha256.cpp
+        openthread/sha256.hpp
+        socket.cpp
+        socket.hpp
+        time.hpp
+        timer.hpp
+        tlv.cpp
+        tlv.hpp
+        token_manager.cpp
+        token_manager.hpp
+        udp_proxy.cpp
+        udp_proxy.hpp
+        uri.hpp
+)
 
-if(OT_COMM_USE_VENDORED_LIBS)
-    target_include_directories(commissioner PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include)
-endif()
+target_link_libraries(commissioner
+    PRIVATE
+        cn-cbor::cn-cbor
+        cose
+        mdns
+        mbedtls
+        mbedx509
+        mbedcrypto
+        fmt::fmt
+        event_core
+        event_pthreads
+        commissioner-common
+)
+
+target_include_directories(commissioner
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 
 install(TARGETS commissioner
         LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+        ARCHIVE DESTINATION lib
+)
+
+## Install third-party shared libraries. We need to install
+## those shared libraries to enable commissioner-cli.
+##
+## We here install the built .so files directly
+## because those third-party libraries are included
+## as EXCLUDE_FROM_ALL, which means `install()` is
+## disabled for them (intended).
+if (BUILD_SHARED_LIBS)
+    install(FILES
+                $<TARGET_FILE:cn-cbor::cn-cbor>
+                $<TARGET_FILE:cose>
+                $<TARGET_FILE:mdns>
+                $<TARGET_FILE:mbedtls>
+                $<TARGET_FILE:mbedx509>
+                $<TARGET_FILE:mbedcrypto>
+                $<TARGET_FILE:fmt::fmt>
+                $<TARGET_FILE:event_core_shared>
+                $<TARGET_FILE:event_pthreads_shared>
+            DESTINATION lib
+    )
+
+    ## Update ldconfig links and caches.
+    install(CODE "execute_process(COMMAND sudo ldconfig)")
+endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
-        DESTINATION include)
+        DESTINATION include
+)

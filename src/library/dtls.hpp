@@ -31,8 +31,8 @@
  *   This file includes wrapper of mbedtls.
  */
 
-#ifndef DTLS_HPP_
-#define DTLS_HPP_
+#ifndef OT_COMM_LIBRARY_DTLS_HPP_
+#define OT_COMM_LIBRARY_DTLS_HPP_
 
 #include <functional>
 #include <list>
@@ -84,7 +84,6 @@ public:
         kOpen,
         kConnecting,
         kConnected,
-        kDisconnecting,
         kDisconnected,
     };
 
@@ -103,7 +102,7 @@ public:
 
     void  Connect(ConnectHandler aOnConnected);
     Error Bind(const std::string &aBindIp, uint16_t aPort);
-    void  Disconnect();
+    void  Disconnect(Error aError);
 
     State GetState() const { return mState; }
 
@@ -167,6 +166,9 @@ private:
 
     Error SetClientTransportId();
 
+    // Decide if we should stop processing this session by given error.
+    static bool ShouldStop(Error aError);
+
     static int HandleMbedtlsExportKeys(void *               aDtlsSession,
                                        const unsigned char *aMasterSecret,
                                        const unsigned char *aKeyBlock,
@@ -212,4 +214,4 @@ using DtlsSessionPtr = std::shared_ptr<DtlsSession>;
 
 } // namespace ot
 
-#endif // DTLS_HPP_
+#endif // OT_COMM_LIBRARY_DTLS_HPP_

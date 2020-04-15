@@ -31,13 +31,19 @@
  *   The file defines constants and type aliases.
  */
 
-#ifndef COMMISSIONER_INCLUDE_DEFINES_HPP_
-#define COMMISSIONER_INCLUDE_DEFINES_HPP_
+#ifndef OT_COMM_DEFINES_HPP_
+#define OT_COMM_DEFINES_HPP_
 
 #include <stdint.h>
 
 #include <cstddef>
 #include <vector>
+
+#if defined(__clang__)
+#define OT_COMM_MUST_USE_RESULT __attribute__((warn_unused_result))
+#else
+#define OT_COMM_MUST_USE_RESULT
+#endif
 
 namespace ot {
 
@@ -151,4 +157,4 @@ using ByteArray = std::vector<uint8_t>;
 
 } // namespace ot
 
-#endif // COMMISSIONER_INCLUDE_DEFINES_HPP_
+#endif // OT_COMM_DEFINES_HPP_

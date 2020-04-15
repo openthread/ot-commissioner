@@ -26,8 +26,8 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ENDPOINT_HPP_
-#define ENDPOINT_HPP_
+#ifndef OT_COMM_LIBRARY_ENDPOINT_HPP_
+#define OT_COMM_LIBRARY_ENDPOINT_HPP_
 
 #include <functional>
 #include <stdint.h>
@@ -63,4 +63,4 @@ protected:
 
 } // namespace ot
 
-#endif // ENDPOINT_HPP_
+#endif // OT_COMM_LIBRARY_ENDPOINT_HPP_
