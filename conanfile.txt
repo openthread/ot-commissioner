@@ -1,3 +1,4 @@
+# TODO: remove this and next line
 # conan remote add gocarlos "https://api.bintray.com/conan/gocarlos/public-conan"
 
 [requires]
@@ -8,7 +9,7 @@ mbedtls/2.16.3-gpl
 mdns/20200331
 
 cose-c/20200225@gocarlos/testing
-cn-cbor/20200227@gocarlos/testing
+cn-cbor/1.0.0
 
 # testing
 catch2/2.11.3
