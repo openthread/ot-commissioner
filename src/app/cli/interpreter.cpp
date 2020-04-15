@@ -94,8 +94,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                     "borderagent list\n"
                     "borderagent get locator\n"
                     "borderagent get meshlocaladdr"},
-    {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>]\n"
-               "joiner enableall (meshcop|ae|nmkp) [<joiner-password>]\n"
+    {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]\n"
+               "joiner enableall (meshcop|ae|nmkp) [<joiner-password>] [<provisioning-url>]\n"
                "joiner disable (meshcop|ae|nmkp) <joiner-eui64>\n"
                "joiner disableall (meshcop|ae|nmkp)\n"
                "joiner getport (meshcop|ae|nmkp)\n"
