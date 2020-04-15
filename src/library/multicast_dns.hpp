@@ -37,7 +37,11 @@
 
 #include <functional>
 
+#if __has_include("mdns/mdns.h")
 #include <mdns/mdns.h>
+#else
+#include <mdns.h>
+#endif
 
 #include <commissioner/commissioner.hpp>
 

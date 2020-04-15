@@ -26,15 +26,19 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_subdirectory(Catch2/repo)
+if (OT_COMM_TEST)
+    add_subdirectory(Catch2/repo)
+endif()
 
 set(coveralls OFF CACHE BOOL "Disbale generating coveralls data")
 add_subdirectory(cn-cbor/repo)
 add_subdirectory(COSE-C)
 add_subdirectory(fmtlib/repo)
 add_subdirectory(json/repo)
-
 add_subdirectory(libevent)
-
 add_subdirectory(mbedtls)
 add_subdirectory(mdns/repo)
+
+if(NOT TARGET mdns::mdns)
+    add_library(mdns::mdns ALIAS mdns)
+endif()
