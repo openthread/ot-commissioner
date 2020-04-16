@@ -191,7 +191,6 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         auto vendorDataTlv = tlvSet[tlv::Type::kVendorData];
         VerifyOrExit(vendorDataTlv != nullptr, error = Error::kNotFound);
         VerifyOrExit(vendorDataTlv->IsValid(), error = Error::kBadFormat);
-        VerifyOrExit(provisioningUrlTlv->GetValueAsString() == mJoinerInfo.mProvisioningUrl, error = Error::kReject);
 
         provisioningUrl = provisioningUrlTlv->GetValueAsString();
         vendorData      = vendorDataTlv->GetValue();
@@ -209,6 +208,7 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         // Accepts a joiner if requirement on vendor-specific provisioning.
         accepted = provisioningUrl.empty();
     }
+    VerifyOrExit(accepted == true, error = Error::kReject);
 
 exit:
     if (error != Error::kNone)
