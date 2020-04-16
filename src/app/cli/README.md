@@ -205,33 +205,105 @@ fdaa:bb::de6
 
 ### Steering dataset
 
-The Commissioner steers joining of new devices by `Steering Data` in the Commissioner dataset. To add a new CCM AE Joiner:
+The Commissioner steers joining of new devices by `Steering Data` in the Commissioner dataset.
 
 ```shell
+> help joiner
 usage:
-joiner enable (meshcop|ae|nmkp) <joiner-eui64>
-joiner enableall (meshcop|ae|nmkp)
+joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]
+joiner enableall (meshcop|ae|nmkp) [<joiner-password>] [<provisioning-url>]
 joiner disable (meshcop|ae|nmkp) <joiner-eui64>
 joiner disableall (meshcop|ae|nmkp)
 joiner getport (meshcop|ae|nmkp)
 joiner setport (meshcop|ae|nmkp) <joiner-udp-port>
 [done]
 >
-
-### The second argument of the joiner command is the type of joiner.
-### It can be only ae, nmkp, or meshcop.
-> joiner enable ae 0123456789abcdef
-[done]
->
 ```
 
-To enable joining for all Joiners:
+* to enable a new MeshCoP joiner:
 
-```shell
-> joiner enableall ae
-[done]
->
-```
+    ```shell
+    ### The second argument of the joiner command is the type of joiner.
+    ### It can be only ae, nmkp, or meshcop.
+    > joiner enable meshcop 0x0123456789abcdef JOINER1
+    [done]
+    >
+    ```
+
+* or provide a provisioning URL:
+
+    ```shell
+    > joiner enable meshcop 0x0123456789abcdef JOINER1 https://google.com
+    [done]
+    >
+    ```
+
+* or enable all MeshCoP joiners:
+
+    ```shell
+    > joiner enableall meshcop JOINER1
+    [done]
+    >
+    ```
+
+* to enable a new CCM AE joiner:
+
+    ```shell
+    > joiner enable ae 0x0123456789abcdef
+    [done]
+    >
+    ```
+
+* to enable all CCM AE joiners:
+
+    ```shell
+    > joiner enableall ae
+    [done]
+    >
+    ```
+
+* to enable a new CCM NMKP joiner:
+
+    ```shell
+    > joiner enable nmkp 0x0123456789abcdef
+    [done]
+    >
+    ```
+
+* to enable all CCM NMKP joiners:
+
+    ```shell
+    > joiner enableall nmkp
+    [done]
+    >
+    ```
+
+* to get joiner UDP ports:
+
+    ```shell
+    > joiner getport meshcop
+    1000
+    [done]
+    > joiner getport ae
+    1001
+    [done]
+    > joiner getport nmkp
+    1002
+    [done]
+    >
+    ```
+
+* to set joiner UDP ports:
+
+    ```shell
+    > joiner setport meshcop 1000
+    [done]
+    > joiner setport ae 1001
+    [done]
+    > joiner setport nmkp 1002
+    [done]
+    >
+    ```
 
 ### Operational dataset
 
