@@ -225,7 +225,7 @@ joiner setport (meshcop|ae|nmkp) <joiner-udp-port>
     ```shell
     ### The second argument of the joiner command is the type of joiner.
     ### It can be only ae, nmkp, or meshcop.
-    > joiner enable meshcop 0x0123456789abcdef JOINER1
+    > joiner enable meshcop 0x0123456789abcdef PSKD1
     [done]
     >
     ```
@@ -233,7 +233,7 @@ joiner setport (meshcop|ae|nmkp) <joiner-udp-port>
 * or provide a provisioning URL:
 
     ```shell
-    > joiner enable meshcop 0x0123456789abcdef JOINER1 https://google.com
+    > joiner enable meshcop 0x0123456789abcdef PSKD1 https://google.com
     [done]
     >
     ```
@@ -241,7 +241,7 @@ joiner setport (meshcop|ae|nmkp) <joiner-udp-port>
 * or enable all MeshCoP joiners:
 
     ```shell
-    > joiner enableall meshcop JOINER1
+    > joiner enableall meshcop PSKD1
     [done]
     >
     ```
