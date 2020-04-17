@@ -45,29 +45,6 @@ namespace ot {
 
 namespace commissioner {
 
-/**
- * The default commissioning handler that always accepts any joiner.
- *
- */
-static bool DefaultCommissioningHandler(const JoinerInfo & aJoinerInfo,
-                                        const std::string &aVendorName,
-                                        const std::string &aVendorModel,
-                                        const std::string &aVendorSwVersion,
-                                        const ByteArray &  aVendorStackVersion,
-                                        const std::string &aProvisioningUrl,
-                                        const ByteArray &  aVendorData)
-{
-    (void)aJoinerInfo;
-    (void)aVendorName;
-    (void)aVendorModel;
-    (void)aVendorSwVersion;
-    (void)aVendorStackVersion;
-    (void)aProvisioningUrl;
-    (void)aVendorData;
-
-    return true;
-}
-
 std::shared_ptr<CommissionerApp> CommissionerApp::Create(const std::string &aConfigFile)
 {
     Error     error = Error::kNone;
@@ -107,7 +84,13 @@ Error CommissionerApp::Init(const AppConfig &aAppConfig)
         [this](JoinerType aType, const ByteArray &aJoinerId) { return GetJoinerInfo(aType, aJoinerId); });
 
     // This is the default behavior of OpenThread on-Mesh Commissioner.
-    mCommissioner->SetCommissioningHandler(DefaultCommissioningHandler);
+    mCommissioner->SetCommissioningHandler([this](const JoinerInfo &aJoinerInfo, const std::string &aVendorName,
+                                                  const std::string &aVendorModel, const std::string &aVendorSwVersion,
+                                                  const ByteArray &  aVendorStackVersion,
+                                                  const std::string &aProvisioningUrl, const ByteArray &aVendorData) {
+        return HandleCommissioning(aJoinerInfo, aVendorName, aVendorModel, aVendorSwVersion, aVendorStackVersion,
+                                   aProvisioningUrl, aVendorData);
+    });
 
 exit:
     return error;
@@ -1464,6 +1447,39 @@ void CommissionerApp::WriteCommLog(LogLevel aLevel, const std::string &aMsg)
     std::time_t now = std::time(nullptr);
     std::strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
     mCommLogStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+}
+
+bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
+                                          const std::string &aVendorName,
+                                          const std::string &aVendorModel,
+                                          const std::string &aVendorSwVersion,
+                                          const ByteArray &  aVendorStackVersion,
+                                          const std::string &aProvisioningUrl,
+                                          const ByteArray &  aVendorData)
+{
+    (void)aVendorName;
+    (void)aVendorModel;
+    (void)aVendorSwVersion;
+    (void)aVendorStackVersion;
+    (void)aVendorData;
+
+    constexpr auto kJoinerNotAccepted = false;
+    constexpr auto kJoinerAccepted    = true;
+
+    auto configuredJoinerInfo = GetJoinerInfo(aJoinerInfo.mType, Commissioner::ComputeJoinerId(aJoinerInfo.mEui64));
+    if (configuredJoinerInfo == nullptr)
+    {
+        WriteCommLog(LogLevel::kInfo, "Joiner not accepted: not configured");
+        return kJoinerNotAccepted;
+    }
+
+    if (aProvisioningUrl != configuredJoinerInfo->mProvisioningUrl)
+    {
+        WriteCommLog(LogLevel::kInfo, "Joiner not accepted: provisioning url not supported");
+        return kJoinerNotAccepted;
+    }
+
+    return kJoinerAccepted;
 }
 
 } // namespace commissioner

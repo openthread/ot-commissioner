@@ -280,6 +280,14 @@ private:
 
     void HandleDatasetChanged(Error error);
 
+    bool HandleCommissioning(const JoinerInfo & aJoinerInfo,
+                             const std::string &aVendorName,
+                             const std::string &aVendorModel,
+                             const std::string &aVendorSwVersion,
+                             const ByteArray &  aVendorStackVersion,
+                             const std::string &aProvisioningUrl,
+                             const ByteArray &  aVendorData);
+
     /*
      * Below are network data associated to the connected Thread network.
      */
