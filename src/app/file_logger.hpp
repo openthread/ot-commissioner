@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,35 +28,47 @@
 
 /**
  * @file
- *   This file includes wrapper of mbedtls.
+ *  The file defines file logger.
+ *
  */
 
-#include "logging.hpp"
+#ifndef OT_COMM_APP_FILE_LOGGER_HPP_
+#define OT_COMM_APP_FILE_LOGGER_HPP_
+
+#include <fstream>
+#include <string>
+
+#include <commissioner/commissioner.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-static std::shared_ptr<Logger> sLogger = nullptr;
+/**
+ * @brief An implementation of the Logger interface that write log to a text file.
+ *
+ */
+class FileLogger : public Logger {
+public:
+    /**
+     * The constructor with given log file name and minimum log level.
+     *
+     * @param[in] aFilename  The log file name.
+     * @param[in] aLogLevel  The minimum log level. Log messages have a lower
+     *                       log level than this will be dropped silently.
+     *
+     */
+    FileLogger(const std::string &aFilename, LogLevel aLogLevel);
 
-void InitLogger(std::shared_ptr<Logger> aLogger)
-{
-    sLogger = aLogger;
-}
+    void Log(LogLevel aLevel, const std::string &aMsg) override;
 
-std::shared_ptr<Logger> GetLogger()
-{
-    return sLogger;
-}
-
-void Log(LogLevel aLevel, const std::string &aMessage)
-{
-    if (GetLogger())
-    {
-        GetLogger()->Log(aLevel, aMessage);
-    }
-}
+ private:
+    std::ofstream mFileStream;
+    LogLevel mLogLevel;
+};
 
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_APP_FILE_LOGGER_HPP_

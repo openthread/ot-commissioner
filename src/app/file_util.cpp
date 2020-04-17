@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,32 +28,98 @@
 
 /**
  * @file
- *   The file defines the interface of a commissioner application.
+ *  The file implements file utilities.
+ *
  */
 
-#ifndef OT_COMM_APP_APP_CONFIG_HPP_
-#define OT_COMM_APP_APP_CONFIG_HPP_
+#include "file_util.hpp"
 
-#include <commissioner/commissioner.hpp>
+#include <algorithm>
+
+#include <utils.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-struct AppConfig
+Error WriteFile(const std::string &aData, const std::string &aFilename) {
+    Error error = Error::kNone;
+
+    FILE * f = fopen(aFilename.c_str(), "w");
+
+    VerifyOrExit(f != NULL, error = Error::kNotFound);
+
+    for (int c : aData)
+    {
+        fputc(c, f);
+    }
+
+exit:
+    if (f != NULL)
+    {
+        fclose(f);
+    }
+
+    return error;
+}
+
+Error ReadFile(std::string &aData, const std::string &aFilename) {
+    Error error = Error::kNone;
+
+    FILE * f = fopen(aFilename.c_str(), "r");
+
+    VerifyOrExit(f != NULL, error = Error::kNotFound);
+
+    while (true)
+    {
+        int c = fgetc(f);
+        VerifyOrExit(c != EOF);
+        aData.push_back(c);
+    }
+
+exit:
+    if (f != NULL)
+    {
+        fclose(f);
+    }
+
+    return error;
+}
+
+Error ReadPemFile(ByteArray &aData, const std::string &aFilename)
 {
-    std::string mLogFile;
+    Error error = Error::kNone;
 
-    std::string mPSKc;
-    std::string mPrivateKeyFile;
-    std::string mCertificateFile;
-    std::string mTrustAnchorFile;
+    std::string str;
 
-    Config mConfig;
-};
+    SuccessOrExit(error = ReadFile(str, aFilename));
+
+    aData = {str.begin(), str.end()};
+    aData.push_back('\0');
+
+exit:
+    return error;
+}
+
+Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
+{
+    Error       error = Error::kNone;
+    std::string hexString;
+    ByteArray   data;
+
+    SuccessOrExit(error = ReadFile(hexString, aFilename));
+
+    hexString.erase(std::remove_if(hexString.begin(), hexString.end(), [](int c) { return isspace(c); }),
+                    hexString.end());
+    SuccessOrExit(error = utils::Hex(data, hexString));
+
+    aData = data;
+
+exit:
+    return error;
+}
 
 } // namespace commissioner
 
-} // namespace ot
 
-#endif // OT_COMM_APP_APP_CONFIG_HPP_
+} // namespace ot

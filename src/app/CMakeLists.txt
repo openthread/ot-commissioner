@@ -32,6 +32,10 @@ target_sources(commissioner-app
     PRIVATE
         commissioner_app.cpp
         commissioner_app.hpp
+        file_logger.cpp
+        file_logger.hpp
+        file_util.cpp
+        file_util.hpp
         json.cpp
         json.hpp
 )

@@ -77,12 +77,21 @@ enum class LogLevel : uint8_t
 };
 
 /**
- * @brief The function write a single log message.
+ * @brief The Commissioner logger.
  *
- * @param[in] aLevel    A logging level.
- * @param[in] aMsg      A logging message.
  */
-using LogWriter = std::function<void(LogLevel aLevel, const std::string &aMsg)>;
+class Logger {
+public:
+    virtual ~Logger() = default;
+
+    /**
+     * @brief The function write a single log message.
+     *
+     * @param[in] aLevel    A logging level.
+     * @param[in] aMsg      A logging message.
+     */
+    virtual void Log(LogLevel aLevel, const std::string &aMsg) = 0;
+};
 
 /**
  * @brief Configuration of a commissioner.
@@ -95,8 +104,7 @@ struct Config
     uint32_t mKeepAliveInterval = 40;  ///< The interval of keep-alive message. In seconds.
     uint32_t mMaxConnectionNum  = 100; ///< Max number of parallel connection from joiner.
 
-    LogLevel  mLogLevel               = LogLevel::kInfo;
-    LogWriter mLogWriter              = nullptr;
+    std::shared_ptr<Logger> mLogger;
     bool      mEnableDtlsDebugLogging = false;
 
     // Mandatory for CCM Thread network.
@@ -259,7 +267,9 @@ public:
      * @brief Create an instance of the commissioner.
      *
      * @param[in] aConfig     A commissioner configuration.
+     * @param[in] aLogger     A commissioner logger. nullable.
      * @param[in] aEventBase  A libevent event_base object. nullable.
+     *
      * @return std::shared_ptr<Commissioner>  nullptr is returned if failed.
      *
      * @note If @p aEventBase is not provided, commissioner will create it by itself and

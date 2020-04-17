@@ -37,9 +37,11 @@
 #include <ctime>
 #include <fstream>
 
-#include "json.hpp"
 #include <address.hpp>
 #include <utils.hpp>
+
+#include "file_util.hpp"
+#include "json.hpp"
 
 namespace ot {
 
@@ -68,29 +70,22 @@ static bool DefaultCommissioningHandler(const JoinerInfo & aJoinerInfo,
     return true;
 }
 
-std::shared_ptr<CommissionerApp> CommissionerApp::Create(const std::string &aConfigFile)
+std::shared_ptr<CommissionerApp> CommissionerApp::Create(const Config &aConfig)
 {
     Error     error = Error::kNone;
-    AppConfig appConfig;
     auto      app = std::shared_ptr<CommissionerApp>(new CommissionerApp());
 
-    SuccessOrExit(error = ReadConfig(appConfig, aConfigFile));
-
-    SuccessOrExit(error = app->Init(appConfig));
+    SuccessOrExit(error = app->Init(aConfig));
 
 exit:
     return error == Error::kNone ? app : nullptr;
 }
 
-Error CommissionerApp::Init(const AppConfig &aAppConfig)
+Error CommissionerApp::Init(const Config &aConfig)
 {
-    Error                         error = Error::kNone;
-    Config                        config;
-    std::shared_ptr<Commissioner> commissioner = nullptr;
+    Error error = Error::kNone;
+    auto  commissioner = Commissioner::Create(aConfig, nullptr);
 
-    SuccessOrExit(error = MakeConfig(config, aAppConfig));
-
-    commissioner = Commissioner::Create(config, nullptr);
     VerifyOrExit(commissioner != nullptr, error = Error::kInvalidArgs);
     SuccessOrExit(error = commissioner->Start());
 
@@ -1241,82 +1236,6 @@ void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const Commissioner
 #undef TEST_AND_SET
 }
 
-Error CommissionerApp::ReadFile(std::string &aData, const std::string &aFilename)
-{
-    Error error = Error::kNone;
-    FILE *f     = fopen(aFilename.c_str(), "r");
-    int   c;
-
-    VerifyOrExit(f != nullptr, error = Error::kNotFound);
-
-    while ((c = fgetc(f)) != EOF)
-    {
-        aData.push_back(c);
-    }
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::ReadPemFile(ByteArray &aData, const std::string &aFilename)
-{
-    Error       error = Error::kNone;
-    std::string data;
-
-    SuccessOrExit(error = ReadFile(data, aFilename));
-    aData = {data.begin(), data.end()};
-    aData.push_back(0);
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
-{
-    Error       error = Error::kNone;
-    std::string hexString;
-    ByteArray   data;
-
-    SuccessOrExit(error = ReadFile(hexString, aFilename));
-
-    hexString.erase(std::remove_if(hexString.begin(), hexString.end(), [](int c) { return isspace(c); }),
-                    hexString.end());
-    SuccessOrExit(error = utils::Hex(data, hexString));
-
-    aData = data;
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::WriteFile(const std::string &aData, const std::string &aFilename)
-{
-    Error error = Error::kNone;
-
-    std::ofstream file(aFilename);
-
-    VerifyOrExit(file.is_open(), error = Error::kNotFound);
-    for (auto c : aData)
-    {
-        file << c;
-    }
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::ReadConfig(AppConfig &aAppConfig, const std::string &aFilename)
-{
-    Error       error = Error::kNone;
-    std::string configData;
-
-    SuccessOrExit(error = ReadFile(configData, aFilename));
-    SuccessOrExit(error = AppConfigFromJson(aAppConfig, configData));
-
-exit:
-    return error;
-}
-
 void CommissionerApp::HandlePanIdConflict(const std::string *aPeerAddr,
                                           const ChannelMask *aChannelMask,
                                           const uint16_t *   aPanId,
@@ -1400,70 +1319,6 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
         return &joinerInfo->second;
     }
     return nullptr;
-}
-
-Error CommissionerApp::MakeConfig(Config &aConfig, const AppConfig &aAppConfig)
-{
-    Error error = Error::kNone;
-
-    aConfig = aAppConfig.mConfig;
-
-    mCommLogStream.open(aAppConfig.mLogFile, std::ofstream::out | std::ofstream::app);
-    VerifyOrExit(mCommLogStream.is_open(), error = Error::kNotFound);
-
-    aConfig.mLogWriter = [this](LogLevel aLevel, const std::string &aMsg) { WriteCommLog(aLevel, aMsg); };
-
-    if (!aAppConfig.mPSKc.empty())
-    {
-        SuccessOrExit(error = utils::Hex(aConfig.mPSKc, aAppConfig.mPSKc));
-    }
-    if (!aAppConfig.mPrivateKeyFile.empty())
-    {
-        SuccessOrExit(error = ReadPemFile(aConfig.mPrivateKey, aAppConfig.mPrivateKeyFile));
-    }
-    if (!aAppConfig.mCertificateFile.empty())
-    {
-        SuccessOrExit(error = ReadPemFile(aConfig.mCertificate, aAppConfig.mCertificateFile));
-    }
-    if (!aAppConfig.mTrustAnchorFile.empty())
-    {
-        SuccessOrExit(error = ReadPemFile(aConfig.mTrustAnchor, aAppConfig.mTrustAnchorFile));
-    }
-
-exit:
-    return error;
-}
-
-static std::string ToString(LogLevel aLevel)
-{
-    switch (aLevel)
-    {
-    case LogLevel::kOff:
-        return "off";
-    case LogLevel::kCritical:
-        return "critical";
-    case LogLevel::kError:
-        return "error";
-    case LogLevel::kWarn:
-        return "warn";
-    case LogLevel::kInfo:
-        return "info";
-    case LogLevel::kDebug:
-        return "debug";
-    default:
-        ASSERT(false);
-        return "unknown";
-    }
-}
-
-void CommissionerApp::WriteCommLog(LogLevel aLevel, const std::string &aMsg)
-{
-    ASSERT(mCommLogStream.is_open());
-
-    char        dateBuf[64];
-    std::time_t now = std::time(nullptr);
-    std::strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-    mCommLogStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
 }
 
 } // namespace commissioner

@@ -28,17 +28,53 @@
 
 /**
  * @file
- *   The file implements the config json parser;
+ *   The file defines the json parser of Network Data and Commissioner configuration.
+ *
  */
 
 #include "json.hpp"
 
+#include <exception>
 #include <iostream>
 
 #include <nlohmann/json.hpp>
 
-#include "commissioner_app.hpp"
 #include <utils.hpp>
+
+#include "commissioner_app.hpp"
+#include "file_logger.hpp"
+#include "file_util.hpp"
+
+namespace ot {
+
+namespace commissioner {
+
+/**
+ * This is the Exception class represents Network Data
+ * and Configuration conversion errors from JSON file.
+ *
+ * We need this because the nlohmann::json library uses
+ * exception exclusively.
+ *
+ */
+class JsonException : public std::invalid_argument {
+public:
+    explicit JsonException(const std::string& what_arg)
+        : std::invalid_argument(what_arg) {}
+    explicit JsonException(const char* what_arg)
+        : std::invalid_argument(what_arg) {}
+};
+
+} // namespace commissioner
+
+} // namespace ot
+
+#define SuccessOrThrow(aError)                                                                  \
+    do {                                                                                        \
+        if (aError != ::ot::commissioner::Error::kNone) {                                       \
+            throw ::ot::commissioner::JsonException(::ot::commissioner::ErrorToString(aError)); \
+        }                                                                                       \
+    } while (false)
 
 /**
  * This overrides how to serialize/deserialize a ByteArray.
@@ -54,8 +90,7 @@ template <> struct adl_serializer<ot::commissioner::ByteArray>
 
     static void from_json(const json &aJson, ot::commissioner::ByteArray &aBuf)
     {
-        // FIXME(wgtdkp): handle the failure
-        IgnoreError(::ot::commissioner::utils::Hex(aBuf, aJson.get<std::string>()));
+        SuccessOrThrow(::ot::commissioner::utils::Hex(aBuf, aJson.get<std::string>()));
     }
 };
 } // namespace nlohmann
@@ -145,17 +180,16 @@ NLOHMANN_JSON_SERIALIZE_ENUM(LogLevel,
                                  {LogLevel::kDebug, "debug"},
                              });
 
-static void from_json(const Json &aJson, AppConfig &aAppConfig)
+static void from_json(const Json &aJson, Config &aConfig)
 {
-#define TEST_AND_SET(name)                         \
-    if (aJson.contains(#name))                     \
-    {                                              \
-        aAppConfig.mConfig.m##name = aJson[#name]; \
+#define TEST_AND_SET(name)              \
+    if (aJson.contains(#name))          \
+    {                                   \
+        aConfig.m##name = aJson[#name]; \
     };
 
     TEST_AND_SET(Id);
     TEST_AND_SET(EnableCcm);
-    TEST_AND_SET(LogLevel);
     TEST_AND_SET(EnableDtlsDebugLogging);
 
     TEST_AND_SET(KeepAliveInterval);
@@ -163,44 +197,40 @@ static void from_json(const Json &aJson, AppConfig &aAppConfig)
 
 #undef TEST_AND_SET
 
-#define TEST_AND_SET(name)                 \
-    if (aJson.contains(#name))             \
-    {                                      \
-        aAppConfig.m##name = aJson[#name]; \
-    };
+    // The default log level is LogLevel::kInfo.
+    LogLevel logLevel = LogLevel::kInfo;
 
-    TEST_AND_SET(LogFile);
-    TEST_AND_SET(PSKc);
-    TEST_AND_SET(PrivateKeyFile);
-    TEST_AND_SET(CertificateFile);
-    TEST_AND_SET(TrustAnchorFile);
+    if (aJson.contains("LogLevel"))
+    {
+        logLevel = aJson["LogLevel"];
+    }
 
-#undef TEST_AND_SET
-}
+    // TODO(wgtdkp): parse logging file.
+    if (aJson.contains("LogFile"))
+    {
+        auto logger = std::make_shared<FileLogger>(aJson["LogFile"], logLevel);
+        aConfig.mLogger = std::dynamic_pointer_cast<Logger>(logger);
+    }
 
-static void to_json(Json &aJson, const AppConfig &aAppConfig)
-{
-#define SET_JSON_VALUE(name) aJson[#name] = aAppConfig.mConfig.m##name
+    if (aJson.contains("PSKc"))
+    {
+        SuccessOrThrow(utils::Hex(aConfig.mPSKc, aJson["PSkc"]));
+    }
 
-    SET_JSON_VALUE(Id);
-    SET_JSON_VALUE(EnableCcm);
-    SET_JSON_VALUE(LogLevel);
-    SET_JSON_VALUE(EnableDtlsDebugLogging);
+    if (aJson.contains("PrivateKeyFile"))
+    {
+        SuccessOrThrow(ReadPemFile(aConfig.mPrivateKey, aJson["PrivateKeyFile"]));
+    }
 
-    SET_JSON_VALUE(KeepAliveInterval);
-    SET_JSON_VALUE(MaxConnectionNum);
+    if (aJson.contains("CertificateFile"))
+    {
+        SuccessOrThrow(ReadPemFile(aConfig.mCertificate, aJson["CertificateFile"]));
+    }
 
-#undef SET_JSON_VALUE
-
-#define SET_JSON_VALUE(name) aJson[#name] = aAppConfig.m##name
-
-    SET_JSON_VALUE(LogFile);
-    SET_JSON_VALUE(PSKc);
-    SET_JSON_VALUE(PrivateKeyFile);
-    SET_JSON_VALUE(CertificateFile);
-    SET_JSON_VALUE(TrustAnchorFile);
-
-#undef SET_JSON_VALUE
+    if (aJson.contains("TrustAnchorFile"))
+    {
+        SuccessOrThrow(ReadPemFile(aConfig.mTrustAnchor, aJson["TrustAnchorFile"]));
+    }
 }
 
 static void to_json(Json &aJson, const CommissionerDataset &aDataset)
@@ -578,22 +608,16 @@ std::string PendingDatasetToJson(const PendingOperationalDataset &aDataset)
     return json.dump(/* indent */ 4);
 }
 
-Error AppConfigFromJson(AppConfig &aAppConfig, const std::string &aJson)
+Error ConfigFromJson(Config &aConfig, const std::string &aJson)
 {
     try
     {
-        aAppConfig = Json::parse(StripComments(aJson));
+        aConfig = Json::parse(StripComments(aJson));
         return Error::kNone;
     } catch (std::exception &e)
     {
         return Error::kBadFormat;
     }
-}
-
-std::string AppConfigToJson(const AppConfig &aAppConfig)
-{
-    Json json = aAppConfig;
-    return json.dump(/* indent */ 4);
 }
 
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport)
@@ -627,3 +651,5 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
 } // namespace commissioner
 
 } // namespace ot
+
+#undef SuccessOrThrow

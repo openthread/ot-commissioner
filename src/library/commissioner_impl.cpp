@@ -186,7 +186,7 @@ Error CommissionerImpl::Init(const Config &aConfig)
     SuccessOrExit(error = ValidateConfig(aConfig));
     mConfig = aConfig;
 
-    InitLogger(mConfig.mLogLevel, mConfig.mLogWriter);
+    InitLogger(aConfig.mLogger);
     LoggingConfig();
 
     SuccessOrExit(error = mBrClient.Init(GetDtlsConfig(mConfig)));
@@ -213,9 +213,6 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
         VerifyOrExit(!aConfig.mId.empty(), error = "commissioner ID is mandatory");
         VerifyOrExit(commissionerIdTlv.IsValid(), error = "invalid commissioner ID: " + aConfig.mId);
     }
-
-    VerifyOrExit(aConfig.mLogLevel <= LogLevel::kDebug,
-                 error = "invalid logging level: " + std::to_string(utils::to_underlying(aConfig.mLogLevel)));
 
     VerifyOrExit(
         (aConfig.mKeepAliveInterval >= kMinKeepAliveInterval && aConfig.mKeepAliveInterval <= kMaxKeepAliveInterval),
@@ -255,7 +252,6 @@ void CommissionerImpl::LoggingConfig()
     LOG_INFO("config: enable CCM = {}", mConfig.mEnableCcm);
     LOG_INFO("config: domain name = {}", mConfig.mDomainName);
     LOG_INFO("config: keep alive interval = {}", mConfig.mKeepAliveInterval);
-    LOG_INFO("config: log level = {}", mConfig.mLogLevel);
     LOG_INFO("config: enable DTLS debug logging = {}", mConfig.mEnableDtlsDebugLogging);
     LOG_INFO("config: maximum connection number = {}", mConfig.mMaxConnectionNum);
 

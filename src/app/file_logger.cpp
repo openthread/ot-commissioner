@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,33 +28,58 @@
 
 /**
  * @file
- *   This file includes wrapper of mbedtls.
+ *  The file defines file logger.
+ *
  */
 
-#include "logging.hpp"
+#include "file_logger.hpp"
+
+#include <ctime>
+
+#include <utils.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-static std::shared_ptr<Logger> sLogger = nullptr;
-
-void InitLogger(std::shared_ptr<Logger> aLogger)
+static std::string ToString(LogLevel aLevel)
 {
-    sLogger = aLogger;
-}
-
-std::shared_ptr<Logger> GetLogger()
-{
-    return sLogger;
-}
-
-void Log(LogLevel aLevel, const std::string &aMessage)
-{
-    if (GetLogger())
+    switch (aLevel)
     {
-        GetLogger()->Log(aLevel, aMessage);
+    case LogLevel::kOff:
+        return "off";
+    case LogLevel::kCritical:
+        return "critical";
+    case LogLevel::kError:
+        return "error";
+    case LogLevel::kWarn:
+        return "warn";
+    case LogLevel::kInfo:
+        return "info";
+    case LogLevel::kDebug:
+        return "debug";
+    default:
+        ASSERT(false);
+        return "unknown";
     }
+}
+
+FileLogger::FileLogger(const std::string& aFilename,
+                       ot::commissioner::LogLevel aLogLevel)
+    : mFileStream(aFilename), mLogLevel(aLogLevel) {}
+
+void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string& aMsg) {
+    char        dateBuf[64];
+    std::time_t now = std::time(nullptr);
+
+    VerifyOrExit(aLevel <= mLogLevel);
+    VerifyOrExit(mFileStream.is_open());
+
+    std::strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    mFileStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+
+exit:
+    return;
 }
 
 } // namespace commissioner
