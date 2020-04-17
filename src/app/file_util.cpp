@@ -50,10 +50,7 @@ Error WriteFile(const std::string &aData, const std::string &aFilename)
 
     VerifyOrExit(f != NULL, error = Error::kNotFound);
 
-    for (int c : aData)
-    {
-        fputc(c, f);
-    }
+    fputs(aData.c_str(), f);
 
 exit:
     if (f != NULL)
