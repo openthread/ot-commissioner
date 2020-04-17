@@ -221,7 +221,7 @@ static void from_json(const Json &aJson, Config &aConfig)
 
     if (aJson.contains("PSKc"))
     {
-        SuccessOrThrow(utils::Hex(aConfig.mPSKc, aJson["PSkc"]));
+        SuccessOrThrow(utils::Hex(aConfig.mPSKc, aJson["PSKc"]));
     }
 
     if (aJson.contains("PrivateKeyFile"))
