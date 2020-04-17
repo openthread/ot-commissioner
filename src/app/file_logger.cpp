@@ -34,7 +34,7 @@
 
 #include "file_logger.hpp"
 
-#include <ctime>
+#include <time.h>
 
 #include <utils.hpp>
 
@@ -73,12 +73,13 @@ FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel 
 void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
 {
     char        dateBuf[64];
-    std::time_t now = std::time(nullptr);
+    struct tm localTime;
+    time_t now = time(nullptr);
 
     VerifyOrExit(aLevel <= mLogLevel);
     VerifyOrExit(mFileStream.is_open());
 
-    std::strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", localtime_r(&now, &localTime));
     mFileStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
 
 exit:
