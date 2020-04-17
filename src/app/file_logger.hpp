@@ -48,7 +48,8 @@ namespace commissioner {
  * @brief An implementation of the Logger interface that write log to a text file.
  *
  */
-class FileLogger : public Logger {
+class FileLogger : public Logger
+{
 public:
     /**
      * The constructor with given log file name and minimum log level.
@@ -62,9 +63,9 @@ public:
 
     void Log(LogLevel aLevel, const std::string &aMsg) override;
 
- private:
+private:
     std::ofstream mFileStream;
-    LogLevel mLogLevel;
+    LogLevel      mLogLevel;
 };
 
 } // namespace commissioner

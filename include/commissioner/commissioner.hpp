@@ -80,7 +80,8 @@ enum class LogLevel : uint8_t
  * @brief The Commissioner logger.
  *
  */
-class Logger {
+class Logger
+{
 public:
     virtual ~Logger() = default;
 
@@ -105,7 +106,7 @@ struct Config
     uint32_t mMaxConnectionNum  = 100; ///< Max number of parallel connection from joiner.
 
     std::shared_ptr<Logger> mLogger;
-    bool      mEnableDtlsDebugLogging = false;
+    bool                    mEnableDtlsDebugLogging = false;
 
     // Mandatory for CCM Thread network.
     std::string mDomainName = "Thread"; ///< The domain name of connecting Thread network.

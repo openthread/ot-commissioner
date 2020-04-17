@@ -72,8 +72,8 @@ static bool DefaultCommissioningHandler(const JoinerInfo & aJoinerInfo,
 
 std::shared_ptr<CommissionerApp> CommissionerApp::Create(const Config &aConfig)
 {
-    Error     error = Error::kNone;
-    auto      app = std::shared_ptr<CommissionerApp>(new CommissionerApp());
+    Error error = Error::kNone;
+    auto  app   = std::shared_ptr<CommissionerApp>(new CommissionerApp());
 
     SuccessOrExit(error = app->Init(aConfig));
 
@@ -83,7 +83,7 @@ exit:
 
 Error CommissionerApp::Init(const Config &aConfig)
 {
-    Error error = Error::kNone;
+    Error error        = Error::kNone;
     auto  commissioner = Commissioner::Create(aConfig, nullptr);
 
     VerifyOrExit(commissioner != nullptr, error = Error::kInvalidArgs);

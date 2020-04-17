@@ -56,7 +56,7 @@ namespace commissioner {
 
 // TODO(wgtdkp): add json format. This is useful for certification.
 
-void InitLogger(std::shared_ptr<Logger> aLogger);
+void                    InitLogger(std::shared_ptr<Logger> aLogger);
 std::shared_ptr<Logger> GetLogger();
 
 void Log(LogLevel aLevel, const std::string &aMessage);

@@ -185,10 +185,10 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
 
 Error Interpreter::Init(const std::string &aConfigFile)
 {
-    Error error   = Error::kNone;
+    Error error = Error::kNone;
 
     std::string configJson;
-    Config config;
+    Config      config;
 
     SuccessOrExit(error = ReadFile(configJson, aConfigFile));
     SuccessOrExit(error = ConfigFromJson(config, configJson));

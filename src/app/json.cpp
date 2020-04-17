@@ -57,12 +57,17 @@ namespace commissioner {
  * exception exclusively.
  *
  */
-class JsonException : public std::invalid_argument {
+class JsonException : public std::invalid_argument
+{
 public:
-    explicit JsonException(const std::string& what_arg)
-        : std::invalid_argument(what_arg) {}
-    explicit JsonException(const char* what_arg)
-        : std::invalid_argument(what_arg) {}
+    explicit JsonException(const std::string &what_arg)
+        : std::invalid_argument(what_arg)
+    {
+    }
+    explicit JsonException(const char *what_arg)
+        : std::invalid_argument(what_arg)
+    {
+    }
 };
 
 } // namespace commissioner
@@ -70,8 +75,10 @@ public:
 } // namespace ot
 
 #define SuccessOrThrow(aError)                                                                  \
-    do {                                                                                        \
-        if (aError != ::ot::commissioner::Error::kNone) {                                       \
+    do                                                                                          \
+    {                                                                                           \
+        if (aError != ::ot::commissioner::Error::kNone)                                         \
+        {                                                                                       \
             throw ::ot::commissioner::JsonException(::ot::commissioner::ErrorToString(aError)); \
         }                                                                                       \
     } while (false)
@@ -208,7 +215,7 @@ static void from_json(const Json &aJson, Config &aConfig)
     // TODO(wgtdkp): parse logging file.
     if (aJson.contains("LogFile"))
     {
-        auto logger = std::make_shared<FileLogger>(aJson["LogFile"], logLevel);
+        auto logger     = std::make_shared<FileLogger>(aJson["LogFile"], logLevel);
         aConfig.mLogger = std::dynamic_pointer_cast<Logger>(logger);
     }
 

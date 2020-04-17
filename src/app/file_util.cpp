@@ -42,10 +42,11 @@ namespace ot {
 
 namespace commissioner {
 
-Error WriteFile(const std::string &aData, const std::string &aFilename) {
+Error WriteFile(const std::string &aData, const std::string &aFilename)
+{
     Error error = Error::kNone;
 
-    FILE * f = fopen(aFilename.c_str(), "w");
+    FILE *f = fopen(aFilename.c_str(), "w");
 
     VerifyOrExit(f != NULL, error = Error::kNotFound);
 
@@ -63,10 +64,11 @@ exit:
     return error;
 }
 
-Error ReadFile(std::string &aData, const std::string &aFilename) {
+Error ReadFile(std::string &aData, const std::string &aFilename)
+{
     Error error = Error::kNone;
 
-    FILE * f = fopen(aFilename.c_str(), "r");
+    FILE *f = fopen(aFilename.c_str(), "r");
 
     VerifyOrExit(f != NULL, error = Error::kNotFound);
 
@@ -120,6 +122,5 @@ exit:
 }
 
 } // namespace commissioner
-
 
 } // namespace ot

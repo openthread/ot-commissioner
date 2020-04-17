@@ -70,7 +70,7 @@ std::string ActiveDatasetToJson(const ActiveOperationalDataset &aDataset);
 Error       PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::string &aJson);
 std::string PendingDatasetToJson(const PendingOperationalDataset &aDataset);
 
-Error       ConfigFromJson(Config &aConfig, const std::string &aJson);
+Error ConfigFromJson(Config &aConfig, const std::string &aJson);
 
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 

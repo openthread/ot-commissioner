@@ -64,11 +64,14 @@ static std::string ToString(LogLevel aLevel)
     }
 }
 
-FileLogger::FileLogger(const std::string& aFilename,
-                       ot::commissioner::LogLevel aLogLevel)
-    : mFileStream(aFilename), mLogLevel(aLogLevel) {}
+FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel aLogLevel)
+    : mFileStream(aFilename)
+    , mLogLevel(aLogLevel)
+{
+}
 
-void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string& aMsg) {
+void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
+{
     char        dateBuf[64];
     std::time_t now = std::time(nullptr);
 
