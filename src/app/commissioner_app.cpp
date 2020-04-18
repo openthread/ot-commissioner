@@ -192,7 +192,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::SyncNetworkData()
+Error CommissionerApp::SyncNetworkData(void)
 {
     Error                     error = Error::kNone;
     ActiveOperationalDataset  activeDataset;

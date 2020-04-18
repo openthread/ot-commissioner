@@ -97,7 +97,7 @@ public:
     Error SaveNetworkData(const std::string &aFilename);
 
     // Sync network data between the Thread Network and Commissioner.
-    Error SyncNetworkData();
+    Error SyncNetworkData(void);
 
     /*
      * Commissioner Dataset APIs
