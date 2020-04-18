@@ -50,6 +50,9 @@ namespace commissioner {
  * Create the target file if it is not found.
  * Clear the target file if it is not empty and write from the beginning.
  *
+ * @param[in] aData      The data to be written.
+ * @param[in] aFileanme  The name of the target file.
+ *
  * @retval Error::kNone  Successfully written the whole string.
  * @retval ...           Failed to write the string.
  *
@@ -62,6 +65,9 @@ Error WriteFile(const std::string &aData, const std::string &aFilename);
 /**
  * This function reads a file into a std::string.
  *
+ * @param[out] aData     The data to read to.
+ * @param[in] aFileanme  The name of the file.
+ *
  * @retval Error::kNone      Successfully read the whole file.
  * @retval Error::kNotFound  Cannot find the given file.
  *
@@ -70,6 +76,9 @@ Error ReadFile(std::string &aData, const std::string &aFilename);
 
 /**
  * This function reads a PEM file into a ByteArray.
+ *
+ * @param[out] aData     The data to read to.
+ * @param[in] aFileanme  The name of the file.
  *
  * @retval Error::kNone      Successfully read the whole file.
  * @retval Error::kNotFound  Cannot find the given file.
@@ -85,6 +94,9 @@ Error ReadPemFile(ByteArray &aData, const std::string &aFilename);
  *
  * Any spaces in the file are accepted and ingored to produce a
  * continuous byte array.
+ *
+ * @param[out] aData     The data to read to.
+ * @param[in] aFileanme  The name of the file.
  *
  * @retval Error::kNone       Successfully read the whole file.
  * @retval Error::kNotFound   Cannot find the given file.
