@@ -51,6 +51,8 @@ target_sources(commissioner
         event.hpp
         logging.cpp
         logging.hpp
+        mbedtls_error.cpp
+        mbedtls_error.hpp
         network_data.cpp
         openthread/bloom_filter.cpp
         openthread/bloom_filter.hpp

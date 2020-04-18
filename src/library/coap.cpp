@@ -1048,7 +1048,7 @@ std::shared_ptr<Message> Message::Deserialize(Error &aError, const ByteArray &aB
         }
         else
         {
-            error = ERROR_BAD_FORMAT("bad CoAP option (number={}", number)
+            error = ERROR_BAD_FORMAT("bad CoAP option (number={}", number);
         }
 
         if (!error.NoError())

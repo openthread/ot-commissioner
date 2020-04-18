@@ -170,11 +170,11 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     , mJoinerInfoRequester(nullptr)
     , mCommissioningHandler(nullptr)
 {
-    ASSERT(mBrClient.AddResource(mResourceUdpRx) == Error::kNone);
-    ASSERT(mBrClient.AddResource(mResourceRlyRx) == Error::kNone);
-    ASSERT(mProxyClient.AddResource(mResourceDatasetChanged) == Error::kNone);
-    ASSERT(mProxyClient.AddResource(mResourcePanIdConflict) == Error::kNone);
-    ASSERT(mProxyClient.AddResource(mResourceEnergyReport) == Error::kNone);
+    ASSERT(mBrClient.AddResource(mResourceUdpRx).NoError());
+    ASSERT(mBrClient.AddResource(mResourceRlyRx).NoError());
+    ASSERT(mProxyClient.AddResource(mResourceDatasetChanged).NoError());
+    ASSERT(mProxyClient.AddResource(mResourcePanIdConflict).NoError());
+    ASSERT(mProxyClient.AddResource(mResourceEnergyReport).NoError());
 }
 
 CommissionerImpl::~CommissionerImpl()

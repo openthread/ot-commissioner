@@ -129,7 +129,7 @@ Address Address::FromString(const std::string &aAddr)
 {
     Address ret;
     auto    error = ret.Set(aAddr);
-    ASSERT(error == Error::kNone);
+    ASSERT(error.NoError());
     return ret;
 }
 

@@ -64,7 +64,7 @@ CommissioningSession::CommissioningSession(CommissionerImpl &aCommImpl,
 
     ASSERT(mJoinerSocket->Connect(mSocket) == 0);
     ASSERT(mSocket->Connect(mJoinerSocket) == 0);
-    ASSERT(mCoap.AddResource(mResourceJoinFin) == Error::kNone);
+    ASSERT(mCoap.AddResource(mResourceJoinFin).NoError());
 }
 
 Error CommissioningSession::Start(ConnectHandler aOnConnected)
