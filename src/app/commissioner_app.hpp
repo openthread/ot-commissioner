@@ -96,8 +96,8 @@ public:
     // Save network data of current Thread network to file in JSON format.
     Error SaveNetworkData(const std::string &aFilename);
 
-    // Pull network data to local.
-    Error PullNetworkData();
+    // Sync network data between the Thread Network and Commissioner.
+    Error SyncNetworkData();
 
     /*
      * Commissioner Dataset APIs

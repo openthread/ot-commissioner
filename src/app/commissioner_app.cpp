@@ -143,7 +143,7 @@ Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
 
     // We need to report the already active commissioner ID if one exists.
     SuccessOrExit(error = mCommissioner->Petition(aExistingCommissionerId, aBorderAgentAddr, aBorderAgentPort));
-    SuccessOrExit(error = PullNetworkData());
+    SuccessOrExit(error = SyncNetworkData());
 
 exit:
     if (error != Error::kNone)
@@ -190,15 +190,14 @@ exit:
     return error;
 }
 
-Error CommissionerApp::PullNetworkData()
+Error CommissionerApp::SyncNetworkData()
 {
     Error                     error = Error::kNone;
-    CommissionerDataset       commDataset;
     ActiveOperationalDataset  activeDataset;
     PendingOperationalDataset pendingDataset;
     BbrDataset                bbrDataset;
 
-    SuccessOrExit(error = mCommissioner->GetCommissionerDataset(commDataset, 0xFFFF));
+    SuccessOrExit(error = mCommissioner->SetCommissionerDataset(mCommDataset));
     if (IsCcmMode())
     {
         SuccessOrExit(error = mCommissioner->GetBbrDataset(bbrDataset, 0xFFFF));
@@ -207,7 +206,6 @@ Error CommissionerApp::PullNetworkData()
     SuccessOrExit(error = mCommissioner->GetActiveDataset(activeDataset, 0xFFFF));
     SuccessOrExit(error = mCommissioner->GetPendingDataset(pendingDataset, 0xFFFF));
 
-    MergeDataset(mCommDataset, commDataset);
     if (IsCcmMode())
     {
         mBbrDataset = bbrDataset;

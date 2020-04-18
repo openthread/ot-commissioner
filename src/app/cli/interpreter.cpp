@@ -88,7 +88,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "token print\n"
               "token set <signed-token-hex-string-file> <signer-cert-pem-file>"},
     {"network", "network save <network-data-file>\n"
-                "network pull"},
+                "network sync"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover\n"
                     "borderagent list\n"
@@ -396,9 +396,9 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         VerifyOrExit(aExpr.size() >= 3, msg = Usage(aExpr));
         SuccessOrExit(error = mCommissioner->SaveNetworkData(aExpr[2]));
     }
-    else if (CaseInsensitiveEqual(aExpr[1], "pull"))
+    else if (CaseInsensitiveEqual(aExpr[1], "sync"))
     {
-        SuccessOrExit(error = mCommissioner->PullNetworkData());
+        SuccessOrExit(error = mCommissioner->SyncNetworkData());
     }
     else
     {
