@@ -44,7 +44,7 @@ void InitLogger(std::shared_ptr<Logger> aLogger)
     sLogger = aLogger;
 }
 
-std::shared_ptr<Logger> GetLogger()
+std::shared_ptr<Logger> GetLogger(void)
 {
     return sLogger;
 }
