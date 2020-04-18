@@ -109,7 +109,7 @@ Error CommissionerApp::Init(const AppConfig &aAppConfig)
     // This is the default behavior of OpenThread on-Mesh Commissioner.
     mCommissioner->SetCommissioningHandler(DefaultCommissioningHandler);
 
-    SetDefaultCommissionerDataset();
+    mCommDataset = MakeDefaultCommissionerDataset();
 
 exit:
     return error;
@@ -1084,16 +1084,18 @@ bool CommissionerApp::JoinerKey::operator<(const JoinerKey &aOther) const
     return mType < aOther.mType || (mType == aOther.mType && mId < aOther.mId);
 }
 
-void CommissionerApp::SetDefaultCommissionerDataset()
+CommissionerDataset CommissionerApp::MakeDefaultCommissionerDataset()
 {
-    mCommDataset.mPresentFlags = 0;
+    CommissionerDataset dataset;
 
-    mCommDataset.mJoinerUdpPort = kDefaultJoinerUdpPort;
-    mCommDataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
-    mCommDataset.mAeUdpPort = kDefaultAeUdpPort;
-    mCommDataset.mPresentFlags |= CommissionerDataset::kAeUdpPortBit;
-    mCommDataset.mNmkpUdpPort = kDefaultNmkpUdpPort;
-    mCommDataset.mPresentFlags |= CommissionerDataset::kNmkpUdpPortBit;
+    dataset.mJoinerUdpPort = kDefaultJoinerUdpPort;
+    dataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
+    dataset.mAeUdpPort = kDefaultAeUdpPort;
+    dataset.mPresentFlags |= CommissionerDataset::kAeUdpPortBit;
+    dataset.mNmkpUdpPort = kDefaultNmkpUdpPort;
+    dataset.mPresentFlags |= CommissionerDataset::kNmkpUdpPortBit;
+
+    return dataset;
 }
 
 ByteArray &CommissionerApp::GetSteeringData(CommissionerDataset &aDataset, JoinerType aJoinerType)
