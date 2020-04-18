@@ -268,7 +268,6 @@ public:
      * @brief Create an instance of the commissioner.
      *
      * @param[in] aConfig     A commissioner configuration.
-     * @param[in] aLogger     A commissioner logger. nullable.
      * @param[in] aEventBase  A libevent event_base object. nullable.
      *
      * @return std::shared_ptr<Commissioner>  nullptr is returned if failed.
