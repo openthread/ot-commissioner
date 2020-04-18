@@ -47,6 +47,8 @@ target_link_libraries(commissioner-app
         commissioner
         commissioner-common
     PRIVATE
+        fmt::fmt
+        mdns
         nlohmann_json::nlohmann_json
 )
 
