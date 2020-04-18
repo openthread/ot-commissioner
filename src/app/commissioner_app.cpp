@@ -109,6 +109,13 @@ Error CommissionerApp::Init(const AppConfig &aAppConfig)
     // This is the default behavior of OpenThread on-Mesh Commissioner.
     mCommissioner->SetCommissioningHandler(DefaultCommissioningHandler);
 
+    mCommDataset.mJoinerUdpPort = kDefaultJoinerUdpPort;
+    mCommDataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
+    mCommDataset.mAeUdpPort = kDefaultAeUdpPort;
+    mCommDataset.mPresentFlags |= CommissionerDataset::kAeUdpPortBit;
+    mCommDataset.mNmkpUdpPort = kDefaultNmkpUdpPort;
+    mCommDataset.mPresentFlags |= CommissionerDataset::kNmkpUdpPortBit;
+
 exit:
     return error;
 }
