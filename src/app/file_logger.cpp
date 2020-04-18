@@ -50,18 +50,25 @@ static std::string ToString(LogLevel aLevel)
     {
     case LogLevel::kOff:
         ret = "off";
+        break;
     case LogLevel::kCritical:
         ret = "critical";
+        break;
     case LogLevel::kError:
         ret = "error";
+        break;
     case LogLevel::kWarn:
         ret = "warn";
+        break;
     case LogLevel::kInfo:
         ret = "info";
+        break;
     case LogLevel::kDebug:
         ret = "debug";
+        break;
     default:
         ASSERT(false);
+        break;
     }
 
     return ret;
@@ -75,9 +82,9 @@ FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel 
 
 void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
 {
-    char        dateBuf[64];
+    char      dateBuf[64];
     struct tm localTime;
-    time_t now = time(nullptr);
+    time_t    now = time(nullptr);
 
     VerifyOrExit(aLevel <= mLogLevel);
     VerifyOrExit(mFileStream.is_open());
