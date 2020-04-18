@@ -170,7 +170,8 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
         ASSERT(aResponse != nullptr);
 
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED, but got {}", aResponse->GetCode()));
+                     error =
+                         ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED, but got {}", aResponse->GetCode()));
         VerifyOrExit(aResponse->GetContentFormat(contentFormat).NoError(),
                      error = ERROR_BAD_FORMAT("cannot find valid CoAP Content Format option"));
         VerifyOrExit(

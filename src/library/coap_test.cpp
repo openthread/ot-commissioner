@@ -344,26 +344,31 @@ TEST_CASE("coap-message-confirmable", "[coap]")
     Coap coap0{eventBase, peer0};
     Coap coap1{eventBase, peer1};
 
-    REQUIRE(coap1.AddResource({"/hello", [&coap1](const Request &aRequest) {
-            REQUIRE(aRequest.IsRequest());
-            REQUIRE(aRequest.GetType() == Type::kConfirmable);
-            REQUIRE(aRequest.GetCode() == Code::kGet);
+    REQUIRE(
+        coap1
+            .AddResource(
+                {"/hello",
+                 [&coap1](const Request &aRequest) {
+                     REQUIRE(aRequest.IsRequest());
+                     REQUIRE(aRequest.GetType() == Type::kConfirmable);
+                     REQUIRE(aRequest.GetCode() == Code::kGet);
 
-            ContentFormat contentFormat;
-            REQUIRE(aRequest.GetContentFormat(contentFormat).NoError());
-            REQUIRE(contentFormat == ContentFormat::kTextPlain);
+                     ContentFormat contentFormat;
+                     REQUIRE(aRequest.GetContentFormat(contentFormat).NoError());
+                     REQUIRE(contentFormat == ContentFormat::kTextPlain);
 
-            std::string uriPath;
-            REQUIRE(aRequest.GetUriPath(uriPath).NoError());
-            REQUIRE(uriPath == "/hello");
+                     std::string uriPath;
+                     REQUIRE(aRequest.GetUriPath(uriPath).NoError());
+                     REQUIRE(uriPath == "/hello");
 
-                    REQUIRE(aRequest.GetPayload() == ByteArray{'h', 'e', 'l', 'l', 'o', ',', ' ', 'C', 'o', 'A', 'P'});
+                     REQUIRE(aRequest.GetPayload() == ByteArray{'h', 'e', 'l', 'l', 'o', ',', ' ', 'C', 'o', 'A', 'P'});
 
-            Response response{Type::kAcknowledgment, Code::kContent};
-            REQUIRE(response.SetContentFormat(ContentFormat::kTextPlain).NoError());
-            response.Append("Ack...");
-            REQUIRE(coap1.SendResponse(aRequest, response).NoError());
-        }}).NoError());
+                     Response response{Type::kAcknowledgment, Code::kContent};
+                     REQUIRE(response.SetContentFormat(ContentFormat::kTextPlain).NoError());
+                     response.Append("Ack...");
+                     REQUIRE(coap1.SendResponse(aRequest, response).NoError());
+                 }})
+            .NoError());
 
     SECTION("basic confirmable message send/recv")
     {
