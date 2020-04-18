@@ -28,7 +28,7 @@
 
 /**
  * @file
- *  The file defines file utilities.
+ *  This file defines file utilities.
  *
  */
 
@@ -48,12 +48,12 @@ namespace commissioner {
  * This function writes a string to the target file.
  *
  * Create the target file if it is not found.
- * Clear the target file if it is not empty, and write to it at the begin.
+ * Clear the target file if it is not empty and write from the beginning.
  *
- * @retval Error::kNone Successfully written the whole string.
- * @retval ...          Failed to write the string.
+ * @retval Error::kNone  Successfully written the whole string.
+ * @retval ...           Failed to write the string.
  *
- * @note This function is not atomic, which means, the target file
+ * @note This function is not atomic, which means the target file
  *       could be corrupted if this function failed.
  *
  */
@@ -62,14 +62,17 @@ Error WriteFile(const std::string &aData, const std::string &aFilename);
 /**
  * This function reads a file into a std::string.
  *
- * @retval Error::kNone     Successfully read the whole file.
- * @retval Error::kNotFound Cannot find the given file.
+ * @retval Error::kNone      Successfully read the whole file.
+ * @retval Error::kNotFound  Cannot find the given file.
  *
  */
 Error ReadFile(std::string &aData, const std::string &aFilename);
 
 /**
  * This function reads a PEM file into a ByteArray.
+ *
+ * @retval Error::kNone      Successfully read the whole file.
+ * @retval Error::kNotFound  Cannot find the given file.
  *
  * @note A '\0' will be append to the end of the data buffer
  *       (this is required by mbedtls to distinguish DER and PEM).
@@ -83,9 +86,9 @@ Error ReadPemFile(ByteArray &aData, const std::string &aFilename);
  * Any spaces in the file are accepted and ingored to produce a
  * continuous byte array.
  *
- * @retval Error::kNone      Successfully read the whole file.
- * @retval Error::kNotFound  Cannot find the given file.
- * @retval Error::kBadFormat There are invalid characters in the file.
+ * @retval Error::kNone       Successfully read the whole file.
+ * @retval Error::kNotFound   Cannot find the given file.
+ * @retval Error::kBadFormat  There are invalid characters in the file.
  *
  */
 Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename);

@@ -28,7 +28,7 @@
 
 /**
  * @file
- *  The file defines file logger.
+ *  This file defines file logger.
  *
  */
 
@@ -44,24 +44,27 @@ namespace commissioner {
 
 static std::string ToString(LogLevel aLevel)
 {
+    std::string ret;
+
     switch (aLevel)
     {
     case LogLevel::kOff:
-        return "off";
+        ret = "off";
     case LogLevel::kCritical:
-        return "critical";
+        ret = "critical";
     case LogLevel::kError:
-        return "error";
+        ret = "error";
     case LogLevel::kWarn:
-        return "warn";
+        ret = "warn";
     case LogLevel::kInfo:
-        return "info";
+        ret = "info";
     case LogLevel::kDebug:
-        return "debug";
+        ret = "debug";
     default:
         ASSERT(false);
-        return "unknown";
     }
+
+    return ret;
 }
 
 FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel aLogLevel)

@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   The file defines the json parser of Network Data and Commissioner configuration.
+ *   This file defines the json parser of Network Data and Commissioner configuration.
  *
  */
 
@@ -50,7 +50,7 @@ namespace ot {
 namespace commissioner {
 
 /**
- * This is the Exception class represents Network Data
+ * This Exception class represents Network Data
  * and Configuration conversion errors from JSON file.
  *
  * We need this because the nlohmann::json library uses
@@ -189,20 +189,20 @@ NLOHMANN_JSON_SERIALIZE_ENUM(LogLevel,
 
 static void from_json(const Json &aJson, Config &aConfig)
 {
-#define TEST_AND_SET(name)              \
+#define SET_IF_PRESENT(name)            \
     if (aJson.contains(#name))          \
     {                                   \
         aConfig.m##name = aJson[#name]; \
     };
 
-    TEST_AND_SET(Id);
-    TEST_AND_SET(EnableCcm);
-    TEST_AND_SET(EnableDtlsDebugLogging);
+    SET_IF_PRESENT(Id);
+    SET_IF_PRESENT(EnableCcm);
+    SET_IF_PRESENT(EnableDtlsDebugLogging);
 
-    TEST_AND_SET(KeepAliveInterval);
-    TEST_AND_SET(MaxConnectionNum);
+    SET_IF_PRESENT(KeepAliveInterval);
+    SET_IF_PRESENT(MaxConnectionNum);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 
     // The default log level is LogLevel::kInfo.
     LogLevel logLevel = LogLevel::kInfo;
@@ -212,7 +212,6 @@ static void from_json(const Json &aJson, Config &aConfig)
         logLevel = aJson["LogLevel"];
     }
 
-    // TODO(wgtdkp): parse logging file.
     if (aJson.contains("LogFile"))
     {
         auto logger     = std::make_shared<FileLogger>(aJson["LogFile"], logLevel);
@@ -242,27 +241,27 @@ static void from_json(const Json &aJson, Config &aConfig)
 
 static void to_json(Json &aJson, const CommissionerDataset &aDataset)
 {
-#define TEST_AND_SET(name)                                          \
+#define SET_IF_PRESENT(name)                                        \
     if (aDataset.mPresentFlags & CommissionerDataset::k##name##Bit) \
     {                                                               \
         aJson[#name] = aDataset.m##name;                            \
     };
 
-    TEST_AND_SET(BorderAgentLocator);
-    TEST_AND_SET(SessionId);
-    TEST_AND_SET(SteeringData);
-    TEST_AND_SET(AeSteeringData);
-    TEST_AND_SET(NmkpSteeringData);
-    TEST_AND_SET(JoinerUdpPort);
-    TEST_AND_SET(AeUdpPort);
-    TEST_AND_SET(NmkpUdpPort);
+    SET_IF_PRESENT(BorderAgentLocator);
+    SET_IF_PRESENT(SessionId);
+    SET_IF_PRESENT(SteeringData);
+    SET_IF_PRESENT(AeSteeringData);
+    SET_IF_PRESENT(NmkpSteeringData);
+    SET_IF_PRESENT(JoinerUdpPort);
+    SET_IF_PRESENT(AeUdpPort);
+    SET_IF_PRESENT(NmkpUdpPort);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void from_json(const Json &aJson, CommissionerDataset &aDataset)
 {
-#define TEST_AND_SET(name)                                                    \
+#define SET_IF_PRESENT(name)                                                  \
     if (aJson.contains(#name))                                                \
     {                                                                         \
         aDataset.m##name = aJson.at(#name).get<decltype(aDataset.m##name)>(); \
@@ -271,45 +270,45 @@ static void from_json(const Json &aJson, CommissionerDataset &aDataset)
 
     // Ignore BorderAgentLocator & CommissionerSessionId
 
-    TEST_AND_SET(SteeringData);
-    TEST_AND_SET(AeSteeringData);
-    TEST_AND_SET(NmkpSteeringData);
-    TEST_AND_SET(JoinerUdpPort);
-    TEST_AND_SET(AeUdpPort);
-    TEST_AND_SET(NmkpUdpPort);
+    SET_IF_PRESENT(SteeringData);
+    SET_IF_PRESENT(AeSteeringData);
+    SET_IF_PRESENT(NmkpSteeringData);
+    SET_IF_PRESENT(JoinerUdpPort);
+    SET_IF_PRESENT(AeUdpPort);
+    SET_IF_PRESENT(NmkpUdpPort);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void to_json(Json &aJson, const BbrDataset &aDataset)
 {
-#define TEST_AND_SET(name)                                 \
+#define SET_IF_PRESENT(name)                               \
     if (aDataset.mPresentFlags & BbrDataset::k##name##Bit) \
     {                                                      \
         aJson[#name] = aDataset.m##name;                   \
     };
 
-    TEST_AND_SET(TriHostname);
-    TEST_AND_SET(RegistrarHostname);
-    TEST_AND_SET(RegistrarIpv6Addr);
+    SET_IF_PRESENT(TriHostname);
+    SET_IF_PRESENT(RegistrarHostname);
+    SET_IF_PRESENT(RegistrarIpv6Addr);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void from_json(const Json &aJson, BbrDataset &aDataset)
 {
-#define TEST_AND_SET(name)                                                    \
+#define SET_IF_PRESENT(name)                                                  \
     if (aJson.contains(#name))                                                \
     {                                                                         \
         aDataset.m##name = aJson.at(#name).get<decltype(aDataset.m##name)>(); \
         aDataset.mPresentFlags |= BbrDataset::k##name##Bit;                   \
     };
 
-    TEST_AND_SET(TriHostname);
-    TEST_AND_SET(RegistrarHostname);
-    TEST_AND_SET(RegistrarIpv6Addr);
+    SET_IF_PRESENT(TriHostname);
+    SET_IF_PRESENT(RegistrarHostname);
+    SET_IF_PRESENT(RegistrarIpv6Addr);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void to_json(Json &aJson, const Timestamp &aTimestamp)
@@ -396,44 +395,44 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 
 static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
 {
-#define TEST_AND_SET(name)                                               \
+#define SET_IF_PRESENT(name)                                             \
     if (aDataset.mPresentFlags & ActiveOperationalDataset::k##name##Bit) \
     {                                                                    \
         aJson[#name] = aDataset.m##name;                                 \
     };
 
-    TEST_AND_SET(ActiveTimestamp);
-    TEST_AND_SET(Channel);
-    TEST_AND_SET(ChannelMask);
-    TEST_AND_SET(ExtendedPanId);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(Channel);
+    SET_IF_PRESENT(ChannelMask);
+    SET_IF_PRESENT(ExtendedPanId);
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit)
     {
         aJson["MeshLocalPrefix"] = Ipv6PrefixToString(aDataset.mMeshLocalPrefix);
     };
 
-    TEST_AND_SET(NetworkMasterKey);
-    TEST_AND_SET(NetworkName);
-    TEST_AND_SET(PanId);
-    TEST_AND_SET(PSKc);
-    TEST_AND_SET(SecurityPolicy);
+    SET_IF_PRESENT(NetworkMasterKey);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(PanId);
+    SET_IF_PRESENT(PSKc);
+    SET_IF_PRESENT(SecurityPolicy);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
 {
-#define TEST_AND_SET(name)                                                    \
+#define SET_IF_PRESENT(name)                                                  \
     if (aJson.contains(#name))                                                \
     {                                                                         \
         aDataset.m##name = aJson.at(#name).get<decltype(aDataset.m##name)>(); \
         aDataset.mPresentFlags |= ActiveOperationalDataset::k##name##Bit;     \
     };
 
-    TEST_AND_SET(ActiveTimestamp);
-    TEST_AND_SET(Channel);
-    TEST_AND_SET(ChannelMask);
-    TEST_AND_SET(ExtendedPanId);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(Channel);
+    SET_IF_PRESENT(ChannelMask);
+    SET_IF_PRESENT(ExtendedPanId);
 
     if (aJson.contains("MeshLocalPrefix"))
     {
@@ -445,46 +444,46 @@ static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
         aDataset.mPresentFlags |= ActiveOperationalDataset::kMeshLocalPrefixBit;
     };
 
-    TEST_AND_SET(NetworkMasterKey);
-    TEST_AND_SET(NetworkName);
-    TEST_AND_SET(PanId);
-    TEST_AND_SET(PSKc);
-    TEST_AND_SET(SecurityPolicy);
+    SET_IF_PRESENT(NetworkMasterKey);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(PanId);
+    SET_IF_PRESENT(PSKc);
+    SET_IF_PRESENT(SecurityPolicy);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void to_json(Json &aJson, const PendingOperationalDataset &aDataset)
 {
     to_json(aJson, static_cast<const ActiveOperationalDataset &>(aDataset));
 
-#define TEST_AND_SET(name)                                                \
+#define SET_IF_PRESENT(name)                                              \
     if (aDataset.mPresentFlags & PendingOperationalDataset::k##name##Bit) \
     {                                                                     \
         aJson[#name] = aDataset.m##name;                                  \
     };
 
-    TEST_AND_SET(PendingTimestamp);
-    TEST_AND_SET(DelayTimer);
+    SET_IF_PRESENT(PendingTimestamp);
+    SET_IF_PRESENT(DelayTimer);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void from_json(const Json &aJson, PendingOperationalDataset &aDataset)
 {
     from_json(aJson, static_cast<ActiveOperationalDataset &>(aDataset));
 
-#define TEST_AND_SET(name)                                                    \
+#define SET_IF_PRESENT(name)                                                  \
     if (aJson.contains(#name))                                                \
     {                                                                         \
         aDataset.m##name = aJson.at(#name).get<decltype(aDataset.m##name)>(); \
         aDataset.mPresentFlags |= PendingOperationalDataset::k##name##Bit;    \
     };
 
-    TEST_AND_SET(PendingTimestamp);
-    TEST_AND_SET(DelayTimer);
+    SET_IF_PRESENT(PendingTimestamp);
+    SET_IF_PRESENT(DelayTimer);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void to_json(Json &aJson, const NetworkData &aNetworkData)
@@ -501,18 +500,18 @@ static void to_json(Json &aJson, const NetworkData &aNetworkData)
 
 static void from_json(const Json &aJson, NetworkData &aNetworkData)
 {
-#define TEST_AND_SET(name)                                                            \
+#define SET_IF_PRESENT(name)                                                          \
     if (aJson.contains(#name))                                                        \
     {                                                                                 \
         aNetworkData.m##name = aJson.at(#name).get<decltype(aNetworkData.m##name)>(); \
     };
 
-    TEST_AND_SET(ActiveDataset);
-    TEST_AND_SET(PendingDataset);
-    TEST_AND_SET(CommDataset);
-    TEST_AND_SET(BbrDataset);
+    SET_IF_PRESENT(ActiveDataset);
+    SET_IF_PRESENT(PendingDataset);
+    SET_IF_PRESENT(CommDataset);
+    SET_IF_PRESENT(BbrDataset);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 static void to_json(Json &aJson, const EnergyReport &aEnergyReport)

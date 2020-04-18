@@ -1146,76 +1146,76 @@ size_t CommissionerApp::EraseAllJoiners(JoinerType aJoinerType)
 
 void CommissionerApp::MergeDataset(ActiveOperationalDataset &aDst, const ActiveOperationalDataset &aSrc)
 {
-#define TEST_AND_SET(name)                                            \
+#define SET_IF_PRESENT(name)                                          \
     if (aSrc.mPresentFlags & ActiveOperationalDataset::k##name##Bit)  \
     {                                                                 \
         aDst.m##name = aSrc.m##name;                                  \
         aDst.mPresentFlags |= ActiveOperationalDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(ActiveTimestamp);
-    TEST_AND_SET(Channel);
-    TEST_AND_SET(ChannelMask);
-    TEST_AND_SET(ExtendedPanId);
-    TEST_AND_SET(MeshLocalPrefix);
-    TEST_AND_SET(NetworkMasterKey);
-    TEST_AND_SET(NetworkName);
-    TEST_AND_SET(PanId);
-    TEST_AND_SET(PSKc);
-    TEST_AND_SET(SecurityPolicy);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(Channel);
+    SET_IF_PRESENT(ChannelMask);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(MeshLocalPrefix);
+    SET_IF_PRESENT(NetworkMasterKey);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(PanId);
+    SET_IF_PRESENT(PSKc);
+    SET_IF_PRESENT(SecurityPolicy);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 void CommissionerApp::MergeDataset(PendingOperationalDataset &aDst, const PendingOperationalDataset &aSrc)
 {
     MergeDataset(static_cast<ActiveOperationalDataset &>(aDst), static_cast<const ActiveOperationalDataset &>(aSrc));
 
-#define TEST_AND_SET(name)                                             \
+#define SET_IF_PRESENT(name)                                           \
     if (aSrc.mPresentFlags & PendingOperationalDataset::k##name##Bit)  \
     {                                                                  \
         aDst.m##name = aSrc.m##name;                                   \
         aDst.mPresentFlags |= PendingOperationalDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(PendingTimestamp);
-    TEST_AND_SET(DelayTimer);
+    SET_IF_PRESENT(PendingTimestamp);
+    SET_IF_PRESENT(DelayTimer);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 void CommissionerApp::MergeDataset(BbrDataset &aDst, const BbrDataset &aSrc)
 {
-#define TEST_AND_SET(name)                              \
+#define SET_IF_PRESENT(name)                            \
     if (aSrc.mPresentFlags & BbrDataset::k##name##Bit)  \
     {                                                   \
         aDst.m##name = aSrc.m##name;                    \
         aDst.mPresentFlags |= BbrDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(TriHostname);
-    TEST_AND_SET(RegistrarHostname);
-    TEST_AND_SET(RegistrarIpv6Addr);
+    SET_IF_PRESENT(TriHostname);
+    SET_IF_PRESENT(RegistrarHostname);
+    SET_IF_PRESENT(RegistrarIpv6Addr);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 // Remove dst dataset's steering data and joiner UDP port
 // if they are not presented in the src dataset.
 void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const CommissionerDataset &aSrc)
 {
-#define TEST_AND_SET(name)                                       \
+#define SET_IF_PRESENT(name)                                     \
     if (aSrc.mPresentFlags & CommissionerDataset::k##name##Bit)  \
     {                                                            \
         aDst.m##name = aSrc.m##name;                             \
         aDst.mPresentFlags |= CommissionerDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(BorderAgentLocator);
-    TEST_AND_SET(SessionId);
+    SET_IF_PRESENT(BorderAgentLocator);
+    SET_IF_PRESENT(SessionId);
 
-#undef TEST_AND_SET
-#define TEST_AND_SET(name)                                        \
+#undef SET_IF_PRESENT
+#define SET_IF_PRESENT(name)                                      \
     if (aSrc.mPresentFlags & CommissionerDataset::k##name##Bit)   \
     {                                                             \
         aDst.m##name = aSrc.m##name;                              \
@@ -1226,14 +1226,14 @@ void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const Commissioner
         aDst.mPresentFlags &= ~CommissionerDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(SteeringData);
-    TEST_AND_SET(AeSteeringData);
-    TEST_AND_SET(NmkpSteeringData);
-    TEST_AND_SET(JoinerUdpPort);
-    TEST_AND_SET(AeUdpPort);
-    TEST_AND_SET(NmkpUdpPort);
+    SET_IF_PRESENT(SteeringData);
+    SET_IF_PRESENT(AeSteeringData);
+    SET_IF_PRESENT(NmkpSteeringData);
+    SET_IF_PRESENT(JoinerUdpPort);
+    SET_IF_PRESENT(AeUdpPort);
+    SET_IF_PRESENT(NmkpUdpPort);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 void CommissionerApp::HandlePanIdConflict(const std::string *aPeerAddr,

@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   The file defines the json parser of Network Data and Commissioner configuration.
+ *   This file defines the json parser of Network Data and Commissioner configuration.
  *
  */
 

@@ -28,7 +28,7 @@
 
 /**
  * @file
- *  The file implements file utilities.
+ *  This file implements file utilities.
  *
  */
 

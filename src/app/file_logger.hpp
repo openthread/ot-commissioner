@@ -28,7 +28,7 @@
 
 /**
  * @file
- *  The file defines file logger.
+ *  This file defines file logger.
  *
  */
 
@@ -55,7 +55,7 @@ public:
      * The constructor with given log file name and minimum log level.
      *
      * @param[in] aFilename  The log file name.
-     * @param[in] aLogLevel  The minimum log level. Log messages have a lower
+     * @param[in] aLogLevel  The minimum log level. Log messages with a lower
      *                       log level than this will be dropped silently.
      *
      */
