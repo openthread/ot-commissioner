@@ -235,6 +235,8 @@ private:
         bool operator<(const JoinerKey &aOther) const;
     };
 
+    void SetDefaultCommissionerDataset();
+
     static ByteArray &GetSteeringData(CommissionerDataset &aDataset, JoinerType aJoinerType);
     static uint16_t & GetJoinerUdpPort(CommissionerDataset &aDataset, JoinerType aJoinerType);
 
