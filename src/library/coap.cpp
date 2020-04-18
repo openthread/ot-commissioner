@@ -1053,7 +1053,7 @@ std::shared_ptr<Message> Message::Deserialize(Error &aError, const ByteArray &aB
 
         if (!error.NoError())
         {
-            if (!IsCriticalOption(number))
+            if (IsCriticalOption(number))
             {
                 // Stop if any unrecognized option is critical.
                 ExitNow();
