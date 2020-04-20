@@ -81,11 +81,11 @@ Error Sign1Message::Deserialize(Sign1Message &aCose, const ByteArray &aBuf)
 {
     Error       error = Error::kNone;
     int         type;
-    HCOSE_SIGN0 sign;
+    HCOSE_SIGN1 sign;
 
     VerifyOrExit(!aBuf.empty(), error = Error::kInvalidArgs);
-    sign = reinterpret_cast<HCOSE_SIGN0>(COSE_Decode(&aBuf[0], aBuf.size(), &type, COSE_sign0_object, nullptr));
-    VerifyOrExit(sign != nullptr && type == COSE_sign0_object, error = Error::kBadFormat);
+    sign = reinterpret_cast<HCOSE_SIGN1>(COSE_Decode(&aBuf[0], aBuf.size(), &type, COSE_sign1_object, nullptr));
+    VerifyOrExit(sign != nullptr && type == COSE_sign1_object, error = Error::kBadFormat);
 
     aCose.mSign = sign;
 
@@ -114,7 +114,7 @@ Error Sign1Message::Validate(const mbedtls_pk_context &aPubKey)
     VerifyOrExit(mbedtls_pk_can_do(&aPubKey, MBEDTLS_PK_ECDSA), error = Error::kInvalidArgs);
     VerifyOrExit((eckey = mbedtls_pk_ec(aPubKey)) != nullptr, error = Error::kInvalidArgs);
 
-    VerifyOrExit(COSE_Sign0_validate_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
+    // VerifyOrExit(COSE_Sign1_validate_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
 
 exit:
     return error;
@@ -128,7 +128,7 @@ Error Sign1Message::Sign(const mbedtls_pk_context &aPrivateKey)
     VerifyOrExit(mbedtls_pk_can_do(&aPrivateKey, MBEDTLS_PK_ECDSA), error = Error::kInvalidArgs);
     VerifyOrExit((eckey = mbedtls_pk_ec(aPrivateKey)) != nullptr, error = Error::kInvalidArgs);
 
-    VerifyOrExit(COSE_Sign0_Sign_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
+    // VerifyOrExit(COSE_Sign1_Sign_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
 
 exit:
     return error;
