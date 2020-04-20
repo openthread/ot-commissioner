@@ -28,9 +28,16 @@
 
 add_subdirectory(Catch2/repo)
 
-set(coveralls OFF CACHE BOOL "Disbale generating coveralls data")
+set(coveralls
+    OFF
+    CACHE BOOL "Disbale generating coveralls data")
 add_subdirectory(cn-cbor/repo)
-add_subdirectory(COSE-C)
+
+set(COSE_C_USE_FIND_PACKAGE
+    ON
+    CACHE BOOL "do not download packages" FORCE)
+
+add_subdirectory(COSE-C/repo)
 add_subdirectory(fmtlib/repo)
 add_subdirectory(json/repo)
 
