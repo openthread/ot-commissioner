@@ -114,7 +114,7 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
 
     SuccessOrExit(error = coseSign.Validate(aPublicKey));
 
-    VerifyOrExit((payload = coseSign.GetPayload(payloadLength)) != NULL);
+    VerifyOrExit((payload = coseSign.GetPayload(payloadLength)) != nullptr);
 
     SuccessOrExit(error = CborValue::Deserialize(token, payload, payloadLength));
 
