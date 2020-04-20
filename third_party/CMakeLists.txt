@@ -28,15 +28,23 @@
 
 add_subdirectory(Catch2/repo)
 
+set(BUILD_SHARED_LIBS
+    OFF
+    CACHE BOOL "Disbale generating coveralls data")
 set(coveralls
     OFF
     CACHE BOOL "Disbale generating coveralls data")
 add_subdirectory(cn-cbor/repo)
 
+set(COSE_C_COVERALLS
+    OFF
+    CACHE BOOL "do not link gcov" FORCE)
 set(COSE_C_USE_FIND_PACKAGE
     ON
     CACHE BOOL "do not download packages" FORCE)
-
+set(COSE_C_USE_MBEDTLS
+    ON
+    CACHE BOOL "use mbedtls" FORCE)
 add_subdirectory(COSE-C/repo)
 add_subdirectory(fmtlib/repo)
 add_subdirectory(json/repo)
