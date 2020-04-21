@@ -38,6 +38,7 @@
 ##
 
 . "$(dirname "$0")"/test_announce_begin.sh
+. "$(dirname "$0")"/test_cli.sh
 . "$(dirname "$0")"/test_discover.sh
 . "$(dirname "$0")"/test_energy_scan.sh
 . "$(dirname "$0")"/test_joining.sh
