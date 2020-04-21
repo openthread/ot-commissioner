@@ -60,7 +60,7 @@ public:
     cn_cbor *      GetImpl() { return mCbor; }
     const cn_cbor *GetImpl() const { return mCbor; }
 
-    bool IsValid() const { return mCbor != NULL; }
+    bool IsValid() const { return mCbor != nullptr; }
 
     // This move the resource from src to dst, leaving the dst invalid.
     static void Move(CborValue &dst, CborValue &src);

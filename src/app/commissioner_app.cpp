@@ -37,37 +37,32 @@
 #include <ctime>
 #include <fstream>
 
-#include "json.hpp"
 #include <address.hpp>
 #include <utils.hpp>
+
+#include "file_util.hpp"
+#include "json.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-std::shared_ptr<CommissionerApp> CommissionerApp::Create(const std::string &aConfigFile)
+std::shared_ptr<CommissionerApp> CommissionerApp::Create(const Config &aConfig)
 {
-    Error     error = Error::kNone;
-    AppConfig appConfig;
-    auto      app = std::shared_ptr<CommissionerApp>(new CommissionerApp());
+    Error error = Error::kNone;
+    auto  app   = std::shared_ptr<CommissionerApp>(new CommissionerApp());
 
-    SuccessOrExit(error = ReadConfig(appConfig, aConfigFile));
-
-    SuccessOrExit(error = app->Init(appConfig));
+    SuccessOrExit(error = app->Init(aConfig));
 
 exit:
     return error == Error::kNone ? app : nullptr;
 }
 
-Error CommissionerApp::Init(const AppConfig &aAppConfig)
+Error CommissionerApp::Init(const Config &aConfig)
 {
-    Error                         error = Error::kNone;
-    Config                        config;
-    std::shared_ptr<Commissioner> commissioner = nullptr;
+    Error error        = Error::kNone;
+    auto  commissioner = Commissioner::Create(aConfig, nullptr);
 
-    SuccessOrExit(error = MakeConfig(config, aAppConfig));
-
-    commissioner = Commissioner::Create(config, nullptr);
     VerifyOrExit(commissioner != nullptr, error = Error::kInvalidArgs);
     SuccessOrExit(error = commissioner->Start());
 
@@ -1134,76 +1129,76 @@ size_t CommissionerApp::EraseAllJoiners(JoinerType aJoinerType)
 
 void CommissionerApp::MergeDataset(ActiveOperationalDataset &aDst, const ActiveOperationalDataset &aSrc)
 {
-#define TEST_AND_SET(name)                                            \
+#define SET_IF_PRESENT(name)                                          \
     if (aSrc.mPresentFlags & ActiveOperationalDataset::k##name##Bit)  \
     {                                                                 \
         aDst.m##name = aSrc.m##name;                                  \
         aDst.mPresentFlags |= ActiveOperationalDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(ActiveTimestamp);
-    TEST_AND_SET(Channel);
-    TEST_AND_SET(ChannelMask);
-    TEST_AND_SET(ExtendedPanId);
-    TEST_AND_SET(MeshLocalPrefix);
-    TEST_AND_SET(NetworkMasterKey);
-    TEST_AND_SET(NetworkName);
-    TEST_AND_SET(PanId);
-    TEST_AND_SET(PSKc);
-    TEST_AND_SET(SecurityPolicy);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(Channel);
+    SET_IF_PRESENT(ChannelMask);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(MeshLocalPrefix);
+    SET_IF_PRESENT(NetworkMasterKey);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(PanId);
+    SET_IF_PRESENT(PSKc);
+    SET_IF_PRESENT(SecurityPolicy);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 void CommissionerApp::MergeDataset(PendingOperationalDataset &aDst, const PendingOperationalDataset &aSrc)
 {
     MergeDataset(static_cast<ActiveOperationalDataset &>(aDst), static_cast<const ActiveOperationalDataset &>(aSrc));
 
-#define TEST_AND_SET(name)                                             \
+#define SET_IF_PRESENT(name)                                           \
     if (aSrc.mPresentFlags & PendingOperationalDataset::k##name##Bit)  \
     {                                                                  \
         aDst.m##name = aSrc.m##name;                                   \
         aDst.mPresentFlags |= PendingOperationalDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(PendingTimestamp);
-    TEST_AND_SET(DelayTimer);
+    SET_IF_PRESENT(PendingTimestamp);
+    SET_IF_PRESENT(DelayTimer);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 void CommissionerApp::MergeDataset(BbrDataset &aDst, const BbrDataset &aSrc)
 {
-#define TEST_AND_SET(name)                              \
+#define SET_IF_PRESENT(name)                            \
     if (aSrc.mPresentFlags & BbrDataset::k##name##Bit)  \
     {                                                   \
         aDst.m##name = aSrc.m##name;                    \
         aDst.mPresentFlags |= BbrDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(TriHostname);
-    TEST_AND_SET(RegistrarHostname);
-    TEST_AND_SET(RegistrarIpv6Addr);
+    SET_IF_PRESENT(TriHostname);
+    SET_IF_PRESENT(RegistrarHostname);
+    SET_IF_PRESENT(RegistrarIpv6Addr);
 
-#undef TEST_AND_SET
+#undef SET_IF_PRESENT
 }
 
 // Remove dst dataset's steering data and joiner UDP port
 // if they are not presented in the src dataset.
 void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const CommissionerDataset &aSrc)
 {
-#define TEST_AND_SET(name)                                       \
+#define SET_IF_PRESENT(name)                                     \
     if (aSrc.mPresentFlags & CommissionerDataset::k##name##Bit)  \
     {                                                            \
         aDst.m##name = aSrc.m##name;                             \
         aDst.mPresentFlags |= CommissionerDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(BorderAgentLocator);
-    TEST_AND_SET(SessionId);
+    SET_IF_PRESENT(BorderAgentLocator);
+    SET_IF_PRESENT(SessionId);
 
-#undef TEST_AND_SET
-#define TEST_AND_SET(name)                                        \
+#undef SET_IF_PRESENT
+#define SET_IF_PRESENT(name)                                      \
     if (aSrc.mPresentFlags & CommissionerDataset::k##name##Bit)   \
     {                                                             \
         aDst.m##name = aSrc.m##name;                              \
@@ -1214,90 +1209,14 @@ void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const Commissioner
         aDst.mPresentFlags &= ~CommissionerDataset::k##name##Bit; \
     }
 
-    TEST_AND_SET(SteeringData);
-    TEST_AND_SET(AeSteeringData);
-    TEST_AND_SET(NmkpSteeringData);
-    TEST_AND_SET(JoinerUdpPort);
-    TEST_AND_SET(AeUdpPort);
-    TEST_AND_SET(NmkpUdpPort);
+    SET_IF_PRESENT(SteeringData);
+    SET_IF_PRESENT(AeSteeringData);
+    SET_IF_PRESENT(NmkpSteeringData);
+    SET_IF_PRESENT(JoinerUdpPort);
+    SET_IF_PRESENT(AeUdpPort);
+    SET_IF_PRESENT(NmkpUdpPort);
 
-#undef TEST_AND_SET
-}
-
-Error CommissionerApp::ReadFile(std::string &aData, const std::string &aFilename)
-{
-    Error error = Error::kNone;
-    FILE *f     = fopen(aFilename.c_str(), "r");
-    int   c;
-
-    VerifyOrExit(f != nullptr, error = Error::kNotFound);
-
-    while ((c = fgetc(f)) != EOF)
-    {
-        aData.push_back(c);
-    }
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::ReadPemFile(ByteArray &aData, const std::string &aFilename)
-{
-    Error       error = Error::kNone;
-    std::string data;
-
-    SuccessOrExit(error = ReadFile(data, aFilename));
-    aData = {data.begin(), data.end()};
-    aData.push_back(0);
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
-{
-    Error       error = Error::kNone;
-    std::string hexString;
-    ByteArray   data;
-
-    SuccessOrExit(error = ReadFile(hexString, aFilename));
-
-    hexString.erase(std::remove_if(hexString.begin(), hexString.end(), [](int c) { return isspace(c); }),
-                    hexString.end());
-    SuccessOrExit(error = utils::Hex(data, hexString));
-
-    aData = data;
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::WriteFile(const std::string &aData, const std::string &aFilename)
-{
-    Error error = Error::kNone;
-
-    std::ofstream file(aFilename);
-
-    VerifyOrExit(file.is_open(), error = Error::kNotFound);
-    for (auto c : aData)
-    {
-        file << c;
-    }
-
-exit:
-    return error;
-}
-
-Error CommissionerApp::ReadConfig(AppConfig &aAppConfig, const std::string &aFilename)
-{
-    Error       error = Error::kNone;
-    std::string configData;
-
-    SuccessOrExit(error = ReadFile(configData, aFilename));
-    SuccessOrExit(error = AppConfigFromJson(aAppConfig, configData));
-
-exit:
-    return error;
+#undef SET_IF_PRESENT
 }
 
 void CommissionerApp::HandlePanIdConflict(const std::string *aPeerAddr,
@@ -1385,70 +1304,6 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
     return nullptr;
 }
 
-Error CommissionerApp::MakeConfig(Config &aConfig, const AppConfig &aAppConfig)
-{
-    Error error = Error::kNone;
-
-    aConfig = aAppConfig.mConfig;
-
-    mCommLogStream.open(aAppConfig.mLogFile, std::ofstream::out | std::ofstream::app);
-    VerifyOrExit(mCommLogStream.is_open(), error = Error::kNotFound);
-
-    aConfig.mLogWriter = [this](LogLevel aLevel, const std::string &aMsg) { WriteCommLog(aLevel, aMsg); };
-
-    if (!aAppConfig.mPSKc.empty())
-    {
-        SuccessOrExit(error = utils::Hex(aConfig.mPSKc, aAppConfig.mPSKc));
-    }
-    if (!aAppConfig.mPrivateKeyFile.empty())
-    {
-        SuccessOrExit(error = ReadPemFile(aConfig.mPrivateKey, aAppConfig.mPrivateKeyFile));
-    }
-    if (!aAppConfig.mCertificateFile.empty())
-    {
-        SuccessOrExit(error = ReadPemFile(aConfig.mCertificate, aAppConfig.mCertificateFile));
-    }
-    if (!aAppConfig.mTrustAnchorFile.empty())
-    {
-        SuccessOrExit(error = ReadPemFile(aConfig.mTrustAnchor, aAppConfig.mTrustAnchorFile));
-    }
-
-exit:
-    return error;
-}
-
-static std::string ToString(LogLevel aLevel)
-{
-    switch (aLevel)
-    {
-    case LogLevel::kOff:
-        return "off";
-    case LogLevel::kCritical:
-        return "critical";
-    case LogLevel::kError:
-        return "error";
-    case LogLevel::kWarn:
-        return "warn";
-    case LogLevel::kInfo:
-        return "info";
-    case LogLevel::kDebug:
-        return "debug";
-    default:
-        ASSERT(false);
-        return "unknown";
-    }
-}
-
-void CommissionerApp::WriteCommLog(LogLevel aLevel, const std::string &aMsg)
-{
-    ASSERT(mCommLogStream.is_open());
-
-    char        dateBuf[64];
-    std::time_t now = std::time(nullptr);
-    std::strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-    mCommLogStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
-}
-
 bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
                                           const std::string &aVendorName,
                                           const std::string &aVendorModel,
@@ -1469,13 +1324,13 @@ bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
     auto configuredJoinerInfo = GetJoinerInfo(aJoinerInfo.mType, Commissioner::ComputeJoinerId(aJoinerInfo.mEui64));
     if (configuredJoinerInfo == nullptr)
     {
-        WriteCommLog(LogLevel::kInfo, "Joiner not accepted: not configured");
+        // TODO(wgtdkp): logging
         return kJoinerNotAccepted;
     }
 
     if (aProvisioningUrl != configuredJoinerInfo->mProvisioningUrl)
     {
-        WriteCommLog(LogLevel::kInfo, "Joiner not accepted: provisioning url not supported");
+        // TODO(wgtdkp): logging
         return kJoinerNotAccepted;
     }
 

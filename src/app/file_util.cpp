@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,33 +28,94 @@
 
 /**
  * @file
- *   This file includes wrapper of mbedtls.
+ *  This file implements file utilities.
+ *
  */
 
-#include "logging.hpp"
+#include "file_util.hpp"
+
+#include <algorithm>
+
+#include <utils.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-static std::shared_ptr<Logger> sLogger = nullptr;
-
-void InitLogger(std::shared_ptr<Logger> aLogger)
+Error WriteFile(const std::string &aData, const std::string &aFilename)
 {
-    sLogger = aLogger;
-}
+    Error error = Error::kNone;
 
-std::shared_ptr<Logger> GetLogger(void)
-{
-    return sLogger;
-}
+    FILE *f = fopen(aFilename.c_str(), "w");
 
-void Log(LogLevel aLevel, const std::string &aMessage)
-{
-    if (GetLogger())
+    VerifyOrExit(f != NULL, error = Error::kNotFound);
+
+    fputs(aData.c_str(), f);
+
+exit:
+    if (f != NULL)
     {
-        GetLogger()->Log(aLevel, aMessage);
+        fclose(f);
     }
+
+    return error;
+}
+
+Error ReadFile(std::string &aData, const std::string &aFilename)
+{
+    Error error = Error::kNone;
+
+    FILE *f = fopen(aFilename.c_str(), "r");
+
+    VerifyOrExit(f != NULL, error = Error::kNotFound);
+
+    while (true)
+    {
+        int c = fgetc(f);
+        VerifyOrExit(c != EOF);
+        aData.push_back(c);
+    }
+
+exit:
+    if (f != NULL)
+    {
+        fclose(f);
+    }
+
+    return error;
+}
+
+Error ReadPemFile(ByteArray &aData, const std::string &aFilename)
+{
+    Error error = Error::kNone;
+
+    std::string str;
+
+    SuccessOrExit(error = ReadFile(str, aFilename));
+
+    aData = {str.begin(), str.end()};
+    aData.push_back('\0');
+
+exit:
+    return error;
+}
+
+Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
+{
+    Error       error = Error::kNone;
+    std::string hexString;
+    ByteArray   data;
+
+    SuccessOrExit(error = ReadFile(hexString, aFilename));
+
+    hexString.erase(std::remove_if(hexString.begin(), hexString.end(), [](int c) { return isspace(c); }),
+                    hexString.end());
+    SuccessOrExit(error = utils::Hex(data, hexString));
+
+    aData = data;
+
+exit:
+    return error;
 }
 
 } // namespace commissioner

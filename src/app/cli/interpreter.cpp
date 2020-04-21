@@ -37,8 +37,10 @@
 
 #include <limits>
 
-#include "json.hpp"
 #include <utils.hpp>
+
+#include "file_util.hpp"
+#include "json.hpp"
 
 #if defined(SuccessOrExit)
 #undef SuccessOrExit
@@ -183,8 +185,15 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
 
 Error Interpreter::Init(const std::string &aConfigFile)
 {
-    Error error   = Error::kNone;
-    mCommissioner = CommissionerApp::Create(aConfigFile);
+    Error error = Error::kNone;
+
+    std::string configJson;
+    Config      config;
+
+    SuccessOrExit(error = ReadFile(configJson, aConfigFile));
+    SuccessOrExit(error = ConfigFromJson(config, configJson));
+
+    mCommissioner = CommissionerApp::Create(config);
 
     VerifyOrExit(mCommissioner != nullptr, error = Error::kInvalidArgs);
 
@@ -370,8 +379,8 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
     {
         ByteArray signedToken, signerCert;
         VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-        SuccessOrExit(error = CommissionerApp::ReadHexStringFile(signedToken, aExpr[2]));
-        SuccessOrExit(error = CommissionerApp::ReadPemFile(signerCert, aExpr[3]));
+        SuccessOrExit(error = ReadHexStringFile(signedToken, aExpr[2]));
+        SuccessOrExit(error = ReadPemFile(signerCert, aExpr[3]));
 
         SuccessOrExit(error = mCommissioner->SetToken(signedToken, signerCert));
     }
