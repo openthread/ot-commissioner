@@ -55,8 +55,6 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     CommissionerImpl   commImpl(eventBase);
     REQUIRE(commImpl.Init(config) == Error::kNone);
 
-    std::list<BorderAgent> baList;
-    REQUIRE(commImpl.Discover(baList) == Error::kNotImplemented);
     REQUIRE(commImpl.Connect("::1", 5684) == Error::kNotImplemented);
 
     std::string existingCommissionerId;

@@ -118,26 +118,6 @@ void CommissionerSafe::Stop()
     return;
 }
 
-void CommissionerSafe::Discover(Handler<std::list<BorderAgent>> aHandler)
-{
-    PushAsyncRequest([=]() { mImpl.Discover(aHandler); });
-}
-
-Error CommissionerSafe::Discover(std::list<BorderAgent> &aBorderAgentList)
-{
-    std::promise<Error> pro;
-    auto                wait = [&pro, &aBorderAgentList](const std::list<BorderAgent> *borderAgentList, Error error) {
-        if (borderAgentList != nullptr)
-        {
-            aBorderAgentList = *borderAgentList;
-        }
-        pro.set_value(error);
-    };
-
-    Discover(wait);
-    return pro.get_future().get();
-}
-
 void CommissionerSafe::Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)
 {
     PushAsyncRequest([=]() { mImpl.Connect(aHandler, aAddr, aPort); });

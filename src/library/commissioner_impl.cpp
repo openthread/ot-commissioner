@@ -142,7 +142,6 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     : mState(State::kDisabled)
     , mSessionId(0)
     , mEventBase(aEventBase)
-    , mBaQuerier(mEventBase)
     , mKeepAliveTimer(mEventBase, [this](Timer &aTimer) { SendKeepAlive(aTimer); })
     , mBrClient(mEventBase)
     , mCommissioningSessionTimer(mEventBase, [this](Timer &aTimer) { HandleCommissioningSessionTimer(aTimer); })
@@ -327,11 +326,6 @@ void CommissionerImpl::Resign(ErrorHandler aHandler)
     Disconnect();
 
     aHandler(Error::kNone);
-}
-
-void CommissionerImpl::Discover(Handler<std::list<BorderAgent>> aHandler)
-{
-    mBaQuerier.SendQuery(aHandler);
 }
 
 void CommissionerImpl::Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)

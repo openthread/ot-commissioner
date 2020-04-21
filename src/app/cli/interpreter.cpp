@@ -92,8 +92,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"network", "network save <network-data-file>\n"
                 "network pull"},
     {"sessionid", "sessionid"},
-    {"borderagent", "borderagent discover\n"
-                    "borderagent list\n"
+    {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator\n"
                     "borderagent get meshlocaladdr"},
     {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]\n"
@@ -439,15 +438,16 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
 
     if (CaseInsensitiveEqual(aExpr[1], "discover"))
     {
-        SuccessOrExit(error = mCommissioner->Discover());
-    }
-    else if (CaseInsensitiveEqual(aExpr[1], "list"))
-    {
-        error = Error::kNone;
-        for (const auto &ba : mCommissioner->GetBorderAgentList())
+        uint64_t timeout = 4000;
+
+        if (aExpr.size() >= 3)
         {
-            msg += ToString(ba);
+            SuccessOrExit(ParseInteger(timeout, aExpr[2]), msg = aExpr[2]);
         }
+
+        SuccessOrExit(error = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout)));
+
+        ExitNow(error = Error::kNone);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
@@ -1084,6 +1084,19 @@ Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
 
 exit:
     return {error, msg};
+}
+
+void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage)
+{
+    if (aErrorMessage != nullptr)
+    {
+        Console::Write(*aErrorMessage, Console::Color::kRed);
+    }
+    else
+    {
+        ASSERT(aBorderAgent != nullptr);
+        Console::Write(ToString(*aBorderAgent), Console::Color::kGreen);
+    }
 }
 
 const std::string Interpreter::Usage(Expression aExpr)

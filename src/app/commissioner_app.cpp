@@ -108,28 +108,6 @@ exit:
     return error;
 }
 
-Error CommissionerApp::Discover()
-{
-    return mCommissioner->Discover(mBorderAgents);
-}
-
-const std::list<BorderAgent> &CommissionerApp::GetBorderAgentList() const
-{
-    return mBorderAgents;
-}
-
-const BorderAgent *CommissionerApp::GetBorderAgent(const std::string &aNetworkName)
-{
-    for (auto &ba : mBorderAgents)
-    {
-        if (aNetworkName.empty() || aNetworkName == ba.mNetworkName)
-        {
-            return &ba;
-        }
-    }
-    return nullptr;
-}
-
 Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
                              const std::string &aBorderAgentAddr,
                              uint16_t           aBorderAgentPort)
