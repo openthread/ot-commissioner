@@ -38,6 +38,7 @@ target_sources(commissioner-common
 
 target_include_directories(commissioner-common
     PRIVATE
+        ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/src
 )
 
