@@ -38,7 +38,7 @@
 #include <fstream>
 #include <string>
 
-#include "commissioner/commissioner.hpp"
+#include <commissioner/commissioner.hpp>
 
 namespace ot {
 

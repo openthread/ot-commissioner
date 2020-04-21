@@ -37,7 +37,7 @@
 #include <functional>
 #include <map>
 
-#include "commissioner/error.hpp"
+#include <commissioner/error.hpp>
 
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"

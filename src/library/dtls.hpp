@@ -46,8 +46,8 @@
 #include <mbedtls/ssl_cookie.h>
 #include <mbedtls/timing.h>
 
-#include "commissioner/commissioner.hpp"
-#include "commissioner/defines.hpp"
+#include <commissioner/commissioner.hpp>
+#include <commissioner/defines.hpp>
 
 #include "common/utils.hpp"
 #include "library/endpoint.hpp"

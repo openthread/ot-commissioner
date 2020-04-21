@@ -39,7 +39,7 @@
 #include <chrono>
 #include <functional>
 
-#include "commissioner/error.hpp"
+#include <commissioner/error.hpp>
 
 #include "common/address.hpp"
 #include "library/coap_secure.hpp"

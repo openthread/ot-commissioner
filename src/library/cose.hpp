@@ -43,8 +43,8 @@
 #include <cose.h>
 #include <mbedtls/pk.h>
 
-#include "commissioner/defines.hpp"
-#include "commissioner/error.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
 
 #include "library/cbor.hpp"
 

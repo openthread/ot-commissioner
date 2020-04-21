@@ -31,7 +31,7 @@
  *   The file implements errors.
  */
 
-#include "commissioner/error.hpp"
+#include <commissioner/error.hpp>
 
 #include "common/utils.hpp"
 

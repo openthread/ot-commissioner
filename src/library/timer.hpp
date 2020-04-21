@@ -31,7 +31,7 @@
 
 #include <functional>
 
-#include "commissioner/error.hpp"
+#include <commissioner/error.hpp>
 
 #include "common/utils.hpp"
 #include "library/event.hpp"

@@ -40,7 +40,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "commissioner/error.hpp"
+#include <commissioner/error.hpp>
 
 struct cn_cbor;
 

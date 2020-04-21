@@ -31,7 +31,7 @@
  *   The file implements Thread Network Data.
  */
 
-#include "commissioner/network_data.hpp"
+#include <commissioner/network_data.hpp>
 
 #include "common/address.hpp"
 #include "common/utils.hpp"

@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "commissioner/error.hpp"
+#include <commissioner/error.hpp>
 
 #include "common/address.hpp"
 

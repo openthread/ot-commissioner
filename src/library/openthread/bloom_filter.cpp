@@ -32,7 +32,7 @@
 
 #include <limits>
 
-#include "commissioner/defines.hpp"
+#include <commissioner/defines.hpp>
 
 #include "library/openthread/crc16.hpp"
 

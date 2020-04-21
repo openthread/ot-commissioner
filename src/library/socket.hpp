@@ -39,7 +39,7 @@
 
 #include <mbedtls/net_sockets.h>
 
-#include "commissioner/defines.hpp"
+#include <commissioner/defines.hpp>
 
 #include "common/address.hpp"
 #include "library/event.hpp"

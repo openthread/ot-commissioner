@@ -33,7 +33,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "commissioner/commissioner.hpp"
+#include <commissioner/commissioner.hpp>
 
 #include "common/utils.hpp"
 

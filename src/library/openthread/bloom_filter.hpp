@@ -29,7 +29,7 @@
 #ifndef OT_COMM_LIBRARY_OPENTHREAD_BLOOM_FILTER_HPP_
 #define OT_COMM_LIBRARY_OPENTHREAD_BLOOM_FILTER_HPP_
 
-#include "commissioner/defines.hpp"
+#include <commissioner/defines.hpp>
 
 namespace ot {
 

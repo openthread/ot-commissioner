@@ -36,8 +36,8 @@
 
 #include <string>
 
-#include "commissioner/defines.hpp"
-#include "commissioner/error.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
 
 // ASSERT allows side-effect.
 #define ASSERT(aCondition)                  \

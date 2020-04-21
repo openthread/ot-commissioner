@@ -33,7 +33,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "commissioner/network_data.hpp"
+#include <commissioner/network_data.hpp>
 
 #include "app/json.hpp"
 #include "common/utils.hpp"

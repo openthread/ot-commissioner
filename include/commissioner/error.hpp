@@ -36,7 +36,7 @@
 
 #include <string>
 
-#include "commissioner/defines.hpp"
+#include <commissioner/defines.hpp>
 
 namespace ot {
 

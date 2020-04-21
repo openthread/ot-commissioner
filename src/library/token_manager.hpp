@@ -31,8 +31,8 @@
 
 #include <mbedtls/pk.h>
 
-#include "commissioner/commissioner.hpp"
-#include "commissioner/error.hpp"
+#include <commissioner/commissioner.hpp>
+#include <commissioner/error.hpp>
 
 #include "library/cbor.hpp"
 #include "library/coap_secure.hpp"

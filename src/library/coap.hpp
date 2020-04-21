@@ -42,8 +42,8 @@
 #include <queue>
 #include <set>
 
-#include "commissioner/defines.hpp"
-#include "commissioner/error.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
 
 #include "common/address.hpp"
 #include "common/utils.hpp"

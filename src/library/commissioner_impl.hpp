@@ -31,7 +31,7 @@
 
 #include <atomic>
 
-#include "commissioner/commissioner.hpp"
+#include <commissioner/commissioner.hpp>
 
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
