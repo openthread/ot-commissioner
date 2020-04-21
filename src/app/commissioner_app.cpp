@@ -1090,10 +1090,14 @@ CommissionerDataset CommissionerApp::MakeDefaultCommissionerDataset()
 
     dataset.mJoinerUdpPort = kDefaultJoinerUdpPort;
     dataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
-    dataset.mAeUdpPort = kDefaultAeUdpPort;
-    dataset.mPresentFlags |= CommissionerDataset::kAeUdpPortBit;
-    dataset.mNmkpUdpPort = kDefaultNmkpUdpPort;
-    dataset.mPresentFlags |= CommissionerDataset::kNmkpUdpPortBit;
+
+    if (mCommissioner->GetConfig().mEnableCcm)
+    {
+        dataset.mAeUdpPort = kDefaultAeUdpPort;
+        dataset.mPresentFlags |= CommissionerDataset::kAeUdpPortBit;
+        dataset.mNmkpUdpPort = kDefaultNmkpUdpPort;
+        dataset.mPresentFlags |= CommissionerDataset::kNmkpUdpPortBit;
+    }
 
     return dataset;
 }
