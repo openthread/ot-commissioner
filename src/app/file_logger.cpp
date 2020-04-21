@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,32 +28,74 @@
 
 /**
  * @file
- *   The file defines the interface of a commissioner application.
+ *  This file defines file logger.
+ *
  */
 
-#ifndef OT_COMM_APP_APP_CONFIG_HPP_
-#define OT_COMM_APP_APP_CONFIG_HPP_
+#include "file_logger.hpp"
 
-#include <commissioner/commissioner.hpp>
+#include <time.h>
+
+#include <utils.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-struct AppConfig
+static std::string ToString(LogLevel aLevel)
 {
-    std::string mLogFile;
+    std::string ret;
 
-    std::string mPSKc;
-    std::string mPrivateKeyFile;
-    std::string mCertificateFile;
-    std::string mTrustAnchorFile;
+    switch (aLevel)
+    {
+    case LogLevel::kOff:
+        ret = "off";
+        break;
+    case LogLevel::kCritical:
+        ret = "critical";
+        break;
+    case LogLevel::kError:
+        ret = "error";
+        break;
+    case LogLevel::kWarn:
+        ret = "warn";
+        break;
+    case LogLevel::kInfo:
+        ret = "info";
+        break;
+    case LogLevel::kDebug:
+        ret = "debug";
+        break;
+    default:
+        ASSERT(false);
+        break;
+    }
 
-    Config mConfig;
-};
+    return ret;
+}
+
+FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel aLogLevel)
+    : mFileStream(aFilename)
+    , mLogLevel(aLogLevel)
+{
+}
+
+void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
+{
+    char      dateBuf[64];
+    struct tm localTime;
+    time_t    now = time(nullptr);
+
+    VerifyOrExit(aLevel <= mLogLevel);
+    VerifyOrExit(mFileStream.is_open());
+
+    strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", localtime_r(&now, &localTime));
+    mFileStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+
+exit:
+    return;
+}
 
 } // namespace commissioner
 
 } // namespace ot
-
-#endif // OT_COMM_APP_APP_CONFIG_HPP_
