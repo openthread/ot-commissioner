@@ -1091,7 +1091,7 @@ CommissionerDataset CommissionerApp::MakeDefaultCommissionerDataset()
     dataset.mJoinerUdpPort = kDefaultJoinerUdpPort;
     dataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
 
-    if (mCommissioner->GetConfig().mEnableCcm)
+    if (IsCcmMode())
     {
         dataset.mAeUdpPort = kDefaultAeUdpPort;
         dataset.mPresentFlags |= CommissionerDataset::kAeUdpPortBit;
