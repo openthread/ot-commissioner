@@ -153,7 +153,7 @@ target_sources(commissioner-test
 
 target_link_libraries(commissioner-test
     PRIVATE
-        cn-cbor
+        cn-cbor::cn-cbor
         cose
         mdns
         mbedtls
