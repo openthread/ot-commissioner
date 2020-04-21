@@ -31,11 +31,11 @@
  *   This file implements UDP proxy.
  */
 
-#include "udp_proxy.hpp"
+#include "library/udp_proxy.hpp"
 
-#include "commissioner_impl.hpp"
-#include "logging.hpp"
-#include "uri.hpp"
+#include "library/commissioner_impl.hpp"
+#include "library/logging.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 

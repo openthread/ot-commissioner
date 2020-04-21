@@ -39,10 +39,10 @@
 
 #include <mbedtls/net_sockets.h>
 
-#include <commissioner/defines.hpp>
+#include "commissioner/defines.hpp"
 
-#include "event.hpp"
-#include <address.hpp>
+#include "common/address.hpp"
+#include "library/event.hpp"
 
 namespace ot {
 

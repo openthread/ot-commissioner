@@ -34,11 +34,11 @@
 #ifndef OT_COMM_LIBRARY_EVENT_HPP_
 #define OT_COMM_LIBRARY_EVENT_HPP_
 
+#include <functional>
+
 #include <event2/event.h>
 #include <event2/event_struct.h>
 #include <event2/thread.h>
-
-#include <functional>
 
 namespace ot {
 

@@ -33,9 +33,9 @@
 
 #include <catch2/catch.hpp>
 
-#include <commissioner/commissioner.hpp>
+#include "commissioner/commissioner.hpp"
 
-#include <utils.hpp>
+#include "common/utils.hpp"
 
 namespace ot {
 

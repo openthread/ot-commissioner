@@ -63,8 +63,7 @@ target_link_libraries(commissioner-tests
 
 target_include_directories(commissioner-tests
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/app
-        ${PROJECT_SOURCE_DIR}/src/library
+        ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
 )
 

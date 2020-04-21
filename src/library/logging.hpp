@@ -36,7 +36,7 @@
 
 #include <fmt/format.h>
 
-#include <commissioner/commissioner.hpp>
+#include "commissioner/commissioner.hpp"
 
 #define LOG(aLevel, aFormat, ...)                                     \
     do                                                                \

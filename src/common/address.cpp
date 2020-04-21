@@ -26,11 +26,11 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "address.hpp"
+#include "common/address.hpp"
 
 #include <arpa/inet.h>
 
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 

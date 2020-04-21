@@ -36,7 +36,7 @@
 
 #include <string>
 
-#include <commissioner/error.hpp>
+#include "commissioner/error.hpp"
 
 namespace ot {
 

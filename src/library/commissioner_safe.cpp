@@ -31,16 +31,15 @@
  *   The file implements the thread safe commissioner.
  */
 
-#include "commissioner_safe.hpp"
+#include "library/commissioner_safe.hpp"
 
 #include <future>
 
-#include "coap.hpp"
-#include "cose.hpp"
-#include "dtls.hpp"
-#include "logging.hpp"
-#include "uri.hpp"
-#include "openthread/bloom_filter.hpp"
+#include "library/coap.hpp"
+#include "library/cose.hpp"
+#include "library/logging.hpp"
+#include "library/openthread/bloom_filter.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 

@@ -31,11 +31,11 @@
  *   The file implements Thread Network Data.
  */
 
-#include <commissioner/network_data.hpp>
+#include "commissioner/network_data.hpp"
 
-#include "time.hpp"
-#include <address.hpp>
-#include <utils.hpp>
+#include "common/address.hpp"
+#include "common/utils.hpp"
+#include "library/time.hpp"
 
 namespace ot {
 

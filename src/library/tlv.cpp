@@ -31,12 +31,12 @@
  *   The file implements Thread TLV.
  */
 
-#include "tlv.hpp"
+#include "library/tlv.hpp"
 
 #include <set>
 
-#include "logging.hpp"
-#include <utils.hpp>
+#include "common/utils.hpp"
+#include "library/logging.hpp"
 
 namespace ot {
 

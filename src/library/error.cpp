@@ -31,9 +31,9 @@
  *   The file implements errors.
  */
 
-#include <commissioner/error.hpp>
+#include "commissioner/error.hpp"
 
-#include <utils.hpp>
+#include "common/utils.hpp"
 
 namespace ot {
 

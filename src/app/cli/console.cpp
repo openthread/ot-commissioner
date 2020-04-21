@@ -31,9 +31,7 @@
  *   The file implements Console.
  */
 
-#include "console.hpp"
-
-#include <fcntl.h>
+#include "app/cli/console.hpp"
 
 #include <iostream>
 

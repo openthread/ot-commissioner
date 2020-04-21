@@ -93,6 +93,8 @@ target_include_directories(commissioner
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
 )
 
 install(TARGETS commissioner

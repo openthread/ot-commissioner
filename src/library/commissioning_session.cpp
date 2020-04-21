@@ -31,12 +31,12 @@
  *   This file implements 1.1 mesh Commissioning Session.
  */
 
-#include "commissioning_session.hpp"
+#include "library/commissioning_session.hpp"
 
-#include "commissioner_impl.hpp"
-#include "logging.hpp"
-#include "tlv.hpp"
-#include "uri.hpp"
+#include "library/commissioner_impl.hpp"
+#include "library/logging.hpp"
+#include "library/tlv.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 

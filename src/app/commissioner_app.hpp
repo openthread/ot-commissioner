@@ -45,10 +45,10 @@
 #include <set>
 #include <unordered_set>
 
-#include <commissioner/commissioner.hpp>
-#include <commissioner/network_data.hpp>
+#include "commissioner/commissioner.hpp"
+#include "commissioner/network_data.hpp"
 
-#include <address.hpp>
+#include "common/address.hpp"
 
 namespace ot {
 

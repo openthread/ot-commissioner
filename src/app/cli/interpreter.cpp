@@ -31,16 +31,15 @@
  *   The file implements CLI interpreter.
  */
 
-#include "interpreter.hpp"
+#include "app/cli/interpreter.hpp"
 
 #include <string.h>
 
 #include <limits>
 
-#include <utils.hpp>
-
-#include "file_util.hpp"
-#include "json.hpp"
+#include "app/file_util.hpp"
+#include "app/json.hpp"
+#include "common/utils.hpp"
 
 #if defined(SuccessOrExit)
 #undef SuccessOrExit

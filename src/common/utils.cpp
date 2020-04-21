@@ -31,11 +31,11 @@
  *   This file implements commissioner utilities.
  */
 
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 #include <ctype.h>
 
-#include <commissioner/error.hpp>
+#include "commissioner/error.hpp"
 
 namespace ot {
 

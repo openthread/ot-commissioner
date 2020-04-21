@@ -34,16 +34,16 @@
 #ifndef OT_COMM_LIBRARY_UDP_PROXY_HPP_
 #define OT_COMM_LIBRARY_UDP_PROXY_HPP_
 
-#include <commissioner/error.hpp>
-
 #include <sys/time.h>
 
 #include <chrono>
 #include <functional>
 
-#include "coap_secure.hpp"
-#include "endpoint.hpp"
-#include <address.hpp>
+#include "commissioner/error.hpp"
+
+#include "common/address.hpp"
+#include "library/coap_secure.hpp"
+#include "library/endpoint.hpp"
 
 namespace ot {
 

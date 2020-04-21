@@ -32,11 +32,11 @@
  *
  */
 
-#include "file_logger.hpp"
+#include "app/file_logger.hpp"
 
 #include <time.h>
 
-#include <utils.hpp>
+#include "common/utils.hpp"
 
 namespace ot {
 

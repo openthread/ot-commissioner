@@ -33,9 +33,10 @@
 
 #include <catch2/catch.hpp>
 
-#include <json.hpp>
-#include <utils.hpp>
-#include <commissioner/network_data.hpp>
+#include "commissioner/network_data.hpp"
+
+#include "app/json.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
