@@ -192,10 +192,10 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
     }
 
     LOG_INFO("received JOIN_FIN.req: vendorName={}, vendorModel={}, vendorSWVversion={}, "
-             "vendorStackVersion={}, provisioningUrl={}, vendorData={:#04x}",
+             "vendorStackVersion={}, provisioningUrl={}, vendorData={}",
              vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
              vendorSwVersionTlv->GetValueAsString(), utils::Hex(vendorStackVersionTlv->GetValue()), provisioningUrl,
-             fmt::join(vendorData, " "));
+             utils::Hex(vendorData));
 
     // Validation done, request commissioning by user.
     if (mCommImpl.mCommissioningHandler != nullptr)
