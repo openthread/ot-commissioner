@@ -47,10 +47,10 @@ cmake -G "${CMAKE_GEN}" \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DOT_COMM_COVERAGE=ON ..
-cmake --build . "$([ "$CMAKE_GEN" != "Ninja" ] && echo "" || echo "-j2")"
+[ "$CMAKE_GEN" == "Ninja" ] && ninja || make -j2
 
 ## Install
-sudo cmake --install .
+[ "$CMAKE_GEN" == "Ninja" ] && sudo ninja install || sudo make install
 
 commissioner-cli -h
 
