@@ -42,7 +42,6 @@
 #include <memory>
 #include <string>
 
-#include <commissioner/border_agent.hpp>
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>

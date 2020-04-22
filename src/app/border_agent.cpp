@@ -34,8 +34,8 @@
 #include <fmt/format.h>
 #include <mdns/mdns.h>
 
-#include <address.hpp>
-#include <utils.hpp>
+#include "common/address.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
