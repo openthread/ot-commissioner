@@ -169,6 +169,11 @@ target_link_libraries(commissioner-test
         commissioner-common-test
 )
 
+target_include_directories(commissioner-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)
+
 set_target_properties(commissioner-test
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"

@@ -77,6 +77,11 @@ target_sources(commissioner-app-test
         json_test.cpp
 )
 
+target_include_directories(commissioner-app-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)
+
 target_link_libraries(commissioner-app-test
     PRIVATE
         Catch2::Catch2
