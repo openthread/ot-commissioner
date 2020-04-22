@@ -27,6 +27,7 @@
 #
 
 add_subdirectory(Catch2/repo)
+add_subdirectory(mbedtls)
 
 set(BUILD_SHARED_LIBS
     OFF
@@ -51,5 +52,4 @@ add_subdirectory(json/repo)
 
 add_subdirectory(libevent)
 
-add_subdirectory(mbedtls)
 add_subdirectory(mdns/repo)

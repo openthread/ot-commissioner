@@ -107,14 +107,14 @@ exit:
 
 Error Sign1Message::Validate(const mbedtls_pk_context &aPubKey)
 {
-    Error                             error = Error::kNone;
-    const struct mbedtls_ecp_keypair *eckey;
+    Error                      error = Error::kNone;
+    const mbedtls_ecp_keypair *eckey;
 
     // Accepts only EC keys
     VerifyOrExit(mbedtls_pk_can_do(&aPubKey, MBEDTLS_PK_ECDSA), error = Error::kInvalidArgs);
     VerifyOrExit((eckey = mbedtls_pk_ec(aPubKey)) != nullptr, error = Error::kInvalidArgs);
 
-    // VerifyOrExit(COSE_Sign1_validate_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
+    VerifyOrExit(COSE_Sign1_validate_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
 
 exit:
     return error;
@@ -128,7 +128,7 @@ Error Sign1Message::Sign(const mbedtls_pk_context &aPrivateKey)
     VerifyOrExit(mbedtls_pk_can_do(&aPrivateKey, MBEDTLS_PK_ECDSA), error = Error::kInvalidArgs);
     VerifyOrExit((eckey = mbedtls_pk_ec(aPrivateKey)) != nullptr, error = Error::kInvalidArgs);
 
-    // VerifyOrExit(COSE_Sign1_Sign_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
+    VerifyOrExit(COSE_Sign1_Sign_eckey(mSign, eckey, nullptr), error = Error::kSecurity);
 
 exit:
     return error;
