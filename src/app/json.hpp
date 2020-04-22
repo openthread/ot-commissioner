@@ -41,7 +41,7 @@
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
 
-#include "commissioner_app.hpp"
+#include "app/commissioner_app.hpp"
 
 namespace ot {
 

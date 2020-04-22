@@ -48,7 +48,7 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/network_data.hpp>
 
-#include <address.hpp>
+#include "common/address.hpp"
 
 namespace ot {
 

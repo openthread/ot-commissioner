@@ -35,8 +35,8 @@
 
 #include <mbedtls/base64.h>
 
-#include <cose.hpp>
-#include <token_manager.hpp>
+#include "library/cose.hpp"
+#include "library/token_manager.hpp"
 
 namespace ot {
 

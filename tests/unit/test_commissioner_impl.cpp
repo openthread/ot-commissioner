@@ -36,8 +36,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <commissioner_impl.hpp>
-#include <utils.hpp>
+#include "common/utils.hpp"
+#include "library/commissioner_impl.hpp"
 
 namespace ot {
 

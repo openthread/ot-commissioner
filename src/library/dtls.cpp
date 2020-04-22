@@ -31,10 +31,7 @@
  *   This file implements wrapper of mbedtls.
  */
 
-#include "dtls.hpp"
-
-#include <cassert>
-#include <cstring>
+#include "library/dtls.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -44,8 +41,8 @@
 #include <mbedtls/pem.h>
 #include <mbedtls/platform.h>
 
-#include "logging.hpp"
-#include "openthread/sha256.hpp"
+#include "library/logging.hpp"
+#include "library/openthread/sha256.hpp"
 
 namespace ot {
 

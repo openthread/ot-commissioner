@@ -53,8 +53,8 @@ target_link_libraries(commissioner-app
 )
 
 target_include_directories(commissioner-app
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
 )
 
 install(DIRECTORY etc/commissioner

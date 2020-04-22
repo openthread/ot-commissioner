@@ -37,6 +37,11 @@ target_sources(commissioner-cli
         main.cpp
 )
 
+target_include_directories(commissioner-cli
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)
+
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app

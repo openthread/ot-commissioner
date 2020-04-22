@@ -45,10 +45,10 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
-#include "endpoint.hpp"
-#include "timer.hpp"
-#include <address.hpp>
-#include <utils.hpp>
+#include "common/address.hpp"
+#include "common/utils.hpp"
+#include "library/endpoint.hpp"
+#include "library/timer.hpp"
 
 namespace ot {
 

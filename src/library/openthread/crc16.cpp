@@ -31,7 +31,7 @@
  *   This file implements CRC16 computations.
  */
 
-#include "crc16.hpp"
+#include "library/openthread/crc16.hpp"
 
 namespace ot {
 

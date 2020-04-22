@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef PBKDF2_CMAC_HPP_
-#define PBKDF2_CMAC_HPP_
+#ifndef OT_COMM_LIBRARY_OPENTHREAD_PBKDF2_CMAC_HPP
+#define OT_COMM_LIBRARY_OPENTHREAD_PBKDF2_CMAC_HPP
 
 #include <stdint.h>
 
@@ -67,4 +67,4 @@ void otPbkdf2Cmac(const uint8_t *aPassword,
 
 } // namespace ot
 
-#endif // PBKDF2_CMAC_HPP_
+#endif // OT_COMM_LIBRARY_OPENTHREAD_PBKDF2_CMAC_HPP

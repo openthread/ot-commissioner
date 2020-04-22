@@ -33,7 +33,7 @@
 
 #include <catch2/catch.hpp>
 
-#include <coap.hpp>
+#include "library/coap.hpp"
 
 namespace ot {
 

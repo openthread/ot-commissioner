@@ -34,8 +34,6 @@
 #ifndef OT_COMM_LIBRARY_URI_HPP_
 #define OT_COMM_LIBRARY_URI_HPP_
 
-#include <string>
-
 namespace ot {
 
 namespace commissioner {

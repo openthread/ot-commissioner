@@ -34,14 +34,14 @@
 #ifndef OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
 #define OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
 
-#include <commissioner/error.hpp>
-
 #include <functional>
 #include <map>
 
-#include "coap.hpp"
-#include "coap_secure.hpp"
-#include "dtls.hpp"
+#include <commissioner/error.hpp>
+
+#include "library/coap.hpp"
+#include "library/coap_secure.hpp"
+#include "library/dtls.hpp"
 
 namespace ot {
 

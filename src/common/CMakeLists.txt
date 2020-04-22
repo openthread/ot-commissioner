@@ -37,9 +37,9 @@ target_sources(commissioner-common
 )
 
 target_include_directories(commissioner-common
-    PUBLIC
+    PRIVATE
         ${PROJECT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src
 )
 
 if (BUILD_SHARED_LIBS)

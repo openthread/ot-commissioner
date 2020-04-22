@@ -32,18 +32,17 @@
  *
  */
 
-#include "json.hpp"
+#include "app/json.hpp"
 
 #include <exception>
 #include <iostream>
 
 #include <nlohmann/json.hpp>
 
-#include <utils.hpp>
-
-#include "commissioner_app.hpp"
-#include "file_logger.hpp"
-#include "file_util.hpp"
+#include "app/commissioner_app.hpp"
+#include "app/file_logger.hpp"
+#include "app/file_util.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 

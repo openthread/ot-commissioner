@@ -33,8 +33,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <coap.hpp>
-#include <dtls.hpp>
+#include "library/coap.hpp"
+#include "library/dtls.hpp"
 
 namespace ot {
 

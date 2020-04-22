@@ -33,9 +33,9 @@
 
 #include <catch2/catch.hpp>
 
-#include <commissioner_impl.hpp>
-#include <token_manager.hpp>
-#include <uri.hpp>
+#include "library/commissioner_impl.hpp"
+#include "library/token_manager.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 

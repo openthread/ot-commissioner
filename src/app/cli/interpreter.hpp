@@ -36,10 +36,9 @@
 
 #include <map>
 
-#include <border_agent.hpp>
-#include <commissioner_app.hpp>
-
-#include "console.hpp"
+#include "app/border_agent.hpp"
+#include "app/cli/console.hpp"
+#include "app/commissioner_app.hpp"
 
 namespace ot {
 

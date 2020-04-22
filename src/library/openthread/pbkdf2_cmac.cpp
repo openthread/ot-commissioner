@@ -32,7 +32,7 @@
  *
  */
 
-#include "pbkdf2_cmac.hpp"
+#include "library/openthread/pbkdf2_cmac.hpp"
 
 #include <assert.h>
 #include <memory.h>

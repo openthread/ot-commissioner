@@ -33,7 +33,7 @@
 
 #include <catch2/catch.hpp>
 
-#include <socket.hpp>
+#include "library/socket.hpp"
 
 namespace ot {
 

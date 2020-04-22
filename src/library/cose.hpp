@@ -40,12 +40,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "cbor.hpp"
 #include <cose.h>
 #include <mbedtls/pk.h>
 
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
+
+#include "library/cbor.hpp"
 
 namespace ot {
 

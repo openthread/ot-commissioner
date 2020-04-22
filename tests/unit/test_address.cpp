@@ -31,12 +31,12 @@
  *   This file defines test cases for Address class.
  */
 
-#include <catch2/catch.hpp>
-
 #include <memory.h>
 #include <netinet/in.h>
 
-#include <address.hpp>
+#include <catch2/catch.hpp>
+
+#include "common/address.hpp"
 
 namespace ot {
 

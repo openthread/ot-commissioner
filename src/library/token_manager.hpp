@@ -34,8 +34,8 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/error.hpp>
 
-#include "cbor.hpp"
-#include "coap_secure.hpp"
+#include "library/cbor.hpp"
+#include "library/coap_secure.hpp"
 
 namespace ot {
 

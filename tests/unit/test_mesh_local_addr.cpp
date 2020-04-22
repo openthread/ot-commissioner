@@ -35,7 +35,7 @@
 
 #include <commissioner/commissioner.hpp>
 
-#include <utils.hpp>
+#include "common/utils.hpp"
 
 namespace ot {
 

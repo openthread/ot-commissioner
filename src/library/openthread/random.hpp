@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef RANDOM_HPP_
-#define RANDOM_HPP_
+#ifndef OT_COMM_LIBRARY_OPENTHREAD_RANDOM_HPP_
+#define OT_COMM_LIBRARY_OPENTHREAD_RANDOM_HPP_
 
 #include <stdint.h>
 
@@ -177,4 +177,4 @@ namespace crypto {
 
 } // namespace ot
 
-#endif // RANDOM_HPP_
+#endif // OT_COMM_LIBRARY_OPENTHREAD_RANDOM_HPP_

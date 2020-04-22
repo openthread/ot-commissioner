@@ -31,16 +31,16 @@
  *   This file implements the Commissioner Token Manager.
  */
 
-#include "token_manager.hpp"
+#include "library/token_manager.hpp"
 
 #include <mbedtls/x509_crt.h>
 
-#include "tlv.hpp"
+#include "library/tlv.hpp"
 
-#include "cose.hpp"
-#include "cwt.hpp"
-#include "logging.hpp"
-#include "uri.hpp"
+#include "library/cose.hpp"
+#include "library/cwt.hpp"
+#include "library/logging.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 

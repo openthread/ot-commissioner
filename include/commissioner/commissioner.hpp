@@ -42,9 +42,9 @@
 #include <memory>
 #include <string>
 
-#include "defines.hpp"
-#include "error.hpp"
-#include "network_data.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
+#include <commissioner/network_data.hpp>
 
 struct event_base;
 

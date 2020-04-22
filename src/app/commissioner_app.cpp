@@ -31,17 +31,15 @@
  *   The file implements commissioner application.
  */
 
-#include "commissioner_app.hpp"
+#include "app/commissioner_app.hpp"
 
 #include <algorithm>
 #include <ctime>
-#include <fstream>
 
-#include <address.hpp>
-#include <utils.hpp>
-
-#include "file_util.hpp"
-#include "json.hpp"
+#include "app/file_util.hpp"
+#include "app/json.hpp"
+#include "common/address.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
