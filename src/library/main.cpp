@@ -31,6 +31,4 @@
  *   This file is for including Catch2's main function.
  */
 
-#define CATCH_CONFIG_MAIN
-
-#include <catch2/catch.hpp>
+#include "catch2/catch.hpp"

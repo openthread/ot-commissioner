@@ -31,11 +31,12 @@
  *   This file defines test cases for COSE.
  */
 
+#include "library/cose.hpp"
+
 #include <catch2/catch.hpp>
 
 #include <mbedtls/base64.h>
 
-#include "library/cose.hpp"
 #include "library/token_manager.hpp"
 
 namespace ot {

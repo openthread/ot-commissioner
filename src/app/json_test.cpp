@@ -31,11 +31,12 @@
  *   This file defines test cases for JSON.
  */
 
+#include "app/json.hpp"
+
 #include <catch2/catch.hpp>
 
 #include <commissioner/network_data.hpp>
 
-#include "app/json.hpp"
 #include "common/utils.hpp"
 
 namespace ot {

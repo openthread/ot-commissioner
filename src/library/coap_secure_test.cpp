@@ -28,17 +28,18 @@
 
 /**
  * @file
- *   This file defines test cases for DTLS implementation with mbedtls.
+ *   This file defines test cases for CoAP implementation.
  */
 
-#include <catch2/catch.hpp>
+#include "library/coap_secure.hpp"
 
-#include "library/coap.hpp"
-#include "library/dtls.hpp"
+#include <catch2/catch.hpp>
 
 namespace ot {
 
 namespace commissioner {
+
+namespace coap {
 
 static const std::string kClientTrustAnchor = "-----BEGIN CERTIFICATE-----\r\n"
                                               "MIIBejCCAR+gAwIBAgIIc5C+m8ijatIwCgYIKoZIzj0EAwIwGDEWMBQGA1UEAwwN\r\n"
@@ -105,13 +106,11 @@ static const std::string kServerKey = "-----BEGIN PRIVATE KEY-----\r\n"
 static const char *       kServerAddr = "::";
 static constexpr uint16_t kServerPort = 5683;
 
-TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
+TEST_CASE("coap-secure-basic", "[coaps]")
 {
-    const ByteArray kHello{'h', 'e', 'l', 'l', 'o'};
-
     DtlsConfig config;
 
-    // Setup dtls server
+    // Setup coap secure server
     config.mCaChain = ByteArray{kServerTrustAnchor.begin(), kServerTrustAnchor.end()};
     config.mOwnCert = ByteArray{kServerCert.begin(), kServerCert.end()};
     config.mOwnKey  = ByteArray{kServerKey.begin(), kServerKey.end()};
@@ -123,25 +122,27 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     auto eventBase = event_base_new();
     REQUIRE(eventBase != nullptr);
 
-    auto serverSocket = std::make_shared<UdpSocket>(eventBase);
-    REQUIRE(serverSocket->Bind(kServerAddr, kServerPort) == 0);
-    DtlsSession dtlsServer{eventBase, true, serverSocket};
+    CoapSecure coapsServer{eventBase, true};
+    Resource   resHello{"/hello", [&coapsServer](const Request &aRequest) {
+                          REQUIRE(aRequest.GetType() == Type::kConfirmable);
+                          REQUIRE(aRequest.GetCode() == Code::kPost);
 
-    REQUIRE(dtlsServer.Init(config) == Error::kNone);
+                          Response response{Type::kAcknowledgment, Code::kChanged};
+                          response.Append("world");
+                          REQUIRE(coapsServer.SendResponse(aRequest, response) == Error::kNone);
+                      }};
+    REQUIRE(coapsServer.AddResource(resHello) == Error::kNone);
 
-    dtlsServer.SetReceiver([&kHello, eventBase](Endpoint &, const ByteArray &aBuf) {
-        REQUIRE(aBuf == kHello);
-
-        event_base_loopbreak(eventBase);
-    });
-
-    auto serverConnected = [](const DtlsSession &aSession, Error aError) {
+    auto onServerConnected = [&coapsServer](const DtlsSession &aSession, Error aError) {
         REQUIRE(aError == Error::kNone);
-        REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
+        REQUIRE(&aSession == &coapsServer.GetDtlsSession());
+        REQUIRE(aSession.GetLocalPort() == kServerPort);
     };
-    dtlsServer.Connect(serverConnected);
 
-    // Setup dtls client
+    REQUIRE(coapsServer.Init(config) == Error::kNone);
+    REQUIRE(coapsServer.Start(onServerConnected, kServerAddr, kServerPort) == Error::kNone);
+
+    // Setup coap secure client
     config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
     config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
     config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
@@ -150,23 +151,34 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     config.mOwnCert.push_back(0);
     config.mOwnKey.push_back(0);
 
-    auto clientSocket = std::make_shared<UdpSocket>(eventBase);
-    REQUIRE(clientSocket->Connect(kServerAddr, kServerPort) == 0);
-    DtlsSession dtlsClient{eventBase, false, clientSocket};
-
-    REQUIRE(dtlsClient.Init(config) == Error::kNone);
-
-    auto clientConnected = [&kHello](DtlsSession &aSession, Error aError) {
+    CoapSecure coapsClient{eventBase, false};
+    REQUIRE(coapsClient.Init(config) == Error::kNone);
+    auto onClientConnected = [&coapsClient, eventBase](const DtlsSession &aSession, Error aError) {
         REQUIRE(aError == Error::kNone);
-        REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
+        REQUIRE(aSession.GetPeerPort() == kServerPort);
 
-        REQUIRE(aSession.Send(kHello) == Error::kNone);
+        Request request{Type::kConfirmable, Code::kPost};
+        REQUIRE(request.SetUriPath("/hello") == Error::kNone);
+        auto onResponse = [eventBase](const Response *aResponse, Error aError) {
+            REQUIRE(aError == Error::kNone);
+            REQUIRE(aResponse != nullptr);
+            REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
+            REQUIRE(aResponse->GetCode() == Code::kChanged);
+
+            auto payload = aResponse->GetPayload();
+            REQUIRE(std::string{payload.begin(), payload.end()} == "world");
+
+            event_base_loopbreak(eventBase);
+        };
+        coapsClient.SendRequest(request, onResponse);
     };
-    dtlsClient.Connect(clientConnected);
+    coapsClient.Connect(onClientConnected, kServerAddr, kServerPort);
 
     REQUIRE(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY) == 0);
     event_base_free(eventBase);
 }
+
+} // namespace coap
 
 } // namespace commissioner
 

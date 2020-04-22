@@ -6,6 +6,7 @@ coverage:
 ignore:
   - "tests/**/*"
   - "third_party/**/*"
+  - "**/*_test.cpp"
 
 comment:
   layout: "diff, flags, files"

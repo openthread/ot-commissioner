@@ -31,9 +31,9 @@
  *   This file defines test cases for CoAP implementation.
  */
 
-#include <catch2/catch.hpp>
-
 #include "library/coap.hpp"
+
+#include <catch2/catch.hpp>
 
 namespace ot {
 

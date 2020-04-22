@@ -52,7 +52,7 @@ sudo ninja install
 commissioner-cli -h
 
 ## Unit tests
-./tests/unit/commissioner-tests
+./tests/commissioner-test
 
 ## Integration Tests
 if [ $TRAVIS_OS_NAME = "linux" ] && [ ${OT_COMM_CXX_STANDARD} = "11" ]; then

@@ -69,4 +69,24 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
+add_library(commissioner-app-test EXCLUDE_FROM_ALL)
+
+target_sources(commissioner-app-test
+    PRIVATE
+        json.hpp
+        json_test.cpp
+)
+
+target_include_directories(commissioner-app-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)
+
+target_link_libraries(commissioner-app-test
+    PRIVATE
+        Catch2::Catch2
+        commissioner-app
+        nlohmann_json::nlohmann_json
+)
+
 add_subdirectory(cli)

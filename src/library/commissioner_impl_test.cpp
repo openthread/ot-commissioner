@@ -34,14 +34,89 @@
  *   through CommissionerSafe. The rest will go to CommissionerSafe test file.
  */
 
+#include "library/commissioner_impl.hpp"
+
+#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 #include "common/utils.hpp"
-#include "library/commissioner_impl.hpp"
 
 namespace ot {
 
 namespace commissioner {
+
+TEST_CASE("mesh-local-address-basic", "[mesh-local-addr]")
+{
+    std::string meshLocalAddr;
+    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC) == Error::kNone);
+    REQUIRE(meshLocalAddr == "fd00::ff:fe00:bbcc");
+}
+
+TEST_CASE("mesh-local-address-invalid-args", "[mesh-local-addr]")
+{
+    std::string meshLocalAddr;
+
+    SECTION("invalid prefix length")
+    {
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/63", 0xBBCC) == Error::kInvalidArgs);
+    }
+
+    SECTION("prefix length is not 8 bytes")
+    {
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/48", 0xBBCC) == Error::kInvalidArgs);
+    }
+
+    SECTION("invalid prefix format")
+    {
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::48", 0xBBCC) == Error::kInvalidArgs);
+    }
+}
+
+// This teat case is from section 8.4.1.2.2 of the Thread 1.2.0 specification.
+TEST_CASE("pskc-test-vector-from-thread-1.2.0-spec", "[pskc]")
+{
+    const std::string passphrase    = "12SECRETPASSWORD34";
+    const std::string networkName   = "Test Network";
+    const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    ByteArray         pskc;
+
+    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kNone);
+    REQUIRE(pskc.size() == kMaxPSKcLength);
+    REQUIRE(utils::Hex(pskc) == "c3f59368445a1b6106be420a706d4cc9");
+}
+
+TEST_CASE("pskc-test-invalid-args", "[pskc]")
+{
+    SECTION("passphrase is too short")
+    {
+        const std::string passphrase    = "12S";
+        const std::string networkName   = "Test Network";
+        const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        ByteArray         pskc;
+
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kInvalidArgs);
+    }
+
+    SECTION("passphrase is too long")
+    {
+        const std::string passphrase(256, '1');
+        const std::string networkName   = "Test Network";
+        const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        ByteArray         pskc;
+
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kInvalidArgs);
+    }
+
+    SECTION("network name is too long")
+    {
+        const std::string passphrase    = "12SECRETPASSWORD34";
+        const std::string networkName   = "Too Long network name";
+        const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        ByteArray         pskc;
+
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kInvalidArgs);
+    }
+}
 
 TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
 {
