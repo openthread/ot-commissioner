@@ -209,7 +209,7 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         // Accepts a joiner if requirement on vendor-specific provisioning.
         accepted = provisioningUrl.empty();
     }
-    VerifyOrExit(accepted == true, error = Error::kReject);
+    VerifyOrExit(accepted, error = Error::kReject);
 
 exit:
     if (error != Error::kNone)
