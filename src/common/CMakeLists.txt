@@ -58,9 +58,7 @@ target_sources(commissioner-common-test
 )
 
 target_link_libraries(commissioner-common-test
-    PRIVATE commissioner-common
-)
-
-target_include_directories(commissioner-common-test
-    PRIVATE ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+    PRIVATE
+        Catch2::Catch2
+        commissioner-common
 )

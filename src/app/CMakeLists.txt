@@ -78,13 +78,10 @@ target_sources(commissioner-app-test
 )
 
 target_link_libraries(commissioner-app-test
-    PRIVATE commissioner-app
-)
-
-target_include_directories(commissioner-app-test
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-        ${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include
+        Catch2::Catch2
+        commissioner-app
+        nlohmann_json::nlohmann_json
 )
 
 add_subdirectory(cli)

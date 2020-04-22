@@ -153,6 +153,7 @@ target_sources(commissioner-test
 
 target_link_libraries(commissioner-test
     PRIVATE
+        Catch2::Catch2
         cn-cbor::cn-cbor
         cose
         mdns
@@ -166,14 +167,6 @@ target_link_libraries(commissioner-test
         commissioner-common
         commissioner-app-test
         commissioner-common-test
-)
-
-target_include_directories(commissioner-test
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
-        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
-        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
-        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
 )
 
 set_target_properties(commissioner-test
