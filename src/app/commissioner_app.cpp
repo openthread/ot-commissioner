@@ -1318,23 +1318,18 @@ bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
     (void)aVendorStackVersion;
     (void)aVendorData;
 
-    constexpr auto kJoinerNotAccepted = false;
-    constexpr auto kJoinerAccepted    = true;
+    bool accepted = false;
 
     auto configuredJoinerInfo = GetJoinerInfo(aJoinerInfo.mType, Commissioner::ComputeJoinerId(aJoinerInfo.mEui64));
-    if (configuredJoinerInfo == nullptr)
-    {
-        // TODO(wgtdkp): logging
-        return kJoinerNotAccepted;
-    }
 
-    if (aProvisioningUrl != configuredJoinerInfo->mProvisioningUrl)
-    {
-        // TODO(wgtdkp): logging
-        return kJoinerNotAccepted;
-    }
+    // TODO(deimi): logging
+    VerifyOrExit(configuredJoinerInfo != nullptr, accepted = false);
+    VerifyOrExit(aProvisioningUrl == configuredJoinerInfo->mProvisioningUrl, accepted = false);
 
-    return kJoinerAccepted;
+    accepted = true;
+
+exit:
+    return accepted;
 }
 
 } // namespace commissioner
