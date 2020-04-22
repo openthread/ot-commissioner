@@ -50,7 +50,11 @@ cmake -G "${CMAKE_GEN}" \
 [ "$CMAKE_GEN" == "Ninja" ] && ninja || make -j2
 
 ## Install
-[ "$CMAKE_GEN" == "Ninja" ] && sudo ninja install || sudo make install
+if [ "$CMAKE_GEN" == "Ninja" ]; then
+    sudo ninja install
+else
+    sudo make install
+fi
 
 commissioner-cli -h
 
