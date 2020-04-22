@@ -35,19 +35,26 @@ set -e
 ## Override default travis cmake
 export PATH="${HOME}/.local/bin:$PATH"
 
+CMAKE_GEN="$([ "$TRAVIS_OS_NAME" != "osx" ] && echo "Ninja" || echo "Unix Makefiles")"
+readonly CMAKE_GEN
+
 ## Build commissioner
 mkdir -p build && cd build
-cmake -GNinja \
+cmake -G "${CMAKE_GEN}" \
       -DBUILD_SHARED_LIBS="${OT_COMM_SHARED_LIB:=OFF}" \
       -DCMAKE_CXX_STANDARD="${OT_COMM_CXX_STANDARD}" \
       -DCMAKE_CXX_STANDARD_REQUIRED=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DOT_COMM_COVERAGE=ON ..
-ninja
+[ "$CMAKE_GEN" == "Ninja" ] && ninja || make -j2
 
 ## Install
-sudo ninja install
+if [ "$CMAKE_GEN" == "Ninja" ]; then
+    sudo ninja install
+else
+    sudo make install
+fi
 
 commissioner-cli -h
 
