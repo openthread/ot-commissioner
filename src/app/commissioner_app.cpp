@@ -45,29 +45,6 @@ namespace ot {
 
 namespace commissioner {
 
-/**
- * The default commissioning handler that always accepts any joiner.
- *
- */
-static bool DefaultCommissioningHandler(const JoinerInfo & aJoinerInfo,
-                                        const std::string &aVendorName,
-                                        const std::string &aVendorModel,
-                                        const std::string &aVendorSwVersion,
-                                        const ByteArray &  aVendorStackVersion,
-                                        const std::string &aProvisioningUrl,
-                                        const ByteArray &  aVendorData)
-{
-    (void)aJoinerInfo;
-    (void)aVendorName;
-    (void)aVendorModel;
-    (void)aVendorSwVersion;
-    (void)aVendorStackVersion;
-    (void)aProvisioningUrl;
-    (void)aVendorData;
-
-    return true;
-}
-
 std::shared_ptr<CommissionerApp> CommissionerApp::Create(const Config &aConfig)
 {
     Error error = Error::kNone;
@@ -100,7 +77,13 @@ Error CommissionerApp::Init(const Config &aConfig)
         [this](JoinerType aType, const ByteArray &aJoinerId) { return GetJoinerInfo(aType, aJoinerId); });
 
     // This is the default behavior of OpenThread on-Mesh Commissioner.
-    mCommissioner->SetCommissioningHandler(DefaultCommissioningHandler);
+    mCommissioner->SetCommissioningHandler([this](const JoinerInfo &aJoinerInfo, const std::string &aVendorName,
+                                                  const std::string &aVendorModel, const std::string &aVendorSwVersion,
+                                                  const ByteArray &  aVendorStackVersion,
+                                                  const std::string &aProvisioningUrl, const ByteArray &aVendorData) {
+        return HandleCommissioning(aJoinerInfo, aVendorName, aVendorModel, aVendorSwVersion, aVendorStackVersion,
+                                   aProvisioningUrl, aVendorData);
+    });
 
 exit:
     return error;
@@ -1295,6 +1278,34 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
         return &joinerInfo->second;
     }
     return nullptr;
+}
+
+bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
+                                          const std::string &aVendorName,
+                                          const std::string &aVendorModel,
+                                          const std::string &aVendorSwVersion,
+                                          const ByteArray &  aVendorStackVersion,
+                                          const std::string &aProvisioningUrl,
+                                          const ByteArray &  aVendorData)
+{
+    (void)aVendorName;
+    (void)aVendorModel;
+    (void)aVendorSwVersion;
+    (void)aVendorStackVersion;
+    (void)aVendorData;
+
+    bool accepted = false;
+
+    auto configuredJoinerInfo = GetJoinerInfo(aJoinerInfo.mType, Commissioner::ComputeJoinerId(aJoinerInfo.mEui64));
+
+    // TODO(deimi): logging
+    VerifyOrExit(configuredJoinerInfo != nullptr, accepted = false);
+    VerifyOrExit(aProvisioningUrl == configuredJoinerInfo->mProvisioningUrl, accepted = false);
+
+    accepted = true;
+
+exit:
+    return accepted;
 }
 
 } // namespace commissioner

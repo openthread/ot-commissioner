@@ -181,21 +181,21 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
     VerifyOrExit((vendorStackVersionTlv = tlvSet[tlv::Type::kVendorStackVersion]) != nullptr, error = Error::kNotFound);
     VerifyOrExit(vendorStackVersionTlv->IsValid(), error = Error::kBadFormat);
 
-    LOG_INFO("received JOIN_FIN.req: vendorName={}, vendorModel={}, vendorSWVversion={}, "
-             "vendorStackVersion={}",
-             vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
-             vendorSwVersionTlv->GetValueAsString(), utils::Hex(vendorStackVersionTlv->GetValue()));
-
     if (auto provisioningUrlTlv = tlvSet[tlv::Type::kProvisioningURL])
     {
         auto vendorDataTlv = tlvSet[tlv::Type::kVendorData];
         VerifyOrExit(vendorDataTlv != nullptr, error = Error::kNotFound);
         VerifyOrExit(vendorDataTlv->IsValid(), error = Error::kBadFormat);
-        VerifyOrExit(provisioningUrlTlv->GetValueAsString() == mJoinerInfo.mProvisioningUrl, error = Error::kReject);
 
         provisioningUrl = provisioningUrlTlv->GetValueAsString();
         vendorData      = vendorDataTlv->GetValue();
     }
+
+    LOG_INFO("received JOIN_FIN.req: vendorName={}, vendorModel={}, vendorSWVversion={}, "
+             "vendorStackVersion={}, provisioningUrl={}, vendorData={}",
+             vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
+             vendorSwVersionTlv->GetValueAsString(), utils::Hex(vendorStackVersionTlv->GetValue()), provisioningUrl,
+             utils::Hex(vendorData));
 
     // Validation done, request commissioning by user.
     if (mCommImpl.mCommissioningHandler != nullptr)
@@ -209,6 +209,7 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         // Accepts a joiner if requirement on vendor-specific provisioning.
         accepted = provisioningUrl.empty();
     }
+    VerifyOrExit(accepted, error = Error::kReject);
 
 exit:
     if (error != Error::kNone)
