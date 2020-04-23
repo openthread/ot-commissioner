@@ -15,8 +15,8 @@ build $ ninja -j16
 
 OT Commissioner requires a JSON configuration file. There are two configuration templates to choose from:
 
-* Commercial Commissioning Mode (CCM) — [src/app/etc/commissioner/ccm-config.json](../etc/commissioner/ccm-config.json)
-* Non-CCM — [src/app/etc/commissioner/non-ccm-config.json](../etc/commissioner/non-ccm-config.json)
+- Commercial Commissioning Mode (CCM) — [src/app/etc/commissioner/ccm-config.json](../etc/commissioner/ccm-config.json)
+- Non-CCM — [src/app/etc/commissioner/non-ccm-config.json](../etc/commissioner/non-ccm-config.json)
 
 Make a copy of your desired configuration file and modify it as needed for your system.
 
@@ -220,90 +220,90 @@ joiner setport (meshcop|ae|nmkp) <joiner-udp-port>
 >
 ```
 
-* to enable a new MeshCoP joiner:
+- to enable a new MeshCoP joiner:
 
-    ```shell
-    ### The second argument of the joiner command is the type of joiner.
-    ### It can be only ae, nmkp, or meshcop.
-    > joiner enable meshcop 0x0123456789abcdef PSKD001
-    [done]
-    >
-    ```
+  ```shell
+  ### The second argument of the joiner command is the type of joiner.
+  ### It can be only ae, nmkp, or meshcop.
+  > joiner enable meshcop 0x0123456789abcdef PSKD001
+  [done]
+  >
+  ```
 
-* or provide a provisioning URL:
+- or provide a provisioning URL:
 
-    ```shell
-    > joiner enable meshcop 0x0123456789abcdef PSKD001 https://google.com
-    [done]
-    >
-    ```
+  ```shell
+  > joiner enable meshcop 0x0123456789abcdef PSKD001 https://google.com
+  [done]
+  >
+  ```
 
-* or enable all MeshCoP joiners:
+- or enable all MeshCoP joiners:
 
-    ```shell
-    > joiner enableall meshcop PSKD001
-    [done]
-    >
-    ```
+  ```shell
+  > joiner enableall meshcop PSKD001
+  [done]
+  >
+  ```
 
-* to enable a new CCM AE joiner:
+- to enable a new CCM AE joiner:
 
-    ```shell
-    > joiner enable ae 0x0123456789abcdef
-    [done]
-    >
-    ```
+  ```shell
+  > joiner enable ae 0x0123456789abcdef
+  [done]
+  >
+  ```
 
-* to enable all CCM AE joiners:
+- to enable all CCM AE joiners:
 
-    ```shell
-    > joiner enableall ae
-    [done]
-    >
-    ```
+  ```shell
+  > joiner enableall ae
+  [done]
+  >
+  ```
 
-* to enable a new CCM NMKP joiner:
+- to enable a new CCM NMKP joiner:
 
-    ```shell
-    > joiner enable nmkp 0x0123456789abcdef
-    [done]
-    >
-    ```
+  ```shell
+  > joiner enable nmkp 0x0123456789abcdef
+  [done]
+  >
+  ```
 
-* to enable all CCM NMKP joiners:
+- to enable all CCM NMKP joiners:
 
-    ```shell
-    > joiner enableall nmkp
-    [done]
-    >
-    ```
+  ```shell
+  > joiner enableall nmkp
+  [done]
+  >
+  ```
 
-* to get joiner UDP ports:
+- to get joiner UDP ports:
 
-    ```shell
-    > joiner getport meshcop
-    1000
-    [done]
-    > joiner getport ae
-    1001
-    [done]
-    > joiner getport nmkp
-    1002
-    [done]
-    >
-    ```
+  ```shell
+  > joiner getport meshcop
+  1000
+  [done]
+  > joiner getport ae
+  1001
+  [done]
+  > joiner getport nmkp
+  1002
+  [done]
+  >
+  ```
 
-* to set joiner UDP ports:
+- to set joiner UDP ports:
 
-    ```shell
-    > joiner setport meshcop 1000
-    [done]
-    > joiner setport ae 1001
-    [done]
-    > joiner setport nmkp 1002
-    [done]
-    >
-    ```
+  ```shell
+  > joiner setport meshcop 1000
+  [done]
+  > joiner setport ae 1001
+  [done]
+  > joiner setport nmkp 1002
+  [done]
+  >
+  ```
 
 ### Operational dataset
 
@@ -435,7 +435,7 @@ To command a Thread device to perform MGMT reenrollment, use the `reenroll` comm
 
 ### Domain reset
 
- To command a Thread device to perform MGMT domain reset, use the `domainreset` command:
+To command a Thread device to perform MGMT domain reset, use the `domainreset` command:
 
 ```shell
 > domainreset fdde:ad00:beef:0:0:ff:fe00:fc00

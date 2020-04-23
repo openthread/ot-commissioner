@@ -8,7 +8,7 @@ You generally only need to submit a CLA once, so if you've already submitted one
 
 ## Code of Conduct
 
-Help us keep OpenThread open and inclusive.  Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+Help us keep OpenThread open and inclusive. Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Bugs
 
@@ -20,9 +20,9 @@ You can request a new feature by [submitting a GitHub Issue](https://github.com/
 
 If you would like to implement a new feature, please consider the scope of the new feature:
 
-* *Large feature* — [Submit a GitHub Issue](https://github.com/openthread/ot-commissioner/issues/new) with your proposal so that the community can review and provide feedback first. Early feedback helps to ensure your proposal is accepted by the community, better coordinate our efforts, and minimize duplicated work.
+- _Large feature_ — [Submit a GitHub Issue](https://github.com/openthread/ot-commissioner/issues/new) with your proposal so that the community can review and provide feedback first. Early feedback helps to ensure your proposal is accepted by the community, better coordinate our efforts, and minimize duplicated work.
 
-* *Small feature* — Can be implemented and directly [submitted as a Pull Request](#submitting-a-pull-request) without a proposal.
+- _Small feature_ — Can be implemented and directly [submitted as a Pull Request](#submitting-a-pull-request) without a proposal.
 
 ## Contributing code
 
@@ -99,7 +99,7 @@ This will open up a text editor where you can specify which commits to squash.
 
 #### Coding conventions and style
 
-OT Commissioner uses and enforces the [OpenThread code format](./.clang-format) on all code, except for code located in [third_party](third_party).  Use `script/make-pretty` and `script/make-pretty check` to automatically reformat code and check for code-style compliance, respectively. OpenThread currently requires [clang-format v6.0.0](http://releases.llvm.org/download.html#6.0.0) for C/C++ and [yapf v0.29.0](https://github.com/google/yapf) for Python.
+OT Commissioner uses and enforces the [OpenThread code format](./.clang-format) on all code, except for code located in [third_party](third_party). Use `script/make-pretty` and `script/make-pretty check` to automatically reformat code and check for code-style compliance, respectively. OpenThread currently requires [clang-format v6.0.0](http://releases.llvm.org/download.html#6.0.0) for C/C++ and [yapf v0.29.0](https://github.com/google/yapf) for Python.
 
 As part of the cleanup process, also run `script/make-pretty check` to ensure that your code passes the baseline code style checks.
 
