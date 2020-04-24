@@ -49,11 +49,11 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/defines.hpp>
 
-#include "endpoint.hpp"
-#include "event.hpp"
-#include "socket.hpp"
-#include "timer.hpp"
-#include <utils.hpp>
+#include "common/utils.hpp"
+#include "library/endpoint.hpp"
+#include "library/event.hpp"
+#include "library/socket.hpp"
+#include "library/timer.hpp"
 
 namespace ot {
 

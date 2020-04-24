@@ -31,11 +31,12 @@
  *   This file defines test cases for token management.
  */
 
+#include "library/token_manager.hpp"
+
 #include <catch2/catch.hpp>
 
-#include <commissioner_impl.hpp>
-#include <token_manager.hpp>
-#include <uri.hpp>
+#include "library/commissioner_impl.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 

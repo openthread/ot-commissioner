@@ -31,10 +31,11 @@
  *   This file defines test cases for DTLS implementation with mbedtls.
  */
 
+#include "library/dtls.hpp"
+
 #include <catch2/catch.hpp>
 
-#include <coap.hpp>
-#include <dtls.hpp>
+#include "library/coap.hpp"
 
 namespace ot {
 

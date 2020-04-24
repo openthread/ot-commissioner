@@ -31,13 +31,11 @@
  *   This file provides an implementation of software random number generator.
  */
 
-#include <assert.h>
+#include "library/openthread/random.hpp"
 
 #include <random>
 
-#include "mbedtls/ctr_drbg.h"
-
-#include "random.hpp"
+#include <mbedtls/ctr_drbg.h>
 
 namespace ot {
 

@@ -31,14 +31,15 @@
  *   The file implements CLI interpreter.
  */
 
-#include "interpreter.hpp"
+#include "app/cli/interpreter.hpp"
 
 #include <string.h>
 
 #include <limits>
 
-#include "json.hpp"
-#include <utils.hpp>
+#include "app/file_util.hpp"
+#include "app/json.hpp"
+#include "common/utils.hpp"
 
 #if defined(SuccessOrExit)
 #undef SuccessOrExit
@@ -90,8 +91,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"network", "network save <network-data-file>\n"
                 "network pull"},
     {"sessionid", "sessionid"},
-    {"borderagent", "borderagent discover\n"
-                    "borderagent list\n"
+    {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator\n"
                     "borderagent get meshlocaladdr"},
     {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]\n"
@@ -183,8 +183,15 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
 
 Error Interpreter::Init(const std::string &aConfigFile)
 {
-    Error error   = Error::kNone;
-    mCommissioner = CommissionerApp::Create(aConfigFile);
+    Error error = Error::kNone;
+
+    std::string configJson;
+    Config      config;
+
+    SuccessOrExit(error = ReadFile(configJson, aConfigFile));
+    SuccessOrExit(error = ConfigFromJson(config, configJson));
+
+    mCommissioner = CommissionerApp::Create(config);
 
     VerifyOrExit(mCommissioner != nullptr, error = Error::kInvalidArgs);
 
@@ -370,8 +377,8 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
     {
         ByteArray signedToken, signerCert;
         VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-        SuccessOrExit(error = CommissionerApp::ReadHexStringFile(signedToken, aExpr[2]));
-        SuccessOrExit(error = CommissionerApp::ReadPemFile(signerCert, aExpr[3]));
+        SuccessOrExit(error = ReadHexStringFile(signedToken, aExpr[2]));
+        SuccessOrExit(error = ReadPemFile(signerCert, aExpr[3]));
 
         SuccessOrExit(error = mCommissioner->SetToken(signedToken, signerCert));
     }
@@ -430,15 +437,16 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
 
     if (CaseInsensitiveEqual(aExpr[1], "discover"))
     {
-        SuccessOrExit(error = mCommissioner->Discover());
-    }
-    else if (CaseInsensitiveEqual(aExpr[1], "list"))
-    {
-        error = Error::kNone;
-        for (const auto &ba : mCommissioner->GetBorderAgentList())
+        uint64_t timeout = 4000;
+
+        if (aExpr.size() >= 3)
         {
-            msg += ToString(ba);
+            SuccessOrExit(ParseInteger(timeout, aExpr[2]), msg = aExpr[2]);
         }
+
+        SuccessOrExit(error = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout)));
+
+        ExitNow(error = Error::kNone);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
@@ -1075,6 +1083,19 @@ Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
 
 exit:
     return {error, msg};
+}
+
+void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage)
+{
+    if (aErrorMessage != nullptr)
+    {
+        Console::Write(*aErrorMessage, Console::Color::kRed);
+    }
+    else
+    {
+        ASSERT(aBorderAgent != nullptr);
+        Console::Write(ToString(*aBorderAgent), Console::Color::kGreen);
+    }
 }
 
 const std::string Interpreter::Usage(Expression aExpr)

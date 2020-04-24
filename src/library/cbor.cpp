@@ -31,7 +31,7 @@
  *   This file implements CBOR.
  */
 
-#include "cbor.hpp"
+#include "library/cbor.hpp"
 
 #include <assert.h>
 

@@ -34,19 +34,19 @@
 #ifndef OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 #define OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 
-#include "tlv.hpp"
-#include <commissioner/commissioner.hpp>
-
 #include <mutex>
 #include <thread>
 
-#include "coap.hpp"
-#include "coap_secure.hpp"
-#include "commissioner_impl.hpp"
-#include "dtls.hpp"
-#include "event.hpp"
-#include "timer.hpp"
-#include "token_manager.hpp"
+#include <commissioner/commissioner.hpp>
+
+#include "library/coap.hpp"
+#include "library/coap_secure.hpp"
+#include "library/commissioner_impl.hpp"
+#include "library/dtls.hpp"
+#include "library/event.hpp"
+#include "library/timer.hpp"
+#include "library/tlv.hpp"
+#include "library/token_manager.hpp"
 
 namespace ot {
 
@@ -95,9 +95,6 @@ public:
 
     // Stop the commissioner running in background.
     void Stop() override;
-
-    void  Discover(Handler<std::list<BorderAgent>> aHandler) override;
-    Error Discover(std::list<BorderAgent> &aBorderAgentList) override;
 
     void  Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error Connect(const std::string &aAddr, uint16_t aPort) override;

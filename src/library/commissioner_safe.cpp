@@ -31,16 +31,15 @@
  *   The file implements the thread safe commissioner.
  */
 
-#include "commissioner_safe.hpp"
+#include "library/commissioner_safe.hpp"
 
 #include <future>
 
-#include "coap.hpp"
-#include "cose.hpp"
-#include "dtls.hpp"
-#include "logging.hpp"
-#include "uri.hpp"
-#include "openthread/bloom_filter.hpp"
+#include "library/coap.hpp"
+#include "library/cose.hpp"
+#include "library/logging.hpp"
+#include "library/openthread/bloom_filter.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 
@@ -116,26 +115,6 @@ void CommissionerSafe::Stop()
         mEventThread = nullptr;
     }
     return;
-}
-
-void CommissionerSafe::Discover(Handler<std::list<BorderAgent>> aHandler)
-{
-    PushAsyncRequest([=]() { mImpl.Discover(aHandler); });
-}
-
-Error CommissionerSafe::Discover(std::list<BorderAgent> &aBorderAgentList)
-{
-    std::promise<Error> pro;
-    auto                wait = [&pro, &aBorderAgentList](const std::list<BorderAgent> *borderAgentList, Error error) {
-        if (borderAgentList != nullptr)
-        {
-            aBorderAgentList = *borderAgentList;
-        }
-        pro.set_value(error);
-    };
-
-    Discover(wait);
-    return pro.get_future().get();
 }
 
 void CommissionerSafe::Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)

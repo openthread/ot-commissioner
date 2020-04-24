@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef CRC16_HPP_
-#define CRC16_HPP_
+#ifndef OT_COMM_LIBRARY_OPENTHREAD_CRC16_HPP_
+#define OT_COMM_LIBRARY_OPENTHREAD_CRC16_HPP_
 
 #include <stdint.h>
 
@@ -93,4 +93,4 @@ private:
 
 } // namespace ot
 
-#endif // CRC16_HPP_
+#endif // OT_COMM_LIBRARY_OPENTHREAD_CRC16_HPP_

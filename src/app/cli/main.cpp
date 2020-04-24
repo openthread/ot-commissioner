@@ -33,10 +33,8 @@
 
 #include <signal.h>
 
-#include <iostream>
-
-#include "interpreter.hpp"
-#include <utils.hpp>
+#include "app/cli/interpreter.hpp"
+#include "common/utils.hpp"
 
 #ifndef OT_COMM_VERSION
 #error "OT_COMM_VERSION not defined"

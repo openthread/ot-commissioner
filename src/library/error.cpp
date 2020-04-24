@@ -33,7 +33,7 @@
 
 #include <commissioner/error.hpp>
 
-#include <utils.hpp>
+#include "common/utils.hpp"
 
 namespace ot {
 

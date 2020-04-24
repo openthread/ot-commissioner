@@ -26,7 +26,7 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bloom_filter.hpp"
+#include "library/openthread/bloom_filter.hpp"
 
 #include <assert.h>
 
@@ -34,7 +34,7 @@
 
 #include <commissioner/defines.hpp>
 
-#include "crc16.hpp"
+#include "library/openthread/crc16.hpp"
 
 namespace ot {
 

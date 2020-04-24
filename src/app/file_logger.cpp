@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,9 +28,74 @@
 
 /**
  * @file
- *   This file is for including Catch2's main function.
+ *  This file defines file logger.
+ *
  */
 
-#define CATCH_CONFIG_MAIN
+#include "app/file_logger.hpp"
 
-#include "catch2/catch.hpp"
+#include <time.h>
+
+#include "common/utils.hpp"
+
+namespace ot {
+
+namespace commissioner {
+
+static std::string ToString(LogLevel aLevel)
+{
+    std::string ret;
+
+    switch (aLevel)
+    {
+    case LogLevel::kOff:
+        ret = "off";
+        break;
+    case LogLevel::kCritical:
+        ret = "critical";
+        break;
+    case LogLevel::kError:
+        ret = "error";
+        break;
+    case LogLevel::kWarn:
+        ret = "warn";
+        break;
+    case LogLevel::kInfo:
+        ret = "info";
+        break;
+    case LogLevel::kDebug:
+        ret = "debug";
+        break;
+    default:
+        ASSERT(false);
+        break;
+    }
+
+    return ret;
+}
+
+FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel aLogLevel)
+    : mFileStream(aFilename)
+    , mLogLevel(aLogLevel)
+{
+}
+
+void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
+{
+    char      dateBuf[64];
+    struct tm localTime;
+    time_t    now = time(nullptr);
+
+    VerifyOrExit(aLevel <= mLogLevel);
+    VerifyOrExit(mFileStream.is_open());
+
+    strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", localtime_r(&now, &localTime));
+    mFileStream << "[ " << dateBuf << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+
+exit:
+    return;
+}
+
+} // namespace commissioner
+
+} // namespace ot

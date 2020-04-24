@@ -28,16 +28,19 @@
 
 /**
  * @file
- *   The file includes definition of Thread Border Agent.
+ *   The file defines Border Agent structure and discovery
+ *   by mDNS in local network.
  */
 
 #ifndef OT_COMM_BORDER_AGENT_HPP_
 #define OT_COMM_BORDER_AGENT_HPP_
 
+#include <functional>
+#include <list>
 #include <string>
 
-#include "defines.hpp"
-#include "network_data.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/network_data.hpp>
 
 namespace ot {
 
@@ -45,6 +48,7 @@ namespace commissioner {
 
 /**
  * The definition of Border Agent discovered by Commissioner.
+ *
  */
 struct BorderAgent
 {
@@ -152,6 +156,25 @@ struct BorderAgent
     static constexpr uint16_t kBbrSeqNumberBit    = 1 << 13;
     static constexpr uint16_t kBbrPortBit         = 1 << 14;
 };
+
+/**
+ * This function is the callback of a discovered Border Agent.
+ *
+ * @param[in] aBorderAgent   The discovered Border Agent. nullable.
+ * @param[in] aErrorMessage  The detailed message of a malformed Border Agent response. nullable.
+ *
+ */
+using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const std::string *aErrorMessage)>;
+
+/**
+ * Discovery Border Agent in local network with mDNS.
+ *
+ * @param[in] aBorderAgentHandler  The handler of found Border Agent.
+ *                                 called once for each Border Agent.
+ * @param[in] aTimeout             The time waiting for mDNS responses.
+ *
+ */
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);
 
 } // namespace commissioner
 

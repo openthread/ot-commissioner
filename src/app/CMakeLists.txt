@@ -32,6 +32,12 @@ target_sources(commissioner-app
     PRIVATE
         commissioner_app.cpp
         commissioner_app.hpp
+        border_agent.cpp
+        border_agent.hpp
+        file_logger.cpp
+        file_logger.hpp
+        file_util.cpp
+        file_util.hpp
         json.cpp
         json.hpp
 )
@@ -41,12 +47,14 @@ target_link_libraries(commissioner-app
         commissioner
         commissioner-common
     PRIVATE
+        fmt::fmt
+        mdns
         nlohmann_json::nlohmann_json
 )
 
 target_include_directories(commissioner-app
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
 )
 
 install(DIRECTORY etc/commissioner
@@ -60,5 +68,25 @@ if (BUILD_SHARED_LIBS)
             ARCHIVE DESTINATION lib
     )
 endif()
+
+add_library(commissioner-app-test EXCLUDE_FROM_ALL)
+
+target_sources(commissioner-app-test
+    PRIVATE
+        json.hpp
+        json_test.cpp
+)
+
+target_include_directories(commissioner-app-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)
+
+target_link_libraries(commissioner-app-test
+    PRIVATE
+        Catch2::Catch2
+        commissioner-app
+        nlohmann_json::nlohmann_json
+)
 
 add_subdirectory(cli)

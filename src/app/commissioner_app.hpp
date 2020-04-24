@@ -48,9 +48,7 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/network_data.hpp>
 
-#include <address.hpp>
-
-#include "app_config.hpp"
+#include "common/address.hpp"
 
 namespace ot {
 
@@ -69,18 +67,8 @@ public:
     using MilliSeconds = std::chrono::milliseconds;
     using Seconds      = std::chrono::seconds;
 
-    static std::shared_ptr<CommissionerApp> Create(const std::string &aConfigFile);
+    static std::shared_ptr<CommissionerApp> Create(const Config &aConfig);
     ~CommissionerApp() = default;
-
-    // Discover Border Agent on link-local network.
-    Error Discover();
-
-    // Return all Border Agent ranked by the order they are discovered.
-    const std::list<BorderAgent> &GetBorderAgentList() const;
-
-    // Return the discovered Border Agent matching the given Thread network name.
-    // Set @p aNetworkName to empty to match any network name.
-    const BorderAgent *GetBorderAgent(const std::string &aNetworkName);
 
     Error Start(std::string &aExistingCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
     void  Stop();
@@ -215,17 +203,9 @@ public:
     Error              RequestToken(const std::string &aAddr, uint16_t aPort);
     Error              SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert);
 
-    static Error ReadFile(std::string &aData, const std::string &aFilename);
-
-    // Read a PEM file. '\0' will be append to the end of the data buffer.
-    static Error ReadPemFile(ByteArray &aData, const std::string &aFilename);
-
-    // Read a hex string file. Any spaces in the file are accepted and ignored.
-    static Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename);
-
 private:
     CommissionerApp() = default;
-    Error Init(const AppConfig &aAppConfig);
+    Error Init(const Config &aConfig);
 
     struct JoinerKey
     {
@@ -245,19 +225,7 @@ private:
     static void MergeDataset(BbrDataset &aDst, const BbrDataset &aSrc);
     static void MergeDataset(CommissionerDataset &aDst, const CommissionerDataset &aSrc);
 
-    static Error WriteFile(const std::string &aData, const std::string &aFilename);
-    static Error ReadConfig(AppConfig &aAppConfig, const std::string &aFilename);
-
     const JoinerInfo *GetJoinerInfo(JoinerType aType, const ByteArray &aJoinerId);
-
-    // Create a commissioner configuration with given app configuration.
-    Error MakeConfig(Config &aConfig, const AppConfig &aAppConfig);
-
-    // The callback function passed to Commissioner lib for writing a single log message.
-    void WriteCommLog(LogLevel aLevel, const std::string &aMsg);
-
-    // The log stream for the Commissioner library, not the app itself.
-    std::ofstream mCommLogStream;
 
     std::shared_ptr<Commissioner> mCommissioner;
 
@@ -280,6 +248,14 @@ private:
 
     void HandleDatasetChanged(Error error);
 
+    bool HandleCommissioning(const JoinerInfo & aJoinerInfo,
+                             const std::string &aVendorName,
+                             const std::string &aVendorModel,
+                             const std::string &aVendorSwVersion,
+                             const ByteArray &  aVendorStackVersion,
+                             const std::string &aProvisioningUrl,
+                             const ByteArray &  aVendorData);
+
     /*
      * Below are network data associated to the connected Thread network.
      */
@@ -287,7 +263,6 @@ private:
     PendingOperationalDataset mPendingDataset;
     CommissionerDataset       mCommDataset;
     BbrDataset                mBbrDataset;
-    std::list<BorderAgent>    mBorderAgents;
 };
 
 } // namespace commissioner

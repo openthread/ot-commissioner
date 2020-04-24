@@ -47,6 +47,8 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
+#include "library/cbor.hpp"
+
 namespace ot {
 
 namespace commissioner {

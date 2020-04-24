@@ -31,18 +31,16 @@
  *   The file implements the Commissioner interface.
  */
 
-#include "commissioner_impl.hpp"
+#include "library/commissioner_impl.hpp"
 
-#include <iostream>
-
-#include "coap.hpp"
-#include "cose.hpp"
-#include "dtls.hpp"
-#include "logging.hpp"
-#include "uri.hpp"
-#include "openthread/bloom_filter.hpp"
-#include "openthread/pbkdf2_cmac.hpp"
-#include "openthread/sha256.hpp"
+#include "library/coap.hpp"
+#include "library/cose.hpp"
+#include "library/dtls.hpp"
+#include "library/logging.hpp"
+#include "library/openthread/bloom_filter.hpp"
+#include "library/openthread/pbkdf2_cmac.hpp"
+#include "library/openthread/sha256.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 
@@ -142,7 +140,6 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     : mState(State::kDisabled)
     , mSessionId(0)
     , mEventBase(aEventBase)
-    , mBaQuerier(mEventBase)
     , mKeepAliveTimer(mEventBase, [this](Timer &aTimer) { SendKeepAlive(aTimer); })
     , mBrClient(mEventBase)
     , mCommissioningSessionTimer(mEventBase, [this](Timer &aTimer) { HandleCommissioningSessionTimer(aTimer); })
@@ -186,7 +183,7 @@ Error CommissionerImpl::Init(const Config &aConfig)
     SuccessOrExit(error = ValidateConfig(aConfig));
     mConfig = aConfig;
 
-    InitLogger(mConfig.mLogLevel, mConfig.mLogWriter);
+    InitLogger(aConfig.mLogger);
     LoggingConfig();
 
     SuccessOrExit(error = mBrClient.Init(GetDtlsConfig(mConfig)));
@@ -213,9 +210,6 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
         VerifyOrExit(!aConfig.mId.empty(), error = "commissioner ID is mandatory");
         VerifyOrExit(commissionerIdTlv.IsValid(), error = "invalid commissioner ID: " + aConfig.mId);
     }
-
-    VerifyOrExit(aConfig.mLogLevel <= LogLevel::kDebug,
-                 error = "invalid logging level: " + std::to_string(utils::to_underlying(aConfig.mLogLevel)));
 
     VerifyOrExit(
         (aConfig.mKeepAliveInterval >= kMinKeepAliveInterval && aConfig.mKeepAliveInterval <= kMaxKeepAliveInterval),
@@ -255,7 +249,6 @@ void CommissionerImpl::LoggingConfig()
     LOG_INFO("config: enable CCM = {}", mConfig.mEnableCcm);
     LOG_INFO("config: domain name = {}", mConfig.mDomainName);
     LOG_INFO("config: keep alive interval = {}", mConfig.mKeepAliveInterval);
-    LOG_INFO("config: log level = {}", mConfig.mLogLevel);
     LOG_INFO("config: enable DTLS debug logging = {}", mConfig.mEnableDtlsDebugLogging);
     LOG_INFO("config: maximum connection number = {}", mConfig.mMaxConnectionNum);
 
@@ -331,11 +324,6 @@ void CommissionerImpl::Resign(ErrorHandler aHandler)
     Disconnect();
 
     aHandler(Error::kNone);
-}
-
-void CommissionerImpl::Discover(Handler<std::list<BorderAgent>> aHandler)
-{
-    mBaQuerier.SendQuery(aHandler);
 }
 
 void CommissionerImpl::Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)

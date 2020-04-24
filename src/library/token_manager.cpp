@@ -31,16 +31,16 @@
  *   This file implements the Commissioner Token Manager.
  */
 
-#include "token_manager.hpp"
+#include "library/token_manager.hpp"
 
 #include <mbedtls/x509_crt.h>
 
-#include "tlv.hpp"
+#include "library/tlv.hpp"
 
-#include "cose.hpp"
-#include "cwt.hpp"
-#include "logging.hpp"
-#include "uri.hpp"
+#include "library/cose.hpp"
+#include "library/cwt.hpp"
+#include "library/logging.hpp"
+#include "library/uri.hpp"
 
 namespace ot {
 
@@ -114,7 +114,7 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
 
     SuccessOrExit(error = coseSign.Validate(aPublicKey));
 
-    VerifyOrExit((payload = coseSign.GetPayload(payloadLength)) != NULL);
+    VerifyOrExit((payload = coseSign.GetPayload(payloadLength)) != nullptr);
 
     SuccessOrExit(error = CborValue::Deserialize(token, payload, payloadLength));
 

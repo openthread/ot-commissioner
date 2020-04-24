@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,62 +28,48 @@
 
 /**
  * @file
- *   The file implements Console.
+ *  This file defines file logger.
+ *
  */
 
-#include "app/cli/console.hpp"
+#ifndef OT_COMM_APP_FILE_LOGGER_HPP_
+#define OT_COMM_APP_FILE_LOGGER_HPP_
 
-#include <iostream>
+#include <fstream>
+#include <string>
 
-#include <readline/history.h>
-#include <readline/readline.h>
+#include <commissioner/commissioner.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-std::string Console::Read()
+/**
+ * @brief An implementation of the Logger interface that write log to a text file.
+ *
+ */
+class FileLogger : public Logger
 {
-    const char *line = "";
+public:
+    /**
+     * The constructor with given log file name and minimum log level.
+     *
+     * @param[in] aFilename  The log file name.
+     * @param[in] aLogLevel  The minimum log level. Log messages with a lower
+     *                       log level than this will be dropped silently.
+     *
+     */
+    FileLogger(const std::string &aFilename, LogLevel aLogLevel);
 
-    while (line == nullptr || strlen(line) == 0)
-    {
-        line = readline("> ");
-    }
+    void Log(LogLevel aLevel, const std::string &aMsg) override;
 
-    add_history(line);
-
-    return line;
-}
-
-void Console::Write(const std::string &aLine, Color aColor)
-{
-    static const std::string kResetCode = "\u001b[0m";
-    std::string              colorCode;
-
-    switch (aColor)
-    {
-    case Color::kDefault:
-    case Color::kWhite:
-        colorCode = "\u001b[37m";
-        break;
-    case Color::kRed:
-        colorCode = "\u001b[31m";
-        break;
-    case Color::kGreen:
-        colorCode = "\u001b[32m";
-        break;
-    case Color::kYellow:
-        colorCode = "\u001b[33m";
-        break;
-    case Color::kBlue:
-        colorCode = "\u001b[34m";
-        break;
-    }
-
-    std::cout << colorCode << aLine << kResetCode << std::endl;
-}
+private:
+    std::ofstream mFileStream;
+    LogLevel      mLogLevel;
+};
 
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_APP_FILE_LOGGER_HPP_

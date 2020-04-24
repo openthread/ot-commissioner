@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef SHA256_HPP_
-#define SHA256_HPP_
+#ifndef OT_COMM_LIBRARY_OPENTHREAD_SHA256_HPP_
+#define OT_COMM_LIBRARY_OPENTHREAD_SHA256_HPP_
 
 #include <mbedtls/sha256.h>
 
@@ -96,4 +96,4 @@ private:
 
 } // namespace ot
 
-#endif // SHA256_HPP_
+#endif // OT_COMM_LIBRARY_OPENTHREAD_SHA256_HPP_

@@ -31,35 +31,29 @@
  *   This file includes wrapper of mbedtls.
  */
 
-#include "logging.hpp"
+#include "library/logging.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-static LogLevel  sLogLevel  = LogLevel::kInfo;
-static LogWriter sLogWriter = nullptr;
+static std::shared_ptr<Logger> sLogger = nullptr;
 
-void InitLogger(LogLevel aLevel, LogWriter aWriter)
+void InitLogger(std::shared_ptr<Logger> aLogger)
 {
-    sLogLevel  = aLevel;
-    sLogWriter = aWriter;
+    sLogger = aLogger;
 }
 
-LogLevel GetLogLevel()
+std::shared_ptr<Logger> GetLogger(void)
 {
-    return sLogLevel;
-}
-LogWriter GetLogWriter()
-{
-    return sLogWriter;
+    return sLogger;
 }
 
 void Log(LogLevel aLevel, const std::string &aMessage)
 {
-    if (aLevel <= GetLogLevel() && GetLogWriter())
+    if (GetLogger())
     {
-        GetLogWriter()(aLevel, aMessage);
+        GetLogger()->Log(aLevel, aMessage);
     }
 }
 

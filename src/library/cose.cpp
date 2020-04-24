@@ -31,12 +31,12 @@
  *   This file implements COSE.
  */
 
-#include "cose.hpp"
+#include "library/cose.hpp"
 
 #include <mbedtls/bignum.h>
 #include <mbedtls/ecp.h>
 
-#include <utils.hpp>
+#include "common/utils.hpp"
 
 namespace ot {
 

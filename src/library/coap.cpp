@@ -31,15 +31,15 @@
  *   This file implements the CoAP.
  */
 
-#include "coap.hpp"
+#include "library/coap.hpp"
 
 #include <ctype.h>
 #include <memory.h>
 
 #include <algorithm>
 
-#include "logging.hpp"
-#include "openthread/random.hpp"
+#include "library/logging.hpp"
+#include "library/openthread/random.hpp"
 
 namespace ot {
 

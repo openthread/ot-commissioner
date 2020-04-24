@@ -36,9 +36,9 @@ test_discover() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "borderagent discover"
 
     ## TODO(wgtdkp): verify the output
-    send_command_to_commissioner "borderagent list"
+    send_command_to_commissioner "borderagent discover"
+
     stop_commissioner
 }

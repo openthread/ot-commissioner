@@ -45,7 +45,7 @@ jobs:
           packages:
             - clang-format-6.0
             - python3-pip
-      script: python3 -m pip install yapf && script/make-pretty check
+      script: python3 -m pip install yapf==0.29.0 && script/make-pretty check
     - env: OT_COMM_CXX_STANDARD=14
       os: linux
       compiler: gcc

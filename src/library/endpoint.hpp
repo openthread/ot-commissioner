@@ -35,7 +35,7 @@
 
 #include <commissioner/error.hpp>
 
-#include <address.hpp>
+#include "common/address.hpp"
 
 namespace ot {
 

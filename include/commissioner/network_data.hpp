@@ -38,8 +38,8 @@
 
 #include <string>
 
-#include "commissioner/defines.hpp"
-#include "commissioner/error.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
 
 namespace ot {
 

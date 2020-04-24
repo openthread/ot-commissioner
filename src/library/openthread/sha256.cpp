@@ -31,7 +31,7 @@
  *   This file implements crypto utilities.
  */
 
-#include "sha256.hpp"
+#include "library/openthread/sha256.hpp"
 
 namespace ot {
 

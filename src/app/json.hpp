@@ -28,7 +28,8 @@
 
 /**
  * @file
- *   The file defines the config json parser;
+ *   This file defines the json parser of Network Data and Commissioner configuration.
+ *
  */
 
 #ifndef OT_COMM_APP_JSON_HPP_
@@ -40,8 +41,7 @@
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
 
-#include "app_config.hpp"
-#include "commissioner_app.hpp"
+#include "app/commissioner_app.hpp"
 
 namespace ot {
 
@@ -70,8 +70,7 @@ std::string ActiveDatasetToJson(const ActiveOperationalDataset &aDataset);
 Error       PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::string &aJson);
 std::string PendingDatasetToJson(const PendingOperationalDataset &aDataset);
 
-Error       AppConfigFromJson(AppConfig &aAppConfig, const std::string &aJson);
-std::string AppConfigToJson(const AppConfig &aAppConfig);
+Error ConfigFromJson(Config &aConfig, const std::string &aJson);
 
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 

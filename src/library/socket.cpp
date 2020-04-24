@@ -26,13 +26,13 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "socket.hpp"
+#include "library/socket.hpp"
 
 #include <memory.h>
 #include <netinet/in.h>
 
-#include "logging.hpp"
-#include <utils.hpp>
+#include "common/utils.hpp"
+#include "library/logging.hpp"
 
 namespace ot {
 

@@ -26,8 +26,8 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BLOOM_FILTER_HPP_
-#define BLOOM_FILTER_HPP_
+#ifndef OT_COMM_LIBRARY_OPENTHREAD_BLOOM_FILTER_HPP_
+#define OT_COMM_LIBRARY_OPENTHREAD_BLOOM_FILTER_HPP_
 
 #include <commissioner/defines.hpp>
 
@@ -41,4 +41,4 @@ void ComputeBloomFilter(ByteArray &aOut, const ByteArray &aIn);
 
 } // namespace ot
 
-#endif // BLOOM_FILTER_HPP_
+#endif // OT_COMM_LIBRARY_OPENTHREAD_BLOOM_FILTER_HPP_

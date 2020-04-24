@@ -29,14 +29,20 @@
 add_subdirectory(Catch2/repo)
 add_subdirectory(mbedtls)
 
+set(CN_CBOR_FATAL_WARNINGS
+    OFF
+    CACHE BOOL "Disable -Werror and /W4" FORCE)
+set(CN_CBOR_COVERALLS
+    OFF
+    CACHE BOOL "Disable generating coveralls data" FORCE)
+set(CN_CBOR_BUILD_TESTS
+    OFF
+    CACHE BOOL "Disable compiling cbor tests" FORCE)
+add_subdirectory(cn-cbor/repo)
+
 set(BUILD_SHARED_LIBS
     OFF
     CACHE BOOL "Disbale generating coveralls data")
-set(coveralls
-    OFF
-    CACHE BOOL "Disbale generating coveralls data")
-add_subdirectory(cn-cbor/repo)
-
 set(COSE_C_COVERALLS
     OFF
     CACHE BOOL "do not link gcov" FORCE)
@@ -47,6 +53,7 @@ set(COSE_C_USE_MBEDTLS
     ON
     CACHE BOOL "use mbedtls" FORCE)
 add_subdirectory(COSE-C/repo)
+
 add_subdirectory(fmtlib/repo)
 add_subdirectory(json/repo)
 

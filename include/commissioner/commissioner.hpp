@@ -42,10 +42,9 @@
 #include <memory>
 #include <string>
 
-#include "border_agent.hpp"
-#include "defines.hpp"
-#include "error.hpp"
-#include "network_data.hpp"
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
+#include <commissioner/network_data.hpp>
 
 struct event_base;
 
@@ -77,12 +76,22 @@ enum class LogLevel : uint8_t
 };
 
 /**
- * @brief The function write a single log message.
+ * @brief The Commissioner logger.
  *
- * @param[in] aLevel    A logging level.
- * @param[in] aMsg      A logging message.
  */
-using LogWriter = std::function<void(LogLevel aLevel, const std::string &aMsg)>;
+class Logger
+{
+public:
+    virtual ~Logger() = default;
+
+    /**
+     * @brief The function write a single log message.
+     *
+     * @param[in] aLevel    A logging level.
+     * @param[in] aMsg      A logging message.
+     */
+    virtual void Log(LogLevel aLevel, const std::string &aMsg) = 0;
+};
 
 /**
  * @brief Configuration of a commissioner.
@@ -95,9 +104,8 @@ struct Config
     uint32_t mKeepAliveInterval = 40;  ///< The interval of keep-alive message. In seconds.
     uint32_t mMaxConnectionNum  = 100; ///< Max number of parallel connection from joiner.
 
-    LogLevel  mLogLevel               = LogLevel::kInfo;
-    LogWriter mLogWriter              = nullptr;
-    bool      mEnableDtlsDebugLogging = false;
+    std::shared_ptr<Logger> mLogger;
+    bool                    mEnableDtlsDebugLogging = false;
 
     // Mandatory for CCM Thread network.
     std::string mDomainName = "Thread"; ///< The domain name of connecting Thread network.
@@ -260,6 +268,7 @@ public:
      *
      * @param[in] aConfig     A commissioner configuration.
      * @param[in] aEventBase  A libevent event_base object. nullable.
+     *
      * @return std::shared_ptr<Commissioner>  nullptr is returned if failed.
      *
      * @note If @p aEventBase is not provided, commissioner will create it by itself and
@@ -316,22 +325,6 @@ public:
      *
      */
     virtual void Stop() = 0;
-
-    /**
-     * @brief Asynchronously discover Thread Network at link-local.
-     *
-     * @param[in, out] aHandler  A handler of the response and errors; Guaranteed to be called.
-     */
-    virtual void Discover(Handler<std::list<BorderAgent>> aHandler) = 0;
-
-    /**
-     * @brief Synchronously discover Thread Network at link-local.
-     *
-     * @param[out] aBorderAgentList  A list of discovered border agent.
-     *
-     * @return Error::kNone, succeed; otherwise, failed;
-     */
-    virtual Error Discover(std::list<BorderAgent> &aBorderAgentList) = 0;
 
     /**
      * @brief Asynchronously connect to a Thread network.

@@ -34,8 +34,8 @@
 #ifndef OT_COMM_LIBRARY_COAP_SECURE_HPP_
 #define OT_COMM_LIBRARY_COAP_SECURE_HPP_
 
-#include "coap.hpp"
-#include "dtls.hpp"
+#include "library/coap.hpp"
+#include "library/dtls.hpp"
 
 namespace ot {
 

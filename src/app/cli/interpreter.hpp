@@ -36,9 +36,9 @@
 
 #include <map>
 
-#include "commissioner_app.hpp"
-
-#include "console.hpp"
+#include "app/border_agent.hpp"
+#include "app/cli/console.hpp"
+#include "app/commissioner_app.hpp"
 
 namespace ot {
 
@@ -100,6 +100,8 @@ private:
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
+
+    static void BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage);
 
     static const std::string Usage(Expression aExpr);
     static Error             GetJoinerType(JoinerType &aType, const std::string &aStr);
