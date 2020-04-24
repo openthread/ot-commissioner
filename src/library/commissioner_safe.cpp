@@ -107,7 +107,17 @@ exit:
 // Stop the commissioner running in background.
 void CommissionerSafe::Stop()
 {
-    mImpl.Stop();
+    std::promise<void> pro;
+
+    // Send `Stop` to the event loop to break it from inside.
+    // This makes sure the event loop has been started when we
+    // trying to break it.
+    PushAsyncRequest([&pro, this]() {
+        mImpl.Stop();
+        pro.set_value();
+    });
+
+    pro.get_future().wait();
 
     if (mEventThread && mEventThread->joinable())
     {
