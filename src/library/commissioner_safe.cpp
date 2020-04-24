@@ -76,6 +76,7 @@ Error CommissionerSafe::Init(const Config &aConfig)
 
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
+
 exit:
     return error;
 }

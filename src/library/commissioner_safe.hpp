@@ -52,15 +52,17 @@ namespace ot {
 
 namespace commissioner {
 
-// This is the implementation of Thread Commissioner interface.
-// It is based on the event-driven implementation and runs the
-// even loop in a background thread. All API calls are synchronized
-// to the even loop or guarded by locks, which means they can be
-// concurrently called from multiple threads.
-//
-// This is the standard Commissioner instance returned by
-// Commissioner::Create().
-//
+/**
+ * This class implements the Commissioner interface.
+ *
+ * It is based on the event-driven implementation and runs the
+ * event loop in a background thread. Accesses to the event-driven
+ * implementation are synchronized between user thread and the
+ * event-loop thread which means the user can safely call a
+ * Commissioner API from a user thread. But it is not safe to
+ * concurrently call a Commissioner API from multiple user threads.
+ *
+ */
 class CommissionerSafe : public Commissioner
 {
 public:
