@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_network_sync() {
+test_network_sync()
+{
     set -e
 
     start_otbr "${NON_CCM_NCP}" "eth0"
@@ -38,5 +39,18 @@ test_network_sync() {
     start_commissioner "${NON_CCM_CONFIG}"
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "network sync"
+    stop_commissioner
+}
+
+test_get_commissioner_dataset()
+{
+    set -e
+
+    start_otbr "${NON_CCM_NCP}" "eth0"
+    form_network "${PSKC}"
+
+    start_commissioner "${NON_CCM_CONFIG}"
+    send_command_to_commissioner "start :: 49191"
+    send_command_to_commissioner "commdataset get"
     stop_commissioner
 }
