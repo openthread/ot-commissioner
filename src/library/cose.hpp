@@ -40,7 +40,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <cose.h>
+#include "cbor.hpp"
+#include <cose/cose.h>
 #include <mbedtls/pk.h>
 
 #include <commissioner/defines.hpp>
@@ -109,7 +110,7 @@ public:
 private:
     Error AddAttribute(int key, cn_cbor *value, int flags);
 
-    HCOSE_SIGN0 mSign;
+    HCOSE_SIGN1 mSign;
 };
 
 Error MakeCoseKey(ByteArray &aEncodedCoseKey, const mbedtls_pk_context &aKey, const ByteArray &aKeyId);
