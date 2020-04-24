@@ -232,7 +232,7 @@ private:
     std::queue<AsyncRequest> mAsyncRequestQueue;
 
     // The even loop thread running in background.
-    std::shared_ptr<std::thread> mEventThread;
+    std::thread mEventThread;
 };
 
 } // namespace commissioner

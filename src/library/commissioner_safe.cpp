@@ -61,7 +61,6 @@ std::shared_ptr<Commissioner> Commissioner::Create(const Config &aConfig, struct
 
 CommissionerSafe::CommissionerSafe()
     : mImpl(mEventBase.Get())
-    , mEventThread(nullptr)
 {
 }
 
@@ -96,9 +95,9 @@ Error CommissionerSafe::Start()
 {
     Error error = Error::kNone;
 
-    VerifyOrExit(mEventThread == nullptr, error = Error::kAlready);
+    VerifyOrExit(!mEventThread.joinable(), error = Error::kAlready);
 
-    mEventThread = std::make_shared<std::thread>([this]() { IgnoreError(mImpl.Start()); });
+    mEventThread = std::thread([this]() { IgnoreError(mImpl.Start()); });
 
 exit:
     return error;
@@ -108,6 +107,8 @@ exit:
 void CommissionerSafe::Stop()
 {
     std::promise<void> pro;
+
+    VerifyOrExit(mEventThread.joinable());
 
     // Send `Stop` to the event loop to break it from inside.
     // This makes sure the event loop has been started when we
@@ -119,11 +120,9 @@ void CommissionerSafe::Stop()
 
     pro.get_future().wait();
 
-    if (mEventThread && mEventThread->joinable())
-    {
-        mEventThread->join();
-        mEventThread = nullptr;
-    }
+    mEventThread.join();
+
+exit:
     return;
 }
 
