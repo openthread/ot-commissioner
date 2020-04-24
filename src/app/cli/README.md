@@ -356,17 +356,17 @@ OT Commissioner sends a `MGMT_PENDING_SET.req` message to set those parameters.
 > help network
 usage:
 network save <network-data-file>
-network pull
+network sync
 [done]
 >
 ```
 
-#### Pull network data
+#### Sync network data
 
-This command pulls down all Thread network data (active or pending dataset, commissioner dataset, BBR dataset) to local.
+This command pushes local Commissioner Dataset to the Thread Network and pulls down Active / Pending Dataset and BBR Dataset (if in CCM mode) to local.
 
 ```shell
-> network pull
+> network sync
 [done]
 >
 ```
