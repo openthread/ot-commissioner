@@ -16,8 +16,7 @@
 	branch = master
 [submodule "third_party/COSE-C/repo"]
 	path = third_party/COSE-C/repo
-	url = https://github.com/cose-wg/COSE-C.git
-	branch = master
+	url = https://github.com/gocarlos/COSE-C.git
 [submodule "third_party/cn-cbor/repo"]
 	path = third_party/cn-cbor/repo
 	url = https://github.com/jimsch/cn-cbor.git
