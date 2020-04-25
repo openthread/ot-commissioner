@@ -42,19 +42,6 @@
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
-#if defined(SuccessOrExit)
-#undef SuccessOrExit
-#define SuccessOrExit(aError, ...) \
-    do                             \
-    {                              \
-        if ((aError).NoError())    \
-        {                          \
-            __VA_ARGS__;           \
-            goto exit;             \
-        }                          \
-    } while (false)
-#endif // defined(SuccessOrExit)
-
 namespace ot {
 
 namespace commissioner {
