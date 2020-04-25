@@ -1,5 +1,4 @@
-[![Build Status][ot-comm-travis-svg]][ot-comm-travis]
-[![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
+[![Build Status][ot-comm-travis-svg]][ot-comm-travis] [![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
 
 ---
 

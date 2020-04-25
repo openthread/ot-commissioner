@@ -84,8 +84,8 @@ public:
     // Save network data of current Thread network to file in JSON format.
     Error SaveNetworkData(const std::string &aFilename);
 
-    // Pull network data to local.
-    Error PullNetworkData();
+    // Sync network data between the Thread Network and Commissioner.
+    Error SyncNetworkData(void);
 
     /*
      * Commissioner Dataset APIs
@@ -214,6 +214,8 @@ private:
 
         bool operator<(const JoinerKey &aOther) const;
     };
+
+    CommissionerDataset MakeDefaultCommissionerDataset();
 
     static ByteArray &GetSteeringData(CommissionerDataset &aDataset, JoinerType aJoinerType);
     static uint16_t & GetJoinerUdpPort(CommissionerDataset &aDataset, JoinerType aJoinerType);

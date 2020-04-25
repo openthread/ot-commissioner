@@ -90,7 +90,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "token print\n"
               "token set <signed-token-hex-string-file> <signer-cert-pem-file>"},
     {"network", "network save <network-data-file>\n"
-                "network pull"},
+                "network sync"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator\n"
@@ -398,9 +398,9 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = mCommissioner->SaveNetworkData(aExpr[2]));
     }
-    else if (CaseInsensitiveEqual(aExpr[1], "pull"))
+    else if (CaseInsensitiveEqual(aExpr[1], "sync"))
     {
-        SuccessOrExit(value = mCommissioner->PullNetworkData());
+        SuccessOrExit(error = mCommissioner->SyncNetworkData());
     }
     else
     {
