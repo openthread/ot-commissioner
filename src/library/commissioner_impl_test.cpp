@@ -58,12 +58,14 @@ TEST_CASE("mesh-local-address-invalid-args", "[mesh-local-addr]")
 
     SECTION("invalid prefix length")
     {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/63", 0xBBCC).GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/63", 0xBBCC).GetCode() ==
+                ErrorCode::kInvalidArgs);
     }
 
     SECTION("prefix length is not 8 bytes")
     {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/48", 0xBBCC).GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/48", 0xBBCC).GetCode() ==
+                ErrorCode::kInvalidArgs);
     }
 
     SECTION("invalid prefix format")
@@ -94,7 +96,8 @@ TEST_CASE("pskc-test-invalid-args", "[pskc]")
         const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() ==
+                ErrorCode::kInvalidArgs);
     }
 
     SECTION("passphrase is too long")
@@ -104,7 +107,8 @@ TEST_CASE("pskc-test-invalid-args", "[pskc]")
         const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() ==
+                ErrorCode::kInvalidArgs);
     }
 
     SECTION("network name is too long")
@@ -114,7 +118,8 @@ TEST_CASE("pskc-test-invalid-args", "[pskc]")
         const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() ==
+                ErrorCode::kInvalidArgs);
     }
 }
 

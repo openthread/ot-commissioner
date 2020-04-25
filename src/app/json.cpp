@@ -73,13 +73,13 @@ public:
 
 } // namespace ot
 
-#define SuccessOrThrow(aError)                                                                  \
-    do                                                                                          \
-    {                                                                                           \
-        if (!(aError).NoError())                                                                \
-        {                                                                                       \
-            throw ::ot::commissioner::JsonException((aError).ToString());                       \
-        }                                                                                       \
+#define SuccessOrThrow(aError)                                            \
+    do                                                                    \
+    {                                                                     \
+        if (!(aError).NoError())                                          \
+        {                                                                 \
+            throw ::ot::commissioner::JsonException((aError).ToString()); \
+        }                                                                 \
     } while (false)
 
 /**

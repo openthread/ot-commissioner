@@ -79,14 +79,15 @@ Error Sign1Message::Serialize(ByteArray &aBuf)
 
 Error Sign1Message::Deserialize(Sign1Message &aCose, const ByteArray &aBuf)
 {
-    Error error;
+    Error       error;
     int         type;
     HCOSE_SIGN0 sign = nullptr;
 
     VerifyOrExit(!aBuf.empty(), error = ERROR_INVALID_ARGS("COSE SIGN1 message must not be empty"));
 
     sign = reinterpret_cast<HCOSE_SIGN0>(COSE_Decode(aBuf.data(), aBuf.size(), &type, COSE_sign0_object, nullptr));
-    VerifyOrExit(sign != nullptr && type == COSE_sign0_object, error = ERROR_BAD_FORMAT("deserialize COSE SIGN1 message"));
+    VerifyOrExit(sign != nullptr && type == COSE_sign0_object,
+                 error = ERROR_BAD_FORMAT("deserialize COSE SIGN1 message"));
 
     aCose.mSign = sign;
 
@@ -98,7 +99,8 @@ Error Sign1Message::Validate(const CborMap &aCborPublicKey)
 {
     Error error;
 
-    VerifyOrExit(aCborPublicKey.IsValid(), error = ERROR_INVALID_ARGS("validate COSE SIGN1 message with invalid public key"));
+    VerifyOrExit(aCborPublicKey.IsValid(),
+                 error = ERROR_INVALID_ARGS("validate COSE SIGN1 message with invalid public key"));
 
     VerifyOrExit(COSE_Sign0_validate(mSign, aCborPublicKey.GetImpl(), nullptr),
                  error = ERROR_SECURITY("validate COSE SIGN1 message failed"));
@@ -109,7 +111,7 @@ exit:
 
 Error Sign1Message::Validate(const mbedtls_pk_context &aPubKey)
 {
-    Error error;
+    Error                             error;
     const struct mbedtls_ecp_keypair *eckey;
 
     // Accepts only EC keys
@@ -164,10 +166,10 @@ Error Sign1Message::SetExternalData(const ByteArray &aExternalData)
     Error error;
 
     VerifyOrExit(!aExternalData.empty(),
-        error = ERROR_INVALID_ARGS("cannot set COSE SIGN1 message to empty external data"));
+                 error = ERROR_INVALID_ARGS("cannot set COSE SIGN1 message to empty external data"));
 
     VerifyOrExit(COSE_Sign0_SetExternal(mSign, aExternalData.data(), aExternalData.size(), nullptr),
-        error = ERROR_UNKNOWN("set COSE SIGN1 message external data failed"));
+                 error = ERROR_UNKNOWN("set COSE SIGN1 message external data failed"));
 
 exit:
     return error;
@@ -175,7 +177,7 @@ exit:
 
 Error Sign1Message::AddAttribute(int key, int value, int flags)
 {
-    Error error;
+    Error    error;
     cn_cbor *cbor;
 
     cbor = cn_cbor_int_create(value, nullptr);
@@ -194,7 +196,7 @@ exit:
 Error Sign1Message::AddAttribute(int aKey, const ByteArray &aValue, int aFlags)
 {
     Error    error;
-    cn_cbor *cbor  = nullptr;
+    cn_cbor *cbor = nullptr;
 
     VerifyOrExit(!aValue.empty(), error = ERROR_INVALID_ARGS("add empty COSE SIGN1 message attribute"));
     cbor = cn_cbor_data_create(&aValue[0], aValue.size(), nullptr);
@@ -215,7 +217,7 @@ Error Sign1Message::AddAttribute(int key, cn_cbor *value, int flags)
     Error error;
 
     VerifyOrExit(COSE_Sign0_map_put_int(mSign, key, value, flags, nullptr),
-        error = ERROR_UNKNOWN("add COSE SIGN1 message attribute"));
+                 error = ERROR_UNKNOWN("add COSE SIGN1 message attribute"));
 
 exit:
     return error;

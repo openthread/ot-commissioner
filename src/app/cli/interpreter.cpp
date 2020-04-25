@@ -44,14 +44,14 @@
 
 #if defined(SuccessOrExit)
 #undef SuccessOrExit
-#define SuccessOrExit(aError, ...)    \
-    do                                \
-    {                                 \
-        if ((aError).NoError())       \
-        {                             \
-            __VA_ARGS__;              \
-            goto exit;                \
-        }                             \
+#define SuccessOrExit(aError, ...) \
+    do                             \
+    {                              \
+        if ((aError).NoError())    \
+        {                          \
+            __VA_ARGS__;           \
+            goto exit;             \
+        }                          \
     } while (false)
 #endif // defined(SuccessOrExit)
 
@@ -400,7 +400,7 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "sync"))
     {
-        SuccessOrExit(error = mCommissioner->SyncNetworkData());
+        SuccessOrExit(value = mCommissioner->SyncNetworkData());
     }
     else
     {
