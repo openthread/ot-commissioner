@@ -34,6 +34,7 @@
 #include <commissioner/network_data.hpp>
 
 #include "common/address.hpp"
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 #include "library/time.hpp"
 

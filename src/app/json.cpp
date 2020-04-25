@@ -76,9 +76,9 @@ public:
 #define SuccessOrThrow(aError)                                                                  \
     do                                                                                          \
     {                                                                                           \
-        if (aError != ::ot::commissioner::Error::kNone)                                         \
+        if (!(aError).NoError())                                                                \
         {                                                                                       \
-            throw ::ot::commissioner::JsonException(::ot::commissioner::ErrorToString(aError)); \
+            throw ::ot::commissioner::JsonException((aError).ToString());                       \
         }                                                                                       \
     } while (false)
 

@@ -36,8 +36,8 @@
 #include <mbedtls/error.h>
 #include <mbedtls/ssl.h>
 
-#include <error_macros.hpp>
-#include <utils.hpp>
+#include "common/error_macros.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 

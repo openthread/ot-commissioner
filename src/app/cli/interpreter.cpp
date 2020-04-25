@@ -39,6 +39,7 @@
 
 #include "app/file_util.hpp"
 #include "app/json.hpp"
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
 #if defined(SuccessOrExit)
@@ -46,7 +47,7 @@
 #define SuccessOrExit(aError, ...)    \
     do                                \
     {                                 \
-        if ((aError) != Error::kNone) \
+        if ((aError).NoError())       \
         {                             \
             __VA_ARGS__;              \
             goto exit;                \
@@ -183,17 +184,14 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
 
 Error Interpreter::Init(const std::string &aConfigFile)
 {
-    Error error = Error::kNone;
+    Error error;
 
     std::string configJson;
     Config      config;
 
     SuccessOrExit(error = ReadFile(configJson, aConfigFile));
     SuccessOrExit(error = ConfigFromJson(config, configJson));
-
-    mCommissioner = CommissionerApp::Create(config);
-
-    VerifyOrExit(mCommissioner != nullptr, error = Error::kInvalidArgs);
+    SuccessOrExit(error = CommissionerApp::Create(mCommissioner, config));
 
 exit:
     return error;

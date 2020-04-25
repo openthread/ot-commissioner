@@ -46,7 +46,7 @@ namespace ot {
 
 namespace commissioner {
 
-Error CommissionerApp::Create(std::shared_ptr<CommissionerApp> &aCommApp, const std::string &aConfigFile)
+Error CommissionerApp::Create(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig)
 {
     Error     error;
     auto      app = std::shared_ptr<CommissionerApp>(new CommissionerApp());
@@ -64,7 +64,6 @@ Error CommissionerApp::Init(const Config &aConfig)
     Error                         error;
     auto  commissioner = Commissioner::Create(aConfig, nullptr);
 
-    commissioner = Commissioner::Create(config, nullptr);
     VerifyOrExit(commissioner != nullptr, error = ERROR_INVALID_ARGS("bad commissioner configuration"));
     SuccessOrExit(error = commissioner->Start());
 

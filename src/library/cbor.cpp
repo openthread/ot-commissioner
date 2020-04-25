@@ -37,7 +37,7 @@
 
 #include <cn-cbor/cn-cbor.h>
 
-#include <error_macros.hpp>
+#include "common/error_macros.hpp"
 
 namespace ot {
 

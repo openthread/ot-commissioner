@@ -86,7 +86,7 @@ Error Sign1Message::Deserialize(Sign1Message &aCose, const ByteArray &aBuf)
     VerifyOrExit(!aBuf.empty(), error = ERROR_INVALID_ARGS("COSE SIGN1 message must not be empty"));
 
     sign = reinterpret_cast<HCOSE_SIGN0>(COSE_Decode(aBuf.data(), aBuf.size(), &type, COSE_sign0_object, nullptr));
-    VerifyOrExit(sign != nullptr && type != COSE_sign0_object, error = return ERROR_BAD_FORMAT("deserialize COSE SIGN1 message"));
+    VerifyOrExit(sign != nullptr && type == COSE_sign0_object, error = ERROR_BAD_FORMAT("deserialize COSE SIGN1 message"));
 
     aCose.mSign = sign;
 
@@ -98,7 +98,7 @@ Error Sign1Message::Validate(const CborMap &aCborPublicKey)
 {
     Error error;
 
-    VerifyOrExit(aCborPublicKey.IsValid(), error = return ERROR_INVALID_ARGS("validate COSE SIGN1 message with invalid public key"));
+    VerifyOrExit(aCborPublicKey.IsValid(), error = ERROR_INVALID_ARGS("validate COSE SIGN1 message with invalid public key"));
 
     VerifyOrExit(COSE_Sign0_validate(mSign, aCborPublicKey.GetImpl(), nullptr),
                  error = ERROR_SECURITY("validate COSE SIGN1 message failed"));
@@ -164,10 +164,10 @@ Error Sign1Message::SetExternalData(const ByteArray &aExternalData)
     Error error;
 
     VerifyOrExit(!aExternalData.empty(),
-        error = return ERROR_INVALID_ARGS("cannot set COSE SIGN1 message to empty external data"));
+        error = ERROR_INVALID_ARGS("cannot set COSE SIGN1 message to empty external data"));
 
     VerifyOrExit(COSE_Sign0_SetExternal(mSign, aExternalData.data(), aExternalData.size(), nullptr),
-        error = return ERROR_UNKNOWN("set COSE SIGN1 message external data failed"));
+        error = ERROR_UNKNOWN("set COSE SIGN1 message external data failed"));
 
 exit:
     return error;

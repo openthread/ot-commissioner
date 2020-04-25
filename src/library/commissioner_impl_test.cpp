@@ -48,7 +48,7 @@ namespace commissioner {
 TEST_CASE("mesh-local-address-basic", "[mesh-local-addr]")
 {
     std::string meshLocalAddr;
-    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC) == Error::kNone);
+    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC).NoError());
     REQUIRE(meshLocalAddr == "fd00::ff:fe00:bbcc");
 }
 
@@ -58,17 +58,17 @@ TEST_CASE("mesh-local-address-invalid-args", "[mesh-local-addr]")
 
     SECTION("invalid prefix length")
     {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/63", 0xBBCC) == Error::kInvalidArgs);
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/63", 0xBBCC).GetCode() == ErrorCode::kInvalidArgs);
     }
 
     SECTION("prefix length is not 8 bytes")
     {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/48", 0xBBCC) == Error::kInvalidArgs);
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/48", 0xBBCC).GetCode() == ErrorCode::kInvalidArgs);
     }
 
     SECTION("invalid prefix format")
     {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::48", 0xBBCC) == Error::kInvalidArgs);
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::48", 0xBBCC).GetCode() == ErrorCode::kInvalidArgs);
     }
 }
 
@@ -80,7 +80,7 @@ TEST_CASE("pskc-test-vector-from-thread-1.2.0-spec", "[pskc]")
     const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
     ByteArray         pskc;
 
-    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kNone);
+    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).NoError());
     REQUIRE(pskc.size() == kMaxPSKcLength);
     REQUIRE(utils::Hex(pskc) == "c3f59368445a1b6106be420a706d4cc9");
 }
@@ -94,7 +94,7 @@ TEST_CASE("pskc-test-invalid-args", "[pskc]")
         const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kInvalidArgs);
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() == ErrorCode::kInvalidArgs);
     }
 
     SECTION("passphrase is too long")
@@ -104,7 +104,7 @@ TEST_CASE("pskc-test-invalid-args", "[pskc]")
         const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kInvalidArgs);
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() == ErrorCode::kInvalidArgs);
     }
 
     SECTION("network name is too long")
@@ -114,7 +114,7 @@ TEST_CASE("pskc-test-invalid-args", "[pskc]")
         const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == Error::kInvalidArgs);
+        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() == ErrorCode::kInvalidArgs);
     }
 }
 
@@ -130,7 +130,7 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     CommissionerImpl   commImpl(eventBase);
     REQUIRE(commImpl.Init(config).NoError());
 
-    REQUIRE(commImpl.Connect("::1", 5684) == Error::kNotImplemented);
+    REQUIRE(commImpl.Connect("::1", 5684).GetCode() == ErrorCode::kUnimplemented);
 
     std::string existingCommissionerId;
     REQUIRE(commImpl.Petition(existingCommissionerId, "::1", 5684).GetCode() == ErrorCode::kUnimplemented);

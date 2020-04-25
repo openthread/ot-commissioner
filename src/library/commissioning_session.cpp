@@ -211,7 +211,7 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         // Accepts a joiner if requirement on vendor-specific provisioning.
         accepted = provisioningUrl.empty();
     }
-    VerifyOrExit(accepted, error = Error::kReject);
+    VerifyOrExit(accepted, error = ERROR_REJECTED("joiner(EUI64={:X}) is rejected", mJoinerInfo.mEui64));
 
 exit:
     if (!error.NoError())

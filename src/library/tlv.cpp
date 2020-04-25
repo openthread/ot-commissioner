@@ -35,6 +35,7 @@
 
 #include <set>
 
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 #include "library/logging.hpp"
 

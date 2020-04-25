@@ -222,10 +222,6 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
                      error = ERROR_INVALID_ARGS("{} is not a valid Commissioner ID", aConfig.mId));
     }
 
-    VerifyOrExit(aConfig.mLogLevel <= LogLevel::kDebug,
-                 error =
-                     ERROR_INVALID_ARGS("{} is not a valid logging level", utils::to_underlying(aConfig.mLogLevel)));
-
     VerifyOrExit(
         (aConfig.mKeepAliveInterval >= kMinKeepAliveInterval && aConfig.mKeepAliveInterval <= kMaxKeepAliveInterval),
         error = ERROR_INVALID_ARGS("keep-alive internal {} exceeds range [{}, {}]", aConfig.mKeepAliveInterval,
