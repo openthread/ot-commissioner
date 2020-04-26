@@ -80,6 +80,17 @@ public:
         mDtlsSession.Connect(aOnConnected);
     }
 
+    Error GetLocalAddr(Address &aAddr) const
+    {
+        Error error = Error::kNone;
+
+        VerifyOrExit(mSocket->IsConnected(), error = Error::kInvalidState);
+        aAddr = mSocket->GetLocalAddr();
+
+    exit:
+        return error;
+    }
+
     void Stop() { Disconnect(); }
 
     void Disconnect()

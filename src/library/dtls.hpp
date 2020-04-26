@@ -93,7 +93,7 @@ public:
     DtlsSession(const DtlsSession &aOther) = delete;
     const DtlsSession &operator=(const DtlsSession &aOther) = delete;
 
-    Error Send(const ByteArray &aBuf) override;
+    Error Send(const ByteArray &aBuf, MessageSubType aSubType) override;
 
     Error Init(const DtlsConfig &aConfig);
 
@@ -104,7 +104,8 @@ public:
     Error Bind(const std::string &aBindIp, uint16_t aPort);
     void  Disconnect(Error aError);
 
-    State GetState() const { return mState; }
+    State       GetState() const { return mState; }
+    std::string GetStateString() const;
 
     Address  GetPeerAddr() const override { return mSocket->GetPeerAddr(); }
     uint16_t GetPeerPort() const override { return mSocket->GetPeerPort(); }
@@ -154,7 +155,7 @@ private:
     //   Error::kInvalidArgs
     //   Error::kTransportBusy
     //   Error::kTransportFailed
-    Error Write(const ByteArray &aBuf);
+    Error Write(const ByteArray &aBuf, MessageSubType aSubType);
 
     Error TryWrite();
 
@@ -193,7 +194,7 @@ private:
 
     ConnectHandler mOnConnected = nullptr;
 
-    std::queue<ByteArray> mSendQueue;
+    std::queue<std::pair<ByteArray, MessageSubType>> mSendQueue;
 
     std::vector<int>         mCipherSuites;
     mbedtls_ssl_config       mConfig;

@@ -43,6 +43,7 @@
 
 #include "common/address.hpp"
 #include "library/event.hpp"
+#include "library/message.hpp"
 
 namespace ot {
 
@@ -81,6 +82,12 @@ public:
 
     virtual void SetEventHandler(EventHandler aEventHandler) { mEventHandler = aEventHandler; }
 
+    // Set the sub-type of the next message. Required by CommissioningSession::RelaySocket.
+    MessageSubType GetSubType() const { return mSubType; }
+
+    // Get the sub-type of the next message. Required by CommissioningSession::RelaySocket.
+    void SetSubType(MessageSubType aSubType) { mSubType = aSubType; }
+
     // Designed for mbedtls callbacks.
     static int Send(void *aSocket, const uint8_t *aBuf, size_t aLen);
     static int Receive(void *aSocket, uint8_t *aBuf, size_t aMaxLen);
@@ -92,6 +99,8 @@ protected:
     struct event       mEvent;
     EventHandler       mEventHandler;
     bool               mIsConnected;
+
+    MessageSubType mSubType;
 };
 
 using SocketPtr = std::shared_ptr<Socket>;
@@ -129,34 +138,6 @@ using UdpSocketPtr = std::shared_ptr<UdpSocket>;
 
 class MockSocket;
 using MockSocketPtr = std::shared_ptr<MockSocket>;
-
-class MockSocket : public Socket
-{
-public:
-    MockSocket(struct event_base *aEventBase, const Address &aLocalAddr, uint16_t aLocalPort);
-    MockSocket(MockSocket &&aOther);
-    ~MockSocket() override = default;
-
-    uint16_t GetLocalPort() const override { return mLocalPort; }
-    Address  GetLocalAddr() const override { return mLocalAddr; }
-    uint16_t GetPeerPort() const override { return mPeerSocket->GetLocalPort(); }
-    Address  GetPeerAddr() const override { return mPeerSocket->GetLocalAddr(); }
-
-    int Send(const uint8_t *aBuf, size_t aLen) override;
-    int Receive(uint8_t *aBuf, size_t aMaxLen) override;
-
-    int Send(const ByteArray &aBuf);
-    int Receive(ByteArray &aBuf);
-
-    int Connect(MockSocketPtr aPeerSocket);
-
-private:
-    Address  mLocalAddr;
-    uint16_t mLocalPort;
-
-    MockSocketPtr mPeerSocket;
-    ByteArray     mRecvBuf;
-};
 
 } // namespace commissioner
 

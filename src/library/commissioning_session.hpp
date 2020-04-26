@@ -73,7 +73,9 @@ public:
                          uint16_t          aJoinerRouterLocator,
                          const ByteArray & aJoinerIid,
                          const Address &   aJoinerAddr,
-                         uint16_t          aJoinerPort);
+                         uint16_t          aJoinerPort,
+                         const Address &   aLocalAddr,
+                         uint16_t          aLocalPort);
     CommissioningSession(CommissioningSession &&aOther) = delete;
     CommissioningSession &operator=(CommissioningSession &&aOther) = delete;
     CommissioningSession(const CommissioningSession &aOther)       = delete;
@@ -94,13 +96,46 @@ public:
 
     bool Disabled() const { return mDtlsSession->GetState() == DtlsSession::State::kOpen; }
 
-    Error RecvJoinerDtlsRecords(const ByteArray &aRecords);
+    void RecvJoinerDtlsRecords(const ByteArray &aRecords);
 
     const TimePoint &GetExpirationTime() const { return mExpirationTime; }
 
 private:
-    void  HandleJoinerSocketEvent(short aFlags);
-    Error SendRlyTx(const ByteArray &aBuf);
+    friend class RelaySocket;
+
+    class RelaySocket : public Socket
+    {
+    public:
+        RelaySocket(CommissioningSession &aCommissioningSession,
+                    const Address &       aPeerAddr,
+                    uint16_t              aPeerPort,
+                    const Address &       aLocalAddr,
+                    uint16_t              aLocalPort);
+        RelaySocket(RelaySocket &&aOther);
+        ~RelaySocket() override = default;
+
+        uint16_t GetLocalPort() const override { return mLocalPort; }
+        Address  GetLocalAddr() const override { return mLocalAddr; }
+        uint16_t GetPeerPort() const override { return mPeerPort; }
+        Address  GetPeerAddr() const override { return mPeerAddr; }
+
+        int Send(const uint8_t *aBuf, size_t aLen) override;
+        int Receive(uint8_t *aBuf, size_t aMaxLen) override;
+
+        void RecvJoinerDtlsRecords(const ByteArray &aRecords);
+
+    private:
+        CommissioningSession &mCommissioningSession;
+        Address               mPeerAddr;
+        uint16_t              mPeerPort;
+        Address               mLocalAddr;
+        uint16_t              mLocalPort;
+        ByteArray             mRecvBuf;
+    };
+
+    using RelaySocketPtr = std::shared_ptr<RelaySocket>;
+
+    Error SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek);
     void  HandleJoinFin(const coap::Request &aJoinFin);
     Error SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept);
 
@@ -111,14 +146,11 @@ private:
     uint16_t  mJoinerRouterLocator;
     ByteArray mJoinerIid;
 
-    MockSocketPtr  mJoinerSocket;
-    MockSocketPtr  mSocket;
+    RelaySocketPtr mRelaySocket;
     DtlsSessionPtr mDtlsSession;
     coap::Coap     mCoap;
 
     coap::Resource mResourceJoinFin;
-
-    ConnectHandler mOnConnected = nullptr;
 
     TimePoint mExpirationTime;
 };

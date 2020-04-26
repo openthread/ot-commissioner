@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -26,42 +26,33 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OT_COMM_LIBRARY_ENDPOINT_HPP_
-#define OT_COMM_LIBRARY_ENDPOINT_HPP_
+/**
+ * @file
+ *   This file implements time measurements.
+ */
 
-#include <functional>
-#include <stdint.h>
-#include <string>
+#include "time.hpp"
 
-#include <commissioner/error.hpp>
+#include <time.h>
 
-#include "common/address.hpp"
-#include "library/message.hpp"
+#include <iomanip>
+#include <sstream>
 
 namespace ot {
 
 namespace commissioner {
 
-class Endpoint
+std::string TimePointToString(const TimePoint &aTimePoint)
 {
-public:
-    using Receiver = std::function<void(Endpoint &, const ByteArray &)>;
+    struct tm   localTime;
+    std::time_t time = Clock::to_time_t(aTimePoint);
+    localtime_r(&time, &localTime);
 
-    Endpoint()          = default;
-    virtual ~Endpoint() = default;
-
-    virtual Error    Send(const ByteArray &aBuf, MessageSubType aSubType) = 0;
-    virtual Address  GetPeerAddr() const                                  = 0;
-    virtual uint16_t GetPeerPort() const                                  = 0;
-
-    void SetReceiver(Receiver aReceiver) { mReceiver = aReceiver; }
-
-protected:
-    Receiver mReceiver = nullptr;
-};
+    std::stringstream ss;
+    ss << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
 
 } // namespace commissioner
 
 } // namespace ot
-
-#endif // OT_COMM_LIBRARY_ENDPOINT_HPP_

@@ -55,6 +55,7 @@ Message::Message(Type aType, Code aCode)
 }
 
 Message::Message()
+    : mSubType(MessageSubType::kNone)
 {
     SetVersion(kVersion1);
 }
@@ -491,13 +492,14 @@ void Coap::HandleRequest(const Request &aRequest)
     std::string                          uriPath;
     decltype(mResources)::const_iterator resource;
 
+    SuccessOrExit(error = aRequest.GetUriPath(uriPath));
+
     response = mResponsesCache.Match(aRequest);
     if (response != nullptr)
     {
+        LOG_INFO("found cached CoAP response for resource {}", uriPath);
         ExitNow(error = Send(*response));
     }
-
-    SuccessOrExit(error = aRequest.GetUriPath(uriPath));
 
     resource = mResources.find(uriPath);
     if (resource != mResources.end())
@@ -694,7 +696,7 @@ Error Coap::Send(const Message &aMessage)
         aMessage.SetEndpoint(&mEndpoint);
     }
 
-    error = aMessage.GetEndpoint()->Send(data);
+    error = aMessage.GetEndpoint()->Send(data, aMessage.GetSubType());
     SuccessOrExit(error);
 
 exit:

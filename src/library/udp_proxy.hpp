@@ -61,7 +61,7 @@ public:
     }
     ~ProxyEndpoint() override = default;
 
-    Error    Send(const ByteArray &aBuf) override;
+    Error    Send(const ByteArray &aBuf, MessageSubType aSubType) override;
     Address  GetPeerAddr() const override { return mPeerAddr; }
     uint16_t GetPeerPort() const override { return mPeerPort; }
 

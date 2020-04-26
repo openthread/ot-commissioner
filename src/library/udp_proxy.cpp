@@ -44,11 +44,13 @@ namespace commissioner {
 /**
  * Encapsulate the request and send it as a UDP_TX.ntf message.
  */
-Error ProxyEndpoint::Send(const ByteArray &aRequest)
+Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
 {
     Error         error = Error::kNone;
     coap::Request udpTx{coap::Type::kNonConfirmable, coap::Code::kPost};
     ByteArray     udpPayload;
+
+    (void)aSubType;
 
     ASSERT(GetPeerAddr().IsValid() && GetPeerAddr().IsIpv6());
 
