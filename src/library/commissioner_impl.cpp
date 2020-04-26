@@ -2111,8 +2111,8 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             it = mCommissioningSessions
                      .emplace(std::piecewise_construct, std::forward_as_tuple(joinerIid),
                               std::forward_as_tuple(*this, *joinerInfo, joinerUdpPort, joinerRouterLocator, joinerIid,
-                                                    aRlyRx.GetEndpoint()->GetPeerAddr(), aRlyRx.GetEndpoint()->GetPeerPort(),
-                                                    localAddr, kCommissioningPort))
+                                                    aRlyRx.GetEndpoint()->GetPeerAddr(),
+                                                    aRlyRx.GetEndpoint()->GetPeerPort(), localAddr, kCommissioningPort))
                      .first;
             auto &session = it->second;
 
