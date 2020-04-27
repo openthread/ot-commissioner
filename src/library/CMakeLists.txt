@@ -141,6 +141,8 @@ target_sources(commissioner-test
         coap_test.cpp
         commissioner_impl.hpp
         commissioner_impl_test.cpp
+        commissioner_safe.hpp
+        commissioner_safe_test.cpp
         cose.hpp
         cose_test.cpp
         dtls.hpp
