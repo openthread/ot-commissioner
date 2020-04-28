@@ -44,8 +44,8 @@ namespace commissioner {
 
 std::string TimePointToString(const TimePoint &aTimePoint)
 {
-    struct tm   localTime;
-    std::time_t time = Clock::to_time_t(aTimePoint);
+    struct tm         localTime;
+    std::time_t       time = Clock::to_time_t(aTimePoint);
     std::stringstream ss;
 
     localtime_r(&time, &localTime);
