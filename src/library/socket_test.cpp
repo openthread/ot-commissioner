@@ -33,7 +33,7 @@
 
 #include "library/socket.hpp"
 
-#include "memory.h"
+#include <memory.h>
 
 #include <catch2/catch.hpp>
 
