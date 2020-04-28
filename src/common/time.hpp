@@ -31,10 +31,11 @@
  *   This file includes definition for time measurements.
  */
 
-#ifndef OT_COMM_LIBRARY_TIME_HPP_
-#define OT_COMM_LIBRARY_TIME_HPP_
+#ifndef OT_COMM_COMMON_TIME_HPP_
+#define OT_COMM_COMMON_TIME_HPP_
 
 #include <chrono>
+#include <string>
 
 namespace ot {
 
@@ -51,8 +52,10 @@ template <typename D> D NowSinceEpoch()
     return now.time_since_epoch();
 }
 
+std::string TimePointToString(const TimePoint &aTimePoint);
+
 } // namespace commissioner
 
 } // namespace ot
 
-#endif // OT_COMM_LIBRARY_TIME_HPP_
+#endif // OT_COMM_COMMON_TIME_HPP_

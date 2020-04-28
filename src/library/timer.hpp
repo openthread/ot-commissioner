@@ -33,9 +33,9 @@
 
 #include <commissioner/error.hpp>
 
+#include "common/time.hpp"
 #include "common/utils.hpp"
 #include "library/event.hpp"
-#include "library/time.hpp"
 
 namespace ot {
 

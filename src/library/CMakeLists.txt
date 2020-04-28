@@ -51,6 +51,7 @@ target_sources(commissioner
         event.hpp
         logging.cpp
         logging.hpp
+        message.hpp
         network_data.cpp
         openthread/bloom_filter.cpp
         openthread/bloom_filter.hpp
@@ -64,7 +65,6 @@ target_sources(commissioner
         openthread/sha256.hpp
         socket.cpp
         socket.hpp
-        time.hpp
         timer.hpp
         tlv.cpp
         tlv.hpp

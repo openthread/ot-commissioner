@@ -32,6 +32,8 @@ target_sources(commissioner-common
     PRIVATE
         address.cpp
         address.hpp
+        time.cpp
+        time.hpp
         utils.cpp
         utils.hpp
 )

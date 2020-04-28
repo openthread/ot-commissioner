@@ -48,6 +48,7 @@
 #include "common/address.hpp"
 #include "common/utils.hpp"
 #include "library/endpoint.hpp"
+#include "library/message.hpp"
 #include "library/timer.hpp"
 
 namespace ot {
@@ -535,6 +536,9 @@ public:
 
     Endpoint *GetEndpoint() const { return mEndpoint; }
 
+    MessageSubType GetSubType() const { return mSubType; }
+    void           SetSubType(MessageSubType aSubType) { mSubType = aSubType; }
+
     static Error NormalizeUriPath(std::string &uriPath);
 
 protected:
@@ -573,6 +577,8 @@ protected:
     Header                            mHeader;
     std::map<OptionType, OptionValue> mOptions;
     ByteArray                         mPayload;
+
+    MessageSubType mSubType;
 
     mutable Endpoint *mEndpoint = nullptr;
 };
