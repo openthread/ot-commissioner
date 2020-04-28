@@ -61,7 +61,7 @@ readonly NON_CCM_CONFIG=${TEST_ROOT_DIR}/../../src/app/etc/commissioner/non-ccm-
 
 readonly JOINER_NODE_ID=2
 readonly JOINER_EUI64=0x18b4300000000002
-readonly JOINER_PASSPHRASE=abcd
+readonly JOINER_PASSPHRASE=ABCDEF
 
 ## Thread network parameters
 readonly NETWORK_NAME=openthread-test
