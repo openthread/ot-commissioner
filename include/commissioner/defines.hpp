@@ -63,6 +63,16 @@ static constexpr size_t kMinCommissionerPassphraseLength = 6;
 static constexpr size_t kMaxCommissionerPassPhraseLength = 255;
 
 /**
+ * The minimum joiner passphrase length.
+ */
+static constexpr size_t kMinJoinerPassphraseLength = 6;
+
+/**
+ * The maximum joiner passphrase length.
+ */
+static constexpr size_t kMaxJoinerPassphraseLength = 32;
+
+/**
  * The maximum PSKc length.
  */
 static constexpr size_t kMaxPSKcLength = 16;
