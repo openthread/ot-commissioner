@@ -74,6 +74,8 @@ if (OT_COMM_TEST)
 
     target_sources(commissioner-app-test
         PRIVATE
+            commissioner_app.hpp
+            commissioner_app_test.cpp
             json.hpp
             json_test.cpp
     )
