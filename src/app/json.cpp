@@ -75,13 +75,13 @@ private:
 
 } // namespace ot
 
-#define SuccessOrThrow(aError)                                  \
-    do                                                          \
-    {                                                           \
-        if (aError != ::ot::commissioner::Error::kNone)         \
-        {                                                       \
-            throw ::ot::commissioner::JsonException(aError);    \
-        }                                                       \
+#define SuccessOrThrow(aError)                               \
+    do                                                       \
+    {                                                        \
+        if (aError != ::ot::commissioner::Error::kNone)      \
+        {                                                    \
+            throw ::ot::commissioner::JsonException(aError); \
+        }                                                    \
     } while (false)
 
 /**
@@ -552,13 +552,11 @@ Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::stri
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error = Error::kNone;
-    }
-    catch (JsonException &e)
+        error    = Error::kNone;
+    } catch (JsonException &e)
     {
         error = e.GetError();
-    }
-    catch (std::exception &e)
+    } catch (std::exception &e)
     {
         error = Error::kBadFormat;
     }
@@ -579,13 +577,11 @@ Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error = Error::kNone;
-    }
-    catch (JsonException &e)
+        error    = Error::kNone;
+    } catch (JsonException &e)
     {
         error = e.GetError();
-    }
-    catch (std::exception &e)
+    } catch (std::exception &e)
     {
         error = Error::kBadFormat;
     }
@@ -606,13 +602,11 @@ Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::strin
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error = Error::kNone;
-    }
-    catch (JsonException &e)
+        error    = Error::kNone;
+    } catch (JsonException &e)
     {
         error = e.GetError();
-    }
-    catch (std::exception &e)
+    } catch (std::exception &e)
     {
         error = Error::kBadFormat;
     }
@@ -633,13 +627,11 @@ Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::str
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error = Error::kNone;
-    }
-    catch (JsonException &e)
+        error    = Error::kNone;
+    } catch (JsonException &e)
     {
         error = e.GetError();
-    }
-    catch (std::exception &e)
+    } catch (std::exception &e)
     {
         error = Error::kBadFormat;
     }
@@ -660,13 +652,11 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson)
     try
     {
         aConfig = Json::parse(StripComments(aJson));
-        error = Error::kNone;
-    }
-    catch (JsonException &e)
+        error   = Error::kNone;
+    } catch (JsonException &e)
     {
         error = e.GetError();
-    }
-    catch (std::exception &e)
+    } catch (std::exception &e)
     {
         error = Error::kBadFormat;
     }
