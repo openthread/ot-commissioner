@@ -69,7 +69,7 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
-add_library(commissioner-app-test EXCLUDE_FROM_ALL)
+add_library(commissioner-app-test OBJECT EXCLUDE_FROM_ALL)
 
 target_sources(commissioner-app-test
     PRIVATE
@@ -86,7 +86,6 @@ target_link_libraries(commissioner-app-test
     PRIVATE
         Catch2::Catch2
         commissioner-app
-        nlohmann_json::nlohmann_json
 )
 
 add_subdirectory(cli)

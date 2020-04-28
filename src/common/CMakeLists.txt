@@ -51,7 +51,7 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
-add_library(commissioner-common-test)
+add_library(commissioner-common-test OBJECT EXCLUDE_FROM_ALL)
 
 target_sources(commissioner-common-test
     PRIVATE
@@ -68,4 +68,5 @@ target_include_directories(commissioner-common-test
 target_link_libraries(commissioner-common-test
     PRIVATE
         Catch2::Catch2
+        commissioner-common
 )

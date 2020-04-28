@@ -152,6 +152,8 @@ target_sources(commissioner-test
         socket_test.cpp
         token_manager.hpp
         token_manager_test.cpp
+        $<TARGET_OBJECTS:commissioner-app-test>
+        $<TARGET_OBJECTS:commissioner-common-test>
 )
 
 target_link_libraries(commissioner-test
@@ -167,9 +169,8 @@ target_link_libraries(commissioner-test
         event_core
         event_pthreads
         commissioner
+        commissioner-app
         commissioner-common
-        commissioner-app-test
-        commissioner-common-test
 )
 
 target_include_directories(commissioner-test
