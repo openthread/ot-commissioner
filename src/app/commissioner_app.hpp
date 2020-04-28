@@ -48,6 +48,7 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/network_data.hpp>
 
+#include "app/border_agent.hpp"
 #include "common/address.hpp"
 
 namespace ot {
@@ -231,9 +232,9 @@ private:
 
     std::shared_ptr<Commissioner> mCommissioner;
 
-    std::map<JoinerKey, JoinerInfo> mJoiners;
-
     ByteArray mSignedToken;
+
+    std::list<BorderAgent> mBorderAgents;
 
 private:
     void HandlePanIdConflict(const std::string *aPeerAddr,
@@ -244,9 +245,6 @@ private:
                             const ChannelMask *aChannelMask,
                             const ByteArray *  aEnergyList,
                             Error              aError);
-
-    std::map<uint16_t, ChannelMask> mPanIdConflicts;
-    EnergyReportMap                 mEnergyReports;
 
     void HandleDatasetChanged(Error error);
 
@@ -259,12 +257,15 @@ private:
                              const ByteArray &  aVendorData);
 
     /*
-     * Below are network data associated to the connected Thread network.
+     * Below are data associated with the connected Thread Network.
      */
-    ActiveOperationalDataset  mActiveDataset;
-    PendingOperationalDataset mPendingDataset;
-    CommissionerDataset       mCommDataset;
-    BbrDataset                mBbrDataset;
+    std::map<JoinerKey, JoinerInfo> mJoiners;
+    std::map<uint16_t, ChannelMask> mPanIdConflicts;
+    EnergyReportMap                 mEnergyReports;
+    ActiveOperationalDataset        mActiveDataset;
+    PendingOperationalDataset       mPendingDataset;
+    CommissionerDataset             mCommDataset;
+    BbrDataset                      mBbrDataset;
 };
 
 } // namespace commissioner
