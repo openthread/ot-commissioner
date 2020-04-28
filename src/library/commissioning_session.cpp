@@ -109,15 +109,13 @@ Error CommissioningSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aInclu
     if (aIncludeKek)
     {
         VerifyOrExit(!mDtlsSession->GetKek().empty(), error = Error::kInvalidState);
-
-        LOG_DEBUG("include KEK TLV in RLY_TX.ntf message");
         SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerRouterKEK, mDtlsSession->GetKek()}));
     }
 
     mCommImpl.mBrClient.SendRequest(rlyTx, nullptr);
 
-    LOG_DEBUG("sent RLY_TX.ntf: CommissioningSessionState={}, joinerIID={}, length={}", mDtlsSession->GetStateString(),
-              utils::Hex(GetJoinerIid()), aDtlsMessage.size());
+    LOG_DEBUG("sent RLY_TX.ntf: CommissioningSessionState={}, joinerIID={}, length={}, includeKek={}",
+              mDtlsSession->GetStateString(), utils::Hex(GetJoinerIid()), aDtlsMessage.size(), aIncludeKek);
 
 exit:
     return error;
@@ -219,9 +217,11 @@ CommissioningSession::RelaySocket::RelaySocket(CommissioningSession &aCommission
     , mLocalAddr(aLocalAddr)
     , mLocalPort(aLocalPort)
 {
+    int fail;
+
     mIsConnected = true;
 
-    int fail = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
+    fail = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
     ASSERT(fail == 0);
     ASSERT((fail = event_add(&mEvent, nullptr)) == 0);
 }

@@ -46,9 +46,9 @@ std::string TimePointToString(const TimePoint &aTimePoint)
 {
     struct tm   localTime;
     std::time_t time = Clock::to_time_t(aTimePoint);
-    localtime_r(&time, &localTime);
-
     std::stringstream ss;
+
+    localtime_r(&time, &localTime);
     ss << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
     return ss.str();
 }

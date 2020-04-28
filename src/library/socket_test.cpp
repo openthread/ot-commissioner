@@ -126,14 +126,15 @@ int MockSocket::Receive(ByteArray &aBuf)
 {
     uint8_t buf[512];
     int     rval;
+
     while ((rval = Receive(buf, sizeof(buf))) > 0)
     {
         aBuf.insert(aBuf.end(), buf, buf + rval);
     }
-    if (rval == MBEDTLS_ERR_SSL_WANT_READ && !aBuf.empty())
-    {
-        return 0;
-    }
+
+    VerifyOrExit(rval != MBEDTLS_ERR_SSL_WANT_READ || aBuf.empty(), rval = 0);
+
+exit:
     return rval;
 }
 
