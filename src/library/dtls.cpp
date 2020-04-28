@@ -33,12 +33,8 @@
 
 #include "library/dtls.hpp"
 
-#include <algorithm>
-#include <iostream>
-
 #include <mbedtls/debug.h>
 #include <mbedtls/error.h>
-#include <mbedtls/pem.h>
 #include <mbedtls/platform.h>
 
 #include "library/logging.hpp"

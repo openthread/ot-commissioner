@@ -34,12 +34,12 @@
 #ifndef OT_COMM_LIBRARY_TLV_HPP_
 #define OT_COMM_LIBRARY_TLV_HPP_
 
-#include <stdint.h>
-
 #include <limits>
 #include <list>
 #include <map>
 #include <memory>
+
+#include <stdint.h>
 
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>

@@ -33,9 +33,9 @@
 
 #include "app/cli/interpreter.hpp"
 
-#include <string.h>
-
 #include <limits>
+
+#include <string.h>
 
 #include "app/file_util.hpp"
 #include "app/json.hpp"

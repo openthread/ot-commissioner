@@ -34,11 +34,6 @@
 #ifndef OT_COMM_LIBRARY_UDP_PROXY_HPP_
 #define OT_COMM_LIBRARY_UDP_PROXY_HPP_
 
-#include <sys/time.h>
-
-#include <chrono>
-#include <functional>
-
 #include <commissioner/error.hpp>
 
 #include "common/address.hpp"

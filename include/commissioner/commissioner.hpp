@@ -34,13 +34,13 @@
 #ifndef OT_COMM_COMMISSIONER_HPP_
 #define OT_COMM_COMMISSIONER_HPP_
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include <functional>
 #include <list>
 #include <memory>
 #include <string>
+
+#include <stddef.h>
+#include <stdint.h>
 
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>

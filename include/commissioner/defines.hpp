@@ -34,9 +34,9 @@
 #ifndef OT_COMM_DEFINES_HPP_
 #define OT_COMM_DEFINES_HPP_
 
-#include <stdint.h>
-
 #include <vector>
+
+#include <stdint.h>
 
 #if defined(__clang__)
 #define OT_COMM_MUST_USE_RESULT __attribute__((warn_unused_result))

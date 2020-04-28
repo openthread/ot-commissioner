@@ -33,10 +33,10 @@
 
 #include "library/coap.hpp"
 
+#include <algorithm>
+
 #include <ctype.h>
 #include <memory.h>
-
-#include <algorithm>
 
 #include "library/logging.hpp"
 #include "library/openthread/random.hpp"
