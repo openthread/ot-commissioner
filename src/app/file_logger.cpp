@@ -34,6 +34,8 @@
 
 #include "app/file_logger.hpp"
 
+#include <sstream>
+
 #include "common/time.hpp"
 #include "common/utils.hpp"
 
@@ -73,18 +75,51 @@ static std::string ToString(LogLevel aLevel)
     return ret;
 }
 
-FileLogger::FileLogger(const std::string &aFilename, ot::commissioner::LogLevel aLogLevel)
-    : mFileStream(aFilename)
-    , mLogLevel(aLogLevel)
+Error FileLogger::Create(std::shared_ptr<FileLogger> &aFileLogger, const std::string &aFilename, LogLevel aLogLevel)
 {
+    Error error;
+    auto  logger = std::shared_ptr<FileLogger>(new FileLogger);
+
+    SuccessOrExit(error = logger->Init(aFilename, aLogLevel));
+    aFileLogger = logger;
+
+exit:
+    return error;
+}
+
+FileLogger::~FileLogger()
+{
+    if (mLogFile)
+    {
+        fclose(mLogFile);
+    }
+}
+
+Error FileLogger::Init(const std::string &aFilename, LogLevel aLogLevel)
+{
+    Error error = Error::kNone;
+    FILE *logFile;
+
+    logFile = fopen(aFilename.c_str(), "w");
+    VerifyOrExit(logFile != nullptr, error = Error::kNotFound);
+
+    mLogFile  = logFile;
+    mLogLevel = aLogLevel;
+
+exit:
+    return error;
 }
 
 void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
 {
-    VerifyOrExit(aLevel <= mLogLevel);
-    VerifyOrExit(mFileStream.is_open());
+    std::lock_guard<std::mutex> _(mLogMutex);
+    std::stringstream           logStream;
 
-    mFileStream << "[ " << TimePointToString(Clock::now()) << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+    VerifyOrExit(aLevel <= mLogLevel);
+    VerifyOrExit(mLogFile != nullptr);
+
+    logStream << "[ " << TimePointToString(Clock::now()) << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+    fputs(logStream.str().c_str(), mLogFile);
 
 exit:
     return;

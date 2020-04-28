@@ -213,8 +213,10 @@ static void from_json(const Json &aJson, Config &aConfig)
 
     if (aJson.contains("LogFile"))
     {
-        auto logger     = std::make_shared<FileLogger>(aJson["LogFile"], logLevel);
-        aConfig.mLogger = std::dynamic_pointer_cast<Logger>(logger);
+        std::shared_ptr<FileLogger> logger;
+
+        SuccessOrThrow(FileLogger::Create(logger, aJson["LogFile"], logLevel));
+        aConfig.mLogger = logger;
     }
 
     if (aJson.contains("PSKc"))

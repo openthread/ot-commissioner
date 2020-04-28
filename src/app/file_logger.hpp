@@ -35,8 +35,10 @@
 #ifndef OT_COMM_APP_FILE_LOGGER_HPP_
 #define OT_COMM_APP_FILE_LOGGER_HPP_
 
-#include <fstream>
+#include <mutex>
 #include <string>
+
+#include <stdio.h>
 
 #include <commissioner/commissioner.hpp>
 
@@ -51,21 +53,30 @@ namespace commissioner {
 class FileLogger : public Logger
 {
 public:
+    ~FileLogger() override;
+
     /**
-     * The constructor with given log file name and minimum log level.
+     * This function returns a file logger with given filename and minimum log level.
      *
      * @param[in] aFilename  The log file name.
      * @param[in] aLogLevel  The minimum log level. Log messages with a lower
      *                       log level than this will be dropped silently.
      *
+     * @retval Error::kNone  Successfully created the file logger.
+     * @retval ...           Failed to create the file logger.
+     *
      */
-    FileLogger(const std::string &aFilename, LogLevel aLogLevel);
+    static Error Create(std::shared_ptr<FileLogger> &aFileLogger, const std::string &aFilename, LogLevel aLogLevel);
 
     void Log(LogLevel aLevel, const std::string &aMsg) override;
 
 private:
-    std::ofstream mFileStream;
-    LogLevel      mLogLevel;
+    FileLogger() = default;
+    Error Init(const std::string &aFilename, LogLevel aLogLevel);
+
+    FILE *     mLogFile;
+    LogLevel   mLogLevel;
+    std::mutex mLogMutex;
 };
 
 } // namespace commissioner
