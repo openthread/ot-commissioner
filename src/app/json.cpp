@@ -59,27 +59,29 @@ namespace commissioner {
 class JsonException : public std::invalid_argument
 {
 public:
-    explicit JsonException(const std::string &what_arg)
-        : std::invalid_argument(what_arg)
+    explicit JsonException(Error aError)
+        : std::invalid_argument(ErrorToString(aError))
+        , mError(aError)
     {
     }
-    explicit JsonException(const char *what_arg)
-        : std::invalid_argument(what_arg)
-    {
-    }
+
+    Error GetError() const { return mError; }
+
+private:
+    Error mError;
 };
 
 } // namespace commissioner
 
 } // namespace ot
 
-#define SuccessOrThrow(aError)                                                                  \
-    do                                                                                          \
-    {                                                                                           \
-        if (aError != ::ot::commissioner::Error::kNone)                                         \
-        {                                                                                       \
-            throw ::ot::commissioner::JsonException(::ot::commissioner::ErrorToString(aError)); \
-        }                                                                                       \
+#define SuccessOrThrow(aError)                                  \
+    do                                                          \
+    {                                                           \
+        if (aError != ::ot::commissioner::Error::kNone)         \
+        {                                                       \
+            throw ::ot::commissioner::JsonException(aError);    \
+        }                                                       \
     } while (false)
 
 /**
@@ -545,14 +547,23 @@ std::string NetworkDataToJson(const NetworkData &aNetworkData)
 
 Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::string &aJson)
 {
+    Error error;
+
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        return Error::kNone;
-    } catch (std::exception &e)
-    {
-        return Error::kBadFormat;
+        error = Error::kNone;
     }
+    catch (JsonException &e)
+    {
+        error = e.GetError();
+    }
+    catch (std::exception &e)
+    {
+        error = Error::kBadFormat;
+    }
+
+    return error;
 }
 
 std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset)
@@ -563,14 +574,23 @@ std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset)
 
 Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
 {
+    Error error;
+
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        return Error::kNone;
-    } catch (std::exception &e)
-    {
-        return Error::kBadFormat;
+        error = Error::kNone;
     }
+    catch (JsonException &e)
+    {
+        error = e.GetError();
+    }
+    catch (std::exception &e)
+    {
+        error = Error::kBadFormat;
+    }
+
+    return error;
 }
 
 std::string BbrDatasetToJson(const BbrDataset &aDataset)
@@ -581,14 +601,23 @@ std::string BbrDatasetToJson(const BbrDataset &aDataset)
 
 Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::string &aJson)
 {
+    Error error;
+
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        return Error::kNone;
-    } catch (std::exception &e)
-    {
-        return Error::kBadFormat;
+        error = Error::kNone;
     }
+    catch (JsonException &e)
+    {
+        error = e.GetError();
+    }
+    catch (std::exception &e)
+    {
+        error = Error::kBadFormat;
+    }
+
+    return error;
 }
 
 std::string ActiveDatasetToJson(const ActiveOperationalDataset &aDataset)
@@ -599,14 +628,23 @@ std::string ActiveDatasetToJson(const ActiveOperationalDataset &aDataset)
 
 Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::string &aJson)
 {
+    Error error;
+
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        return Error::kNone;
-    } catch (std::exception &e)
-    {
-        return Error::kBadFormat;
+        error = Error::kNone;
     }
+    catch (JsonException &e)
+    {
+        error = e.GetError();
+    }
+    catch (std::exception &e)
+    {
+        error = Error::kBadFormat;
+    }
+
+    return error;
 }
 
 std::string PendingDatasetToJson(const PendingOperationalDataset &aDataset)
@@ -617,14 +655,23 @@ std::string PendingDatasetToJson(const PendingOperationalDataset &aDataset)
 
 Error ConfigFromJson(Config &aConfig, const std::string &aJson)
 {
+    Error error;
+
     try
     {
         aConfig = Json::parse(StripComments(aJson));
-        return Error::kNone;
-    } catch (std::exception &e)
-    {
-        return Error::kBadFormat;
+        error = Error::kNone;
     }
+    catch (JsonException &e)
+    {
+        error = e.GetError();
+    }
+    catch (std::exception &e)
+    {
+        error = Error::kBadFormat;
+    }
+
+    return error;
 }
 
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport)
