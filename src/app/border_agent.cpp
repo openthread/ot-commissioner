@@ -318,7 +318,7 @@ static int HandleRecord(const struct sockaddr *from,
                 ByteArray bbrSeqNum;
                 if (utils::Hex(bbrSeqNum, value) != Error::kNone || bbrSeqNum.size() != 1)
                 {
-                    ExitNow(errorMsg = fmt::format("[mDNS] value of TXT Key 'vo' is invalid: {}", value));
+                    ExitNow(errorMsg = fmt::format("[mDNS] value of TXT Key 'sq' is invalid: {}", value));
                 }
                 else
                 {
@@ -331,7 +331,7 @@ static int HandleRecord(const struct sockaddr *from,
                 ByteArray bbrPort;
                 if (utils::Hex(bbrPort, value) != Error::kNone || bbrPort.size() != 2)
                 {
-                    ExitNow(errorMsg = fmt::format("[mDNS] value of TXT Key 'vo' is invalid: {}", value));
+                    ExitNow(errorMsg = fmt::format("[mDNS] value of TXT Key 'bb' is invalid: {}", value));
                 }
                 else
                 {
