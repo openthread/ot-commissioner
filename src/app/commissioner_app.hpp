@@ -234,8 +234,6 @@ private:
 
     ByteArray mSignedToken;
 
-    std::list<BorderAgent> mBorderAgents;
-
 private:
     void HandlePanIdConflict(const std::string *aPeerAddr,
                              const ChannelMask *aChannelMask,
