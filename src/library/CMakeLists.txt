@@ -86,6 +86,7 @@ target_link_libraries(commissioner
         fmt::fmt
         event_core
         event_pthreads
+        pthread
         commissioner-common
 )
 
