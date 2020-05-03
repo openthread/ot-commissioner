@@ -39,7 +39,6 @@
 #include "library/cose.hpp"
 #include "library/logging.hpp"
 #include "library/openthread/bloom_filter.hpp"
-#include "library/uri.hpp"
 
 namespace ot {
 

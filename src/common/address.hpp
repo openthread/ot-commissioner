@@ -29,9 +29,9 @@
 #ifndef OT_COMM_COMMON_ADDRESS_HPP_
 #define OT_COMM_COMMON_ADDRESS_HPP_
 
-#include <sys/socket.h>
-
 #include <string>
+
+#include <sys/socket.h>
 
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>

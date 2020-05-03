@@ -30,8 +30,9 @@
 #define OT_COMM_LIBRARY_ENDPOINT_HPP_
 
 #include <functional>
-#include <stdint.h>
 #include <string>
+
+#include <stdint.h>
 
 #include <commissioner/error.hpp>
 
