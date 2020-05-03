@@ -36,6 +36,9 @@
 
 #include <sstream>
 
+#include <string.h>
+
+#include "common/error_macros.hpp"
 #include "common/time.hpp"
 #include "common/utils.hpp"
 
@@ -97,11 +100,21 @@ FileLogger::~FileLogger()
 
 Error FileLogger::Init(const std::string &aFilename, LogLevel aLogLevel)
 {
-    Error error = Error::kNone;
+    Error error;
     FILE *logFile;
 
     logFile = fopen(aFilename.c_str(), "w");
-    VerifyOrExit(logFile != nullptr, error = Error::kNotFound);
+    if (logFile == nullptr)
+    {
+        if (errno == ENOENT)
+        {
+            ExitNow(error = ERROR_NOT_FOUND("failed to init file logger '{}', {}", aFilename, strerror(errno)));
+        }
+        else
+        {
+            ExitNow(error = ERROR_IO_ERROR("failed to init file logger '{}', {}", aFilename, strerror(errno)));
+        }
+    }
 
     mLogFile  = logFile;
     mLogLevel = aLogLevel;

@@ -1031,11 +1031,11 @@ exit:
     return value;
 }
 
-void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage)
+void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError)
 {
-    if (aErrorMessage != nullptr)
+    if (!aError.NoError())
     {
-        Console::Write(*aErrorMessage, Console::Color::kRed);
+        Console::Write(aError.ToString(), Console::Color::kRed);
     }
     else
     {

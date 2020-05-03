@@ -60,7 +60,7 @@ class JsonException : public std::invalid_argument
 {
 public:
     explicit JsonException(Error aError)
-        : std::invalid_argument(ErrorToString(aError))
+        : std::invalid_argument(aError.GetMessage())
         , mError(aError)
     {
     }
@@ -532,6 +532,9 @@ Error NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson)
     try
     {
         aNetworkData = Json::parse(StripComments(aJson));
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
         error = {ErrorCode::kInvalidArgs, e.what()};

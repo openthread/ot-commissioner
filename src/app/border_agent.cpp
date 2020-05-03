@@ -45,7 +45,7 @@ namespace commissioner {
 struct BorderAgentOrErrorMsg
 {
     BorderAgent mBorderAgent;
-    std::string mErrorMsg;
+    Error       mError;
 };
 
 static int HandleRecord(const struct sockaddr *from,
@@ -84,13 +84,13 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 
         mdns_query_recv(socket, buf, sizeof(buf), HandleRecord, &curBorderAgentOrErrorMsg, 1);
 
-        if (!curBorderAgentOrErrorMsg.mErrorMsg.empty())
+        if (!curBorderAgentOrErrorMsg.mError.NoError())
         {
-            aBorderAgentHandler(nullptr, &curBorderAgentOrErrorMsg.mErrorMsg);
+            aBorderAgentHandler(nullptr, curBorderAgentOrErrorMsg.mError);
         }
         else if (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags != 0)
         {
-            aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, nullptr);
+            aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, ERROR_NONE);
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -140,7 +140,7 @@ static int HandleRecord(const struct sockaddr *from,
 
     BorderAgentOrErrorMsg &borderAgentOrErrorMsg = *reinterpret_cast<BorderAgentOrErrorMsg *>(border_agent);
     BorderAgent &          borderAgent           = borderAgentOrErrorMsg.mBorderAgent;
-    std::string &          errorMsg              = borderAgentOrErrorMsg.mErrorMsg;
+    Error &                error                 = borderAgentOrErrorMsg.mError;
 
     (void)rclass;
     (void)ttl;
@@ -148,7 +148,7 @@ static int HandleRecord(const struct sockaddr *from,
     *reinterpret_cast<struct sockaddr *>(&fromAddrStorage) = *from;
     if (!fromAddr.Set(fromAddrStorage).NoError())
     {
-        ExitNow(errorMsg = "invalid source address of mDNS response");
+        ExitNow(error = ERROR_BAD_FORMAT("invalid source address of mDNS response"));
     }
 
     fromAddrStr = fromAddr.ToString();
@@ -179,7 +179,7 @@ static int HandleRecord(const struct sockaddr *from,
         *reinterpret_cast<struct sockaddr_in *>(&addrStorage) = addr;
         if (!fromAddr.Set(addrStorage).NoError())
         {
-            ExitNow(errorMsg = "invalid IPv4 address in A record");
+            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv4 address in A record"));
         }
 
         addrStr = fromAddr.ToString();
@@ -202,7 +202,7 @@ static int HandleRecord(const struct sockaddr *from,
         *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
         if (!fromAddr.Set(addrStorage).NoError())
         {
-            ExitNow(errorMsg = "invalid IPv6 address in AAAA record");
+            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv6 address in AAAA record"));
         }
 
         addrStr = fromAddr.ToString();
@@ -226,7 +226,7 @@ static int HandleRecord(const struct sockaddr *from,
 
             if (key == "rv")
             {
-                VerifyOrExit(value == "1", errorMsg = fmt::format("value of TXT Key 'rv' is {} but not 1", value));
+                VerifyOrExit(value == "1", error = ERROR_BAD_FORMAT("value of TXT Key 'rv' is {} but not 1", value));
             }
             else if (key == "tv")
             {
@@ -238,7 +238,7 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &bitmap = binaryValue;
                 if (bitmap.size() != 4)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'sb' is invalid: value={}", utils::Hex(bitmap)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'sb' is invalid: value={}", utils::Hex(bitmap)));
                 }
 
                 borderAgent.mState.mConnectionMode = (bitmap[0] >> 5);
@@ -258,8 +258,8 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &extendPanId = binaryValue;
                 if (extendPanId.size() != 8)
                 {
-                    ExitNow(errorMsg =
-                                fmt::format("value of TXT Key 'xp' is invalid: value={}", utils::Hex(extendPanId)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'xp' is invalid: value={}",
+                                                     utils::Hex(extendPanId)));
                 }
                 else
                 {
@@ -282,8 +282,8 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &activeTimestamp = binaryValue;
                 if (activeTimestamp.size() != 8)
                 {
-                    ExitNow(errorMsg =
-                                fmt::format("value of TXT Key 'at' is invalid: value={}", utils::Hex(activeTimestamp)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'at' is invalid: value={}",
+                                                     utils::Hex(activeTimestamp)));
                 }
                 else
                 {
@@ -296,8 +296,8 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &partitionId = binaryValue;
                 if (partitionId.size() != 4)
                 {
-                    ExitNow(errorMsg =
-                                fmt::format("value of TXT Key 'pt' is invalid: value={}", utils::Hex(partitionId)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'pt' is invalid: value={}",
+                                                     utils::Hex(partitionId)));
                 }
                 else
                 {
@@ -315,7 +315,7 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &oui = binaryValue;
                 if (oui.size() != 3)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'vo' is invalid: value={}", utils::Hex(oui)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'vo' is invalid: value={}", utils::Hex(oui)));
                 }
                 else
                 {
@@ -333,8 +333,8 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &bbrSeqNum = binaryValue;
                 if (bbrSeqNum.size() != 1)
                 {
-                    ExitNow(errorMsg =
-                                fmt::format("[mDNS] value of TXT Key 'sq' is invalid: {}", utils::Hex(bbrSeqNum)));
+                    ExitNow(error =
+                                ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'sq' is invalid: {}", utils::Hex(bbrSeqNum)));
                 }
                 else
                 {
@@ -347,7 +347,8 @@ static int HandleRecord(const struct sockaddr *from,
                 auto &bbrPort = binaryValue;
                 if (bbrPort.size() != 2)
                 {
-                    ExitNow(errorMsg = fmt::format("[mDNS] value of TXT Key 'bb' is invalid: {}", utils::Hex(bbrPort)));
+                    ExitNow(error =
+                                ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'bb' is invalid: {}", utils::Hex(bbrPort)));
                 }
                 else
                 {

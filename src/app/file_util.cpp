@@ -34,9 +34,9 @@
 
 #include "app/file_util.hpp"
 
-#include <string.h>
-
 #include <algorithm>
+
+#include <string.h>
 
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -48,10 +48,19 @@ namespace commissioner {
 Error WriteFile(const std::string &aData, const std::string &aFilename)
 {
     Error error;
-
     FILE *f = fopen(aFilename.c_str(), "w");
 
-    VerifyOrExit(f != NULL, error = ERROR_NOT_FOUND("cannot open file '{}': {}", aFilename, strerror(errno)));
+    if (f == nullptr)
+    {
+        if (errno == ENOENT)
+        {
+            ExitNow(error = ERROR_NOT_FOUND("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+        else
+        {
+            ExitNow(error = ERROR_IO_ERROR("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+    }
 
     fputs(aData.c_str(), f);
 
@@ -70,7 +79,17 @@ Error ReadFile(std::string &aData, const std::string &aFilename)
 
     FILE *f = fopen(aFilename.c_str(), "r");
 
-    VerifyOrExit(f != NULL, error = ERROR_NOT_FOUND("cannot open file '{}': {}", aFilename, strerror(errno)));
+    if (f == nullptr)
+    {
+        if (errno == ENOENT)
+        {
+            ExitNow(error = ERROR_NOT_FOUND("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+        else
+        {
+            ExitNow(error = ERROR_IO_ERROR("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+    }
 
     while (true)
     {

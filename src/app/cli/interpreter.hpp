@@ -119,7 +119,7 @@ private:
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
-    static void BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage);
+    static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 
     static const std::string Usage(Expression aExpr);
     static Error             GetJoinerType(JoinerType &aType, const std::string &aStr);

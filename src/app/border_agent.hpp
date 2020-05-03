@@ -160,11 +160,12 @@ struct BorderAgent
 /**
  * This function is the callback of a discovered Border Agent.
  *
- * @param[in] aBorderAgent   The discovered Border Agent. nullable.
- * @param[in] aErrorMessage  The detailed message of a malformed Border Agent response. nullable.
+ * @param[in] aBorderAgent   The discovered Border Agent. Not null
+ *                           only when aError.NoError() is true.
+ * @param[in] aError         The error;
  *
  */
-using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const std::string *aErrorMessage)>;
+using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const Error &aError)>;
 
 /**
  * Discovery Border Agent in local network with mDNS.
