@@ -29,9 +29,10 @@
 cmake_minimum_required(VERSION 3.13.1)
 project(ot-commissioner VERSION 1.0.0)
 
+option(OT_COMM_ANDROID          "Build with Android NDK" OFF)
+option(OT_COMM_APP              "Build the CLI App" ON)
 option(OT_COMM_COVERAGE         "Enable coverage reporting" OFF)
 option(OT_COMM_TEST             "Build tests" ON)
-option(OT_COMM_APP              "Build the CLI App" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)

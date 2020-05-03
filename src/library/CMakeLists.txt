@@ -86,7 +86,7 @@ target_link_libraries(commissioner
         fmt::fmt
         event_core
         event_pthreads
-        pthread
+        $<$<NOT:$<BOOL:${OT_COMM_ANDROID}>>:pthread>
         commissioner-common
 )
 
