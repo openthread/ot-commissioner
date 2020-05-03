@@ -33,6 +33,8 @@ target_sources(commissioner-common
         address.cpp
         address.hpp
         error_macros.hpp
+        time.cpp
+        time.hpp
         utils.cpp
         utils.hpp
 )

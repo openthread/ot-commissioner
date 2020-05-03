@@ -34,7 +34,6 @@
 #include "app/commissioner_app.hpp"
 
 #include <algorithm>
-#include <ctime>
 
 #include "app/file_util.hpp"
 #include "app/json.hpp"

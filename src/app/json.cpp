@@ -59,27 +59,29 @@ namespace commissioner {
 class JsonException : public std::invalid_argument
 {
 public:
-    explicit JsonException(const std::string &what_arg)
-        : std::invalid_argument(what_arg)
+    explicit JsonException(Error aError)
+        : std::invalid_argument(ErrorToString(aError))
+        , mError(aError)
     {
     }
-    explicit JsonException(const char *what_arg)
-        : std::invalid_argument(what_arg)
-    {
-    }
+
+    Error GetError() const { return mError; }
+
+private:
+    Error mError;
 };
 
 } // namespace commissioner
 
 } // namespace ot
 
-#define SuccessOrThrow(aError)                                            \
-    do                                                                    \
-    {                                                                     \
-        if (!(aError).NoError())                                          \
-        {                                                                 \
-            throw ::ot::commissioner::JsonException((aError).ToString()); \
-        }                                                                 \
+#define SuccessOrThrow(aError)                               \
+    do                                                       \
+    {                                                        \
+        if (!aError.NoError())                               \
+        {                                                    \
+            throw ::ot::commissioner::JsonException(aError); \
+        }                                                    \
     } while (false)
 
 /**
@@ -213,8 +215,10 @@ static void from_json(const Json &aJson, Config &aConfig)
 
     if (aJson.contains("LogFile"))
     {
-        auto logger     = std::make_shared<FileLogger>(aJson["LogFile"], logLevel);
-        aConfig.mLogger = std::dynamic_pointer_cast<Logger>(logger);
+        std::shared_ptr<FileLogger> logger;
+
+        SuccessOrThrow(FileLogger::Create(logger, aJson["LogFile"], logLevel));
+        aConfig.mLogger = logger;
     }
 
     if (aJson.contains("PSKc"))
@@ -436,10 +440,8 @@ static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
     if (aJson.contains("MeshLocalPrefix"))
     {
         std::string prefix = aJson["MeshLocalPrefix"];
-        if (!Ipv6PrefixFromString(aDataset.mMeshLocalPrefix, prefix).NoError())
-        {
-            throw std::exception();
-        }
+
+        SuccessOrThrow(Ipv6PrefixFromString(aDataset.mMeshLocalPrefix, prefix));
         aDataset.mPresentFlags |= ActiveOperationalDataset::kMeshLocalPrefixBit;
     };
 
@@ -551,6 +553,9 @@ Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::stri
     try
     {
         aDataset = Json::parse(StripComments(aJson));
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
         error = {ErrorCode::kInvalidArgs, e.what()};
@@ -572,6 +577,9 @@ Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
     try
     {
         aDataset = Json::parse(StripComments(aJson));
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
         error = {ErrorCode::kInvalidArgs, e.what()};
@@ -593,6 +601,9 @@ Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::strin
     try
     {
         aDataset = Json::parse(StripComments(aJson));
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
         error = {ErrorCode::kInvalidArgs, e.what()};
@@ -614,6 +625,9 @@ Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::str
     try
     {
         aDataset = Json::parse(StripComments(aJson));
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
         error = {ErrorCode::kInvalidArgs, e.what()};
@@ -635,6 +649,9 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson)
     try
     {
         aConfig = Json::parse(StripComments(aJson));
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
         error = {ErrorCode::kInvalidArgs, e.what()};

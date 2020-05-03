@@ -41,4 +41,5 @@ add_subdirectory(repo)
 target_include_directories(event_core
     INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/repo/include
+        ${CMAKE_CURRENT_BINARY_DIR}/repo/include
 )

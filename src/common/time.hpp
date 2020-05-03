@@ -26,43 +26,36 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OT_COMM_LIBRARY_ENDPOINT_HPP_
-#define OT_COMM_LIBRARY_ENDPOINT_HPP_
+/**
+ * @file
+ *   This file includes definition for time measurements.
+ */
 
-#include <functional>
+#ifndef OT_COMM_COMMON_TIME_HPP_
+#define OT_COMM_COMMON_TIME_HPP_
+
+#include <chrono>
 #include <string>
-
-#include <stdint.h>
-
-#include <commissioner/error.hpp>
-
-#include "common/address.hpp"
-#include "library/message.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-class Endpoint
+using Clock        = std::chrono::system_clock;
+using Duration     = std::chrono::milliseconds;
+using TimePoint    = std::chrono::time_point<Clock>;
+using MilliSeconds = std::chrono::milliseconds;
+
+template <typename D> D NowSinceEpoch()
 {
-public:
-    using Receiver = std::function<void(Endpoint &, const ByteArray &)>;
+    auto now = std::chrono::time_point_cast<D>(Clock::now());
+    return now.time_since_epoch();
+}
 
-    Endpoint()          = default;
-    virtual ~Endpoint() = default;
-
-    virtual Error    Send(const ByteArray &aBuf, MessageSubType aSubType) = 0;
-    virtual Address  GetPeerAddr() const                                  = 0;
-    virtual uint16_t GetPeerPort() const                                  = 0;
-
-    void SetReceiver(Receiver aReceiver) { mReceiver = aReceiver; }
-
-protected:
-    Receiver mReceiver = nullptr;
-};
+std::string TimePointToString(const TimePoint &aTimePoint);
 
 } // namespace commissioner
 
 } // namespace ot
 
-#endif // OT_COMM_LIBRARY_ENDPOINT_HPP_
+#endif // OT_COMM_COMMON_TIME_HPP_

@@ -33,12 +33,8 @@
 
 #include "library/dtls.hpp"
 
-#include <algorithm>
-#include <iostream>
-
 #include <mbedtls/debug.h>
 #include <mbedtls/error.h>
-#include <mbedtls/pem.h>
 #include <mbedtls/platform.h>
 
 #include "common/error_macros.hpp"
@@ -318,6 +314,27 @@ exit:
     return;
 }
 
+std::string DtlsSession::GetStateString() const
+{
+    std::string stateString = "UNKNOWN";
+    switch (mState)
+    {
+    case State::kOpen:
+        stateString = "OPEN";
+        break;
+    case State::kConnecting:
+        stateString = "CONNECTING";
+        break;
+    case State::kConnected:
+        stateString = "CONNECTED";
+        break;
+    case State::kDisconnected:
+        stateString = "DISCONNECTED";
+        break;
+    }
+    return stateString;
+}
+
 int DtlsSession::HandleMbedtlsExportKeys(void *               aDtlsSession,
                                          const unsigned char *aMasterSecret,
                                          const unsigned char *aKeyBlock,
@@ -434,6 +451,8 @@ Error DtlsSession::Read()
 
     if (rval > 0)
     {
+        LOG_DEBUG("DTLS(object={}) successfully read data: {}", static_cast<void *>(this),
+                  utils::Hex({buf, buf + rval}));
         mReceiver(*this, {buf, buf + static_cast<size_t>(rval)});
         ExitNow();
     }
@@ -460,21 +479,23 @@ exit:
     return error;
 }
 
-Error DtlsSession::Write(const ByteArray &aBuf)
+Error DtlsSession::Write(const ByteArray &aBuf, MessageSubType aSubType)
 {
     int   rval = 0;
     Error error;
 
     VerifyOrExit(mState == State::kConnected, error = ERROR_INVALID_STATE("the DTLS session is not connected"));
 
+    mSocket->SetSubType(aSubType);
     rval = mbedtls_ssl_write(&mSsl, &aBuf[0], aBuf.size());
+    mSocket->SetSubType(MessageSubType::kNone);
 
     if (rval >= 0)
     {
         VerifyOrExit(static_cast<size_t>(rval) == aBuf.size(),
                      error = ERROR_IO_BUSY("written {} bytes of total length {}", rval, aBuf.size()));
 
-        LOG_DEBUG("DTLS successfully write data: {}", utils::Hex(aBuf));
+        LOG_DEBUG("DTLS(object={}) successfully write data: {}", static_cast<void *>(this), utils::Hex(aBuf));
     }
     else
     {
@@ -490,16 +511,13 @@ Error DtlsSession::TryWrite()
     Error error;
     while (error.NoError() && !mSendQueue.empty())
     {
-        error = Write(mSendQueue.front());
-        if (error.NoError())
-        {
-            mSendQueue.pop();
-        }
-        else
-        {
-            break;
-        }
+        auto &messagePair = mSendQueue.front();
+
+        SuccessOrExit(error = Write(messagePair.first, messagePair.second));
+        mSendQueue.pop();
     }
+
+exit:
     return error;
 }
 
@@ -543,7 +561,7 @@ exit:
     return error;
 }
 
-Error DtlsSession::Send(const ByteArray &aBuf)
+Error DtlsSession::Send(const ByteArray &aBuf, MessageSubType aSubType)
 {
     Error error;
 
@@ -551,10 +569,10 @@ Error DtlsSession::Send(const ByteArray &aBuf)
 
     if (mSendQueue.empty())
     {
-        error = Write(aBuf);
+        error = Write(aBuf, aSubType);
         if (!error.NoError() && !ShouldStop(error))
         {
-            mSendQueue.emplace(aBuf);
+            mSendQueue.emplace(aBuf, aSubType);
 
             // hide non-critical error (IO Busy) from caller.
             error = ERROR_NONE;
@@ -562,7 +580,7 @@ Error DtlsSession::Send(const ByteArray &aBuf)
     }
     else
     {
-        mSendQueue.emplace(aBuf);
+        mSendQueue.emplace(aBuf, aSubType);
     }
 
 exit:

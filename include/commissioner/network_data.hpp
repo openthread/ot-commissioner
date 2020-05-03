@@ -34,9 +34,9 @@
 #ifndef OT_COMM_NETWORK_DATA_HPP_
 #define OT_COMM_NETWORK_DATA_HPP_
 
-#include <stdint.h>
-
 #include <string>
+
+#include <stdint.h>
 
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>

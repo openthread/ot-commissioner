@@ -60,6 +60,7 @@ Socket::Socket(struct event_base *aEventBase)
     : mEventBase(aEventBase)
     , mEventHandler(nullptr)
     , mIsConnected(false)
+    , mSubType(MessageSubType::kNone)
 {
     memset(&mEvent, 0, sizeof(mEvent));
 }
@@ -265,81 +266,6 @@ void UdpSocket::SetEventHandler(EventHandler aEventHandler)
             aEventHandler(aFlags);
         }
     };
-}
-
-MockSocket::MockSocket(struct event_base *aEventBase, const Address &aLocalAddr, uint16_t aLocalPort)
-    : Socket(aEventBase)
-    , mLocalAddr(aLocalAddr)
-    , mLocalPort(aLocalPort)
-    , mPeerSocket(nullptr)
-{
-}
-
-MockSocket::MockSocket(MockSocket &&aOther)
-    : Socket(std::move(aOther))
-    , mLocalAddr(std::move(aOther.mLocalAddr))
-    , mLocalPort(std::move(aOther.mLocalPort))
-    , mPeerSocket(std::move(aOther.mPeerSocket))
-{
-}
-
-int MockSocket::Send(const uint8_t *aBuf, size_t aLen)
-{
-    ASSERT(IsConnected());
-
-    auto &peerRecvBuf = mPeerSocket->mRecvBuf;
-
-    peerRecvBuf.insert(peerRecvBuf.end(), aBuf, aBuf + aLen);
-    event_active(&mPeerSocket->mEvent, EV_READ, 0);
-
-    return static_cast<int>(aLen);
-}
-
-int MockSocket::Receive(uint8_t *aBuf, size_t aMaxLen)
-{
-    if (mRecvBuf.empty())
-    {
-        return MBEDTLS_ERR_SSL_WANT_READ;
-    }
-    auto len = std::min(aMaxLen, mRecvBuf.size());
-    memcpy(aBuf, &mRecvBuf[0], len);
-    mRecvBuf.erase(mRecvBuf.begin(), mRecvBuf.begin() + len);
-    return static_cast<int>(len);
-}
-
-int MockSocket::Send(const ByteArray &aBuf)
-{
-    ASSERT(!aBuf.empty());
-    return Send(&aBuf[0], aBuf.size());
-}
-
-int MockSocket::Receive(ByteArray &aBuf)
-{
-    uint8_t buf[512];
-    int     rval;
-    while ((rval = Receive(buf, sizeof(buf))) > 0)
-    {
-        aBuf.insert(aBuf.end(), buf, buf + rval);
-    }
-    if (rval == MBEDTLS_ERR_SSL_WANT_READ && !aBuf.empty())
-    {
-        return 0;
-    }
-    return rval;
-}
-
-int MockSocket::Connect(MockSocketPtr aPeerSocket)
-{
-    mPeerSocket  = aPeerSocket;
-    mIsConnected = true;
-
-    // Setup Event
-    int rval = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
-    VerifyOrExit(rval == 0);
-    VerifyOrExit((rval = event_add(&mEvent, nullptr)) == 0);
-
-exit:
-    return rval;
 }
 
 } // namespace commissioner

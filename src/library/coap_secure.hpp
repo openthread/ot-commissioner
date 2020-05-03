@@ -92,6 +92,17 @@ public:
 
     void Stop() { Disconnect(ERROR_CANCELLED("the CoAPs server has been stopped")); }
 
+    Error GetLocalAddr(Address &aAddr) const
+    {
+        Error error;
+
+        VerifyOrExit(mSocket->IsConnected(), error = ERROR_INVALID_STATE("socket is not connected"));
+        aAddr = mSocket->GetLocalAddr();
+
+    exit:
+        return error;
+    }
+
     void Disconnect(Error aError)
     {
         mDtlsSession.Disconnect(aError);

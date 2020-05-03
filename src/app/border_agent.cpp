@@ -110,6 +110,11 @@ static inline std::string ToString(const mdns_string_t &aString)
     return std::string(aString.str, aString.length);
 }
 
+static inline ByteArray ToByteArray(const mdns_string_t &aString)
+{
+    return ByteArray{aString.str, aString.str + aString.length};
+}
+
 /**
  * This is the callback per mDNS record.
  *
@@ -215,8 +220,9 @@ static int HandleRecord(const struct sockaddr *from,
 
         for (size_t i = 0; i < parsed; ++i)
         {
-            auto key   = ToString(txtBuffer[i].key);
-            auto value = ToString(txtBuffer[i].value);
+            auto key         = ToString(txtBuffer[i].key);
+            auto value       = ToString(txtBuffer[i].value);
+            auto binaryValue = ToByteArray(txtBuffer[i].value);
 
             if (key == "rv")
             {
@@ -229,10 +235,10 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "sb")
             {
-                ByteArray bitmap;
-                if (!utils::Hex(bitmap, value).NoError() || bitmap.size() != 4)
+                auto &bitmap = binaryValue;
+                if (bitmap.size() != 4)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'sb' is invalid: value={:X}", value));
+                    ExitNow(errorMsg = fmt::format("value of TXT Key 'sb' is invalid: value={}", utils::Hex(bitmap)));
                 }
 
                 borderAgent.mState.mConnectionMode = (bitmap[0] >> 5);
@@ -249,10 +255,11 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "xp")
             {
-                ByteArray extendPanId;
-                if (!utils::Hex(extendPanId, value).NoError() || extendPanId.size() != 8)
+                auto &extendPanId = binaryValue;
+                if (extendPanId.size() != 8)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'xp' is invalid: value={:X}", value));
+                    ExitNow(errorMsg =
+                                fmt::format("value of TXT Key 'xp' is invalid: value={}", utils::Hex(extendPanId)));
                 }
                 else
                 {
@@ -272,10 +279,11 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "at")
             {
-                ByteArray activeTimestamp;
-                if (!utils::Hex(activeTimestamp, value).NoError() || activeTimestamp.size() != 8)
+                auto &activeTimestamp = binaryValue;
+                if (activeTimestamp.size() != 8)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'at' is invalid: value={:X}", value));
+                    ExitNow(errorMsg =
+                                fmt::format("value of TXT Key 'at' is invalid: value={}", utils::Hex(activeTimestamp)));
                 }
                 else
                 {
@@ -285,10 +293,11 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "pt")
             {
-                ByteArray partitionId;
-                if (!utils::Hex(partitionId, value).NoError() || partitionId.size() != 4)
+                auto &partitionId = binaryValue;
+                if (partitionId.size() != 4)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'pt' is invalid: value={:X}", value));
+                    ExitNow(errorMsg =
+                                fmt::format("value of TXT Key 'pt' is invalid: value={}", utils::Hex(partitionId)));
                 }
                 else
                 {
@@ -303,10 +312,10 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "vo")
             {
-                ByteArray oui;
-                if (!utils::Hex(oui, value).NoError() || oui.size() != 3)
+                auto &oui = binaryValue;
+                if (oui.size() != 3)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'vo' is invalid: value={:X}", value));
+                    ExitNow(errorMsg = fmt::format("value of TXT Key 'vo' is invalid: value={}", utils::Hex(oui)));
                 }
                 else
                 {
@@ -321,10 +330,11 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "sq")
             {
-                ByteArray bbrSeqNum;
-                if (!utils::Hex(bbrSeqNum, value).NoError() || bbrSeqNum.size() != 1)
+                auto &bbrSeqNum = binaryValue;
+                if (bbrSeqNum.size() != 1)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'vo' is invalid: {:X}", value));
+                    ExitNow(errorMsg =
+                                fmt::format("[mDNS] value of TXT Key 'sq' is invalid: {}", utils::Hex(bbrSeqNum)));
                 }
                 else
                 {
@@ -334,10 +344,10 @@ static int HandleRecord(const struct sockaddr *from,
             }
             else if (key == "bb")
             {
-                ByteArray bbrPort;
-                if (!utils::Hex(bbrPort, value).NoError() || bbrPort.size() != 2)
+                auto &bbrPort = binaryValue;
+                if (bbrPort.size() != 2)
                 {
-                    ExitNow(errorMsg = fmt::format("value of TXT Key 'vo' is invalid: {:X}", value));
+                    ExitNow(errorMsg = fmt::format("[mDNS] value of TXT Key 'bb' is invalid: {}", utils::Hex(bbrPort)));
                 }
                 else
                 {

@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,31 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OT_COMM_LIBRARY_ENDPOINT_HPP_
-#define OT_COMM_LIBRARY_ENDPOINT_HPP_
+/**
+ * @file
+ *   This file defines test cases of CommissionerSafe.
+ *
+ */
 
-#include <functional>
-#include <string>
+#include <catch2/catch.hpp>
 
-#include <stdint.h>
-
-#include <commissioner/error.hpp>
-
-#include "common/address.hpp"
-#include "library/message.hpp"
+#include "library/commissioner_safe.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-class Endpoint
+TEST_CASE("stop-immediately-after-starting", "[commissioner]")
 {
-public:
-    using Receiver = std::function<void(Endpoint &, const ByteArray &)>;
+    Config config;
+    config.mEnableCcm = false;
+    config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
-    Endpoint()          = default;
-    virtual ~Endpoint() = default;
-
-    virtual Error    Send(const ByteArray &aBuf, MessageSubType aSubType) = 0;
-    virtual Address  GetPeerAddr() const                                  = 0;
-    virtual uint16_t GetPeerPort() const                                  = 0;
-
-    void SetReceiver(Receiver aReceiver) { mReceiver = aReceiver; }
-
-protected:
-    Receiver mReceiver = nullptr;
-};
+    // This creates an CommissionerSafe instance.
+    auto commissioner = Commissioner::Create(config, nullptr);
+    REQUIRE(commissioner != nullptr);
+}
 
 } // namespace commissioner
 
 } // namespace ot
-
-#endif // OT_COMM_LIBRARY_ENDPOINT_HPP_

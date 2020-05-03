@@ -2084,11 +2084,14 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
         if (it == mCommissioningSessions.end())
         {
+            Address localAddr;
+
+            SuccessOrExit(error = mBrClient.GetLocalAddr(localAddr));
             it = mCommissioningSessions
                      .emplace(std::piecewise_construct, std::forward_as_tuple(joinerIid),
                               std::forward_as_tuple(*this, *joinerInfo, joinerUdpPort, joinerRouterLocator, joinerIid,
                                                     aRlyRx.GetEndpoint()->GetPeerAddr(),
-                                                    aRlyRx.GetEndpoint()->GetPeerPort()))
+                                                    aRlyRx.GetEndpoint()->GetPeerPort(), localAddr, kCommissioningPort))
                      .first;
             auto &session = it->second;
 
@@ -2119,13 +2122,15 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             }
             else
             {
+                LOG_INFO("commissioning timer started, expiration-time={}",
+                         TimePointToString(session.GetExpirationTime()));
                 mCommissioningSessionTimer.Start(session.GetExpirationTime());
             }
         }
 
         ASSERT(it != mCommissioningSessions.end());
         auto &session = it->second;
-        SuccessOrExit(error = session.RecvJoinerDtlsRecords(dtlsRecords));
+        session.RecvJoinerDtlsRecords(dtlsRecords);
     }
 
 exit:
@@ -2139,9 +2144,11 @@ void CommissionerImpl::HandleCommissioningSessionTimer(Timer &aTimer)
 {
     TimePoint nextShot;
     bool      hasNextShot = false;
+    auto      now         = Clock::now();
 
-    auto now = Clock::now();
-    auto it  = mCommissioningSessions.begin();
+    LOG_DEBUG("commissioning session timer triggered");
+
+    auto it = mCommissioningSessions.begin();
     while (it != mCommissioningSessions.end())
     {
         auto &session = it->second;

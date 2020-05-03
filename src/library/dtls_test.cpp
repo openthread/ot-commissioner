@@ -161,7 +161,7 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
         REQUIRE(aError.NoError());
         REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
 
-        REQUIRE(aSession.Send(kHello).NoError());
+        REQUIRE(aSession.Send(kHello, MessageSubType::kNone).NoError());
     };
     dtlsClient.Connect(clientConnected);
 

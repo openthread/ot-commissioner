@@ -39,7 +39,6 @@
 #include "library/cose.hpp"
 #include "library/logging.hpp"
 #include "library/openthread/bloom_filter.hpp"
-#include "library/uri.hpp"
 
 namespace ot {
 
@@ -63,7 +62,6 @@ std::shared_ptr<Commissioner> Commissioner::Create(const Config &aConfig, struct
 
 CommissionerSafe::CommissionerSafe()
     : mImpl(mEventBase.Get())
-    , mEventThread(nullptr)
 {
 }
 
@@ -80,6 +78,7 @@ Error CommissionerSafe::Init(const Config &aConfig)
 
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
+
     error = ERROR_NONE;
 
 exit:
@@ -101,9 +100,9 @@ Error CommissionerSafe::Start()
 {
     Error error;
 
-    VerifyOrExit(mEventThread == nullptr, error = ERROR_INVALID_STATE("the commissioner is running"));
+    VerifyOrExit(!mEventThread.joinable(), error = ERROR_INVALID_STATE("the commissioner is running"));
 
-    mEventThread = std::make_shared<std::thread>([this]() { IgnoreError(mImpl.Start()); });
+    mEventThread = std::thread([this]() { IgnoreError(mImpl.Start()); });
 
 exit:
     return error;
@@ -112,13 +111,23 @@ exit:
 // Stop the commissioner running in background.
 void CommissionerSafe::Stop()
 {
-    mImpl.Stop();
+    std::promise<void> pro;
 
-    if (mEventThread && mEventThread->joinable())
-    {
-        mEventThread->join();
-        mEventThread = nullptr;
-    }
+    VerifyOrExit(mEventThread.joinable());
+
+    // Send `Stop` to the event loop to break it from inside.
+    // This makes sure the event loop has been started when we
+    // trying to break it.
+    PushAsyncRequest([&pro, this]() {
+        mImpl.Stop();
+        pro.set_value();
+    });
+
+    pro.get_future().wait();
+
+    mEventThread.join();
+
+exit:
     return;
 }
 

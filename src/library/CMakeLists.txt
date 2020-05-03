@@ -53,6 +53,7 @@ target_sources(commissioner
         logging.hpp
         mbedtls_error.cpp
         mbedtls_error.hpp
+        message.hpp
         network_data.cpp
         openthread/bloom_filter.cpp
         openthread/bloom_filter.hpp
@@ -66,7 +67,6 @@ target_sources(commissioner
         openthread/sha256.hpp
         socket.cpp
         socket.hpp
-        time.hpp
         timer.hpp
         tlv.cpp
         tlv.hpp
@@ -88,6 +88,7 @@ target_link_libraries(commissioner
         fmt::fmt
         event_core
         event_pthreads
+        $<$<NOT:$<BOOL:${OT_COMM_ANDROID}>>:pthread>
         commissioner-common
 )
 
@@ -143,6 +144,8 @@ target_sources(commissioner-test
         coap_test.cpp
         commissioner_impl.hpp
         commissioner_impl_test.cpp
+        commissioner_safe.hpp
+        commissioner_safe_test.cpp
         cose.hpp
         cose_test.cpp
         dtls.hpp

@@ -33,10 +33,10 @@
 
 #include "library/coap.hpp"
 
+#include <algorithm>
+
 #include <ctype.h>
 #include <memory.h>
-
-#include <algorithm>
 
 #include "common/error_macros.hpp"
 #include "library/logging.hpp"
@@ -56,6 +56,7 @@ Message::Message(Type aType, Code aCode)
 }
 
 Message::Message()
+    : mSubType(MessageSubType::kNone)
 {
     SetVersion(kVersion1);
 }
@@ -506,7 +507,7 @@ void Coap::ReceiveMessage(Endpoint &aEndpoint, std::shared_ptr<Message> aMessage
     if (!error.NoError())
     {
         // Silently drop a bad formatted message
-        LOG_INFO("Received a CoAP message in bad format: {}", error.GetMessage());
+        LOG_INFO("drop a CoAP message in bad format: {}", error.GetMessage());
     }
     else
     {
@@ -531,13 +532,14 @@ void Coap::HandleRequest(const Request &aRequest)
     std::string                          uriPath;
     decltype(mResources)::const_iterator resource;
 
+    SuccessOrExit(error = aRequest.GetUriPath(uriPath));
+
     response = mResponsesCache.Match(aRequest);
     if (response != nullptr)
     {
+        LOG_INFO("found cached CoAP response for resource {}", uriPath);
         ExitNow(error = Send(*response));
     }
-
-    SuccessOrExit(error = aRequest.GetUriPath(uriPath));
 
     resource = mResources.find(uriPath);
     if (resource != mResources.end())
@@ -739,7 +741,7 @@ Error Coap::Send(const Message &aMessage)
         aMessage.SetEndpoint(&mEndpoint);
     }
 
-    error = aMessage.GetEndpoint()->Send(data);
+    error = aMessage.GetEndpoint()->Send(data, aMessage.GetSubType());
     SuccessOrExit(error);
 
 exit:

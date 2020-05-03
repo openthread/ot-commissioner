@@ -48,22 +48,19 @@ CommissioningSession::CommissioningSession(CommissionerImpl &aCommImpl,
                                            uint16_t          aJoinerRouterLocator,
                                            const ByteArray & aJoinerIid,
                                            const Address &   aJoinerAddr,
-                                           uint16_t          aJoinerPort)
+                                           uint16_t          aJoinerPort,
+                                           const Address &   aLocalAddr,
+                                           uint16_t          aLocalPort)
     : mCommImpl(aCommImpl)
     , mJoinerInfo(aJoinerInfo)
     , mJoinerUdpPort(aJoinerUdpPort)
     , mJoinerRouterLocator(aJoinerRouterLocator)
     , mJoinerIid(aJoinerIid)
-    , mJoinerSocket(std::make_shared<MockSocket>(aCommImpl.GetEventBase(), aJoinerAddr, aJoinerPort))
-    , mSocket(std::make_shared<MockSocket>(aCommImpl.GetEventBase(), Address::FromString("::"), kCommissioningPort))
-    , mDtlsSession(std::make_shared<DtlsSession>(aCommImpl.GetEventBase(), /* aIsServer */ true, mSocket))
+    , mRelaySocket(std::make_shared<RelaySocket>(*this, aJoinerAddr, aJoinerPort, aLocalAddr, aLocalPort))
+    , mDtlsSession(std::make_shared<DtlsSession>(aCommImpl.GetEventBase(), /* aIsServer */ true, mRelaySocket))
     , mCoap(aCommImpl.GetEventBase(), *mDtlsSession)
     , mResourceJoinFin(uri::kJoinFin, [this](const coap::Request &aRequest) { HandleJoinFin(aRequest); })
 {
-    mJoinerSocket->SetEventHandler([this](short aFlags) { HandleJoinerSocketEvent(aFlags); });
-
-    ASSERT(mJoinerSocket->Connect(mSocket) == 0);
-    ASSERT(mSocket->Connect(mJoinerSocket) == 0);
     ASSERT(mCoap.AddResource(mResourceJoinFin).NoError());
 }
 
@@ -92,43 +89,12 @@ void CommissioningSession::Stop()
     mDtlsSession->Disconnect(ERROR_ABORTED("the joiner commissioning session was aborted"));
 }
 
-Error CommissioningSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
+void CommissioningSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
 {
-    Error error;
-
-    if (!aRecords.empty())
-    {
-        if (int fail = mJoinerSocket->Send(&aRecords[0], aRecords.size()))
-        {
-            ExitNow(error = ERROR_IO_ERROR("forwarding Joiner DTLS records failed: {}", fail));
-        }
-    }
-
-exit:
-    return error;
+    mRelaySocket->RecvJoinerDtlsRecords(aRecords);
 }
 
-void CommissioningSession::HandleJoinerSocketEvent(short aFlags)
-{
-    if (aFlags & EV_READ)
-    {
-        ByteArray buf;
-        if (int fail = mJoinerSocket->Receive(buf))
-        {
-            LOG_ERROR("receiving DTLS records to joiner failed: {}", fail);
-        }
-        else
-        {
-            Error error = SendRlyTx(buf);
-            if (!error.NoError())
-            {
-                LOG_ERROR("sending RLY_TX.ntf failed: {}", error.ToString());
-            }
-        }
-    }
-}
-
-Error CommissioningSession::SendRlyTx(const ByteArray &aBuf)
+Error CommissioningSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek)
 {
     Error         error;
     coap::Request rlyTx{coap::Type::kNonConfirmable, coap::Code::kPost};
@@ -138,16 +104,18 @@ Error CommissioningSession::SendRlyTx(const ByteArray &aBuf)
     SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerUdpPort, GetJoinerUdpPort()}));
     SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerRouterLocator, GetJoinerRouterLocator()}));
     SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerIID, GetJoinerIid()}));
-    SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerDtlsEncapsulation, aBuf}));
+    SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerDtlsEncapsulation, aDtlsMessage}));
 
-    if (!mDtlsSession->GetKek().empty())
+    if (aIncludeKek)
     {
+        VerifyOrExit(!mDtlsSession->GetKek().empty(), error = ERROR_INVALID_STATE("DTLS KEK is not available"));
         SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerRouterKEK, mDtlsSession->GetKek()}));
     }
 
     mCommImpl.mBrClient.SendRequest(rlyTx, nullptr);
 
-    LOG_DEBUG("sent RLY_TX.ntf: joinerIID={}, dtlsMessagelength={}", utils::Hex(GetJoinerIid()), aBuf.size());
+    LOG_DEBUG("sent RLY_TX.ntf: CommissioningSessionState={}, joinerIID={}, length={}, includeKek={}",
+              mDtlsSession->GetStateString(), utils::Hex(GetJoinerIid()), aDtlsMessage.size(), aIncludeKek);
 
 exit:
     return error;
@@ -229,10 +197,79 @@ Error CommissioningSession::SendJoinFinResponse(const coap::Request &aJoinFinReq
     coap::Response joinFin{coap::Type::kAcknowledgment, coap::Code::kChanged};
     SuccessOrExit(error = AppendTlv(joinFin, {tlv::Type::kState, aAccept ? tlv::kStateAccept : tlv::kStateReject}));
 
+    joinFin.SetSubType(MessageSubType::kJoinFinResponse);
     SuccessOrExit(error = mCoap.SendResponse(aJoinFinReq, joinFin));
 
 exit:
     return error;
+}
+
+CommissioningSession::RelaySocket::RelaySocket(CommissioningSession &aCommissioningSession,
+                                               const Address &       aPeerAddr,
+                                               uint16_t              aPeerPort,
+                                               const Address &       aLocalAddr,
+                                               uint16_t              aLocalPort)
+    : Socket(aCommissioningSession.mCommImpl.GetEventBase())
+    , mCommissioningSession(aCommissioningSession)
+    , mPeerAddr(aPeerAddr)
+    , mPeerPort(aPeerPort)
+    , mLocalAddr(aLocalAddr)
+    , mLocalPort(aLocalPort)
+{
+    int fail;
+
+    mIsConnected = true;
+
+    fail = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
+    ASSERT(fail == 0);
+    ASSERT((fail = event_add(&mEvent, nullptr)) == 0);
+}
+
+CommissioningSession::RelaySocket::RelaySocket(RelaySocket &&aOther)
+    : Socket(std::move(aOther))
+    , mCommissioningSession(aOther.mCommissioningSession)
+    , mPeerAddr(std::move(aOther.mPeerAddr))
+    , mPeerPort(std::move(aOther.mPeerPort))
+    , mLocalAddr(aOther.mLocalAddr)
+    , mLocalPort(aOther.mLocalPort)
+{
+}
+
+int CommissioningSession::RelaySocket::Send(const uint8_t *aBuf, size_t aLen)
+{
+    Error error;
+    bool  includeKek = GetSubType() == MessageSubType::kJoinFinResponse;
+
+    SuccessOrExit(error = mCommissioningSession.SendRlyTx({aBuf, aBuf + aLen}, includeKek));
+
+exit:
+    if (!error.NoError())
+    {
+        LOG_ERROR("failed to RLY_TX.ntf: {}", error.ToString());
+    }
+    return error.NoError() ? static_cast<int>(aLen) : MBEDTLS_ERR_NET_SEND_FAILED;
+}
+
+int CommissioningSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen)
+{
+    int rval;
+
+    VerifyOrExit(!mRecvBuf.empty(), rval = MBEDTLS_ERR_SSL_WANT_READ);
+
+    rval = static_cast<int>(std::min(aMaxLen, mRecvBuf.size()));
+    memcpy(aBuf, mRecvBuf.data(), rval);
+    mRecvBuf.erase(mRecvBuf.begin(), mRecvBuf.begin() + rval);
+
+exit:
+    return rval;
+}
+
+void CommissioningSession::RelaySocket::RecvJoinerDtlsRecords(const ByteArray &aRecords)
+{
+    mRecvBuf.insert(mRecvBuf.end(), aRecords.begin(), aRecords.end());
+
+    // Notifies the DTLS session that there is incoming data.
+    event_active(&mEvent, EV_READ, 0);
 }
 
 } // namespace commissioner

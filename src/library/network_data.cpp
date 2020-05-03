@@ -35,8 +35,8 @@
 
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
-#include "library/time.hpp"
 
 namespace ot {
 
