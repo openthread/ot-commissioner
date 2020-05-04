@@ -62,7 +62,37 @@ struct EnergyReport
 };
 using EnergyReportMap = std::map<Address, EnergyReport>;
 
-class CommissionerApp
+/**
+ * @brief Enumeration of Joiner Type for steering.
+ *
+ */
+enum class JoinerType
+{
+    kMeshCoP = 0, ///< Conventional non-CCM joiner.
+    kAE,          ///< CCM AE joiner.
+    kNMKP         ///< CCM NMKP joiner.
+};
+
+/**
+ * @brief Definition of joiner information.
+ */
+struct JoinerInfo
+{
+    JoinerType mType;
+
+    // If the value is all-zeros, it represents for all joiners of this type.
+    uint64_t mEui64; ///< The IEEE EUI-64 value.
+
+    // Valid only if mType is kMeshCoP.
+    std::string mPSKd; ///< The pre-shared device key.
+
+    // Valid only if mType is kMeshCoP.
+    std::string mProvisioningUrl;
+
+    JoinerInfo(JoinerType aType, uint64_t aEui64, const std::string &aPSKd, const std::string &aProvisioningUrl);
+};
+
+class CommissionerApp : public CommissionerHandler
 {
 public:
     using MilliSeconds = std::chrono::milliseconds;
@@ -70,6 +100,29 @@ public:
 
     static std::shared_ptr<CommissionerApp> Create(const Config &aConfig);
     ~CommissionerApp() = default;
+
+    // Handle commissioner events.
+    Error OnJoinerRequest(std::string &aPSKd, const ByteArray &aJoinerId) override;
+
+    void OnJoinerConnected(const ByteArray &aJoinerId, Error aError) override;
+
+    bool OnJoinerFinalize(const ByteArray &  aJoinerId,
+                          const std::string &aVendorName,
+                          const std::string &aVendorModel,
+                          const std::string &aVendorSwVersion,
+                          const ByteArray &  aVendorStackVersion,
+                          const std::string &aProvisioningUrl,
+                          const ByteArray &  aVendorData) override;
+
+    void OnPanIdConflict(const std::string &aPeerAddr,
+                         const ChannelMask &aChannelMask,
+                         const uint16_t &   aPanId) override;
+
+    void OnEnergyReport(const std::string &aPeerAddr,
+                        const ChannelMask &aChannelMask,
+                        const ByteArray &  aEnergyList) override;
+
+    void OnDatasetChanged() override;
 
     Error Start(std::string &aExistingCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
     void  Stop();
@@ -97,14 +150,11 @@ public:
     Error GetSteeringData(ByteArray &aSteeringData, JoinerType aJoinerType) const;
     Error EnableJoiner(JoinerType         aType,
                        uint64_t           aEui64,
-                       const ByteArray &  aPSKd            = {},
+                       const std::string &aPSKd            = {},
                        const std::string &aProvisioningUrl = {});
     Error DisableJoiner(JoinerType aType, uint64_t aEui64);
-    Error EnableAllJoiners(JoinerType aType, const ByteArray &aPSKd, const std::string &aProvisioningUrl);
+    Error EnableAllJoiners(JoinerType aType, const std::string &aPSKd, const std::string &aProvisioningUrl);
     Error DisableAllJoiners(JoinerType aType);
-
-    // Currently, for only non-CCM joiners.
-    bool IsJoinerCommissioned(JoinerType aType, uint64_t aEui64);
 
     Error GetJoinerUdpPort(uint16_t &aJoinerUdpPort, JoinerType aJoinerType) const;
     Error SetJoinerUdpPort(JoinerType aType, uint16_t aUdpPort);
@@ -235,25 +285,6 @@ private:
     ByteArray mSignedToken;
 
 private:
-    void HandlePanIdConflict(const std::string *aPeerAddr,
-                             const ChannelMask *aChannelMask,
-                             const uint16_t *   aPanId,
-                             Error              aError);
-    void HandleEnergyReport(const std::string *aPeerAddr,
-                            const ChannelMask *aChannelMask,
-                            const ByteArray *  aEnergyList,
-                            Error              aError);
-
-    void HandleDatasetChanged(Error error);
-
-    bool HandleCommissioning(const JoinerInfo & aJoinerInfo,
-                             const std::string &aVendorName,
-                             const std::string &aVendorModel,
-                             const std::string &aVendorSwVersion,
-                             const ByteArray &  aVendorStackVersion,
-                             const std::string &aProvisioningUrl,
-                             const ByteArray &  aVendorData);
-
     /*
      * Below are data associated with the connected Thread Network.
      */

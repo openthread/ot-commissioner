@@ -55,6 +55,8 @@ static constexpr uint16_t kListeningJoinerPort = 9527;
 // the joiner session will be closed and removed.
 static constexpr uint32_t kJoinerTimeout = 20;
 
+static constexpr uint8_t kLocalExternalAddrMask = 1 << 1;
+
 class CommissionerImpl;
 class JoinerSession;
 
@@ -64,32 +66,30 @@ using JoinerSessionPtr = std::shared_ptr<JoinerSession>;
 class JoinerSession : std::enable_shared_from_this<JoinerSession>
 {
 public:
-    using ConnectHandler = std::function<void(JoinerSession &, Error)>;
-
-    JoinerSession(CommissionerImpl &aCommImpl,
-                  const JoinerInfo &aJoinerInfo,
-                  uint16_t          aJoinerUdpPort,
-                  uint16_t          aJoinerRouterLocator,
-                  const ByteArray & aJoinerIid,
-                  const Address &   aJoinerAddr,
-                  uint16_t          aJoinerPort,
-                  const Address &   aLocalAddr,
-                  uint16_t          aLocalPort);
+    JoinerSession(CommissionerImpl & aCommImpl,
+                         const ByteArray &  aJoinerId,
+                         const std::string &aJoinerPSkd,
+                         uint16_t           aJoinerUdpPort,
+                         uint16_t           aJoinerRouterLocator,
+                         const Address &    aJoinerAddr,
+                         uint16_t           aJoinerPort,
+                         const Address &    aLocalAddr,
+                         uint16_t           aLocalPort);
     JoinerSession(JoinerSession &&aOther) = delete;
     JoinerSession &operator=(JoinerSession &&aOther) = delete;
     JoinerSession(const JoinerSession &aOther)       = delete;
     JoinerSession &operator=(const JoinerSession &aOther) = delete;
-    ~JoinerSession()                                      = default;
+    ~JoinerSession()                                             = default;
 
+    ByteArray GetJoinerId() const { return mJoinerId; }
     uint16_t  GetJoinerUdpPort() const { return mJoinerUdpPort; }
     uint16_t  GetJoinerRouterLocator() const { return mJoinerRouterLocator; }
-    ByteArray GetJoinerIid() const { return mJoinerIid; }
     Address   GetPeerAddr() const { return mDtlsSession->GetPeerAddr(); }
     uint16_t  GetPeerPort() const { return mDtlsSession->GetPeerPort(); }
 
-    Error Start(ConnectHandler aOnConnected);
+    void Connect();
 
-    void Stop();
+    void Disconnect();
 
     DtlsSession::State GetState() const { return mDtlsSession->GetState(); }
 
@@ -134,16 +134,25 @@ private:
 
     using RelaySocketPtr = std::shared_ptr<RelaySocket>;
 
+    ByteArray GetJoinerIid() const
+    {
+        auto joinerIid = mJoinerId;
+        joinerIid[0] ^= kLocalExternalAddrMask;
+        return joinerIid;
+    }
+
+    void HandleConnect(Error aError);
+
     Error SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek);
     void  HandleJoinFin(const coap::Request &aJoinFin);
     Error SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept);
 
     CommissionerImpl &mCommImpl;
-    JoinerInfo        mJoinerInfo;
 
-    uint16_t  mJoinerUdpPort;
-    uint16_t  mJoinerRouterLocator;
-    ByteArray mJoinerIid;
+    ByteArray   mJoinerId;
+    std::string mJoinerPSKd;
+    uint16_t    mJoinerUdpPort;
+    uint16_t    mJoinerRouterLocator;
 
     RelaySocketPtr mRelaySocket;
     DtlsSessionPtr mDtlsSession;

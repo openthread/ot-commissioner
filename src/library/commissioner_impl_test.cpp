@@ -126,8 +126,9 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     config.mEnableCcm = false;
     config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
-    struct event_base *eventBase = event_base_new();
-    CommissionerImpl   commImpl(eventBase);
+    CommissionerHandler dummyHandler;
+    struct event_base * eventBase = event_base_new();
+    CommissionerImpl    commImpl(dummyHandler, eventBase);
     REQUIRE(commImpl.Init(config) == Error::kNone);
 
     REQUIRE(commImpl.Connect("::1", 5684) == Error::kNotImplemented);

@@ -495,14 +495,14 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
     if (CaseInsensitiveEqual(aExpr[1], "enable"))
     {
         uint64_t    eui64;
-        ByteArray   pskd;
+        std::string pskd;
         std::string provisioningUrl;
 
         VerifyOrExit(aExpr.size() >= (type == JoinerType::kMeshCoP ? 5 : 4), msg = Usage(aExpr));
         SuccessOrExit(ParseInteger(eui64, aExpr[3]), msg = aExpr[3]);
         if (type == JoinerType::kMeshCoP)
         {
-            pskd = {aExpr[4].begin(), aExpr[4].end()};
+            pskd = aExpr[4];
             if (aExpr.size() >= 6)
             {
                 provisioningUrl = aExpr[5];
@@ -513,12 +513,12 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "enableall"))
     {
-        ByteArray   pskd;
+        std::string pskd;
         std::string provisioningUrl;
         if (type == JoinerType::kMeshCoP)
         {
             VerifyOrExit(aExpr.size() >= 4, msg = Usage(aExpr));
-            pskd = {aExpr[3].begin(), aExpr[3].end()};
+            pskd = aExpr[3];
             if (aExpr.size() >= 5)
             {
                 provisioningUrl = aExpr[4];

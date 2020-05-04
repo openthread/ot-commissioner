@@ -46,8 +46,6 @@
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
 
-struct event_base;
-
 namespace ot {
 
 namespace commissioner {
@@ -129,117 +127,54 @@ struct Config
 };
 
 /**
- * @brief Enumeration of Joiner Type for steering.
+ * @brief The base class defines Handlers of commissioner events.
+ *
+ * Application should inherit this class and override the virtual
+ * functions to provide specific handler.
+ *
+ * @note keep in mind that those handlers will be called in another threads.
  *
  */
-enum class JoinerType
-{
-    kMeshCoP = 0, ///< Conventional non-CCM joiner.
-    kAE,          ///< CCM AE joiner.
-    kNMKP         ///< CCM NMKP joiner.
-};
-
-/**
- * @brief Definition of joiner information.
- */
-struct JoinerInfo
-{
-    JoinerType mType;
-
-    // If the value is all-zeros, it represents for all joiners of this type.
-    uint64_t mEui64; ///< The IEEE EUI-64 value.
-
-    // Valid only if mType is kMeshCoP.
-    ByteArray mPSKd; ///< The pre-shared device key.
-
-    // Valid only if mType is kMeshCoP.
-    std::string mProvisioningUrl;
-
-    bool mIsCommissioned = false;
-
-    JoinerInfo(JoinerType aType, uint64_t aEui64, const ByteArray &aPSKd, const std::string &aProvisioningUrl);
-};
-
-/**
- * @brief The interface of a Thread commissioner.
- *
- */
-class Commissioner
+class CommissionerHandler
 {
 public:
     /**
-     * The response handler of a general TMF request.
+     * The function notifies the start of a joining request from given joiner.
      *
-     * @param[in] aError  An error code.
+     * @param[out] aPSKd      The password of the joiner.
+     * @param[in]  aJoinerId  A joiner ID.
+     *
+     * @return Error::kNotFound  Cannot find the given joiner.
+     * @return Error::kNone      The given joiner is found, EUI64 and PSKd are set.
+     *
      */
-    using ErrorHandler = std::function<void(Error aError)>;
+    virtual Error OnJoinerRequest(std::string &aPSKd, const ByteArray &aJoinerId)
+    {
+        (void)aPSKd;
+        (void)aJoinerId;
+        return Error::kNotFound;
+    }
 
     /**
-     * The response handler of a general TMF request.
+     * This function notifies a joiner DTLS session is connected or not.
      *
-     * @param[in] aResponseData  A response data. nullable.
-     * @param[in] aError         An error code.
+     * @param[in] aJoinerId  The joiner ID.
+     * @param[in] aError     The error during connecting; the joiner connection
+     *                       is successfully established if error is Error::kNone;
+     *                       otherwise, it failed to connect.
      *
-     * @note @p aResponseData is guaranteed to be not null only when @p aError == Error::kNone.
-     *       Otherwise, @p aResponseData should never be accessed.
      */
-    template <typename T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
+    virtual void OnJoinerConnected(const ByteArray &aJoinerId, Error aError)
+    {
+        (void)aJoinerId;
+        (void)aError;
+    }
 
     /**
-     * The petition result handler.
+     * This function notifies the receiving of JOIN_FIN.req message and asks for
+     * vendor-specific provisioning if required.
      *
-     * @param[in] aExistingCommissionerId  The Existing commissioner Id. nullable.
-     * @param[in] aError                   An error code.
-     *
-     * @note There is an exiting active commissioner if @p aError != Error::kNone
-     *       and @p aExistingCommissionerId is not null.
-     */
-    using PetitionHandler = std::function<void(const std::string *aExistingCommissionerId, Error aError)>;
-
-    /**
-     * The MGMT_PANID_CONFLICT.ans handler.
-     *
-     * @param[in] aPeerAddr     A peer address that sent this MGMT_PANID_CONFLICT.ans request.
-     * @param[in] aChannelMask  A channel mask the peer scanned at.
-     * @param[in] aPanId        A PAN ID that has a conflict.
-     * @param[in] aError        An error code.
-     *
-     * @note @p aPeerAddr, aChannelMask and aPanId are guaranteed to
-     *       be not null only when @p aError == Error::kNone. Otherwise,
-     *       they should never be accessed.
-     */
-    using PanIdConflictHandler = std::function<
-        void(const std::string *aPeerAddr, const ChannelMask *aChannelMask, const uint16_t *aPanId, Error aError)>;
-
-    /**
-     * The MGMT_ED_REPORT.ans handler.
-     *
-     * @param[in] aPeerAddr     A peer address that sent this MGMT_PANID_CONFLICT.ans request.
-     * @param[in] aChannelMask  A channel mask the peer scanned at.
-     * @param[in] aEnergyList   A list of measured energy level in dBm.
-     * @param[in] aError        An error code.
-     *
-     * @note @p aPeerAddr, aChannelMask and aEnergyList are guaranteed to
-     *       be not null only when @p aError == Error::kNone. Otherwise,
-     *       they should never be accessed.
-     */
-    using EnergyReportHandler = std::function<
-        void(const std::string *aPeerAddr, const ChannelMask *aChannelMask, const ByteArray *aEneryList, Error aError)>;
-
-    /**
-     * The function request user information of given joiner.
-     *
-     * @param[in]  aType    A joiner type.
-     * @param[in]  aId      A joiner ID.
-     *
-     * @return the associated joiner info.
-     */
-    using JoinerInfoRequester = std::function<const JoinerInfo *(JoinerType aType, const ByteArray &aId)>;
-
-    /**
-     * The callback provided by vendor (application) to commission a joiner.
-     *
-     * @param[in]  aJoinerInfo         A joiner info indexing the commissioning joiner.
+     * @param[in]  aJoinerId           The joiner ID.
      * @param[in]  aVendorName         A human-readable product vendor name string in utf-8 format.
      * @param[in]  aVendorModel        A human-readable product model string.
      * @param[in]  aVendorSwVersion    A utf-8 string that specifies the product software version.
@@ -255,35 +190,119 @@ public:
      * @return  A boolean indicates whether the joiner is accepted.
      *
      * @note This will be called when A well-formed JOIN_FIN.req has been received.
+     */
+    virtual bool OnJoinerFinalize(const ByteArray &  aJoinerId,
+                                  const std::string &aVendorName,
+                                  const std::string &aVendorModel,
+                                  const std::string &aVendorSwVersion,
+                                  const ByteArray &  aVendorStackVersion,
+                                  const std::string &aProvisioningUrl,
+                                  const ByteArray &  aVendorData)
+    {
+        (void)aJoinerId;
+        (void)aVendorName;
+        (void)aVendorModel;
+        (void)aVendorSwVersion;
+        (void)aVendorStackVersion;
+        (void)aProvisioningUrl;
+        (void)aVendorData;
+        return false;
+    }
+
+    /**
+     * This function notifies the receiving a PAN ID conflict answer.
+     *
+     * @param[in] aPeerAddr     A peer address that sent the MGMT_PANID_CONFLICT.ans request.
+     * @param[in] aChannelMask  A channel mask the peer scanned with.
+     * @param[in] aPanId        The PAN ID that has a conflict.
      *
      */
-    using CommissioningHandler = std::function<bool(const JoinerInfo & aJoinerInfo,
-                                                    const std::string &aVendorName,
-                                                    const std::string &aVendorModel,
-                                                    const std::string &aVendorSwVersion,
-                                                    const ByteArray &  aVendorStackVersion,
-                                                    const std::string &aProvisioningUrl,
-                                                    const ByteArray &  aVendorData)>;
+    virtual void OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, const uint16_t &aPanId)
+    {
+        (void)aPeerAddr;
+        (void)aChannelMask;
+        (void)aPanId;
+    }
+
+    /**
+     * This function notifies the receiving of a energy scan report.
+     *
+     * @param[in] aPeerAddr     A peer address that sent the MGMT_PANID_CONFLICT.ans request.
+     * @param[in] aChannelMask  A channel mask the peer scanned with.
+     * @param[in] aEnergyList   A list of measured energy level in dBm.
+     *
+     */
+    virtual void OnEnergyReport(const std::string &aPeerAddr,
+                                const ChannelMask &aChannelMask,
+                                const ByteArray &  aEnergyList)
+    {
+        (void)aPeerAddr;
+        (void)aChannelMask;
+        (void)aEnergyList;
+    }
+
+    /**
+     * This function notifies that the operational dataset has been changed.
+     *
+     * It is typical for the handler to request latest operational dataset by
+     * calling GetActiveDataset and GetPendingDataset.
+     *
+     */
+    virtual void OnDatasetChanged() {}
+
+    virtual ~CommissionerHandler() = default;
+};
+
+/**
+ * @brief The interface of a Thread commissioner.
+ *
+ */
+class Commissioner
+{
+public:
+    /**
+     * The response handler of a general TMF request.
+     *
+     * @param[in] aError  A error code.
+     */
+    using ErrorHandler = std::function<void(Error aError)>;
+
+    /**
+     * The response handler of a general TMF request.
+     *
+     * @param[in] aResponseData  A response data. nullable.
+     * @param[in] aError         A error code.
+     *
+     * @note @p aResponseData is guaranteed to be not null only when @p aError == Error::kNone.
+     *       Otherwise, @p aResponseData should never be accessed.
+     */
+    template <class T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
+
+    /**
+     * The petition result handler.
+     *
+     * @param[in] aExistingCommissionerId  The Existing commissioner Id. nullable.
+     * @param[in] aError                   An error code.
+     *
+     * @note There is an exiting active commissioner if @p aError != Error::kNone
+     *       and @p aExistingCommissionerId is not null.
+     */
+    using PetitionHandler = std::function<void(const std::string *aExistingCommissionerId, Error aError)>;
 
     /**
      * @brief Create an instance of the commissioner.
      *
      * @param[out] aCommissioner  The created commissioner instance.
+     * @param[in] aHandler    A handler of commissioner events.
      * @param[in]  aConfig        A commissioner configuration.
-     * @param[in]  aEventBase     A libevent event_base object. nullable.
      *
      * @retval Error::kNone  Successfully created a commissioner instance.
      * @retval ...           Failed to create a commissioner instance.
      *
-     * @note If @p aEventBase is not provided, commissioner will create it by itself and
-     *       run the event loop in separate background thread. In this case, all callback
-     *       function will be called in separate thread and synchronization is needed;
-     *       Otherwise, it is the user to run the event loop and no synchronization is
-     *       needed in callback functions.
      */
     static Error Create(std::shared_ptr<Commissioner> &aCommissioner,
-                        const Config &                 aConfig,
-                        struct event_base *            aEventBase);
+                        CommissionerHandler &aHandler,
+                        const Config &aConfig);
 
     virtual ~Commissioner() = default;
 
@@ -293,25 +312,6 @@ public:
      * @return The configuration.
      */
     virtual const Config &GetConfig() const = 0;
-
-    /**
-     * @brief Set the joiner info requester.
-     *
-     * @param[in] aJoinerInfoRequester  A joiner info requester. nullable.
-     *                                  If null, it equals to always returning failure.
-     */
-    virtual void SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester) = 0;
-
-    /**
-     * @brief Set the joiner commissioning handler.
-     *
-     * @param[in] aCommissioningHandler  A joiner commissioning handler. nullable.
-     *
-     * @note A joiner will be rejected if this handler is not provided
-     *       while the joiner requires vendor-specific provision.
-     *
-     */
-    virtual void SetCommissioningHandler(CommissioningHandler aCommissioningHandler) = 0;
 
     /**
      * @brief Start the commissioner event loop.
@@ -413,9 +413,6 @@ public:
      *
      */
     virtual void AbortRequests() = 0;
-
-    // Connect to the border agent, start petition if succeed.
-    // Sends keepalive message if petition succeed.
 
     /**
      * @brief Asynchronously petition to a Thread network.
@@ -1003,6 +1000,7 @@ public:
      * by sending MLR.req message to the Primary Backbone Router.
      * It will not return until errors happened, timeouted or succeed.
      *
+     * @param[out] aStatus            The Status.
      * @param[in] aPbbrAddr           A Primary Backbone Router Address that the MLR.req message
      *                                will be sent to.
      * @param[in] aMulticastAddrList  A list of multicast address to be registered.
@@ -1062,33 +1060,6 @@ public:
      * @return Error::kNone, succeed; Otherwise, failed.
      */
     virtual Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) = 0;
-
-    /**
-     * @brief Set the Dataset Changed Handler.
-     *
-     * @param[in] aHandler  A Dataset Changed handler; nullable.
-     *
-     * @note The handler will be called when received MGMT_DATASET_CHANGED.ntf request.
-     */
-    virtual void SetDatasetChangedHandler(ErrorHandler aHandler) = 0;
-
-    /**
-     * @brief Set the PAN ID Conflict Handler.
-     *
-     * @param[in] aHandler   A PAN ID Conflict handler; nullable.
-     *
-     * @note The handler will be called when received MGMT_PANID_CONFLICT.ans request.
-     */
-    virtual void SetPanIdConflictHandler(PanIdConflictHandler aHandler) = 0;
-
-    /**
-     * @brief Set the Energy Report Handler.
-     *
-     * @param[in] aHandler  A Energy Report handler; nullable.
-     *
-     * @note The handler will be called when received MGMT_ED_REPORT.ans request.
-     */
-    virtual void SetEnergyReportHandler(EnergyReportHandler aHandler) = 0;
 
     /**
      * @brief Generate PSKc by given passphrase, networkname and extended PAN ID.

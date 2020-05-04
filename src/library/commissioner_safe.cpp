@@ -44,30 +44,23 @@ namespace ot {
 
 namespace commissioner {
 
+std::shared_ptr<Commissioner> Commissioner::Create(CommissionerHandler &aHandler, const Config &aConfig)
 Error Commissioner::Create(std::shared_ptr<Commissioner> &aCommissioner,
-                           const Config &                 aConfig,
-                           struct event_base *            aEventBase)
+                           CommissionerHandler &aHandler,
+                           const Config &                 aConfig)
 {
     Error error;
-    if (aEventBase == nullptr)
-    {
-        auto comm = std::make_shared<CommissionerSafe>();
-        SuccessOrExit(error = comm->Init(aConfig));
-        aCommissioner = comm;
-    }
-    else
-    {
-        auto comm = std::make_shared<CommissionerImpl>(aEventBase);
-        SuccessOrExit(error = comm->Init(aConfig));
-        aCommissioner = comm;
-    }
+    auto comm = std::make_shared<CommissionerSafe>(aHandler);
+
+    SuccessOrExit(error = comm->Init(aConfig));
+    aCommissioner = comm;
 
 exit:
     return error;
 }
 
-CommissionerSafe::CommissionerSafe()
-    : mImpl(mEventBase.Get())
+CommissionerSafe::CommissionerSafe(CommissionerHandler &aHandler)
+    : mImpl(aHandler, mEventBase.Get())
 {
 }
 
@@ -530,36 +523,6 @@ Error CommissionerSafe::SetToken(const ByteArray &aSignedToken, const ByteArray 
     std::promise<Error> pro;
     PushAsyncRequest([&]() { pro.set_value(mImpl.SetToken(aSignedToken, aSignerCert)); });
     return pro.get_future().get();
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester)
-{
-    mImpl.SetJoinerInfoRequester(aJoinerInfoRequester);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetCommissioningHandler(CommissioningHandler aCommissioningHandler)
-{
-    mImpl.SetCommissioningHandler(aCommissioningHandler);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetDatasetChangedHandler(ErrorHandler aHandler)
-{
-    mImpl.SetDatasetChangedHandler(aHandler);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetPanIdConflictHandler(PanIdConflictHandler aHandler)
-{
-    mImpl.SetPanIdConflictHandler(aHandler);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetEnergyReportHandler(EnergyReportHandler aHandler)
-{
-    mImpl.SetEnergyReportHandler(aHandler);
 }
 
 void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)

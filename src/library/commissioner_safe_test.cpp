@@ -42,13 +42,15 @@ namespace commissioner {
 
 TEST_CASE("stop-immediately-after-starting", "[commissioner]")
 {
+    CommissionerHandler dummyHandler;
+
     Config config;
     config.mEnableCcm = false;
     config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
     // This creates an CommissionerSafe instance.
     std::shared_ptr<Commissioner> commissioner;
-    REQUIRE(Commissioner::Create(commissioner, config, nullptr) == Error::kNone);
+    REQUIRE(Commissioner::Create(commissioner, dummyHandler, config) == Error::kNone);
     REQUIRE(commissioner != nullptr);
 }
 
