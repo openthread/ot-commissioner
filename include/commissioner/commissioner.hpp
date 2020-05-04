@@ -214,10 +214,7 @@ public:
      *                    was accepted by the leader.
      *
      */
-    virtual void OnKeepAliveResponse(Error aError)
-    {
-        (void)aError;
-    }
+    virtual void OnKeepAliveResponse(Error aError) { (void)aError; }
 
     /**
      * This function notifies the receiving a PAN ID conflict answer.
