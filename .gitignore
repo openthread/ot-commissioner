@@ -64,3 +64,7 @@ doc
 __pycache__/
 venv/
 *.py[cod]
+
+# Java
+*.java
+com/google/openthread/commissioner

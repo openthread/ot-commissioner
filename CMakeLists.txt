@@ -32,6 +32,7 @@ project(ot-commissioner VERSION 1.0.0)
 option(OT_COMM_ANDROID          "Build with Android NDK" OFF)
 option(OT_COMM_APP              "Build the CLI App" ON)
 option(OT_COMM_COVERAGE         "Enable coverage reporting" OFF)
+option(OT_COMM_JAVA             "Build Java binding" OFF)
 option(OT_COMM_TEST             "Build tests" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -46,6 +47,5 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(src)
-
 add_subdirectory(tools)
 add_subdirectory(third_party EXCLUDE_FROM_ALL)

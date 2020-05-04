@@ -59,8 +59,7 @@ if [ "$(uname)" = "Linux" ]; then
     ## FIXME(wgtdkp): this is only apt install
     ## Install packages
     sudo apt-get update
-    sudo apt-get install git \
-                         wget \
+    sudo apt-get install wget \
                          libssl-dev \
                          build-essential \
                          software-properties-common \
@@ -76,7 +75,8 @@ if [ "$(uname)" = "Linux" ]; then
                          ninja-build \
                          python-setuptools \
                          python-pip \
-                         lcov -y
+                         lcov \
+                         swig -y
 
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
@@ -94,7 +94,15 @@ elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
 
     ## Install packages
-    brew install git coreutils readline ncurses llvm@6 cmake ninja lcov && true
+    brew install coreutils \
+                 readline \
+                 ncurses \
+                 llvm@6 \
+                 cmake \
+                 ninja \
+                 lcov \
+                 swig && true
+
     sudo ln -s "$(brew --prefix llvm@6)/bin/clang-format" /usr/local/bin/clang-format-6.0
 
     ## Install latest cmake
