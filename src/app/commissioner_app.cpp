@@ -111,6 +111,14 @@ exit:
 void CommissionerApp::Stop()
 {
     IgnoreError(mCommissioner->Resign());
+
+    mJoiners.clear();
+    mPanIdConflicts.clear();
+    mEnergyReports.clear();
+    mActiveDataset  = ActiveOperationalDataset();
+    mPendingDataset = PendingOperationalDataset();
+    mCommDataset    = MakeDefaultCommissionerDataset();
+    mBbrDataset     = BbrDataset();
 }
 
 void CommissionerApp::AbortRequests()
