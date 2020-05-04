@@ -141,18 +141,16 @@ public:
     /**
      * The function notifies the start of a joining request from given joiner.
      *
-     * @param[out] aPSKd      The password of the joiner.
      * @param[in]  aJoinerId  A joiner ID.
      *
-     * @return Error::kNotFound  Cannot find the given joiner.
-     * @return Error::kNone      The given joiner is found, EUI64 and PSKd are set.
+     * @return PSKd of the joiner. An empty PSKd indicates that the joiner is not
+     *         enabled.
      *
      */
-    virtual Error OnJoinerRequest(std::string &aPSKd, const ByteArray &aJoinerId)
+    virtual std::string OnJoinerRequest(const ByteArray &aJoinerId)
     {
-        (void)aPSKd;
         (void)aJoinerId;
-        return Error::kNotFound;
+        return "";
     }
 
     /**

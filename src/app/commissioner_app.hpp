@@ -102,7 +102,7 @@ public:
     ~CommissionerApp() = default;
 
     // Handle commissioner events.
-    Error OnJoinerRequest(std::string &aPSKd, const ByteArray &aJoinerId) override;
+    std::string OnJoinerRequest(const ByteArray &aJoinerId) override;
 
     void OnJoinerConnected(const ByteArray &aJoinerId, Error aError) override;
 

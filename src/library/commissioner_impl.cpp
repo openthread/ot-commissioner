@@ -2020,11 +2020,11 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}", utils::Hex(joinerId),
               joinerRouterLocator, dtlsRecords.size());
 
-    error = mCommissionerHandler.OnJoinerRequest(joinerPSKd, joinerId);
-    if (error != Error::kNone)
+    joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
+    if (joinerPSKd.empty())
     {
         LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
-        ExitNow();
+        ExitNow(error = Error::kReject);
     }
 
     {

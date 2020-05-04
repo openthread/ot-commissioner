@@ -1194,29 +1194,25 @@ void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const Commissioner
 #undef SET_IF_PRESENT
 }
 
-Error CommissionerApp::OnJoinerRequest(std::string &aPSKd, const ByteArray &aJoinerId)
+std::string CommissionerApp::OnJoinerRequest(const ByteArray &aJoinerId)
 {
-    Error error;
+    std::string pskd;
 
     auto joinerInfo = mJoiners.find({JoinerType::kMeshCoP, aJoinerId});
     if (joinerInfo != mJoiners.end())
     {
-        aPSKd = joinerInfo->second.mPSKd;
-        ExitNow(error = Error::kNone);
+        ExitNow(pskd = joinerInfo->second.mPSKd);
     }
 
     // Check if all joiners has been enabled.
     joinerInfo = mJoiners.find({JoinerType::kMeshCoP, Commissioner::ComputeJoinerId(0)});
     if (joinerInfo != mJoiners.end())
     {
-        aPSKd = joinerInfo->second.mPSKd;
-        ExitNow(error = Error::kNone);
+        ExitNow(pskd = joinerInfo->second.mPSKd);
     }
 
-    error = Error::kNotFound;
-
 exit:
-    return error;
+    return pskd;
 }
 
 void CommissionerApp::OnJoinerConnected(const ByteArray &aJoinerId, Error aError)
