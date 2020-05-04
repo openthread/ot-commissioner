@@ -57,13 +57,11 @@ exit:
 
 Error CommissionerApp::Init(const Config &aConfig)
 {
-    Error error        = Error::kNone;
-    auto  commissioner = Commissioner::Create(aConfig, nullptr);
+    Error error;
 
-    VerifyOrExit(commissioner != nullptr, error = Error::kInvalidArgs);
-    SuccessOrExit(error = commissioner->Start());
+    SuccessOrExit(error = Commissioner::Create(mCommissioner, aConfig, nullptr));
+    SuccessOrExit(error = mCommissioner->Start());
 
-    mCommissioner = commissioner;
     mCommissioner->SetPanIdConflictHandler(
         [this](const std::string *aPeerAddr, const ChannelMask *aChannelMask, const uint16_t *aPanId, Error aError) {
             HandlePanIdConflict(aPeerAddr, aChannelMask, aPanId, aError);

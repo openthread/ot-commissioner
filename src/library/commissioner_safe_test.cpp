@@ -47,8 +47,8 @@ TEST_CASE("stop-immediately-after-starting", "[commissioner]")
     config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
     // This creates an CommissionerSafe instance.
-    auto commissioner = Commissioner::Create(config, nullptr);
-    REQUIRE(commissioner != nullptr);
+    std::shared_ptr<Commissioner> commissioner;
+    REQUIRE(Commissioner::Create(commissioner, config, nullptr) == Error::kNone);
 }
 
 } // namespace commissioner
