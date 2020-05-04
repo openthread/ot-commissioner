@@ -193,6 +193,7 @@ public:
      * @return  A boolean indicates whether the joiner is accepted.
      *
      * @note This will be called when A well-formed JOIN_FIN.req has been received.
+     *
      */
     virtual bool OnJoinerFinalize(const ByteArray &  aJoinerId,
                                   const std::string &aVendorName,
@@ -346,25 +347,6 @@ public:
      * @return The configuration.
      */
     virtual const Config &GetConfig() const = 0;
-
-    /**
-     * @brief Start the commissioner event loop.
-     *
-     * @return Error::kNone, succeed; otherwise, failed.
-     *
-     * @note A commissioner must be started before it can send TMF requests.
-     *       If the commissioner is created with @p aEventBase != nullptr,
-     *       this function will start event loop in current thread and wait
-     *       until calling `Stop`; Otherwise, this function will start
-     *       event loop in seprate thread.
-     */
-    virtual Error Start() = 0;
-
-    /**
-     * @brief Stop the commissioner event loop.
-     *
-     */
-    virtual void Stop() = 0;
 
     /**
      * @brief Asynchronously connect to a Thread network.

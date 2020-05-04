@@ -30,6 +30,7 @@
 #define OT_COMM_LIBRARY_COMMISSIONER_IMPL_HPP_
 
 #include <atomic>
+#include <memory>
 
 #include <commissioner/commissioner.hpp>
 
@@ -74,7 +75,7 @@ public:
 
     Error Init(const Config &aConfig);
 
-    ~CommissionerImpl() override;
+    ~CommissionerImpl() override = default;
 
     const Config &GetConfig() const override;
 
@@ -89,12 +90,6 @@ public:
     const std::string &GetDomainName() const override;
 
     void AbortRequests() override;
-
-    // Start the commissioner event loop and will not return until it is stopped.
-    Error Start() override;
-
-    // Stop the commissioner.
-    void Stop() override;
 
     void  Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error Connect(const std::string &, uint16_t) override { return Error::kNotImplemented; }

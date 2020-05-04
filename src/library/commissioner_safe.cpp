@@ -76,13 +76,16 @@ Error CommissionerSafe::Init(const Config &aConfig)
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
 
+    // Do not propogate the returned error.
+    SuccessOrExit(StartEventLoopThread());
+
 exit:
     return error;
 }
 
 CommissionerSafe::~CommissionerSafe()
 {
-    Stop();
+    StopEventLoopThread();
 }
 
 const Config &CommissionerSafe::GetConfig() const
@@ -91,20 +94,22 @@ const Config &CommissionerSafe::GetConfig() const
     return mImpl.GetConfig();
 }
 
-Error CommissionerSafe::Start()
+Error CommissionerSafe::StartEventLoopThread()
 {
     Error error = Error::kNone;
 
     VerifyOrExit(!mEventThread.joinable(), error = Error::kAlready);
 
-    mEventThread = std::thread([this]() { IgnoreError(mImpl.Start()); });
+    mEventThread = std::thread([this]() {
+        LOG_INFO("event loop started in background thread");
+        event_base_loop(mEventBase.Get(), EVLOOP_NO_EXIT_ON_EMPTY);
+    });
 
 exit:
     return error;
 }
 
-// Stop the commissioner running in background.
-void CommissionerSafe::Stop()
+void CommissionerSafe::StopEventLoopThread(void)
 {
     std::promise<void> pro;
 
@@ -114,7 +119,7 @@ void CommissionerSafe::Stop()
     // This makes sure the event loop has been started when we
     // trying to break it.
     PushAsyncRequest([&pro, this]() {
-        mImpl.Stop();
+        event_base_loopbreak(mEventBase.Get());
         pro.set_value();
     });
 
