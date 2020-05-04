@@ -1893,6 +1893,8 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
 {
     Error       error = Error::kNone;
     tlv::TlvSet tlvSet;
+    tlv::TlvPtr channelMaskTlv;
+    tlv::TlvPtr panIdTlv;
     ChannelMask channelMask;
     uint16_t    panId;
     std::string peerAddr = "unknown address";
@@ -1904,16 +1906,12 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
     mProxyClient.SendEmptyChanged(aRequest);
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aRequest));
-    if (auto channelMaskTlv = tlvSet[tlv::Type::kChannelMask])
-    {
-        SuccessOrExit(error = DecodeChannelMask(channelMask, channelMaskTlv->GetValue()));
-    }
-    if (auto panIdTlv = tlvSet[tlv::Type::kPanId])
-    {
-        panId = panIdTlv->GetValueAsUint16();
-    }
+    VerifyOrExit((channelMaskTlv = tlvSet[tlv::Type::kChannelMask]) != nullptr, error = Error::kBadFormat);
+    VerifyOrExit((panIdTlv = tlvSet[tlv::Type::kPanId]) != nullptr, error = Error::kBadFormat);
 
-    error = Error::kNone;
+    SuccessOrExit(error = DecodeChannelMask(channelMask, channelMaskTlv->GetValue()));
+    panId = panIdTlv->GetValueAsUint16();
+
     mCommissionerHandler.OnPanIdConflict(peerAddr, channelMask, panId);
 
 exit:

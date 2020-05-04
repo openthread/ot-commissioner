@@ -1255,9 +1255,7 @@ exit:
     return accepted;
 }
 
-void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr,
-                                      const ChannelMask &aChannelMask,
-                                      const uint16_t &   aPanId)
+void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
 {
     (void)aPeerAddr;
     // Main thread will wait for updates to mPanIdConflicts,

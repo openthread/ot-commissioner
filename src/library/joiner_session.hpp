@@ -134,12 +134,7 @@ private:
 
     using RelaySocketPtr = std::shared_ptr<RelaySocket>;
 
-    ByteArray GetJoinerIid() const
-    {
-        auto joinerIid = mJoinerId;
-        joinerIid[0] ^= kLocalExternalAddrMask;
-        return joinerIid;
-    }
+    ByteArray GetJoinerIid() const;
 
     void HandleConnect(Error aError);
 

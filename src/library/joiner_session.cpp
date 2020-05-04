@@ -92,6 +92,13 @@ void JoinerSession::Disconnect()
     mDtlsSession->Disconnect(Error::kAbort);
 }
 
+ByteArray JoinerSession::GetJoinerIid() const
+{
+    auto joinerIid = mJoinerId;
+    joinerIid[0] ^= kLocalExternalAddrMask;
+    return joinerIid;
+}
+
 void JoinerSession::HandleConnect(Error aError)
 {
     mCommImpl.mCommissionerHandler.OnJoinerConnected(mJoinerId, aError);

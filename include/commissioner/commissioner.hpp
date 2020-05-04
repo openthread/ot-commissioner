@@ -217,7 +217,7 @@ public:
      * @param[in] aPanId        The PAN ID that has a conflict.
      *
      */
-    virtual void OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, const uint16_t &aPanId)
+    virtual void OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
     {
         (void)aPeerAddr;
         (void)aChannelMask;
@@ -263,7 +263,7 @@ public:
     /**
      * The response handler of a general TMF request.
      *
-     * @param[in] aError  A error code.
+     * @param[in] aError  An error code.
      */
     using ErrorHandler = std::function<void(Error aError)>;
 
@@ -271,12 +271,12 @@ public:
      * The response handler of a general TMF request.
      *
      * @param[in] aResponseData  A response data. nullable.
-     * @param[in] aError         A error code.
+     * @param[in] aError         An error code.
      *
      * @note @p aResponseData is guaranteed to be not null only when @p aError == Error::kNone.
      *       Otherwise, @p aResponseData should never be accessed.
      */
-    template <class T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
+    template <typename T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
 
     /**
      * The petition result handler.
@@ -293,7 +293,7 @@ public:
      * @brief Create an instance of the commissioner.
      *
      * @param[out] aCommissioner  The created commissioner instance.
-     * @param[in] aHandler    A handler of commissioner events.
+     * @param[in]  aHandler       A handler of commissioner events.
      * @param[in]  aConfig        A commissioner configuration.
      *
      * @retval Error::kNone  Successfully created a commissioner instance.
@@ -1000,12 +1000,12 @@ public:
      * by sending MLR.req message to the Primary Backbone Router.
      * It will not return until errors happened, timeouted or succeed.
      *
-     * @param[out] aStatus            The Status.
-     * @param[in] aPbbrAddr           A Primary Backbone Router Address that the MLR.req message
-     *                                will be sent to.
-     * @param[in] aMulticastAddrList  A list of multicast address to be registered.
-     * @param[in] aTimeout            A time period after which the registration as a
-     *                                listener to the included multicast group(s) expires; In seconds.
+     * @param[out] aStatus             The Status.
+     * @param[in]  aPbbrAddr           A Primary Backbone Router Address that the MLR.req message
+     *                                 will be sent to.
+     * @param[in]  aMulticastAddrList  A list of multicast address to be registered.
+     * @param[in]  aTimeout            A time period after which the registration as a
+     *                                 listener to the included multicast group(s) expires; In seconds.
      * @return Error::kNone, succeed, the address has been successfully registered; Otherwise, failed;
      */
     virtual Error RegisterMulticastListener(uint8_t &                       aStatus,
