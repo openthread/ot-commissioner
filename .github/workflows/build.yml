@@ -148,6 +148,7 @@ jobs:
                 -DCMAKE_BUILD_TYPE=Release                                                          \
                 -DOT_COMM_ANDROID=ON                                                                \
                 -DOT_COMM_APP=OFF                                                                   \
+                -FOT_COMM_TEST=OFF                                                                  \
                 -S . -B build
           cmake --build build
 
