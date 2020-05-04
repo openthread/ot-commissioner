@@ -234,7 +234,7 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
 exit:
     if (!error.empty())
     {
-        LOG_WARN("bad configuration: {}", error);
+        LOG_WARN(LOG_REGION_CONFIG, "bad configuration: {}", error);
         return Error::kFailed;
     }
     else
@@ -245,12 +245,12 @@ exit:
 
 void CommissionerImpl::LoggingConfig()
 {
-    LOG_INFO("config: Id = {}", mConfig.mId);
-    LOG_INFO("config: enable CCM = {}", mConfig.mEnableCcm);
-    LOG_INFO("config: domain name = {}", mConfig.mDomainName);
-    LOG_INFO("config: keep alive interval = {}", mConfig.mKeepAliveInterval);
-    LOG_INFO("config: enable DTLS debug logging = {}", mConfig.mEnableDtlsDebugLogging);
-    LOG_INFO("config: maximum connection number = {}", mConfig.mMaxConnectionNum);
+    LOG_INFO(LOG_REGION_CONFIG, "Id = {}", mConfig.mId);
+    LOG_INFO(LOG_REGION_CONFIG, "enable CCM = {}", mConfig.mEnableCcm);
+    LOG_INFO(LOG_REGION_CONFIG, "domain name = {}", mConfig.mDomainName);
+    LOG_INFO(LOG_REGION_CONFIG, "keep alive interval = {}", mConfig.mKeepAliveInterval);
+    LOG_INFO(LOG_REGION_CONFIG, "enable DTLS debug logging = {}", mConfig.mEnableDtlsDebugLogging);
+    LOG_INFO(LOG_REGION_CONFIG, "maximum connection number = {}", mConfig.mMaxConnectionNum);
 
     // Do not logging credentials
 }
@@ -272,7 +272,7 @@ void CommissionerImpl::SetCommissioningHandler(CommissioningHandler aCommissioni
 
 Error CommissionerImpl::Start()
 {
-    LOG_INFO("event loop started in background thread");
+    LOG_INFO(LOG_REGION_GENERIC, "event loop started in background thread");
     event_base_loop(mEventBase, EVLOOP_NO_EXIT_ON_EMPTY);
     return Error::kNone;
 }
@@ -292,12 +292,12 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
         }
         else
         {
-            LOG_DEBUG("DTLS connection to border agent succeed");
+            LOG_DEBUG(LOG_REGION_GENERIC, "DTLS connection to border agent succeed");
             SendPetition(aHandler);
         }
     };
 
-    LOG_DEBUG("starting petition: border agent = ({}, {})", aAddr, aPort);
+    LOG_DEBUG(LOG_REGION_GENERIC, "starting petition: border agent = ({}, {})", aAddr, aPort);
 
     if (mBrClient.IsConnected())
     {
@@ -410,7 +410,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
     error = Error::kNone;
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_COMMISSIONER_GET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_GET.req");
 
 exit:
     if (error != Error::kNone)
@@ -448,7 +448,7 @@ void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const Commi
     error = Error::kNone;
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_COMMISSIONER_SET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_SET.req");
 
 exit:
     if (error != Error::kNone)
@@ -482,7 +482,7 @@ void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aD
     error = Error::kNone;
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_BBR_SET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
 
 exit:
     if (error != Error::kNone)
@@ -528,7 +528,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_BBR_GET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
 
 exit:
     if (error != Error::kNone)
@@ -576,7 +576,7 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_ACTIVE_GET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_GET.req");
 
 exit:
     if (error != Error::kNone)
@@ -616,7 +616,7 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
     error = Error::kNone;
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_ACTIVE_SET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_SET.req");
 
 exit:
     if (error != Error::kNone)
@@ -667,7 +667,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_PENDING_GET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_GET.req");
 
 exit:
     if (error != Error::kNone)
@@ -701,7 +701,7 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     error = Error::kNone;
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent MGMT_PENDING_SET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_SET.req");
 
 exit:
     if (error != Error::kNone)
@@ -751,7 +751,7 @@ void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     
     error = Error::kNone;
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
-    LOG_DEBUG("sent MGMT_SEC_PENDING_SET.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_SEC_PENDING_SET.req");
 
 exit:
     if (error != Error::kNone)
@@ -818,7 +818,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
     error = Error::kNone;
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
-    LOG_DEBUG("sent MGMT_NET_MIGRATE.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_NET_MIGRATE.req");
 
 exit:
     if (error != Error::kNone)
@@ -888,7 +888,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
     error = Error::kNone;
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
-    LOG_DEBUG("sent MLR.req");
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MLR.req");
 
 exit:
     if (error != Error::kNone)
@@ -1132,7 +1132,8 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         mState = State::kActive;
         mKeepAliveTimer.Start(GetKeepAliveInterval());
 
-        LOG_INFO("petition succeed, start keep-alive timer with {} seconds", GetKeepAliveInterval().count() / 1000);
+        LOG_INFO(LOG_REGION_GENERIC, "petition succeed, start keep-alive timer with {} seconds",
+                 GetKeepAliveInterval().count() / 1000);
 
     exit:
         if (error != Error::kNone)
@@ -1156,7 +1157,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent petition request");
+    LOG_DEBUG(LOG_REGION_GENERIC, "sent petition request");
 
 exit:
     if (error != Error::kNone)
@@ -1184,7 +1185,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
             Resign([](Error) {});
 
             // TODO(wgtdkp): notify user that we are rejected.
-            LOG_WARN("keep alive message rejected: {}", ErrorToString(error));
+            LOG_WARN(LOG_REGION_GENERIC, "keep alive message rejected: {}", ErrorToString(error));
         }
         return;
     };
@@ -1206,12 +1207,12 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG("sent keep alive message: keepAlive={}", aKeepAlive);
+    LOG_DEBUG(LOG_REGION_GENERIC, "sent keep alive message: keepAlive={}", aKeepAlive);
 
 exit:
     if (error != Error::kNone)
     {
-        LOG_WARN("sending keep alive message failed: {}", ErrorToString(error));
+        LOG_WARN(LOG_REGION_GENERIC, "sending keep alive message failed: {}", ErrorToString(error));
     }
 }
 
@@ -1920,7 +1921,7 @@ void CommissionerImpl::HandleDatasetChanged(const coap::Request &aRequest)
 
     IgnoreError(aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr));
 
-    LOG_INFO("received MGMT_DATASET_CHANGED.ntf from {}", peerAddr);
+    LOG_INFO(LOG_REGION_MGMT, "received MGMT_DATASET_CHANGED.ntf from {}", peerAddr);
 
     mProxyClient.SendEmptyChanged(aRequest);
 
@@ -1940,7 +1941,7 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
 
     IgnoreError(aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr));
 
-    LOG_INFO("received MGMT_PANID_CONFLICT.ans from {}", peerAddr);
+    LOG_INFO(LOG_REGION_MGMT, "received MGMT_PANID_CONFLICT.ans from {}", peerAddr);
 
     mProxyClient.SendEmptyChanged(aRequest);
 
@@ -1963,7 +1964,7 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
 exit:
     if (error != Error::kNone)
     {
-        LOG_WARN("handle MGMT_PANID_CONFLICT.ans from {} failed: {}", peerAddr, ErrorToString(error));
+        LOG_WARN(LOG_REGION_MGMT, "handle MGMT_PANID_CONFLICT.ans from {} failed: {}", peerAddr, ErrorToString(error));
 
         if (mPanIdConflictHandler != nullptr)
         {
@@ -1982,7 +1983,7 @@ void CommissionerImpl::HandleEnergyReport(const coap::Request &aRequest)
 
     IgnoreError(aRequest.GetEndpoint()->GetPeerAddr().ToString(peerAddr));
 
-    LOG_INFO("received MGMT_ED_REPORT.ans from {}", peerAddr);
+    LOG_INFO(LOG_REGION_MGMT, "received MGMT_ED_REPORT.ans from {}", peerAddr);
 
     mProxyClient.SendEmptyChanged(aRequest);
 
@@ -2005,7 +2006,7 @@ void CommissionerImpl::HandleEnergyReport(const coap::Request &aRequest)
 exit:
     if (error != Error::kNone)
     {
-        LOG_WARN("handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, ErrorToString(error));
+        LOG_WARN(LOG_REGION_MGMT, "handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, ErrorToString(error));
 
         if (mEnergyReportHandler != nullptr)
         {
@@ -2074,12 +2075,12 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     VerifyOrExit(tlv->IsValid(), error = Error::kBadFormat);
     dtlsRecords = tlv->GetValue();
 
-    LOG_DEBUG("received RLY_RX.ntf: joinerIID={}, joinerRouterLocator={}, length={}", utils::Hex(joinerIid),
-              joinerRouterLocator, dtlsRecords.size());
+    LOG_DEBUG(LOG_REGION_MESHCOP, "received RLY_RX.ntf: joinerIID={}, joinerRouterLocator={}, length={}",
+              utils::Hex(joinerIid), joinerRouterLocator, dtlsRecords.size());
 
     if (mJoinerInfoRequester == nullptr)
     {
-        LOG_WARN("joiner info requester is nil, give up");
+        LOG_WARN(LOG_REGION_MESHCOP, "joiner info requester is nil, give up");
         ExitNow();
     }
     else
@@ -2089,7 +2090,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
         joinerInfo = mJoinerInfoRequester(JoinerType::kMeshCoP, joinerId);
         if (joinerInfo == nullptr)
         {
-            LOG_INFO("joiner(IID={}) is disabled", utils::Hex(joinerIid));
+            LOG_INFO(LOG_REGION_MESHCOP, "joiner(IID={}) is disabled", utils::Hex(joinerIid));
             ExitNow();
         }
     }
@@ -2118,19 +2119,19 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             std::string peerAddr = "unknown address";
             IgnoreError(session.GetPeerAddr().ToString(peerAddr));
 
-            LOG_DEBUG("received a new joiner(IID={}) DTLS connection from [{}]:{}", utils::Hex(session.GetJoinerIid()),
-                      peerAddr, session.GetPeerPort());
+            LOG_DEBUG(LOG_REGION_MESHCOP, "received a new joiner(IID={}) DTLS connection from [{}]:{}",
+                      utils::Hex(session.GetJoinerIid()), peerAddr, session.GetPeerPort());
 
             auto onConnected = [peerAddr](CommissioningSession &aSession, Error aError) {
                 if (aError != Error::kNone)
                 {
-                    LOG_ERROR("a joiner(IID={}) DTLS connection from [{}]:{} failed: {}",
+                    LOG_ERROR(LOG_REGION_MESHCOP, "a joiner(IID={}) DTLS connection from [{}]:{} failed: {}",
                               utils::Hex(aSession.GetJoinerIid()), peerAddr, aSession.GetPeerPort(),
                               ErrorToString(aError));
                 }
                 else
                 {
-                    LOG_INFO("a joiner(IID={}) DTLS connection from [{}]:{} succeed",
+                    LOG_INFO(LOG_REGION_MESHCOP, "a joiner(IID={}) DTLS connection from [{}]:{} succeed",
                              utils::Hex(aSession.GetJoinerIid()), peerAddr, aSession.GetPeerPort());
                 }
             };
@@ -2143,7 +2144,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             }
             else
             {
-                LOG_INFO("commissioning timer started, expiration-time={}",
+                LOG_INFO(LOG_REGION_MESHCOP, "commissioning timer started, expiration-time={}",
                          TimePointToString(session.GetExpirationTime()));
                 mCommissioningSessionTimer.Start(session.GetExpirationTime());
             }
@@ -2157,7 +2158,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 exit:
     if (error != Error::kNone)
     {
-        LOG_ERROR("failed to handle RLY_RX.ntf message: {}", ErrorToString(error));
+        LOG_ERROR(LOG_REGION_MESHCOP, "handle RLY_RX.ntf message failed: {}", ErrorToString(error));
     }
 }
 
@@ -2167,7 +2168,7 @@ void CommissionerImpl::HandleCommissioningSessionTimer(Timer &aTimer)
     bool      hasNextShot = false;
     auto      now         = Clock::now();
 
-    LOG_DEBUG("commissioning session timer triggered");
+    LOG_DEBUG(LOG_REGION_MESHCOP, "commissioning session timer triggered");
 
     auto it = mCommissioningSessions.begin();
     while (it != mCommissioningSessions.end())
@@ -2178,7 +2179,8 @@ void CommissionerImpl::HandleCommissioningSessionTimer(Timer &aTimer)
         {
             it = mCommissioningSessions.erase(it);
 
-            LOG_INFO("commissioning session (joiner IID={}) removed", utils::Hex(session.GetJoinerIid()));
+            LOG_INFO(LOG_REGION_MESHCOP, "session(={}, joinerIid={}) removed", static_cast<void *>(&(*it)),
+                     utils::Hex(session.GetJoinerIid()));
         }
         else
         {

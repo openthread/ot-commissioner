@@ -121,7 +121,8 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
 exit:
     if (error != Error::kNone)
     {
-        LOG_WARN("handling a UDP_RX.ntf request failed: {}", ErrorToString(error));
+        LOG_WARN(LOG_REGION_COAP, "client(={}) handle UDP_RX.ntf request failed: {}", static_cast<void *>(this),
+                 ErrorToString(error));
     }
     return;
 }

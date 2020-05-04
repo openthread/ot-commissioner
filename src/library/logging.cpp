@@ -49,11 +49,11 @@ std::shared_ptr<Logger> GetLogger(void)
     return sLogger;
 }
 
-void Log(LogLevel aLevel, const std::string &aMessage)
+void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMessage)
 {
     if (GetLogger())
     {
-        GetLogger()->Log(aLevel, aMessage);
+        GetLogger()->Log(aLevel, aRegion, aMessage);
     }
 }
 

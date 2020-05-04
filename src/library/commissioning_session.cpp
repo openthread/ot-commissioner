@@ -114,8 +114,10 @@ Error CommissioningSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aInclu
 
     mCommImpl.mBrClient.SendRequest(rlyTx, nullptr);
 
-    LOG_DEBUG("sent RLY_TX.ntf: CommissioningSessionState={}, joinerIID={}, length={}, includeKek={}",
-              mDtlsSession->GetStateString(), utils::Hex(GetJoinerIid()), aDtlsMessage.size(), aIncludeKek);
+    LOG_DEBUG(LOG_REGION_MESHCOP,
+              "commissioningSession(={}) sent RLY_TX.ntf: SessionState={}, joinerIID={}, length={}, includeKek={}",
+              static_cast<void *>(this), mDtlsSession->GetStateString(), utils::Hex(GetJoinerIid()),
+              aDtlsMessage.size(), aIncludeKek);
 
 exit:
     return error;
@@ -162,9 +164,10 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
         vendorData      = vendorDataTlv->GetValue();
     }
 
-    LOG_INFO("received JOIN_FIN.req: vendorName={}, vendorModel={}, vendorSWVversion={}, "
+    LOG_INFO(LOG_REGION_MESHCOP,
+             "session(={}) received JOIN_FIN.req: vendorName={}, vendorModel={}, vendorSWVversion={}, "
              "vendorStackVersion={}, provisioningUrl={}, vendorData={}",
-             vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
+             static_cast<void *>(this), vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
              vendorSwVersionTlv->GetValueAsString(), utils::Hex(vendorStackVersionTlv->GetValue()), provisioningUrl,
              utils::Hex(vendorData));
 
@@ -185,11 +188,12 @@ void CommissioningSession::HandleJoinFin(const coap::Request &aJoinFin)
 exit:
     if (error != Error::kNone)
     {
-        LOG_WARN("handle JOIN_FIN.req failed: {}", ErrorToString(error));
+        LOG_WARN(LOG_REGION_MESHCOP, "session(={}) handle JOIN_FIN.req failed: {}", static_cast<void *>(this),
+                 ErrorToString(error));
     }
 
     IgnoreError(SendJoinFinResponse(aJoinFin, accepted));
-    LOG_INFO("sent JOIN_FIN.rsp: accepted={}", accepted);
+    LOG_INFO(LOG_REGION_MESHCOP, "session(={}) sent JOIN_FIN.rsp: accepted={}", static_cast<void *>(this), accepted);
 }
 
 Error CommissioningSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
@@ -246,7 +250,8 @@ int CommissioningSession::RelaySocket::Send(const uint8_t *aBuf, size_t aLen)
 exit:
     if (error != Error::kNone)
     {
-        LOG_ERROR("failed to RLY_TX.ntf: {}", ErrorToString(error));
+        LOG_ERROR(LOG_REGION_MESHCOP, "session(={}) send RLY_TX.ntf failed: {}",
+                  static_cast<void *>(&mCommissioningSession), ErrorToString(error));
     }
     return error == Error::kNone ? static_cast<int>(aLen) : MBEDTLS_ERR_NET_SEND_FAILED;
 }

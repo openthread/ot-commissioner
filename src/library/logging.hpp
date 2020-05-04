@@ -38,17 +38,27 @@
 
 #include <commissioner/commissioner.hpp>
 
-#define LOG(aLevel, aFormat, ...)                                     \
-    do                                                                \
-    {                                                                 \
-        Log(aLevel, fmt::format(FMT_STRING(aFormat), ##__VA_ARGS__)); \
+#define LOG_REGION_COAP "coap"
+#define LOG_REGION_GENERIC "commissioner"
+#define LOG_REGION_CONFIG "config"
+#define LOG_REGION_DTLS "dtls"
+#define LOG_REGION_MBEDTLS "mbedtls"
+#define LOG_REGION_MGMT "mgmt"
+#define LOG_REGION_SOCKET "socket"
+#define LOG_REGION_TOKEN_MANAGER "token-manager"
+#define LOG_REGION_MESHCOP "meshcop"
+
+#define LOG(aLevel, aRegion, aFmt, ...)                                     \
+    do                                                                      \
+    {                                                                       \
+        Log(aLevel, aRegion, fmt::format(FMT_STRING(aFmt), ##__VA_ARGS__)); \
     } while (false)
 
-#define LOG_DEBUG(fmt, ...) LOG(LogLevel::kDebug, fmt, ##__VA_ARGS__)
-#define LOG_INFO(fmt, ...) LOG(LogLevel::kInfo, fmt, ##__VA_ARGS__)
-#define LOG_WARN(fmt, ...) LOG(LogLevel::kWarn, fmt, ##__VA_ARGS__)
-#define LOG_ERROR(fmt, ...) LOG(LogLevel::kError, fmt, ##__VA_ARGS__)
-#define LOG_CRIT(fmt, ...) LOG(LogLevel::kCritical, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(aRegion, aFmt, ...) LOG(LogLevel::kDebug, aRegion, aFmt, ##__VA_ARGS__)
+#define LOG_INFO(aRegion, aFmt, ...) LOG(LogLevel::kInfo, aRegion, aFmt, ##__VA_ARGS__)
+#define LOG_WARN(aRegion, aFmt, ...) LOG(LogLevel::kWarn, aRegion, aFmt, ##__VA_ARGS__)
+#define LOG_ERROR(aRegion, aFmt, ...) LOG(LogLevel::kError, aRegion, aFmt, ##__VA_ARGS__)
+#define LOG_CRIT(aRegion, aFmt, ...) LOG(LogLevel::kCritical, aRegion, aFmt, ##__VA_ARGS__)
 
 namespace ot {
 
@@ -59,7 +69,7 @@ namespace commissioner {
 void                    InitLogger(std::shared_ptr<Logger> aLogger);
 std::shared_ptr<Logger> GetLogger(void);
 
-void Log(LogLevel aLevel, const std::string &aMessage);
+void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMessage);
 
 } // namespace commissioner
 

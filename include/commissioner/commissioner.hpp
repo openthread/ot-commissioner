@@ -87,10 +87,12 @@ public:
     /**
      * @brief The function write a single log message.
      *
-     * @param[in] aLevel    A logging level.
-     * @param[in] aMsg      A logging message.
+     * @param[in] aLevel   A logging level.
+     * @param[in] aRegion  A logging region.
+     * @param[in] aMsg     A logging message.
+     *
      */
-    virtual void Log(LogLevel aLevel, const std::string &aMsg) = 0;
+    virtual void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMsg) = 0;
 };
 
 /**
