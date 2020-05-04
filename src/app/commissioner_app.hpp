@@ -114,6 +114,8 @@ public:
                           const std::string &aProvisioningUrl,
                           const ByteArray &  aVendorData) override;
 
+    void OnKeepAliveResponse(Error aError) override;
+
     void OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId) override;
 
     void OnEnergyReport(const std::string &aPeerAddr,

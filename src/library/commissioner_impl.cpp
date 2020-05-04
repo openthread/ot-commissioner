@@ -1139,15 +1139,18 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         if (error == Error::kNone)
         {
             mKeepAliveTimer.Start(GetKeepAliveInterval());
+            LOG_INFO("keep alive message accepted, keep-alive timer restarted");
         }
         else
         {
             mState = State::kDisabled;
             Resign([](Error) {});
 
-            // TODO(wgtdkp): notify user that we are rejected.
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", ErrorToString(error));
         }
+
+        mCommissionerHandler.OnKeepAliveResponse(error);
+
         return;
     };
 

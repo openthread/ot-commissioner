@@ -208,6 +208,18 @@ public:
     }
 
     /**
+     * This funtions notifies the response of a keep-alive message.
+     *
+     * @param[in] aError  An error indicates whether the keep-alive message
+     *                    was accepted by the leader.
+     *
+     */
+    virtual void OnKeepAliveResponse(Error aError)
+    {
+        (void)aError;
+    }
+
+    /**
      * This function notifies the receiving a PAN ID conflict answer.
      *
      * @param[in] aPeerAddr     A peer address that sent the MGMT_PANID_CONFLICT.ans request.

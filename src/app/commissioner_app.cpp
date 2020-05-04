@@ -1251,6 +1251,13 @@ exit:
     return accepted;
 }
 
+void CommissionerApp::OnKeepAliveResponse(Error aError)
+{
+    (void)aError;
+
+    // Dummy handler.
+}
+
 void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
 {
     (void)aPeerAddr;
