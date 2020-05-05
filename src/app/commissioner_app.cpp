@@ -199,7 +199,7 @@ Error CommissionerApp::GetBorderAgentLocator(uint16_t &aLocator) const
     VerifyOrExit(IsActive(), error = Error::kInvalidState);
 
     // We must have Border Agent Locator in commissioner dataset.
-    ASSERT(mCommDataset.mPresentFlags & CommissionerDataset::kBorderAgentLocatorBit);
+    VerifyOrDie(mCommDataset.mPresentFlags & CommissionerDataset::kBorderAgentLocatorBit);
 
     aLocator = mCommDataset.mBorderAgentLocator;
 
@@ -429,7 +429,7 @@ Error CommissionerApp::GetActiveTimestamp(Timestamp &aTimestamp) const
 
     VerifyOrExit(IsActive(), error = Error::kInvalidState);
 
-    ASSERT(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit);
+    VerifyOrDie(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit);
     aTimestamp = mActiveDataset.mActiveTimestamp;
 
 exit:
@@ -448,7 +448,7 @@ Error CommissionerApp::GetChannel(Channel &aChannel)
     // TODO(wgtdkp): should we send MGMT_ACTIVE_GET.req for all GetXXX APIs ?
     SuccessOrExit(error = mCommissioner->GetActiveDataset(mActiveDataset, 0xFFFF));
 
-    ASSERT(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kChannelBit);
+    VerifyOrDie(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kChannelBit);
 
     aChannel = mActiveDataset.mChannel;
 
@@ -1080,7 +1080,7 @@ ByteArray &CommissionerApp::GetSteeringData(CommissionerDataset &aDataset, Joine
         return aDataset.mNmkpSteeringData;
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         aDataset.mPresentFlags |= CommissionerDataset::kSteeringDataBit;
         return aDataset.mSteeringData;
     }
@@ -1103,7 +1103,7 @@ uint16_t &CommissionerApp::GetJoinerUdpPort(CommissionerDataset &aDataset, Joine
         return aDataset.mNmkpUdpPort;
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         aDataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
         return aDataset.mJoinerUdpPort;
     }

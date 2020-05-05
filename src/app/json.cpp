@@ -678,14 +678,12 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     // the JSON library will map `aEnergyReportMap` into JSON array.
     for (auto &kv : aEnergyReportMap)
     {
-        auto &deviceAddr = kv.first;
-        auto &report     = kv.second;
-
-        ASSERT(deviceAddr.IsValid());
-        Error       error;
+        auto &      deviceAddr = kv.first;
+        auto &      report     = kv.second;
         std::string addr;
-        error = deviceAddr.ToString(addr);
-        ASSERT(error == Error::kNone);
+
+        VerifyOrDie(deviceAddr.IsValid());
+        SuccessOrDie(deviceAddr.ToString(addr));
 
         json[addr] = report;
     }

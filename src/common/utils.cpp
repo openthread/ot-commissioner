@@ -78,7 +78,7 @@ std::string Hex(const ByteArray &aBytes)
 
 static inline uint8_t Hex(char c)
 {
-    ASSERT(isxdigit(c));
+    VerifyOrDie(isxdigit(c));
     return c >= 'A' && c <= 'F' ? (c - 'A' + 10) : c >= 'a' && c <= 'f' ? (c - 'a' + 10) : (c - '0');
 }
 

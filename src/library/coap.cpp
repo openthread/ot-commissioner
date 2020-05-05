@@ -64,7 +64,7 @@ size_t Message::GetHeaderLength() const
 {
     ByteArray buf;
 
-    ASSERT(Serialize(mHeader, buf) == Error::kNone);
+    SuccessOrDie(Serialize(mHeader, buf));
     return buf.size();
 }
 
@@ -224,7 +224,7 @@ Error Message::Serialize(OptionType         aOptionNumber,
     size_t   firstByte   = aBuf.size();
     size_t   extend      = aBuf.size() + 1;
 
-    ASSERT(utils::to_underlying(aOptionNumber) >= aLastOptionNumber);
+    VerifyOrDie(utils::to_underlying(aOptionNumber) >= aLastOptionNumber);
 
     VerifyOrExit(IsValidOption(aOptionNumber, aOptionValue), error = Error::kBadFormat);
 
@@ -269,7 +269,7 @@ Error Message::Serialize(OptionType         aOptionNumber,
         aBuf[extend++] = deltaLength & 0xff;
     }
 
-    ASSERT(length + firstByte == extend);
+    VerifyOrDie(length + firstByte == extend);
 
     aBuf.insert(aBuf.end(), aOptionValue.GetOpaqueValue().begin(), aOptionValue.GetOpaqueValue().end());
 
@@ -338,7 +338,7 @@ Error Message::Deserialize(OptionType &     aOptionNumber,
         ExitNow(error = Error::kBadFormat);
     }
 
-    ASSERT(firstByte + length == extend);
+    VerifyOrDie(firstByte + length == extend);
 
     VerifyOrExit(valueLength + extend <= aBuf.size(), error = Error::kBadFormat);
 
@@ -417,7 +417,7 @@ void Coap::SendRequest(const Request &aRequest, ResponseHandler aHandler)
 
     VerifyOrExit(request->IsConfirmable() || request->IsNonConfirmable(), error = Error::kInvalidArgs);
 
-    ASSERT(request->GetMessageId() == 0);
+    VerifyOrDie(request->GetMessageId() == 0);
     request->SetMessageId(AllocMessageId());
     request->SetToken(kDefaultTokenLength);
 
@@ -471,7 +471,7 @@ void Coap::ReceiveMessage(Endpoint &aEndpoint, std::shared_ptr<Message> aMessage
     }
     else
     {
-        ASSERT(aMessage != nullptr);
+        VerifyOrDie(aMessage != nullptr);
 
         aMessage->SetEndpoint(&aEndpoint);
         if (aMessage->IsRequest())
@@ -785,7 +785,7 @@ void Coap::RequestsCache::Put(const RequestHolder &aRequestHolder)
 
 Coap::RequestHolder Coap::RequestsCache::Eliminate()
 {
-    ASSERT(!IsEmpty());
+    VerifyOrDie(!IsEmpty());
     auto ret = *mContainer.begin();
 
     mContainer.erase(mContainer.begin());
@@ -1113,7 +1113,7 @@ void Message::SetToken(const ByteArray &aToken)
 
 void Message::SetToken(uint8_t aTokenLength)
 {
-    ASSERT(aTokenLength <= sizeof(mHeader.mToken));
+    VerifyOrDie(aTokenLength <= sizeof(mHeader.mToken));
 
     mHeader.mTokenLength = aTokenLength;
     random::non_crypto::FillBuffer(mHeader.mToken, aTokenLength);

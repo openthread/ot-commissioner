@@ -52,7 +52,7 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
 
     (void)aSubType;
 
-    ASSERT(GetPeerAddr().IsValid() && GetPeerAddr().IsIpv6());
+    VerifyOrDie(GetPeerAddr().IsValid() && GetPeerAddr().IsIpv6());
 
     VerifyOrExit(mBrClient.IsConnected(), error = Error::kInvalidState);
 
@@ -76,7 +76,7 @@ void ProxyClient::SendRequest(const coap::Request & aRequest,
                               const Address &       aPeerAddr,
                               uint16_t              aPeerPort)
 {
-    ASSERT(aPeerAddr.IsValid() && aPeerAddr.IsIpv6());
+    VerifyOrDie(aPeerAddr.IsValid() && aPeerAddr.IsIpv6());
     mEndpoint.SetPeerAddr(aPeerAddr);
     mEndpoint.SetPeerPort(aPeerPort);
 

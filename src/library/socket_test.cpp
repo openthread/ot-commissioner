@@ -94,7 +94,7 @@ MockSocket::MockSocket(MockSocket &&aOther)
 
 int MockSocket::Send(const uint8_t *aBuf, size_t aLen)
 {
-    ASSERT(IsConnected());
+    VerifyOrDie(IsConnected());
 
     auto &peerRecvBuf = mPeerSocket->mRecvBuf;
 
@@ -118,7 +118,7 @@ int MockSocket::Receive(uint8_t *aBuf, size_t aMaxLen)
 
 int MockSocket::Send(const ByteArray &aBuf)
 {
-    ASSERT(!aBuf.empty());
+    VerifyOrDie(!aBuf.empty());
     return Send(aBuf.data(), aBuf.size());
 }
 

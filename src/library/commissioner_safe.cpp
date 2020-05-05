@@ -558,7 +558,7 @@ void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
 {
     auto commissionerSafe = reinterpret_cast<CommissionerSafe *>(aContext);
 
-    ASSERT(commissionerSafe != nullptr);
+    VerifyOrDie(commissionerSafe != nullptr);
 
     if (auto asyncReq = commissionerSafe->PopAsyncRequest())
     {

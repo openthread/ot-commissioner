@@ -90,7 +90,7 @@ static Error ErrorFromMbedtlsError(int aMbedtlsError)
     static constexpr int kMbedtlsErrorHighLevelModuleIdCipher = 6;
     static constexpr int kMbedtlsErrorHighLevelModuleIdSsl    = 7;
 
-    ASSERT(aMbedtlsError <= 0);
+    VerifyOrDie(aMbedtlsError <= 0);
 
     Error error;
 
@@ -297,7 +297,7 @@ exit:
 
 void DtlsSession::Connect(ConnectHandler aOnConnected)
 {
-    ASSERT(mState == State::kOpen);
+    VerifyOrDie(mState == State::kOpen);
 
     mOnConnected = aOnConnected;
     mState       = State::kConnecting;
@@ -305,7 +305,7 @@ void DtlsSession::Connect(ConnectHandler aOnConnected)
 
 void DtlsSession::Reconnect()
 {
-    ASSERT(mIsServer);
+    VerifyOrDie(mIsServer);
     Reset();
     Connect(mOnConnected);
 }
@@ -425,7 +425,7 @@ void DtlsSession::HandleEvent(short aFlags)
         break;
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         break;
     }
 
@@ -438,7 +438,7 @@ exit:
 
 Error DtlsSession::SetClientTransportId()
 {
-    ASSERT(mIsServer && !mIsClientIdSet);
+    VerifyOrDie(mIsServer && !mIsClientIdSet);
     Error error    = Error::kNone;
     int   rval     = 0;
     auto  peerAddr = GetPeerAddr();
@@ -665,7 +665,7 @@ void DtlsSession::HandshakeTimerCallback(Timer &)
 
     case State::kConnected:
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
     }
 
     if (ShouldStop(error))

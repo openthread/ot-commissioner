@@ -99,16 +99,14 @@ exit:
 
 std::string Ipv6PrefixToString(ByteArray aPrefix)
 {
-    ASSERT(aPrefix.size() <= 16);
-
-    auto prefixLength = aPrefix.size() * 8;
-    aPrefix.resize(16);
-
-    Address addr;
-    ASSERT(addr.Set(aPrefix) == Error::kNone);
-
+    auto        prefixLength = aPrefix.size() * 8;
+    Address     addr;
     std::string ret;
-    ASSERT(addr.ToString(ret) == Error::kNone);
+
+    VerifyOrDie(aPrefix.size() <= 16);
+    aPrefix.resize(16);
+    SuccessOrDie(addr.Set(aPrefix));
+    SuccessOrDie(addr.ToString(ret));
     return ret + "/" + std::to_string(prefixLength);
 }
 

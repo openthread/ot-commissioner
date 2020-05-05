@@ -68,7 +68,7 @@ static std::string ToString(LogLevel aLevel)
         ret = "debug";
         break;
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         break;
     }
 
