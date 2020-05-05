@@ -80,7 +80,7 @@ const std::string ErrorToString(const Error &aError)
     case Error::kTransportFailed:
         return "TransportFailed";
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         return "";
     }
 }

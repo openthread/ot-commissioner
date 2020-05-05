@@ -54,7 +54,7 @@ public:
     {
         int flags = mIsSingle ? 0 : EV_PERSIST;
 
-        ASSERT(event_assign(&mTimerEvent, aEventBase, -1, flags, HandleEvent, this) == 0);
+        VerifyOrDie(event_assign(&mTimerEvent, aEventBase, -1, flags, HandleEvent, this) == 0);
     }
 
     ~Timer() { Stop(); }
@@ -74,7 +74,7 @@ public:
         tv.tv_sec  = delay.count() / 1000000;
         tv.tv_usec = delay.count() % 1000000;
 
-        ASSERT(event_add(&mTimerEvent, &tv) == 0);
+        VerifyOrDie(event_add(&mTimerEvent, &tv) == 0);
         mFireTime = aFireTime;
         mEnabled  = true;
     }

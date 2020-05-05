@@ -158,11 +158,11 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     , mJoinerInfoRequester(nullptr)
     , mCommissioningHandler(nullptr)
 {
-    ASSERT(mBrClient.AddResource(mResourceUdpRx) == Error::kNone);
-    ASSERT(mBrClient.AddResource(mResourceRlyRx) == Error::kNone);
-    ASSERT(mProxyClient.AddResource(mResourceDatasetChanged) == Error::kNone);
-    ASSERT(mProxyClient.AddResource(mResourcePanIdConflict) == Error::kNone);
-    ASSERT(mProxyClient.AddResource(mResourceEnergyReport) == Error::kNone);
+    SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
+    SuccessOrDie(mBrClient.AddResource(mResourceRlyRx));
+    SuccessOrDie(mProxyClient.AddResource(mResourceDatasetChanged));
+    SuccessOrDie(mProxyClient.AddResource(mResourcePanIdConflict));
+    SuccessOrDie(mProxyClient.AddResource(mResourceEnergyReport));
 }
 
 CommissionerImpl::~CommissionerImpl()
@@ -383,7 +383,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         CommissionerDataset dataset;
 
         SuccessOrExit(error = aError);
-        ASSERT(aResponse != nullptr);
+        VerifyOrDie(aResponse != nullptr);
 
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged, error = Error::kFailed);
 
@@ -2037,8 +2037,7 @@ Error CommissionerImpl::MakeChannelMask(ByteArray &aBuf, uint32_t aChannelMask)
     }
 
     VerifyOrExit(!entry.mMasks.empty(), error = Error::kInvalidArgs);
-    error = EncodeChannelMask(aBuf, {entry});
-    ASSERT(error == Error::kNone);
+    SuccessOrDie(EncodeChannelMask(aBuf, {entry}));
 
 exit:
     return error;
@@ -2150,7 +2149,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             }
         }
 
-        ASSERT(it != mCommissioningSessions.end());
+        VerifyOrDie(it != mCommissioningSessions.end());
         auto &session = it->second;
         session.RecvJoinerDtlsRecords(dtlsRecords);
     }

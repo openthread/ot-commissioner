@@ -283,7 +283,7 @@ Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral
         {
             if (*c == '\'')
             {
-                ASSERT(begin != aLiteral.end());
+                VerifyOrDie(begin != aLiteral.end());
                 expr.emplace_back(begin, c);
                 begin          = aLiteral.end();
                 inSingleQuotes = false;
@@ -1093,14 +1093,14 @@ void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const std:
     }
     else
     {
-        ASSERT(aBorderAgent != nullptr);
+        VerifyOrDie(aBorderAgent != nullptr);
         Console::Write(ToString(*aBorderAgent), Console::Color::kGreen);
     }
 }
 
 const std::string Interpreter::Usage(Expression aExpr)
 {
-    ASSERT(aExpr.size() >= 1);
+    VerifyOrDie(aExpr.size() >= 1);
     auto usage = mUsageMap.find(aExpr[0]);
     return usage != mUsageMap.end() ? usage->second : "";
 }

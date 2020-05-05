@@ -61,7 +61,7 @@ CommissioningSession::CommissioningSession(CommissionerImpl &aCommImpl,
     , mCoap(aCommImpl.GetEventBase(), *mDtlsSession)
     , mResourceJoinFin(uri::kJoinFin, [this](const coap::Request &aRequest) { HandleJoinFin(aRequest); })
 {
-    ASSERT(mCoap.AddResource(mResourceJoinFin) == Error::kNone);
+    SuccessOrDie(mCoap.AddResource(mResourceJoinFin));
 }
 
 Error CommissioningSession::Start(ConnectHandler aOnConnected)
@@ -222,8 +222,8 @@ CommissioningSession::RelaySocket::RelaySocket(CommissioningSession &aCommission
     mIsConnected = true;
 
     fail = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
-    ASSERT(fail == 0);
-    ASSERT((fail = event_add(&mEvent, nullptr)) == 0);
+    VerifyOrDie(fail == 0);
+    VerifyOrDie((fail = event_add(&mEvent, nullptr)) == 0);
 }
 
 CommissioningSession::RelaySocket::RelaySocket(RelaySocket &&aOther)

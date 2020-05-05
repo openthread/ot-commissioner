@@ -165,7 +165,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
         coap::ContentFormat contentFormat;
 
         SuccessOrExit(error = aError);
-        ASSERT(aResponse != nullptr);
+        VerifyOrDie(aResponse != nullptr);
 
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged, error = Error::kFailed);
         VerifyOrExit(aResponse->GetContentFormat(contentFormat) == Error::kNone, error = Error::kBadFormat);

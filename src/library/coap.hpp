@@ -332,7 +332,7 @@ public:
 
     uint32_t GetUint32Value() const
     {
-        ASSERT(mValue.size() <= sizeof(uint32_t));
+        VerifyOrDie(mValue.size() <= sizeof(uint32_t));
         uint32_t ret = 0;
         for (auto byte : mValue)
         {
@@ -713,7 +713,7 @@ private:
 
         TimePoint Earliest() const
         {
-            ASSERT(!IsEmpty());
+            VerifyOrDie(!IsEmpty());
             return mContainer.begin()->mNextTimerShot;
         }
 
@@ -722,7 +722,7 @@ private:
 
         const RequestHolder &Front() const
         {
-            ASSERT(!IsEmpty());
+            VerifyOrDie(!IsEmpty());
             return *mContainer.begin();
         }
 
