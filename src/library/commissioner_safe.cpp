@@ -44,13 +44,12 @@ namespace ot {
 
 namespace commissioner {
 
-std::shared_ptr<Commissioner> Commissioner::Create(CommissionerHandler &aHandler, const Config &aConfig)
 Error Commissioner::Create(std::shared_ptr<Commissioner> &aCommissioner,
-                           CommissionerHandler &aHandler,
+                           CommissionerHandler &          aHandler,
                            const Config &                 aConfig)
 {
     Error error;
-    auto comm = std::make_shared<CommissionerSafe>(aHandler);
+    auto  comm = std::make_shared<CommissionerSafe>(aHandler);
 
     SuccessOrExit(error = comm->Init(aConfig));
     aCommissioner = comm;

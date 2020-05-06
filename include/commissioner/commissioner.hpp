@@ -335,8 +335,8 @@ public:
      *
      */
     static Error Create(std::shared_ptr<Commissioner> &aCommissioner,
-                        CommissionerHandler &aHandler,
-                        const Config &aConfig);
+                        CommissionerHandler &          aHandler,
+                        const Config &                 aConfig);
 
     virtual ~Commissioner() = default;
 
