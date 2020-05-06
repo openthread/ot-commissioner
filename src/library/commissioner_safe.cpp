@@ -44,18 +44,26 @@ namespace ot {
 
 namespace commissioner {
 
-std::shared_ptr<Commissioner> Commissioner::Create(const Config &aConfig, struct event_base *aEventBase)
+Error Commissioner::Create(std::shared_ptr<Commissioner> &aCommissioner,
+                           const Config &                 aConfig,
+                           struct event_base *            aEventBase)
 {
+    Error error;
     if (aEventBase == nullptr)
     {
         auto comm = std::make_shared<CommissionerSafe>();
-        return (comm->Init(aConfig) == Error::kNone) ? comm : nullptr;
+        SuccessOrExit(error = comm->Init(aConfig));
+        aCommissioner = comm;
     }
     else
     {
         auto comm = std::make_shared<CommissionerImpl>(aEventBase);
-        return (comm->Init(aConfig) == Error::kNone) ? comm : nullptr;
+        SuccessOrExit(error = comm->Init(aConfig));
+        aCommissioner = comm;
     }
+
+exit:
+    return error;
 }
 
 CommissionerSafe::CommissionerSafe()

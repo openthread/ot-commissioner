@@ -266,10 +266,12 @@ public:
     /**
      * @brief Create an instance of the commissioner.
      *
-     * @param[in] aConfig     A commissioner configuration.
-     * @param[in] aEventBase  A libevent event_base object. nullable.
+     * @param[out] aCommissioner  The created commissioner instance.
+     * @param[in]  aConfig        A commissioner configuration.
+     * @param[in]  aEventBase     A libevent event_base object. nullable.
      *
-     * @return std::shared_ptr<Commissioner>  nullptr is returned if failed.
+     * @retval Error::kNone  Successfully created a commissioner instance.
+     * @retval ...           Failed to create a commissioner instance.
      *
      * @note If @p aEventBase is not provided, commissioner will create it by itself and
      *       run the event loop in separate background thread. In this case, all callback
@@ -277,7 +279,9 @@ public:
      *       Otherwise, it is the user to run the event loop and no synchronization is
      *       needed in callback functions.
      */
-    static std::shared_ptr<Commissioner> Create(const Config &aConfig, struct event_base *aEventBase);
+    static Error Create(std::shared_ptr<Commissioner> &aCommissioner,
+                        const Config &                 aConfig,
+                        struct event_base *            aEventBase);
 
     virtual ~Commissioner() = default;
 
