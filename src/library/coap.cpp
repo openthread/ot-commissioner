@@ -522,7 +522,7 @@ void Coap::HandleRequest(const Request &aRequest)
 exit:
     if (error != Error::kNone)
     {
-        LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: %s", static_cast<void *>(this),
+        LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this),
                  ErrorToString(error));
     }
     return;
