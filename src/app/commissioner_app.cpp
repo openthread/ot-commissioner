@@ -1261,8 +1261,8 @@ void CommissionerApp::OnKeepAliveResponse(Error aError)
 void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
 {
     (void)aPeerAddr;
-    // Main thread will wait for updates to mPanIdConflicts,
-    // which guarantees no concurrent access to it.
+
+    // FIXME(wgtdkp): synchronization
     mPanIdConflicts[aPanId] = aChannelMask;
 }
 
@@ -1274,8 +1274,7 @@ void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
 
     SuccessOrDie(addr.Set(aPeerAddr));
 
-    // Main thread will wait for updates to mPanIdConflicts,
-    // which guarantees no concurrent access to it.
+    // FIXME(wgtdkp): synchronization
     mEnergyReports[addr] = {aChannelMask, aEnergyList};
 }
 
@@ -1285,7 +1284,7 @@ void CommissionerApp::OnDatasetChanged()
         [this](const ActiveOperationalDataset *aDataset, Error aError) {
             if (aError == Error::kNone)
             {
-                // FIXME(wgtdkp): syncronization
+                // FIXME(wgtdkp): synchronization
                 mActiveDataset = *aDataset;
             }
             else
@@ -1299,7 +1298,7 @@ void CommissionerApp::OnDatasetChanged()
         [this](const PendingOperationalDataset *aDataset, Error aError) {
             if (aError == Error::kNone)
             {
-                // FIXME(wgtdkp): syncronization
+                // FIXME(wgtdkp): synchronization
                 mPendingDataset = *aDataset;
             }
             else
