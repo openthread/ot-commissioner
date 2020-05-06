@@ -51,21 +51,24 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
-add_library(commissioner-common-test)
+if (OT_COMM_TEST)
+    add_library(commissioner-common-test OBJECT)
 
-target_sources(commissioner-common-test
-    PRIVATE
-        address.hpp
-        address_test.cpp
-)
+    target_sources(commissioner-common-test
+        PRIVATE
+            address.hpp
+            address_test.cpp
+    )
 
-target_include_directories(commissioner-common-test
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/src
-)
+    target_include_directories(commissioner-common-test
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/src
+    )
 
-target_link_libraries(commissioner-common-test
-    PRIVATE
-        Catch2::Catch2
-)
+    target_link_libraries(commissioner-common-test
+        PRIVATE
+            Catch2::Catch2
+            commissioner-common
+    )
+endif()
