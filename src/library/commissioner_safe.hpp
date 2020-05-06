@@ -190,8 +190,8 @@ private:
     void         PushAsyncRequest(AsyncRequest &&aAsyncRequest);
     AsyncRequest PopAsyncRequest();
 
-    Error StartEventLoopThread();
-    void  StopEventLoopThread();
+    void StartEventLoopThread();
+    void StopEventLoopThread();
 
 private:
     class EventBaseHolder

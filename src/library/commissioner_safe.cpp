@@ -76,8 +76,7 @@ Error CommissionerSafe::Init(const Config &aConfig)
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
 
-    // Do not propogate the returned error.
-    SuccessOrExit(StartEventLoopThread());
+    StartEventLoopThread();
 
 exit:
     return error;
@@ -94,19 +93,14 @@ const Config &CommissionerSafe::GetConfig() const
     return mImpl.GetConfig();
 }
 
-Error CommissionerSafe::StartEventLoopThread()
+void CommissionerSafe::StartEventLoopThread()
 {
-    Error error = Error::kNone;
-
-    VerifyOrExit(!mEventThread.joinable(), error = Error::kAlready);
+    VerifyOrDie(!mEventThread.joinable());
 
     mEventThread = std::thread([this]() {
         LOG_INFO("event loop started in background thread");
         event_base_loop(mEventBase.Get(), EVLOOP_NO_EXIT_ON_EMPTY);
     });
-
-exit:
-    return error;
 }
 
 void CommissionerSafe::StopEventLoopThread(void)
