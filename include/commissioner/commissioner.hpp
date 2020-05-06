@@ -132,7 +132,11 @@ struct Config
  * Application should inherit this class and override the virtual
  * functions to provide specific handler.
  *
- * @note keep in mind that those handlers will be called in another threads.
+ * @note Those handlers will be called in another threads and synchronization
+ *       is needed if user data is accessed there.
+ * @note Keep the handlers simple and light, no heavy jobs or blocking operations
+ *       (e.g. those synchronized APIs provided by the Commissioner) should be
+ *       executed in those handlers.
  *
  */
 class CommissionerHandler
@@ -271,6 +275,13 @@ public:
      * The response handler of a general TMF request.
      *
      * @param[in] aError  An error code.
+     *
+     * @note Those handlers will be called in another threads and synchronization
+     *       is needed if user data is accessed there.
+     * @note Keep the handlers simple and light, no heavy jobs or blocking operations
+     *       (e.g. those synchronized APIs provided by the Commissioner) should be
+     *       executed in those handlers.
+     *
      */
     using ErrorHandler = std::function<void(Error aError)>;
 
@@ -282,6 +293,12 @@ public:
      *
      * @note @p aResponseData is guaranteed to be not null only when @p aError == Error::kNone.
      *       Otherwise, @p aResponseData should never be accessed.
+     * @note Those handlers will be called in another threads and synchronization
+     *       is needed if user data is accessed there.
+     * @note Keep the handlers simple and light, no heavy jobs or blocking operations
+     *       (e.g. those synchronized APIs provided by the Commissioner) should be
+     *       executed in those handlers.
+     *
      */
     template <typename T> using Handler = std::function<void(const T *aResponseData, Error aError)>;
 
@@ -293,6 +310,12 @@ public:
      *
      * @note There is an exiting active commissioner if @p aError != Error::kNone
      *       and @p aExistingCommissionerId is not null.
+     * @note Those handlers will be called in another threads and synchronization
+     *       is needed if user data is accessed there.
+     * @note Keep the handlers simple and light, no heavy jobs or blocking operations
+     *       (e.g. those synchronized APIs provided by the Commissioner) should be
+     *       executed in those handlers.
+     *
      */
     using PetitionHandler = std::function<void(const std::string *aExistingCommissionerId, Error aError)>;
 
