@@ -107,7 +107,8 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
     const char *       expire;
     size_t             expireLength;
 
-    LOG_INFO("received token, length = {}, {}", aSignedToken.size(), utils::Hex(aSignedToken));
+    LOG_INFO(LOG_REGION_TOKEN_MANAGER, "received token, length = {}, {}", aSignedToken.size(),
+             utils::Hex(aSignedToken));
 
     VerifyOrExit(!aSignedToken.empty(), error = Error::kInvalidArgs);
     SuccessOrExit(error = cose::Sign1Message::Deserialize(coseSign, aSignedToken));

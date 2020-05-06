@@ -409,8 +409,8 @@ Error GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope)
         else
         {
             // Drop invalid TLVs
-            LOG_WARN("dropping invalid/unknown TLV(type={}, value={})", utils::to_underlying(tlv->GetType()),
-                     utils::Hex(tlv->GetValue()));
+            LOG_WARN(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
+                     utils::to_underlying(tlv->GetType()), utils::Hex(tlv->GetValue()));
         }
     }
 

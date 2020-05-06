@@ -56,20 +56,20 @@ static void HandleMbedtlsDebug(void *, int level, const char *file, int line, co
     switch (level)
     {
     case 1:
-        LOG_CRIT("{}, {}: {}", file, line, str);
+        LOG_CRIT(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
 
     case 2:
-        LOG_WARN("{}, {}: {}", file, line, str);
+        LOG_WARN(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
 
     case 3:
-        LOG_INFO("{}, {}: {}", file, line, str);
+        LOG_INFO(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
 
     case 4:
     default:
-        LOG_DEBUG("{}, {}: {}", file, line, str);
+        LOG_DEBUG(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
     }
 }
@@ -332,7 +332,7 @@ void DtlsSession::Disconnect(Error aError)
     mSocket->Reset();
     Reset();
 
-    LOG_DEBUG("DTLS disconnected");
+    LOG_DEBUG(LOG_REGION_DTLS, "session={} disconnected", static_cast<void *>(this));
 
 exit:
     return;
@@ -473,7 +473,7 @@ Error DtlsSession::Read()
 
     if (rval > 0)
     {
-        LOG_DEBUG("DTLS(object={}) successfully read data: {}", static_cast<void *>(this),
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: {}", static_cast<void *>(this),
                   utils::Hex({buf, buf + rval}));
         mReceiver(*this, {buf, buf + static_cast<size_t>(rval)});
         ExitNow(error = Error::kNone);
@@ -516,7 +516,8 @@ Error DtlsSession::Write(const ByteArray &aBuf, MessageSubType aSubType)
     {
         VerifyOrExit(static_cast<size_t>(rval) == aBuf.size(), error = Error::kInvalidArgs);
 
-        LOG_DEBUG("DTLS(object={}) successfully write data: {}", static_cast<void *>(this), utils::Hex(aBuf));
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully write data: {}", static_cast<void *>(this),
+                  utils::Hex(aBuf));
         ExitNow(error = Error::kNone);
     }
 
@@ -572,7 +573,7 @@ Error DtlsSession::Handshake()
         break;
 
     case MBEDTLS_ERR_SSL_TIMEOUT:
-        LOG_ERROR("DTLS: Handshake timeout");
+        LOG_ERROR(LOG_REGION_DTLS, "session(={}) handshake timeout", static_cast<void *>(this));
 
         // Fall through
 

@@ -245,7 +245,8 @@ void UdpSocket::SetEventHandler(EventHandler aEventHandler)
             int rval = mbedtls_net_accept(&mNetCtx, &connectedCtx, nullptr, 0, nullptr);
             if (rval != 0)
             {
-                LOG_INFO("bound UDP socket accept new connection failed: {}", rval);
+                LOG_INFO(LOG_REGION_SOCKET, "UDP socket(={}) accept new connection failed: {}",
+                         static_cast<void *>(this), rval);
             }
             else
             {

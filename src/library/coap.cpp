@@ -497,7 +497,8 @@ void Coap::HandleRequest(const Request &aRequest)
     response = mResponsesCache.Match(aRequest);
     if (response != nullptr)
     {
-        LOG_INFO("found cached CoAP response for resource {}", uriPath);
+        LOG_INFO(LOG_REGION_COAP, "server(={}) found cached CoAP response for resource {}", static_cast<void *>(this),
+                 uriPath);
         ExitNow(error = Send(*response));
     }
 
@@ -521,7 +522,8 @@ void Coap::HandleRequest(const Request &aRequest)
 exit:
     if (error != Error::kNone)
     {
-        LOG_INFO("CoAP: handle request failed: %s", ErrorToString(error));
+        LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this),
+                 ErrorToString(error));
     }
     return;
 }
@@ -596,7 +598,7 @@ void Coap::Retransmit(Timer &)
 {
     auto now = Clock::now();
 
-    LOG_DEBUG("CoAP retransmit timer triggered");
+    LOG_DEBUG(LOG_REGION_COAP, "client(={}) retransmit timer triggered", static_cast<void *>(this));
 
     while (!mRequestsCache.IsEmpty() && mRequestsCache.Earliest() < now)
     {
@@ -617,18 +619,21 @@ void Coap::Retransmit(Timer &)
             // Retransmit
             if (!requestHolder.mAcknowledged)
             {
-                LOG_INFO("retransmit of request {}, retransmit count = {}", uri, requestHolder.mRetransmissionCount);
+                LOG_INFO(LOG_REGION_COAP, "client(={}) retransmit request {}, retransmit count = {}",
+                         static_cast<void *>(this), uri, requestHolder.mRetransmissionCount);
 
                 auto error = Send(*requestHolder.mRequest);
                 if (error != Error::kNone)
                 {
-                    LOG_WARN("retransmit of request {} failed: {}", uri, ErrorToString(error));
+                    LOG_WARN(LOG_REGION_COAP, "client(={}) retransmit request {} failed: {}", static_cast<void *>(this),
+                             uri, ErrorToString(error));
                     FinalizeTransaction(requestHolder, nullptr, error);
                 }
             }
             else
             {
-                LOG_DEBUG("request to {} has been acknowledged, won't retransmit", uri);
+                LOG_DEBUG(LOG_REGION_COAP, "client(={}) request to {} has been acknowledged, won't retransmit",
+                          static_cast<void *>(this), uri);
             }
         }
         else
@@ -757,8 +762,8 @@ void Coap::ResponsesCache::Eliminate()
             break;
         }
         mContainer.erase(earliest);
-        LOG_INFO("removed response cache: token={}, messageId={}", utils::Hex(response.GetToken()),
-                 response.GetMessageId());
+        LOG_INFO(LOG_REGION_COAP, "server(={}) remove response cache: token={}, messageId={}",
+                 static_cast<void *>(this), utils::Hex(response.GetToken()), response.GetMessageId());
     }
 }
 
