@@ -39,8 +39,6 @@ target_sources(commissioner
         commissioner_impl.hpp
         commissioner_safe.cpp
         commissioner_safe.hpp
-        commissioning_session.cpp
-        commissioning_session.hpp
         cose.cpp
         cose.hpp
         cwt.hpp
@@ -49,6 +47,8 @@ target_sources(commissioner
         endpoint.hpp
         error.cpp
         event.hpp
+        joiner_session.cpp
+        joiner_session.hpp
         logging.cpp
         logging.hpp
         message.hpp

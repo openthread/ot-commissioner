@@ -35,9 +35,9 @@
 
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
-#include "library/commissioning_session.hpp"
 #include "library/dtls.hpp"
 #include "library/event.hpp"
+#include "library/joiner_session.hpp"
 #include "library/timer.hpp"
 #include "library/tlv.hpp"
 #include "library/token_manager.hpp"
@@ -64,7 +64,7 @@ namespace commissioner {
 //
 class CommissionerImpl : public Commissioner
 {
-    friend class CommissioningSession;
+    friend class JoinerSession;
 
 public:
     explicit CommissionerImpl(struct event_base *aEventBase);
@@ -249,7 +249,7 @@ private:
 
     void HandleRlyRx(const coap::Request &aRequest);
 
-    void HandleCommissioningSessionTimer(Timer &aTimer);
+    void HandleJoinerSessionTimer(Timer &aTimer);
 
 private:
     static constexpr uint16_t kDefaultMmPort = 61631;
@@ -274,8 +274,8 @@ private:
 
     coap::CoapSecure mBrClient;
 
-    std::map<ByteArray, CommissioningSession> mCommissioningSessions;
-    Timer                                     mCommissioningSessionTimer;
+    std::map<ByteArray, JoinerSession> mJoinerSessions;
+    Timer                              mJoinerSessionTimer;
 
     coap::Resource mResourceUdpRx;
     coap::Resource mResourceRlyRx;

@@ -39,14 +39,14 @@
 #include <commissioner/commissioner.hpp>
 
 #define LOG_REGION_COAP "coap"
-#define LOG_REGION_GENERIC "commissioner"
 #define LOG_REGION_CONFIG "config"
 #define LOG_REGION_DTLS "dtls"
+#define LOG_REGION_JOINER_SESSION "joiner-session"
 #define LOG_REGION_MBEDTLS "mbedtls"
+#define LOG_REGION_MESHCOP "meshcop"
 #define LOG_REGION_MGMT "mgmt"
 #define LOG_REGION_SOCKET "socket"
 #define LOG_REGION_TOKEN_MANAGER "token-manager"
-#define LOG_REGION_MESHCOP "meshcop"
 
 #define LOG(aLevel, aRegion, aFmt, ...)                                     \
     do                                                                      \

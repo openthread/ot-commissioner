@@ -142,7 +142,7 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     , mEventBase(aEventBase)
     , mKeepAliveTimer(mEventBase, [this](Timer &aTimer) { SendKeepAlive(aTimer); })
     , mBrClient(mEventBase)
-    , mCommissioningSessionTimer(mEventBase, [this](Timer &aTimer) { HandleCommissioningSessionTimer(aTimer); })
+    , mJoinerSessionTimer(mEventBase, [this](Timer &aTimer) { HandleJoinerSessionTimer(aTimer); })
     , mResourceUdpRx(uri::kUdpRx, [this](const coap::Request &aRequest) { mProxyClient.HandleUdpRx(aRequest); })
     , mResourceRlyRx(uri::kRelayRx, [this](const coap::Request &aRequest) { HandleRlyRx(aRequest); })
     , mProxyClient(mEventBase, mBrClient)
@@ -272,7 +272,7 @@ void CommissionerImpl::SetCommissioningHandler(CommissioningHandler aCommissioni
 
 Error CommissionerImpl::Start()
 {
-    LOG_INFO(LOG_REGION_GENERIC, "event loop started in background thread");
+    LOG_INFO(LOG_REGION_MESHCOP, "event loop started in background thread");
     event_base_loop(mEventBase, EVLOOP_NO_EXIT_ON_EMPTY);
     return Error::kNone;
 }
@@ -292,12 +292,12 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
         }
         else
         {
-            LOG_DEBUG(LOG_REGION_GENERIC, "DTLS connection to border agent succeed");
+            LOG_DEBUG(LOG_REGION_MESHCOP, "DTLS connection to border agent succeed");
             SendPetition(aHandler);
         }
     };
 
-    LOG_DEBUG(LOG_REGION_GENERIC, "starting petition: border agent = ({}, {})", aAddr, aPort);
+    LOG_DEBUG(LOG_REGION_MESHCOP, "starting petition: border agent = ({}, {})", aAddr, aPort);
 
     if (mBrClient.IsConnected())
     {
@@ -1132,7 +1132,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         mState = State::kActive;
         mKeepAliveTimer.Start(GetKeepAliveInterval());
 
-        LOG_INFO(LOG_REGION_GENERIC, "petition succeed, start keep-alive timer with {} seconds",
+        LOG_INFO(LOG_REGION_MESHCOP, "petition succeed, start keep-alive timer with {} seconds",
                  GetKeepAliveInterval().count() / 1000);
 
     exit:
@@ -1157,7 +1157,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG(LOG_REGION_GENERIC, "sent petition request");
+    LOG_DEBUG(LOG_REGION_MESHCOP, "sent petition request");
 
 exit:
     if (error != Error::kNone)
@@ -1185,7 +1185,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
             Resign([](Error) {});
 
             // TODO(wgtdkp): notify user that we are rejected.
-            LOG_WARN(LOG_REGION_GENERIC, "keep alive message rejected: {}", ErrorToString(error));
+            LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", ErrorToString(error));
         }
         return;
     };
@@ -1207,12 +1207,12 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 
     mBrClient.SendRequest(request, onResponse);
 
-    LOG_DEBUG(LOG_REGION_GENERIC, "sent keep alive message: keepAlive={}", aKeepAlive);
+    LOG_DEBUG(LOG_REGION_MESHCOP, "sent keep alive message: keepAlive={}", aKeepAlive);
 
 exit:
     if (error != Error::kNone)
     {
-        LOG_WARN(LOG_REGION_GENERIC, "sending keep alive message failed: {}", ErrorToString(error));
+        LOG_WARN(LOG_REGION_MESHCOP, "sending keep alive message failed: {}", ErrorToString(error));
     }
 }
 
@@ -2075,12 +2075,12 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     VerifyOrExit(tlv->IsValid(), error = Error::kBadFormat);
     dtlsRecords = tlv->GetValue();
 
-    LOG_DEBUG(LOG_REGION_MESHCOP, "received RLY_RX.ntf: joinerIID={}, joinerRouterLocator={}, length={}",
+    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerIID={}, joinerRouterLocator={}, length={}",
               utils::Hex(joinerIid), joinerRouterLocator, dtlsRecords.size());
 
     if (mJoinerInfoRequester == nullptr)
     {
-        LOG_WARN(LOG_REGION_MESHCOP, "joiner info requester is nil, give up");
+        LOG_WARN(LOG_REGION_JOINER_SESSION, "joiner info requester is nil, give up");
         ExitNow();
     }
     else
@@ -2090,67 +2090,68 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
         joinerInfo = mJoinerInfoRequester(JoinerType::kMeshCoP, joinerId);
         if (joinerInfo == nullptr)
         {
-            LOG_INFO(LOG_REGION_MESHCOP, "joiner(IID={}) is disabled", utils::Hex(joinerIid));
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(IID={}) is disabled", utils::Hex(joinerIid));
             ExitNow();
         }
     }
 
     {
-        auto it = mCommissioningSessions.find(joinerIid);
-        if (it != mCommissioningSessions.end() && it->second.Disabled())
+        auto it = mJoinerSessions.find(joinerIid);
+        if (it != mJoinerSessions.end() && it->second.Disabled())
         {
-            mCommissioningSessions.erase(it);
-            it = mCommissioningSessions.end();
+            mJoinerSessions.erase(it);
+            it = mJoinerSessions.end();
         }
 
-        if (it == mCommissioningSessions.end())
+        if (it == mJoinerSessions.end())
         {
             Address localAddr;
 
             SuccessOrExit(error = mBrClient.GetLocalAddr(localAddr));
-            it = mCommissioningSessions
+            it = mJoinerSessions
                      .emplace(std::piecewise_construct, std::forward_as_tuple(joinerIid),
                               std::forward_as_tuple(*this, *joinerInfo, joinerUdpPort, joinerRouterLocator, joinerIid,
                                                     aRlyRx.GetEndpoint()->GetPeerAddr(),
-                                                    aRlyRx.GetEndpoint()->GetPeerPort(), localAddr, kCommissioningPort))
+                                                    aRlyRx.GetEndpoint()->GetPeerPort(), localAddr,
+                                                    kListeningJoinerPort))
                      .first;
             auto &session = it->second;
 
             std::string peerAddr = "unknown address";
             IgnoreError(session.GetPeerAddr().ToString(peerAddr));
 
-            LOG_DEBUG(LOG_REGION_MESHCOP, "received a new joiner(IID={}) DTLS connection from [{}]:{}",
+            LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received a new joiner(IID={}) DTLS connection from [{}]:{}",
                       utils::Hex(session.GetJoinerIid()), peerAddr, session.GetPeerPort());
 
-            auto onConnected = [peerAddr](CommissioningSession &aSession, Error aError) {
+            auto onConnected = [peerAddr](JoinerSession &aSession, Error aError) {
                 if (aError != Error::kNone)
                 {
-                    LOG_ERROR(LOG_REGION_MESHCOP, "a joiner(IID={}) DTLS connection from [{}]:{} failed: {}",
+                    LOG_ERROR(LOG_REGION_JOINER_SESSION, "a joiner(IID={}) DTLS connection from [{}]:{} failed: {}",
                               utils::Hex(aSession.GetJoinerIid()), peerAddr, aSession.GetPeerPort(),
                               ErrorToString(aError));
                 }
                 else
                 {
-                    LOG_INFO(LOG_REGION_MESHCOP, "a joiner(IID={}) DTLS connection from [{}]:{} succeed",
+                    LOG_INFO(LOG_REGION_JOINER_SESSION, "a joiner(IID={}) DTLS connection from [{}]:{} succeed",
                              utils::Hex(aSession.GetJoinerIid()), peerAddr, aSession.GetPeerPort());
                 }
             };
 
             if ((error = session.Start(onConnected)) != Error::kNone)
             {
-                mCommissioningSessions.erase(it);
-                it = mCommissioningSessions.end();
+                mJoinerSessions.erase(it);
+                it = mJoinerSessions.end();
                 ExitNow();
             }
             else
             {
-                LOG_INFO(LOG_REGION_MESHCOP, "commissioning timer started, expiration-time={}",
+                LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning timer started, expiration-time={}",
                          TimePointToString(session.GetExpirationTime()));
-                mCommissioningSessionTimer.Start(session.GetExpirationTime());
+                mJoinerSessionTimer.Start(session.GetExpirationTime());
             }
         }
 
-        VerifyOrDie(it != mCommissioningSessions.end());
+        VerifyOrDie(it != mJoinerSessions.end());
         auto &session = it->second;
         session.RecvJoinerDtlsRecords(dtlsRecords);
     }
@@ -2158,28 +2159,28 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 exit:
     if (error != Error::kNone)
     {
-        LOG_ERROR(LOG_REGION_MESHCOP, "handle RLY_RX.ntf message failed: {}", ErrorToString(error));
+        LOG_ERROR(LOG_REGION_JOINER_SESSION, "handle RLY_RX.ntf message failed: {}", ErrorToString(error));
     }
 }
 
-void CommissionerImpl::HandleCommissioningSessionTimer(Timer &aTimer)
+void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
 {
     TimePoint nextShot;
     bool      hasNextShot = false;
     auto      now         = Clock::now();
 
-    LOG_DEBUG(LOG_REGION_MESHCOP, "commissioning session timer triggered");
+    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "joiner session timer triggered");
 
-    auto it = mCommissioningSessions.begin();
-    while (it != mCommissioningSessions.end())
+    auto it = mJoinerSessions.begin();
+    while (it != mJoinerSessions.end())
     {
         auto &session = it->second;
 
         if (now >= session.GetExpirationTime())
         {
-            it = mCommissioningSessions.erase(it);
+            it = mJoinerSessions.erase(it);
 
-            LOG_INFO(LOG_REGION_MESHCOP, "session(={}, joinerIid={}) removed", static_cast<void *>(&(*it)),
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "session(={}, joinerIid={}) removed", static_cast<void *>(&(*it)),
                      utils::Hex(session.GetJoinerIid()));
         }
         else

@@ -82,10 +82,10 @@ public:
 
     virtual void SetEventHandler(EventHandler aEventHandler) { mEventHandler = aEventHandler; }
 
-    // Set the sub-type of the next message. Required by CommissioningSession::RelaySocket.
+    // Set the sub-type of the next message. Required by JoinerSession::RelaySocket.
     MessageSubType GetSubType() const { return mSubType; }
 
-    // Get the sub-type of the next message. Required by CommissioningSession::RelaySocket.
+    // Get the sub-type of the next message. Required by JoinerSession::RelaySocket.
     void SetSubType(MessageSubType aSubType) { mSubType = aSubType; }
 
     // Designed for mbedtls callbacks.
