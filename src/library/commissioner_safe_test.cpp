@@ -49,6 +49,7 @@ TEST_CASE("stop-immediately-after-starting", "[commissioner]")
     // This creates an CommissionerSafe instance.
     std::shared_ptr<Commissioner> commissioner;
     REQUIRE(Commissioner::Create(commissioner, config, nullptr) == Error::kNone);
+    REQUIRE(commissioner != nullptr);
 }
 
 } // namespace commissioner
