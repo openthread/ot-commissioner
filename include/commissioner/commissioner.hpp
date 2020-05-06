@@ -134,6 +134,7 @@ struct Config
  *
  * @note Those handlers will be called in another threads and synchronization
  *       is needed if user data is accessed there.
+ * @note No more than one handler will be called concurrently.
  * @note Keep the handlers simple and light, no heavy jobs or blocking operations
  *       (e.g. those synchronized APIs provided by the Commissioner) should be
  *       executed in those handlers.
@@ -278,6 +279,7 @@ public:
      *
      * @note Those handlers will be called in another threads and synchronization
      *       is needed if user data is accessed there.
+     * @note No more than one handler will be called concurrently.
      * @note Keep the handlers simple and light, no heavy jobs or blocking operations
      *       (e.g. those synchronized APIs provided by the Commissioner) should be
      *       executed in those handlers.
@@ -295,6 +297,7 @@ public:
      *       Otherwise, @p aResponseData should never be accessed.
      * @note Those handlers will be called in another threads and synchronization
      *       is needed if user data is accessed there.
+     * @note No more than one handler will be called concurrently.
      * @note Keep the handlers simple and light, no heavy jobs or blocking operations
      *       (e.g. those synchronized APIs provided by the Commissioner) should be
      *       executed in those handlers.
@@ -312,6 +315,7 @@ public:
      *       and @p aExistingCommissionerId is not null.
      * @note Those handlers will be called in another threads and synchronization
      *       is needed if user data is accessed there.
+     * @note No more than one handler will be called concurrently.
      * @note Keep the handlers simple and light, no heavy jobs or blocking operations
      *       (e.g. those synchronized APIs provided by the Commissioner) should be
      *       executed in those handlers.
