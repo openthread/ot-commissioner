@@ -1271,7 +1271,8 @@ void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
                                      const ByteArray &  aEnergyList)
 {
     Address addr;
-    ASSERT(addr.Set(aPeerAddr) == Error::kNone);
+
+    SuccessOrDie(addr.Set(aPeerAddr));
 
     // Main thread will wait for updates to mPanIdConflicts,
     // which guarantees no concurrent access to it.
