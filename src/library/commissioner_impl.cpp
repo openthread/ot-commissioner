@@ -1139,7 +1139,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         if (error == Error::kNone)
         {
             mKeepAliveTimer.Start(GetKeepAliveInterval());
-            LOG_INFO("keep alive message accepted, keep-alive timer restarted");
+            LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
         }
         else
         {
@@ -1150,8 +1150,6 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         }
 
         mCommissionerHandler.OnKeepAliveResponse(error);
-
-        return;
     };
 
     VerifyOrExit(IsActive(), error = Error::kInvalidState);
@@ -2020,8 +2018,8 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
     joinerId = joinerIid;
     joinerId[0] ^= kLocalExternalAddrMask;
-    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}", utils::Hex(joinerId),
-              joinerRouterLocator, dtlsRecords.size());
+    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}",
+              utils::Hex(joinerId), joinerRouterLocator, dtlsRecords.size());
 
     joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
     if (joinerPSKd.empty())
@@ -2055,12 +2053,13 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             std::string peerAddr = "unknown address";
             IgnoreError(session.GetPeerAddr().ToString(peerAddr));
 
-            LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received a new joiner(ID={}) DTLS connection from [{}]:{}", utils::Hex(joinerId), peerAddr,
-                      session.GetPeerPort());
+            LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received a new joiner(ID={}) DTLS connection from [{}]:{}",
+                      utils::Hex(joinerId), peerAddr, session.GetPeerPort());
 
             session.Connect();
 
-            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning timer started, expiration-time={}", TimePointToString(session.GetExpirationTime()));
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning timer started, expiration-time={}",
+                     TimePointToString(session.GetExpirationTime()));
             mJoinerSessionTimer.Start(session.GetExpirationTime());
         }
 
@@ -2093,7 +2092,8 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
         {
             it = mJoinerSessions.erase(it);
 
-            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning session (joiner ID={}) removed", utils::Hex(session.GetJoinerId()));
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning session (joiner ID={}) removed",
+                     utils::Hex(session.GetJoinerId()));
         }
         else
         {

@@ -43,14 +43,14 @@ namespace ot {
 namespace commissioner {
 
 JoinerSession::JoinerSession(CommissionerImpl & aCommImpl,
-                                           const ByteArray &  aJoinerId,
-                                           const std::string &aJoinerPSkd,
-                                           uint16_t           aJoinerUdpPort,
-                                           uint16_t           aJoinerRouterLocator,
-                                           const Address &    aJoinerAddr,
-                                           uint16_t           aJoinerPort,
-                                           const Address &    aLocalAddr,
-                                           uint16_t           aLocalPort)
+                             const ByteArray &  aJoinerId,
+                             const std::string &aJoinerPSkd,
+                             uint16_t           aJoinerUdpPort,
+                             uint16_t           aJoinerRouterLocator,
+                             const Address &    aJoinerAddr,
+                             uint16_t           aJoinerPort,
+                             const Address &    aLocalAddr,
+                             uint16_t           aLocalPort)
     : mCommImpl(aCommImpl)
     , mJoinerId(aJoinerId)
     , mJoinerPSKd(aJoinerPSkd)
@@ -129,8 +129,10 @@ Error JoinerSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek)
 
     mCommImpl.mBrClient.SendRequest(rlyTx, nullptr);
 
-    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "session(={}) sent RLY_TX.ntf: SessionState={}, joinerID={}, length={}, includeKek={}",
-              static_cast<void *>(this), mDtlsSession->GetStateString(), utils::Hex(GetJoinerId()), aDtlsMessage.size(), aIncludeKek);
+    LOG_DEBUG(LOG_REGION_JOINER_SESSION,
+              "session(={}) sent RLY_TX.ntf: SessionState={}, joinerID={}, length={}, includeKek={}",
+              static_cast<void *>(this), mDtlsSession->GetStateString(), utils::Hex(GetJoinerId()), aDtlsMessage.size(),
+              aIncludeKek);
 
 exit:
     return error;
