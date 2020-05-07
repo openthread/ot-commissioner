@@ -46,8 +46,6 @@ namespace ot {
 
 namespace commissioner {
 
-static constexpr uint8_t kLocalExternalAddrMask = 1 << 1;
-
 Error Commissioner::GeneratePSKc(ByteArray &        aPSKc,
                                  const std::string &aPassphrase,
                                  const std::string &aNetworkName,
@@ -128,17 +126,10 @@ exit:
     return error;
 }
 
-JoinerInfo::JoinerInfo(JoinerType aType, uint64_t aEui64, const ByteArray &aPSKd, const std::string &aProvisioningUrl)
-    : mType(aType)
-    , mEui64(aEui64)
-    , mPSKd(aPSKd)
-    , mProvisioningUrl(aProvisioningUrl)
-{
-}
-
-CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
+CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase)
     : mState(State::kDisabled)
     , mSessionId(0)
+    , mCommissionerHandler(aHandler)
     , mEventBase(aEventBase)
     , mKeepAliveTimer(mEventBase, [this](Timer &aTimer) { SendKeepAlive(aTimer); })
     , mBrClient(mEventBase)
@@ -152,11 +143,6 @@ CommissionerImpl::CommissionerImpl(struct event_base *aEventBase)
     , mResourcePanIdConflict(uri::kMgmtPanidConflict,
                              [this](const coap::Request &aRequest) { HandlePanIdConflict(aRequest); })
     , mResourceEnergyReport(uri::kMgmtEdReport, [this](const coap::Request &aRequest) { HandleEnergyReport(aRequest); })
-    , mDatasetChangedHandler(nullptr)
-    , mPanIdConflictHandler(nullptr)
-    , mEnergyReportHandler(nullptr)
-    , mJoinerInfoRequester(nullptr)
-    , mCommissioningHandler(nullptr)
 {
     SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
     SuccessOrDie(mBrClient.AddResource(mResourceRlyRx));
@@ -258,16 +244,6 @@ void CommissionerImpl::LoggingConfig()
 const Config &CommissionerImpl::GetConfig() const
 {
     return mConfig;
-}
-
-void CommissionerImpl::SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester)
-{
-    mJoinerInfoRequester = aJoinerInfoRequester;
-}
-
-void CommissionerImpl::SetCommissioningHandler(CommissioningHandler aCommissioningHandler)
-{
-    mCommissioningHandler = aCommissioningHandler;
 }
 
 Error CommissionerImpl::Start()
@@ -1074,21 +1050,6 @@ Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray 
     return mTokenManager.SetToken(aSignedToken, aSignerCert);
 }
 
-void CommissionerImpl::SetDatasetChangedHandler(ErrorHandler aHandler)
-{
-    mDatasetChangedHandler = aHandler;
-}
-
-void CommissionerImpl::SetPanIdConflictHandler(PanIdConflictHandler aHandler)
-{
-    mPanIdConflictHandler = aHandler;
-}
-
-void CommissionerImpl::SetEnergyReportHandler(EnergyReportHandler aHandler)
-{
-    mEnergyReportHandler = aHandler;
-}
-
 void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 {
     Error         error = Error::kNone;
@@ -1178,16 +1139,17 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         if (error == Error::kNone)
         {
             mKeepAliveTimer.Start(GetKeepAliveInterval());
+            LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
         }
         else
         {
             mState = State::kDisabled;
             Resign([](Error) {});
 
-            // TODO(wgtdkp): notify user that we are rejected.
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", ErrorToString(error));
         }
-        return;
+
+        mCommissionerHandler.OnKeepAliveResponse(error);
     };
 
     VerifyOrExit(IsActive(), error = Error::kInvalidState);
@@ -1925,16 +1887,15 @@ void CommissionerImpl::HandleDatasetChanged(const coap::Request &aRequest)
 
     mProxyClient.SendEmptyChanged(aRequest);
 
-    if (mDatasetChangedHandler != nullptr)
-    {
-        mDatasetChangedHandler(Error::kNone);
-    }
+    mCommissionerHandler.OnDatasetChanged();
 }
 
 void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
 {
     Error       error = Error::kNone;
     tlv::TlvSet tlvSet;
+    tlv::TlvPtr channelMaskTlv;
+    tlv::TlvPtr panIdTlv;
     ChannelMask channelMask;
     uint16_t    panId;
     std::string peerAddr = "unknown address";
@@ -1946,30 +1907,18 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
     mProxyClient.SendEmptyChanged(aRequest);
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aRequest));
-    if (auto channelMaskTlv = tlvSet[tlv::Type::kChannelMask])
-    {
-        SuccessOrExit(error = DecodeChannelMask(channelMask, channelMaskTlv->GetValue()));
-    }
-    if (auto panIdTlv = tlvSet[tlv::Type::kPanId])
-    {
-        panId = panIdTlv->GetValueAsUint16();
-    }
+    VerifyOrExit((channelMaskTlv = tlvSet[tlv::Type::kChannelMask]) != nullptr, error = Error::kBadFormat);
+    VerifyOrExit((panIdTlv = tlvSet[tlv::Type::kPanId]) != nullptr, error = Error::kBadFormat);
 
-    error = Error::kNone;
-    if (mPanIdConflictHandler != nullptr)
-    {
-        mPanIdConflictHandler(&peerAddr, &channelMask, &panId, Error::kNone);
-    }
+    SuccessOrExit(error = DecodeChannelMask(channelMask, channelMaskTlv->GetValue()));
+    panId = panIdTlv->GetValueAsUint16();
+
+    mCommissionerHandler.OnPanIdConflict(peerAddr, channelMask, panId);
 
 exit:
     if (error != Error::kNone)
     {
         LOG_WARN(LOG_REGION_MGMT, "handle MGMT_PANID_CONFLICT.ans from {} failed: {}", peerAddr, ErrorToString(error));
-
-        if (mPanIdConflictHandler != nullptr)
-        {
-            mPanIdConflictHandler(nullptr, nullptr, nullptr, error);
-        }
     }
 }
 
@@ -1998,20 +1947,12 @@ void CommissionerImpl::HandleEnergyReport(const coap::Request &aRequest)
     }
 
     error = Error::kNone;
-    if (mEnergyReportHandler != nullptr)
-    {
-        mEnergyReportHandler(&peerAddr, &channelMask, &energyList, Error::kNone);
-    }
+    mCommissionerHandler.OnEnergyReport(peerAddr, channelMask, energyList);
 
 exit:
     if (error != Error::kNone)
     {
         LOG_WARN(LOG_REGION_MGMT, "handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, ErrorToString(error));
-
-        if (mEnergyReportHandler != nullptr)
-        {
-            mEnergyReportHandler(nullptr, nullptr, nullptr, error);
-        }
     }
 }
 
@@ -2048,14 +1989,14 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 {
     Error       error = Error::kNone;
     tlv::TlvSet tlvSet;
-
     tlv::TlvPtr tlv;
 
-    const JoinerInfo *joinerInfo = nullptr;
-    uint16_t          joinerUdpPort;
-    uint16_t          joinerRouterLocator;
-    ByteArray         joinerIid;
-    ByteArray         dtlsRecords;
+    std::string joinerPSKd;
+    uint16_t    joinerUdpPort;
+    uint16_t    joinerRouterLocator;
+    ByteArray   joinerIid;
+    ByteArray   joinerId;
+    ByteArray   dtlsRecords;
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aRlyRx));
 
@@ -2075,28 +2016,20 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     VerifyOrExit(tlv->IsValid(), error = Error::kBadFormat);
     dtlsRecords = tlv->GetValue();
 
-    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerIID={}, joinerRouterLocator={}, length={}",
-              utils::Hex(joinerIid), joinerRouterLocator, dtlsRecords.size());
+    joinerId = joinerIid;
+    joinerId[0] ^= kLocalExternalAddrMask;
+    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}",
+              utils::Hex(joinerId), joinerRouterLocator, dtlsRecords.size());
 
-    if (mJoinerInfoRequester == nullptr)
+    joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
+    if (joinerPSKd.empty())
     {
-        LOG_WARN(LOG_REGION_JOINER_SESSION, "joiner info requester is nil, give up");
-        ExitNow();
-    }
-    else
-    {
-        auto joinerId = joinerIid;
-        joinerId[0] ^= kLocalExternalAddrMask;
-        joinerInfo = mJoinerInfoRequester(JoinerType::kMeshCoP, joinerId);
-        if (joinerInfo == nullptr)
-        {
-            LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(IID={}) is disabled", utils::Hex(joinerIid));
-            ExitNow();
-        }
+        LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
+        ExitNow(error = Error::kReject);
     }
 
     {
-        auto it = mJoinerSessions.find(joinerIid);
+        auto it = mJoinerSessions.find(joinerId);
         if (it != mJoinerSessions.end() && it->second.Disabled())
         {
             mJoinerSessions.erase(it);
@@ -2109,8 +2042,8 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
             SuccessOrExit(error = mBrClient.GetLocalAddr(localAddr));
             it = mJoinerSessions
-                     .emplace(std::piecewise_construct, std::forward_as_tuple(joinerIid),
-                              std::forward_as_tuple(*this, *joinerInfo, joinerUdpPort, joinerRouterLocator, joinerIid,
+                     .emplace(std::piecewise_construct, std::forward_as_tuple(joinerId),
+                              std::forward_as_tuple(*this, joinerId, joinerPSKd, joinerUdpPort, joinerRouterLocator,
                                                     aRlyRx.GetEndpoint()->GetPeerAddr(),
                                                     aRlyRx.GetEndpoint()->GetPeerPort(), localAddr,
                                                     kListeningJoinerPort))
@@ -2120,35 +2053,14 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             std::string peerAddr = "unknown address";
             IgnoreError(session.GetPeerAddr().ToString(peerAddr));
 
-            LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received a new joiner(IID={}) DTLS connection from [{}]:{}",
-                      utils::Hex(session.GetJoinerIid()), peerAddr, session.GetPeerPort());
+            LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received a new joiner(ID={}) DTLS connection from [{}]:{}",
+                      utils::Hex(joinerId), peerAddr, session.GetPeerPort());
 
-            auto onConnected = [peerAddr](JoinerSession &aSession, Error aError) {
-                if (aError != Error::kNone)
-                {
-                    LOG_ERROR(LOG_REGION_JOINER_SESSION, "a joiner(IID={}) DTLS connection from [{}]:{} failed: {}",
-                              utils::Hex(aSession.GetJoinerIid()), peerAddr, aSession.GetPeerPort(),
-                              ErrorToString(aError));
-                }
-                else
-                {
-                    LOG_INFO(LOG_REGION_JOINER_SESSION, "a joiner(IID={}) DTLS connection from [{}]:{} succeed",
-                             utils::Hex(aSession.GetJoinerIid()), peerAddr, aSession.GetPeerPort());
-                }
-            };
+            session.Connect();
 
-            if ((error = session.Start(onConnected)) != Error::kNone)
-            {
-                mJoinerSessions.erase(it);
-                it = mJoinerSessions.end();
-                ExitNow();
-            }
-            else
-            {
-                LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning timer started, expiration-time={}",
-                         TimePointToString(session.GetExpirationTime()));
-                mJoinerSessionTimer.Start(session.GetExpirationTime());
-            }
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning timer started, expiration-time={}",
+                     TimePointToString(session.GetExpirationTime()));
+            mJoinerSessionTimer.Start(session.GetExpirationTime());
         }
 
         VerifyOrDie(it != mJoinerSessions.end());
@@ -2159,7 +2071,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 exit:
     if (error != Error::kNone)
     {
-        LOG_ERROR(LOG_REGION_JOINER_SESSION, "handle RLY_RX.ntf message failed: {}", ErrorToString(error));
+        LOG_ERROR(LOG_REGION_JOINER_SESSION, "failed to handle RLY_RX.ntf message: {}", ErrorToString(error));
     }
 }
 
@@ -2180,8 +2092,8 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
         {
             it = mJoinerSessions.erase(it);
 
-            LOG_INFO(LOG_REGION_JOINER_SESSION, "session(={}, joinerIid={}) removed", static_cast<void *>(&(*it)),
-                     utils::Hex(session.GetJoinerIid()));
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning session (joiner ID={}) removed",
+                     utils::Hex(session.GetJoinerId()));
         }
         else
         {

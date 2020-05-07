@@ -66,7 +66,7 @@ namespace commissioner {
 class CommissionerSafe : public Commissioner
 {
 public:
-    CommissionerSafe();
+    explicit CommissionerSafe(CommissionerHandler &aHandler);
 
     CommissionerSafe(const CommissionerSafe &aCommissioner) = delete;
     const CommissionerSafe &operator=(const CommissionerSafe &aCommissioner) = delete;
@@ -76,9 +76,6 @@ public:
     ~CommissionerSafe() override;
 
     const Config &GetConfig() const override;
-
-    void SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester) override;
-    void SetCommissioningHandler(CommissioningHandler aCommissioningHandler) override;
 
     uint16_t GetSessionId() const override;
 
@@ -190,12 +187,6 @@ public:
     Error RequestToken(ByteArray &aSignedToken, const std::string &aAddr, uint16_t aPort) override;
 
     Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) override;
-
-    void SetDatasetChangedHandler(ErrorHandler aHandler) override;
-
-    void SetPanIdConflictHandler(PanIdConflictHandler aHandler) override;
-
-    void SetEnergyReportHandler(EnergyReportHandler aHandler) override;
 
 private:
     using AsyncRequest = std::function<void()>;

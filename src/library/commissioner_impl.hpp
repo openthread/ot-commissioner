@@ -67,7 +67,7 @@ class CommissionerImpl : public Commissioner
     friend class JoinerSession;
 
 public:
-    explicit CommissionerImpl(struct event_base *aEventBase);
+    explicit CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase);
 
     CommissionerImpl(const CommissionerImpl &aCommissioner) = delete;
     const CommissionerImpl &operator=(const CommissionerImpl &aCommissioner) = delete;
@@ -77,9 +77,6 @@ public:
     ~CommissionerImpl() override;
 
     const Config &GetConfig() const override;
-
-    void SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester) override;
-    void SetCommissioningHandler(CommissioningHandler aCommissioningHandler) override;
 
     uint16_t GetSessionId() const override;
 
@@ -192,12 +189,6 @@ public:
 
     Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) override;
 
-    void SetDatasetChangedHandler(ErrorHandler aHandler) override;
-
-    void SetPanIdConflictHandler(PanIdConflictHandler aHandler) override;
-
-    void SetEnergyReportHandler(EnergyReportHandler aHandler) override;
-
     struct event_base *GetEventBase() { return mEventBase; }
 
 private:
@@ -206,10 +197,6 @@ private:
     static Error ValidateConfig(const Config &aConfig);
     void         LoggingConfig();
 
-    ByteArray &  GetPendingSteeringData(JoinerType aJoinerType);
-    uint16_t &   GetPendingJoinerUdpPort(JoinerType aJoinerType);
-    bool         IsValidJoinerUdpPort(JoinerType aType, uint16_t aUdpPort);
-    void         UpdateCommissionerDataset(const std::list<tlv::Tlv> &aTlvList);
     static Error HandleStateResponse(const coap::Response *aResponse, Error aError);
 
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);
@@ -266,7 +253,8 @@ private:
     static constexpr uint32_t kMinKeepAliveInterval = 30;
     static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
-    struct event_base *mEventBase;
+    CommissionerHandler &mCommissionerHandler;
+    struct event_base *  mEventBase;
 
     Config mConfig;
 
@@ -284,15 +272,9 @@ private:
 
     TokenManager mTokenManager;
 
-    coap::Resource       mResourceDatasetChanged;
-    coap::Resource       mResourcePanIdConflict;
-    coap::Resource       mResourceEnergyReport;
-    ErrorHandler         mDatasetChangedHandler;
-    PanIdConflictHandler mPanIdConflictHandler;
-    EnergyReportHandler  mEnergyReportHandler;
-
-    JoinerInfoRequester  mJoinerInfoRequester;
-    CommissioningHandler mCommissioningHandler;
+    coap::Resource mResourceDatasetChanged;
+    coap::Resource mResourcePanIdConflict;
+    coap::Resource mResourceEnergyReport;
 };
 
 /*

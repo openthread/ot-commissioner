@@ -44,6 +44,14 @@ namespace ot {
 
 namespace commissioner {
 
+JoinerInfo::JoinerInfo(JoinerType aType, uint64_t aEui64, const std::string &aPSKd, const std::string &aProvisioningUrl)
+    : mType(aType)
+    , mEui64(aEui64)
+    , mPSKd(aPSKd)
+    , mProvisioningUrl(aProvisioningUrl)
+{
+}
+
 std::shared_ptr<CommissionerApp> CommissionerApp::Create(const Config &aConfig)
 {
     Error error = Error::kNone;
@@ -59,28 +67,8 @@ Error CommissionerApp::Init(const Config &aConfig)
 {
     Error error;
 
-    SuccessOrExit(error = Commissioner::Create(mCommissioner, aConfig, nullptr));
+    SuccessOrExit(error = Commissioner::Create(mCommissioner, *this, aConfig));
     SuccessOrExit(error = mCommissioner->Start());
-
-    mCommissioner->SetPanIdConflictHandler(
-        [this](const std::string *aPeerAddr, const ChannelMask *aChannelMask, const uint16_t *aPanId, Error aError) {
-            HandlePanIdConflict(aPeerAddr, aChannelMask, aPanId, aError);
-        });
-    mCommissioner->SetEnergyReportHandler(
-        [this](const std::string *aPeerAddr, const ChannelMask *aChannelMask, const ByteArray *aEnergyList,
-               Error aError) { HandleEnergyReport(aPeerAddr, aChannelMask, aEnergyList, aError); });
-    mCommissioner->SetDatasetChangedHandler([this](Error aError) { HandleDatasetChanged(aError); });
-    mCommissioner->SetJoinerInfoRequester(
-        [this](JoinerType aType, const ByteArray &aJoinerId) { return GetJoinerInfo(aType, aJoinerId); });
-
-    // This is the default behavior of OpenThread on-Mesh Commissioner.
-    mCommissioner->SetCommissioningHandler([this](const JoinerInfo &aJoinerInfo, const std::string &aVendorName,
-                                                  const std::string &aVendorModel, const std::string &aVendorSwVersion,
-                                                  const ByteArray &  aVendorStackVersion,
-                                                  const std::string &aProvisioningUrl, const ByteArray &aVendorData) {
-        return HandleCommissioning(aJoinerInfo, aVendorName, aVendorModel, aVendorSwVersion, aVendorStackVersion,
-                                   aProvisioningUrl, aVendorData);
-    });
 
     mCommDataset = MakeDefaultCommissionerDataset();
 
@@ -236,7 +224,7 @@ exit:
 
 Error CommissionerApp::EnableJoiner(JoinerType         aType,
                                     uint64_t           aEui64,
-                                    const ByteArray &  aPSKd,
+                                    const std::string &aPSKd,
                                     const std::string &aProvisioningUrl)
 {
     Error error       = Error::kNone;
@@ -294,7 +282,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::EnableAllJoiners(JoinerType aType, const ByteArray &aPSKd, const std::string &aProvisioningUrl)
+Error CommissionerApp::EnableAllJoiners(JoinerType aType, const std::string &aPSKd, const std::string &aProvisioningUrl)
 {
     Error     error = Error::kNone;
     ByteArray joinerId;
@@ -340,18 +328,6 @@ Error CommissionerApp::DisableAllJoiners(JoinerType aType)
 
 exit:
     return error;
-}
-
-bool CommissionerApp::IsJoinerCommissioned(JoinerType aType, uint64_t aEui64)
-{
-    // This doesn't work for CCM joiners, since CCM joiners are not
-    // commissioned by the commissioner.
-    auto joiner = mJoiners.find(JoinerKey{aType, Commissioner::ComputeJoinerId(aEui64)});
-    if (joiner == mJoiners.end())
-    {
-        return false;
-    }
-    return joiner->second.mIsCommissioned;
 }
 
 Error CommissionerApp::GetJoinerUdpPort(uint16_t &aJoinerUdpPort, JoinerType aJoinerType) const
@@ -1218,52 +1194,97 @@ void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const Commissioner
 #undef SET_IF_PRESENT
 }
 
-void CommissionerApp::HandlePanIdConflict(const std::string *aPeerAddr,
-                                          const ChannelMask *aChannelMask,
-                                          const uint16_t *   aPanId,
-                                          Error              aError)
+std::string CommissionerApp::OnJoinerRequest(const ByteArray &aJoinerId)
 {
-    // TODO(wgtdkp): logging
-    (void)aPeerAddr;
+    std::string pskd;
 
-    if (aError != Error::kNone)
+    auto joinerInfo = mJoiners.find({JoinerType::kMeshCoP, aJoinerId});
+    if (joinerInfo != mJoiners.end())
     {
-        return;
+        ExitNow(pskd = joinerInfo->second.mPSKd);
     }
 
-    // Main thread will wait for updates to mPanIdConflicts,
-    // which guarantees no concurrent access to it.
-    mPanIdConflicts[*aPanId] = *aChannelMask;
+    // Check if all joiners has been enabled.
+    joinerInfo = mJoiners.find({JoinerType::kMeshCoP, Commissioner::ComputeJoinerId(0)});
+    if (joinerInfo != mJoiners.end())
+    {
+        ExitNow(pskd = joinerInfo->second.mPSKd);
+    }
+
+exit:
+    return pskd;
 }
 
-void CommissionerApp::HandleEnergyReport(const std::string *aPeerAddr,
-                                         const ChannelMask *aChannelMask,
-                                         const ByteArray *  aEnergyList,
-                                         Error              aError)
+void CommissionerApp::OnJoinerConnected(const ByteArray &aJoinerId, Error aError)
+{
+    (void)aJoinerId;
+    (void)aError;
+
+    // TODO(wgtdkp): logging
+}
+
+bool CommissionerApp::OnJoinerFinalize(const ByteArray &  aJoinerId,
+                                       const std::string &aVendorName,
+                                       const std::string &aVendorModel,
+                                       const std::string &aVendorSwVersion,
+                                       const ByteArray &  aVendorStackVersion,
+                                       const std::string &aProvisioningUrl,
+                                       const ByteArray &  aVendorData)
+{
+    (void)aVendorName;
+    (void)aVendorModel;
+    (void)aVendorSwVersion;
+    (void)aVendorStackVersion;
+    (void)aVendorData;
+
+    bool accepted = false;
+
+    auto configuredJoinerInfo = GetJoinerInfo(JoinerType::kMeshCoP, aJoinerId);
+
+    // TODO(deimi): logging
+    VerifyOrExit(configuredJoinerInfo != nullptr, accepted = false);
+    VerifyOrExit(aProvisioningUrl == configuredJoinerInfo->mProvisioningUrl, accepted = false);
+
+    accepted = true;
+
+exit:
+    return accepted;
+}
+
+void CommissionerApp::OnKeepAliveResponse(Error aError)
+{
+    (void)aError;
+
+    // Dummy handler.
+}
+
+void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
+{
+    (void)aPeerAddr;
+
+    // FIXME(wgtdkp): synchronization
+    mPanIdConflicts[aPanId] = aChannelMask;
+}
+
+void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
+                                     const ChannelMask &aChannelMask,
+                                     const ByteArray &  aEnergyList)
 {
     Address addr;
 
-    SuccessOrExit(aError);
-    SuccessOrExit(addr.Set(*aPeerAddr));
+    SuccessOrDie(addr.Set(aPeerAddr));
 
-    // Main thread will wait for updates to mPanIdConflicts,
-    // which guarantees no concurrent access to it.
-    mEnergyReports[addr] = {*aChannelMask, *aEnergyList};
-
-exit:
-    return;
+    // FIXME(wgtdkp): synchronization
+    mEnergyReports[addr] = {aChannelMask, aEnergyList};
 }
 
-void CommissionerApp::HandleDatasetChanged(Error error)
+void CommissionerApp::OnDatasetChanged()
 {
-    // TODO(wgtdkp): logging
-    (void)error;
-
     mCommissioner->GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) {
             if (aError == Error::kNone)
             {
-                // FIXME(wgtdkp): syncronization
+                // FIXME(wgtdkp): synchronization
                 mActiveDataset = *aDataset;
             }
             else
@@ -1277,7 +1298,7 @@ void CommissionerApp::HandleDatasetChanged(Error error)
         [this](const PendingOperationalDataset *aDataset, Error aError) {
             if (aError == Error::kNone)
             {
-                // FIXME(wgtdkp): syncronization
+                // FIXME(wgtdkp): synchronization
                 mPendingDataset = *aDataset;
             }
             else
@@ -1301,34 +1322,6 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
         return &joinerInfo->second;
     }
     return nullptr;
-}
-
-bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
-                                          const std::string &aVendorName,
-                                          const std::string &aVendorModel,
-                                          const std::string &aVendorSwVersion,
-                                          const ByteArray &  aVendorStackVersion,
-                                          const std::string &aProvisioningUrl,
-                                          const ByteArray &  aVendorData)
-{
-    (void)aVendorName;
-    (void)aVendorModel;
-    (void)aVendorSwVersion;
-    (void)aVendorStackVersion;
-    (void)aVendorData;
-
-    bool accepted = false;
-
-    auto configuredJoinerInfo = GetJoinerInfo(aJoinerInfo.mType, Commissioner::ComputeJoinerId(aJoinerInfo.mEui64));
-
-    // TODO(deimi): logging
-    VerifyOrExit(configuredJoinerInfo != nullptr, accepted = false);
-    VerifyOrExit(aProvisioningUrl == configuredJoinerInfo->mProvisioningUrl, accepted = false);
-
-    accepted = true;
-
-exit:
-    return accepted;
 }
 
 } // namespace commissioner

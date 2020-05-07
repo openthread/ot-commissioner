@@ -42,20 +42,20 @@ namespace ot {
 
 namespace commissioner {
 
-JoinerSession::JoinerSession(CommissionerImpl &aCommImpl,
-                             const JoinerInfo &aJoinerInfo,
-                             uint16_t          aJoinerUdpPort,
-                             uint16_t          aJoinerRouterLocator,
-                             const ByteArray & aJoinerIid,
-                             const Address &   aJoinerAddr,
-                             uint16_t          aJoinerPort,
-                             const Address &   aLocalAddr,
-                             uint16_t          aLocalPort)
+JoinerSession::JoinerSession(CommissionerImpl & aCommImpl,
+                             const ByteArray &  aJoinerId,
+                             const std::string &aJoinerPSkd,
+                             uint16_t           aJoinerUdpPort,
+                             uint16_t           aJoinerRouterLocator,
+                             const Address &    aJoinerAddr,
+                             uint16_t           aJoinerPort,
+                             const Address &    aLocalAddr,
+                             uint16_t           aLocalPort)
     : mCommImpl(aCommImpl)
-    , mJoinerInfo(aJoinerInfo)
+    , mJoinerId(aJoinerId)
+    , mJoinerPSKd(aJoinerPSkd)
     , mJoinerUdpPort(aJoinerUdpPort)
     , mJoinerRouterLocator(aJoinerRouterLocator)
-    , mJoinerIid(aJoinerIid)
     , mRelaySocket(std::make_shared<RelaySocket>(*this, aJoinerAddr, aJoinerPort, aLocalAddr, aLocalPort))
     , mDtlsSession(std::make_shared<DtlsSession>(aCommImpl.GetEventBase(), /* aIsServer */ true, mRelaySocket))
     , mCoap(aCommImpl.GetEventBase(), *mDtlsSession)
@@ -64,29 +64,44 @@ JoinerSession::JoinerSession(CommissionerImpl &aCommImpl,
     SuccessOrDie(mCoap.AddResource(mResourceJoinFin));
 }
 
-Error JoinerSession::Start(ConnectHandler aOnConnected)
+void JoinerSession::Connect()
 {
     Error error = Error::kNone;
 
     auto dtlsConfig = GetDtlsConfig(mCommImpl.GetConfig());
-    dtlsConfig.mPSK = mJoinerInfo.mPSKd;
+    dtlsConfig.mPSK = {mJoinerPSKd.begin(), mJoinerPSKd.end()};
 
     mExpirationTime = Clock::now() + MilliSeconds(kDtlsHandshakeTimeoutMax * 1000 + kJoinerTimeout * 1000);
 
     SuccessOrExit(error = mDtlsSession->Init(dtlsConfig));
 
     {
-        auto onConnected = [this, aOnConnected](const DtlsSession &, Error aError) { aOnConnected(*this, aError); };
+        auto onConnected = [this](const DtlsSession &, Error aError) { HandleConnect(aError); };
         mDtlsSession->Connect(onConnected);
     }
 
 exit:
-    return error;
+    if (error != Error::kNone)
+    {
+        HandleConnect(error);
+    }
 }
 
-void JoinerSession::Stop()
+void JoinerSession::Disconnect()
 {
     mDtlsSession->Disconnect(Error::kAbort);
+}
+
+ByteArray JoinerSession::GetJoinerIid() const
+{
+    auto joinerIid = mJoinerId;
+    joinerIid[0] ^= kLocalExternalAddrMask;
+    return joinerIid;
+}
+
+void JoinerSession::HandleConnect(Error aError)
+{
+    mCommImpl.mCommissionerHandler.OnJoinerConnected(mJoinerId, aError);
 }
 
 void JoinerSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
@@ -115,9 +130,9 @@ Error JoinerSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek)
     mCommImpl.mBrClient.SendRequest(rlyTx, nullptr);
 
     LOG_DEBUG(LOG_REGION_JOINER_SESSION,
-              "session(={}) sent RLY_TX.ntf: SessionState={}, joinerIID={}, length={}, includeKek={}",
-              static_cast<void *>(this), mDtlsSession->GetStateString(), utils::Hex(GetJoinerIid()),
-              aDtlsMessage.size(), aIncludeKek);
+              "session(={}) sent RLY_TX.ntf: SessionState={}, joinerID={}, length={}, includeKek={}",
+              static_cast<void *>(this), mDtlsSession->GetStateString(), utils::Hex(GetJoinerId()), aDtlsMessage.size(),
+              aIncludeKek);
 
 exit:
     return error;
@@ -172,17 +187,9 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
              utils::Hex(vendorData));
 
     // Validation done, request commissioning by user.
-    if (mCommImpl.mCommissioningHandler != nullptr)
-    {
-        accepted = mCommImpl.mCommissioningHandler(
-            mJoinerInfo, vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
-            vendorSwVersionTlv->GetValueAsString(), vendorStackVersionTlv->GetValue(), provisioningUrl, vendorData);
-    }
-    else
-    {
-        // Accepts a joiner if requirement on vendor-specific provisioning.
-        accepted = provisioningUrl.empty();
-    }
+    accepted = mCommImpl.mCommissionerHandler.OnJoinerFinalize(
+        mJoinerId, vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
+        vendorSwVersionTlv->GetValueAsString(), vendorStackVersionTlv->GetValue(), provisioningUrl, vendorData);
     VerifyOrExit(accepted, error = Error::kReject);
 
 exit:
