@@ -100,7 +100,7 @@ void CommissionerSafe::StartEventLoopThread()
     assert(!mEventThread.joinable());
 
     mEventThread = std::thread([this]() {
-        LOG_INFO("event loop started in background thread");
+        LOG_INFO(LOG_REGION_MESHCOP, "event loop started in background thread");
         event_base_loop(mEventBase.Get(), EVLOOP_NO_EXIT_ON_EMPTY);
     });
 }
