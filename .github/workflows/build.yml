@@ -33,7 +33,7 @@ on: [push, pull_request]
 jobs:
 
   cancel-previous-runs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: rokroskar/workflow-run-cleanup-action@master
         env:
@@ -41,7 +41,7 @@ jobs:
         if: "github.ref != 'refs/heads/master'"
 
   pretty:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -84,7 +84,7 @@ jobs:
 
   clang-build:
     name: clang-${{ matrix.clang_ver }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         clang_ver: [5, 6, 7, 8, 9]
@@ -109,7 +109,7 @@ jobs:
           ./build/tests/commissioner-test
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -129,7 +129,7 @@ jobs:
           ./build/tests/commissioner-test
 
   android-ndk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -153,7 +153,7 @@ jobs:
           cmake --build build
 
   fmt-format-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
