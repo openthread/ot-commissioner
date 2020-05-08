@@ -52,6 +52,8 @@ jobs:
           sudo apt --no-install-recommends install -y clang-tools clang-format-6.0
           clang-format-6.0 --version
           python3 -m pip install yapf==0.29.0
+          suto apt-get install -y npm
+          sudo npm i -g npx
       - name: Check
         run: |
           script/make-pretty check
