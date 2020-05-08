@@ -28,7 +28,10 @@
 
 /**
  * @file
- *   The file defines the SWIG interface of the commissioner.
+ *   This file defines the SWIG interface of the commissioner.
+ *
+ * See http://www.swig.org for more information about SWIG.
+ *
  */
 
 %module(directors="1") commissionerModule

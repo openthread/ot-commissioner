@@ -1,8 +1,8 @@
 # OT Commissioner Java
 
-This is the Java binding of the OT Commissioner library.
+**OT Commissioner Java** binds C++ classes in [include/commissioner](../../include/commissioner) to equivalent Java classes.
+Instead of crafting JNI and Java classes by hand, we use [SWIG](http://www.swig.org) to generate those Java classes from a defined [interface file](./commissioner.i).
+This simplifies the maintaining of the Commissioner interface between C++ and Java.
 
-files
-
-- **commissioner.i** - the [SWIG](http://www.swig.org/) interface file for generating proper `Commissioner` class in Java.
-- The generated Java classes are outputted in `build/src/java`.
+_Note: only synchronized APIs are currently supported in the Java binding,
+it is encouraged to make asynchronous queries with [Java Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)._ 
