@@ -77,9 +77,6 @@ TEST_CASE("pskd-validation", "[pskd]")
         // Includes capital 'Z' at the end.
         REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "22222Z") == Error::kInvalidArgs);
 
-        // Includes lower cases.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "abcedf") == Error::kInvalidArgs);
-
         // Includes lowercase alphanumeric characters.
         REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "abcedf") == Error::kInvalidArgs);
 
