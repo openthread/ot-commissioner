@@ -63,7 +63,7 @@ TEST_CASE("pskd-validation", "[pskd]")
                 Error::kInvalidArgs);
     }
 
-    SECTION("A PSKd includes invalid characters should be rejected")
+    SECTION("A PSKd including invalid characters should be rejected")
     {
         // Includes capital 'O' at the end.
         REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "00000O") == Error::kInvalidArgs);
