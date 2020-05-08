@@ -278,6 +278,8 @@ private:
     static void MergeDataset(BbrDataset &aDst, const BbrDataset &aSrc);
     static void MergeDataset(CommissionerDataset &aDst, const CommissionerDataset &aSrc);
 
+    static Error ValidatePSKd(const std::string &aPSKd);
+
     const JoinerInfo *GetJoinerInfo(JoinerType aType, const ByteArray &aJoinerId);
 
     std::shared_ptr<Commissioner> mCommissioner;

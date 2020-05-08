@@ -234,6 +234,8 @@ Error CommissionerApp::EnableJoiner(JoinerType         aType,
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
+    SuccessOrExit(error = ValidatePSKd(aPSKd));
+
     VerifyOrExit(IsActive(), error = Error::kInvalidState);
 
     VerifyOrExit(mJoiners.count({aType, joinerId}) == 0, error = Error::kAlready);
@@ -291,6 +293,7 @@ Error CommissionerApp::EnableAllJoiners(JoinerType aType, const std::string &aPS
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
+    SuccessOrExit(error = ValidatePSKd(aPSKd));
     VerifyOrExit(IsActive(), error = Error::kInvalidState);
 
     // Set steering data to all 1 to enable all joiners.
@@ -1307,6 +1310,24 @@ void CommissionerApp::OnDatasetChanged()
             }
         },
         0xFFFF);
+}
+
+Error CommissionerApp::ValidatePSKd(const std::string &aPSKd)
+{
+    Error error = Error::kInvalidArgs;
+
+    VerifyOrExit(aPSKd.size() >= kMinJoinerDeviceCredentialLength && aPSKd.size() <= kMaxJoinerDeviceCredentialLength);
+
+    for (auto c : aPSKd)
+    {
+        VerifyOrExit(isdigit(c) || isupper(c));
+        VerifyOrExit(c != 'I' && c != 'O' && c != 'Q' && c != 'Z');
+    }
+
+    error = Error::kNone;
+
+exit:
+    return error;
 }
 
 const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArray &aJoinerId)

@@ -40,7 +40,7 @@ test_joining() {
     send_command_to_commissioner "active"
 
     ## enable all MeshCoP joiners
-    send_command_to_commissioner "joiner enable meshcop ${JOINER_EUI64} ${JOINER_PASSPHRASE}"
+    send_command_to_commissioner "joiner enable meshcop ${JOINER_EUI64} ${JOINER_CREDENTIAL}"
 
     start_joiner "meshcop"
 
