@@ -57,7 +57,7 @@ TEST_CASE("pskd-validation", "[pskd]")
         REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "00001") == Error::kInvalidArgs);
     }
 
-    SECTION("A PSkd longer than 32 characters should be rejected")
+    SECTION("A PSKd longer than 32 characters should be rejected")
     {
         REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "000000000000000000000000000000001") ==
                 Error::kInvalidArgs);
