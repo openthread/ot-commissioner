@@ -1316,7 +1316,7 @@ Error CommissionerApp::ValidatePSKd(const std::string &aPSKd)
 {
     Error error = Error::kInvalidArgs;
 
-    VerifyOrExit(aPSKd.size() >= kMinJoinerPassphraseLength && aPSKd.size() <= kMaxJoinerPassphraseLength);
+    VerifyOrExit(aPSKd.size() >= kMinJoinerDeviceCredentialLength && aPSKd.size() <= kMaxJoinerDeviceCredentialLength);
 
     for (auto c : aPSKd)
     {

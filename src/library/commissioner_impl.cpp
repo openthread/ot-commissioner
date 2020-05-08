@@ -55,8 +55,8 @@ Error Commissioner::GeneratePSKc(ByteArray &        aPSKc,
     const std::string saltPrefix = "Thread";
     ByteArray         salt;
 
-    VerifyOrExit((aPassphrase.size() >= kMinCommissionerPassphraseLength) &&
-                     (aPassphrase.size() <= kMaxCommissionerPassPhraseLength),
+    VerifyOrExit((aPassphrase.size() >= kMinCommissionerCredentialLength) &&
+                     (aPassphrase.size() <= kMaxCommissionerCredentialLength),
                  error = Error::kInvalidArgs);
     VerifyOrExit(aNetworkName.size() <= kMaxNetworkNameLength, error = Error::kInvalidArgs);
     VerifyOrExit(aExtendedPanId.size() == kExtendedPanIdLength, error = Error::kInvalidArgs);

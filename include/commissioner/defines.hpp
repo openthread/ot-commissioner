@@ -53,24 +53,24 @@ namespace commissioner {
  */
 
 /**
- * The minimum commissioner passphrase length.
+ * The minimum Commissioner Credential length.
  */
-static constexpr size_t kMinCommissionerPassphraseLength = 6;
+static constexpr size_t kMinCommissionerCredentialLength = 6;
 
 /**
- * The maximum commissioner passphrase length.
+ * The maximum Commissioner Credential length.
  */
-static constexpr size_t kMaxCommissionerPassPhraseLength = 255;
+static constexpr size_t kMaxCommissionerCredentialLength = 255;
 
 /**
- * The minimum joiner passphrase length.
+ * The minimum Joining Device Credential length.
  */
-static constexpr size_t kMinJoinerPassphraseLength = 6;
+static constexpr size_t kMinJoinerDeviceCredentialLength = 6;
 
 /**
- * The maximum joiner passphrase length.
+ * The maximum Joining Device Credential length.
  */
-static constexpr size_t kMaxJoinerPassphraseLength = 32;
+static constexpr size_t kMaxJoinerDeviceCredentialLength = 32;
 
 /**
  * The maximum PSKc length.
