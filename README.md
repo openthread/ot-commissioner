@@ -1,4 +1,4 @@
-[![Build Status][ot-comm-travis-svg]][ot-comm-travis] [![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
+[![Build][ot-comm-gh-action-build-svg]][ot-comm-gh-action-build] [![Tests][ot-comm-gh-action-tests-svg]][ot-comm-gh-action-tests]  [![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
 
 ---
 
@@ -22,8 +22,10 @@ More information about Thread can be found at [threadgroup.org](http://threadgro
 
 To learn more about OpenThread, visit [openthread.io](https://openthread.io).
 
-[ot-comm-travis]: https://travis-ci.org/openthread/ot-commissioner
-[ot-comm-travis-svg]: https://travis-ci.org/openthread/ot-commissioner.svg?branch=master
+[ot-comm-gh-action-build]: https://github.com/openthread/ot-commissioner/actions?query=workflow%3ABuild+branch%3Amaster+event%3Apush
+[ot-comm-gh-action-build-svg]: https://github.com/openthread/ot-commissioner/workflows/Build/badge.svg?branch=master&event=push
+[ot-comm-gh-action-tests]: https://github.com/openthread/ot-commissioner/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush
+[ot-comm-gh-action-tests-svg]: https://github.com/openthread/ot-commissioner/workflows/Tests/badge.svg?branch=master&event=push
 [ot-comm-codecov]: https://codecov.io/gh/openthread/ot-commissioner
 [ot-comm-codecov-svg]: https://codecov.io/gh/openthread/ot-commissioner/branch/master/graph/badge.svg
 
