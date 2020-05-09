@@ -98,7 +98,7 @@ setup_openthread() {
 
 setup_commissioner() {
     set -e
-    pip install --user -r ../../tools/commissioner_thci/requirements.txt
+    pip install --user -r "${TEST_ROOT_DIR}"/../../tools/commissioner_thci/requirements.txt
 }
 
 main() {

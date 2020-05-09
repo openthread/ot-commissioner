@@ -107,13 +107,9 @@ start_otbr() {
 
     sleep 1
 
-    pidof wpantund
-
     sudo otbr-agent -I wpan0 -d 7 -v > "${OTBR_LOG}" 2>&1 &
 
     sleep 1
-
-    pidof otbr-agent
 }
 
 ## Start commissioner daemon.
