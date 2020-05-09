@@ -1,4 +1,4 @@
-[![Build][ot-comm-gh-action-build-svg]][ot-comm-gh-action-build] [![Tests][ot-comm-gh-action-tests-svg]][ot-comm-gh-action-tests]  [![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
+[![Build][ot-comm-gh-action-build-svg]][ot-comm-gh-action-build] [![Tests][ot-comm-gh-action-tests-svg]][ot-comm-gh-action-tests] [![Coverage Status][ot-comm-codecov-svg]][ot-comm-codecov]
 
 ---
 
