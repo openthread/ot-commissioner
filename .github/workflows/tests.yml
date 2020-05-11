@@ -59,7 +59,7 @@ jobs:
           ./bootstrap.sh
           ./run_tests.sh
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          name: codecov-umbrella
-          fail_ci_if_error: true
+        run: |
+          lcov --directory build/ --capture --output-file coverage.info
+          lcov --list coverage.info
+          bash <(curl -s https://codecov.io/bash) -f coverage.info
