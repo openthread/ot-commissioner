@@ -440,10 +440,7 @@ static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
     if (aJson.contains("MeshLocalPrefix"))
     {
         std::string prefix = aJson["MeshLocalPrefix"];
-        if (Ipv6PrefixFromString(aDataset.mMeshLocalPrefix, prefix) != Error::kNone)
-        {
-            throw std::exception();
-        }
+        SuccessOrThrow(Ipv6PrefixFromString(aDataset.mMeshLocalPrefix, prefix));
         aDataset.mPresentFlags |= ActiveOperationalDataset::kMeshLocalPrefixBit;
     };
 

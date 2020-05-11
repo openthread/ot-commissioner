@@ -563,10 +563,7 @@ CommissionerSafe::AsyncRequest CommissionerSafe::PopAsyncRequest()
 CommissionerSafe::EventBaseHolder::EventBaseHolder()
     : mEventBase(event_base_new())
 {
-    if (mEventBase == nullptr)
-    {
-        throw std::bad_alloc();
-    }
+    VerifyOrDie(mEventBase != nullptr);
 }
 
 CommissionerSafe::EventBaseHolder::~EventBaseHolder()
