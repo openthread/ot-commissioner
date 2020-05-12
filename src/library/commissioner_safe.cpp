@@ -60,9 +60,9 @@ exit:
     return error;
 }
 
-Error CommissionerSafe::Init(CommissionerHandler & aHandler, const Config &aConfig)
+Error CommissionerSafe::Init(CommissionerHandler &aHandler, const Config &aConfig)
 {
-    Error error = Error::kFailed;
+    Error                             error = Error::kFailed;
     std::shared_ptr<CommissionerImpl> impl;
 
     VerifyOrExit(mEventBase.Get() != nullptr, error = Error::kOutOfMemory);

@@ -71,7 +71,7 @@ public:
     CommissionerSafe(const CommissionerSafe &aCommissioner) = delete;
     const CommissionerSafe &operator=(const CommissionerSafe &aCommissioner) = delete;
 
-    Error Init(CommissionerHandler & aHandler, const Config &aConfig);
+    Error Init(CommissionerHandler &aHandler, const Config &aConfig);
 
     ~CommissionerSafe() override;
 
