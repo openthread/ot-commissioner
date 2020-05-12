@@ -66,12 +66,12 @@ namespace commissioner {
 class CommissionerSafe : public Commissioner
 {
 public:
-    explicit CommissionerSafe(CommissionerHandler &aHandler);
+    CommissionerSafe() = default;
 
     CommissionerSafe(const CommissionerSafe &aCommissioner) = delete;
     const CommissionerSafe &operator=(const CommissionerSafe &aCommissioner) = delete;
 
-    Error Init(const Config &aConfig);
+    Error Init(CommissionerHandler & aHandler, const Config &aConfig);
 
     ~CommissionerSafe() override;
 
@@ -210,7 +210,7 @@ private:
     // after any other members.
     EventBaseHolder mEventBase;
 
-    CommissionerImpl mImpl;
+    std::shared_ptr<CommissionerImpl> mImpl;
 
     // The event used to synchronize between the mEventThread
     // and user thread. It will be activated by user calls
