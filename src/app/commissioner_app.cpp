@@ -68,7 +68,6 @@ Error CommissionerApp::Init(const Config &aConfig)
     Error error;
 
     SuccessOrExit(error = Commissioner::Create(mCommissioner, *this, aConfig));
-    SuccessOrExit(error = mCommissioner->Start());
 
     mCommDataset = MakeDefaultCommissionerDataset();
 
