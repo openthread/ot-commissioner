@@ -35,6 +35,7 @@
 
 #include <algorithm>
 
+#include <assert.h>
 #include <ctype.h>
 #include <memory.h>
 
@@ -562,8 +563,7 @@ void Coap::HandleRequest(const Request &aRequest)
 exit:
     if (!error.NoError())
     {
-        LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this),
-                 error.ToString());
+        LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this), error.ToString());
     }
     return;
 }

@@ -35,6 +35,7 @@
 
 #include <limits>
 
+#include <assert.h>
 #include <string.h>
 
 #include "app/file_util.hpp"

@@ -189,7 +189,7 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
     accepted = mCommImpl.mCommissionerHandler.OnJoinerFinalize(
         mJoinerId, vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
         vendorSwVersionTlv->GetValueAsString(), vendorStackVersionTlv->GetValue(), provisioningUrl, vendorData);
-    VerifyOrExit(accepted, error = Error::kReject);
+    VerifyOrExit(accepted, error = ERROR_REJECTED("joiner(ID={}) is rejected", utils::Hex(mJoinerId)));
 
 exit:
     if (!error.NoError())

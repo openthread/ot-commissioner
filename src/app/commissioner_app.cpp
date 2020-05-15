@@ -1335,17 +1335,19 @@ void CommissionerApp::OnDatasetChanged()
 
 Error CommissionerApp::ValidatePSKd(const std::string &aPSKd)
 {
-    Error error = Error::kInvalidArgs;
+    Error error;
 
-    VerifyOrExit(aPSKd.size() >= kMinJoinerDeviceCredentialLength && aPSKd.size() <= kMaxJoinerDeviceCredentialLength);
+    VerifyOrExit(aPSKd.size() >= kMinJoinerDeviceCredentialLength && aPSKd.size() <= kMaxJoinerDeviceCredentialLength,
+                 error = ERROR_INVALID_ARGS("PSKd length(={}) exceeds range [{}, {}]", aPSKd.size(),
+                                            kMinJoinerDeviceCredentialLength, kMaxJoinerDeviceCredentialLength));
 
     for (auto c : aPSKd)
     {
-        VerifyOrExit(isdigit(c) || isupper(c));
-        VerifyOrExit(c != 'I' && c != 'O' && c != 'Q' && c != 'Z');
+        VerifyOrExit(isdigit(c) || isupper(c),
+                     error = ERROR_INVALID_ARGS("PSKd includes non-digit and non-uppercase characters: {}", c));
+        VerifyOrExit(c != 'I' && c != 'O' && c != 'Q' && c != 'Z',
+                     error = ERROR_INVALID_ARGS("PSKd includes invalid uppercase characters: {}", c));
     }
-
-    error = Error::kNone;
 
 exit:
     return error;

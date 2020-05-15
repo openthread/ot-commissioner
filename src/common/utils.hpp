@@ -39,10 +39,10 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
-#define SuccessOrDie(aError)                   \
-    do                                         \
-    {                                          \
-        VerifyOrDie((aError) == Error::kNone); \
+#define SuccessOrDie(aError)             \
+    do                                   \
+    {                                    \
+        VerifyOrDie((aError).NoError()); \
     } while (false)
 
 #define VerifyOrDie(aCondition)             \

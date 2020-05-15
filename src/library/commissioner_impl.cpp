@@ -33,6 +33,8 @@
 
 #include "library/commissioner_impl.hpp"
 
+#include <assert.h>
+
 #include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/dtls.hpp"
@@ -45,6 +47,11 @@
 namespace ot {
 
 namespace commissioner {
+
+static constexpr uint16_t kDefaultMmPort = 61631;
+
+static constexpr uint32_t kMinKeepAliveInterval = 30;
+static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
 Error Commissioner::GeneratePSKc(ByteArray &        aPSKc,
                                  const std::string &aPassphrase,
@@ -61,8 +68,9 @@ Error Commissioner::GeneratePSKc(ByteArray &        aPSKc,
                                             kMinCommissionerCredentialLength, kMaxCommissionerCredentialLength));
     VerifyOrExit(aNetworkName.size() <= kMaxNetworkNameLength,
                  error = ERROR_INVALID_ARGS("network name length={} > {}", aNetworkName.size(), kMaxNetworkNameLength));
-    VerifyOrExit(aExtendedPanId.size() == kExtendedPanIdLength,
-                 error = ERROR_INVALID_ARGS("extended PAN ID length={} != {}", aExtendedPanId.size(), kExtendedPanIdLength));
+    VerifyOrExit(
+        aExtendedPanId.size() == kExtendedPanIdLength,
+        error = ERROR_INVALID_ARGS("extended PAN ID length={} != {}", aExtendedPanId.size(), kExtendedPanIdLength));
 
     salt.insert(salt.end(), saltPrefix.begin(), saltPrefix.end());
     salt.insert(salt.end(), aExtendedPanId.begin(), aExtendedPanId.end());
@@ -1831,7 +1839,8 @@ exit:
 
 void CommissionerImpl::HandleDatasetChanged(const coap::Request &aRequest)
 {
-    LOG_INFO(LOG_REGION_MGMT, "received MGMT_DATASET_CHANGED.ntf from {}", aRequest.GetEndpoint()->GetPeerAddr().ToString());
+    LOG_INFO(LOG_REGION_MGMT, "received MGMT_DATASET_CHANGED.ntf from {}",
+             aRequest.GetEndpoint()->GetPeerAddr().ToString());
 
     mProxyClient.SendEmptyChanged(aRequest);
 
@@ -1853,8 +1862,10 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
     mProxyClient.SendEmptyChanged(aRequest);
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aRequest));
-    VerifyOrExit((channelMaskTlv = tlvSet[tlv::Type::kChannelMask]) != nullptr, error = Error::kBadFormat);
-    VerifyOrExit((panIdTlv = tlvSet[tlv::Type::kPanId]) != nullptr, error = Error::kBadFormat);
+    VerifyOrExit((channelMaskTlv = tlvSet[tlv::Type::kChannelMask]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Channel Mask TLV in MGMT_PANID_CONFLICT.ans"));
+    VerifyOrExit((panIdTlv = tlvSet[tlv::Type::kPanId]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid PAN ID TLV in MGMT_PANID_CONFLICT.ans"));
 
     SuccessOrExit(error = DecodeChannelMask(channelMask, channelMaskTlv->GetValue()));
     panId = panIdTlv->GetValueAsUint16();
@@ -1864,7 +1875,7 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
 exit:
     if (!error.NoError())
     {
-        LOG_WARN(LOG_REGION_MGMT, "handle MGMT_PANID_CONFLICT.ans from {} failed: {}", peerAddr, ErrorToString(error));
+        LOG_WARN(LOG_REGION_MGMT, "handle MGMT_PANID_CONFLICT.ans from {} failed: {}", peerAddr, error.ToString());
     }
 }
 
@@ -1895,7 +1906,7 @@ void CommissionerImpl::HandleEnergyReport(const coap::Request &aRequest)
 exit:
     if (!error.NoError())
     {
-        LOG_WARN(LOG_REGION_MGMT, "handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, ErrorToString(error));
+        LOG_WARN(LOG_REGION_MGMT, "handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, error.ToString());
     }
 }
 
@@ -1968,7 +1979,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     if (joinerPSKd.empty())
     {
         LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
-        ExitNow(error = Error::kReject);
+        ExitNow(error = ERROR_REJECTED("joiner(ID={}) is disabled", utils::Hex(joinerId)));
     }
 
     {

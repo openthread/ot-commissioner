@@ -234,9 +234,6 @@ private:
     void HandleJoinerSessionTimer(Timer &aTimer);
 
 private:
-    static constexpr uint16_t kDefaultMmPort = 61631;
-    static constexpr uint16_t kDefaultMcPort = 49191;
-
     State    mState;
     uint16_t mSessionId; ///< The Commissioner Session ID.
 
@@ -244,9 +241,6 @@ private:
     /*
      * Implementation data.
      */
-
-    static constexpr uint32_t kMinKeepAliveInterval = 30;
-    static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
     CommissionerHandler &mCommissionerHandler;
     struct event_base *  mEventBase;

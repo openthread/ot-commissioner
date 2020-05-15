@@ -35,6 +35,8 @@
 
 #include <set>
 
+#include <assert.h>
+
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 #include "library/logging.hpp"
@@ -115,7 +117,7 @@ bool IsExtendedTlv(Type aType)
 
 void Tlv::Serialize(ByteArray &aBuf) const
 {
-    ASSERT(IsValid());
+    assert(IsValid());
 
     utils::Encode(aBuf, utils::to_underlying(GetType()));
 

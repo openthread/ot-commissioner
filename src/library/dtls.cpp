@@ -33,6 +33,8 @@
 
 #include "library/dtls.hpp"
 
+#include <assert.h>
+
 #include <mbedtls/debug.h>
 #include <mbedtls/error.h>
 #include <mbedtls/platform.h>
@@ -249,7 +251,7 @@ void DtlsSession::Reset()
 {
     if (mState != State::kConnecting && mState != State::kConnected && mState != State::kDisconnected)
     {
-        LOG_WARN(LOG_REGION_DTLS, "session(={}) is in invalid state", static_cast<void*>(this));
+        LOG_WARN(LOG_REGION_DTLS, "session(={}) is in invalid state", static_cast<void *>(this));
         ExitNow();
     }
 
