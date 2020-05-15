@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Commissioner Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ size_t Message::GetHeaderLength() const
 {
     ByteArray buf;
 
-    ASSERT_SUCCESS(Serialize(mHeader, buf));
+    SuccessOrDie(Serialize(mHeader, buf));
     return buf.size();
 }
 
@@ -243,7 +243,7 @@ Error Message::Serialize(OptionType         aOptionNumber,
     size_t   firstByte   = aBuf.size();
     size_t   extend      = aBuf.size() + 1;
 
-    ASSERT(utils::to_underlying(aOptionNumber) >= aLastOptionNumber);
+    VerifyOrDie(utils::to_underlying(aOptionNumber) >= aLastOptionNumber);
 
     VerifyOrExit(IsValidOption(aOptionNumber, aOptionValue),
                  error = ERROR_INVALID_ARGS("option (number={}) is not valid", aOptionNumber));
@@ -289,7 +289,7 @@ Error Message::Serialize(OptionType         aOptionNumber,
         aBuf[extend++] = deltaLength & 0xff;
     }
 
-    ASSERT(length + firstByte == extend);
+    VerifyOrDie(length + firstByte == extend);
 
     aBuf.insert(aBuf.end(), aOptionValue.GetOpaqueValue().begin(), aOptionValue.GetOpaqueValue().end());
 
@@ -361,7 +361,7 @@ Error Message::Deserialize(OptionType &     aOptionNumber,
         ExitNow(error = ERROR_BAD_FORMAT("invalid CoAP option (firstByte={:X})", aBuf[firstByte]));
     }
 
-    ASSERT(firstByte + length == extend);
+    VerifyOrDie(firstByte + length == extend);
 
     VerifyOrExit(valueLength + extend <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of a CoAP option"));
 
@@ -447,7 +447,7 @@ void Coap::SendRequest(const Request &aRequest, ResponseHandler aHandler)
     VerifyOrExit(request->IsConfirmable() || request->IsNonConfirmable(),
                  error = ERROR_INVALID_ARGS("a CoAP request is neither Confirmable nor NON-Confirmable"));
 
-    ASSERT(request->GetMessageId() == 0);
+    VerifyOrDie(request->GetMessageId() == 0);
     request->SetMessageId(AllocMessageId());
     request->SetToken(kDefaultTokenLength);
 
@@ -507,11 +507,11 @@ void Coap::ReceiveMessage(Endpoint &aEndpoint, std::shared_ptr<Message> aMessage
     if (!error.NoError())
     {
         // Silently drop a bad formatted message
-        LOG_INFO("drop a CoAP message in bad format: {}", error.GetMessage());
+        LOG_INFO(LOG_REGION_COAP, "drop a CoAP message in bad format: {}", error.GetMessage());
     }
     else
     {
-        ASSERT(aMessage != nullptr);
+        assert(aMessage != nullptr);
 
         aMessage->SetEndpoint(&aEndpoint);
         if (aMessage->IsRequest())
@@ -537,7 +537,8 @@ void Coap::HandleRequest(const Request &aRequest)
     response = mResponsesCache.Match(aRequest);
     if (response != nullptr)
     {
-        LOG_INFO("found cached CoAP response for resource {}", uriPath);
+        LOG_INFO(LOG_REGION_COAP, "server(={}) found cached CoAP response for resource {}", static_cast<void *>(this),
+                 uriPath);
         ExitNow(error = Send(*response));
     }
 
@@ -561,7 +562,8 @@ void Coap::HandleRequest(const Request &aRequest)
 exit:
     if (!error.NoError())
     {
-        LOG_INFO("handle CoAP request failed: {}", error.ToString());
+        LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this),
+                 error.ToString());
     }
     return;
 }
@@ -638,7 +640,7 @@ void Coap::Retransmit(Timer &)
 {
     auto now = Clock::now();
 
-    LOG_DEBUG("CoAP retransmit timer triggered");
+    LOG_DEBUG(LOG_REGION_COAP, "client(={}) retransmit timer triggered", static_cast<void *>(this));
 
     while (!mRequestsCache.IsEmpty() && mRequestsCache.Earliest() < now)
     {
@@ -662,18 +664,21 @@ void Coap::Retransmit(Timer &)
             // Retransmit
             if (!requestHolder.mAcknowledged)
             {
-                LOG_INFO("retransmit of request {}, retransmit count = {}", uri, requestHolder.mRetransmissionCount);
+                LOG_INFO(LOG_REGION_COAP, "client(={}) retransmit request {}, retransmit count = {}",
+                         static_cast<void *>(this), uri, requestHolder.mRetransmissionCount);
 
                 auto error = Send(*requestHolder.mRequest);
                 if (!error.NoError())
                 {
-                    LOG_WARN("retransmit of request {} failed: {}", uri, error.ToString());
+                    LOG_WARN(LOG_REGION_COAP, "client(={}) retransmit request {} failed: {}", static_cast<void *>(this),
+                             uri, error.ToString());
                     FinalizeTransaction(requestHolder, nullptr, error);
                 }
             }
             else
             {
-                LOG_DEBUG("request to {} has been acknowledged, won't retransmit", uri);
+                LOG_DEBUG(LOG_REGION_COAP, "client(={}) request to {} has been acknowledged, won't retransmit",
+                          static_cast<void *>(this), uri);
             }
         }
         else
@@ -802,8 +807,8 @@ void Coap::ResponsesCache::Eliminate()
             break;
         }
         mContainer.erase(earliest);
-        LOG_INFO("removed response cache: token={}, messageId={}", utils::Hex(response.GetToken()),
-                 response.GetMessageId());
+        LOG_INFO(LOG_REGION_COAP, "server(={}) remove response cache: token={}, messageId={}",
+                 static_cast<void *>(this), utils::Hex(response.GetToken()), response.GetMessageId());
     }
 }
 
@@ -830,7 +835,7 @@ void Coap::RequestsCache::Put(const RequestHolder &aRequestHolder)
 
 Coap::RequestHolder Coap::RequestsCache::Eliminate()
 {
-    ASSERT(!IsEmpty());
+    VerifyOrDie(!IsEmpty());
     auto ret = *mContainer.begin();
 
     mContainer.erase(mContainer.begin());
@@ -1160,7 +1165,7 @@ void Message::SetToken(const ByteArray &aToken)
 
 void Message::SetToken(uint8_t aTokenLength)
 {
-    ASSERT(aTokenLength <= sizeof(mHeader.mToken));
+    VerifyOrDie(aTokenLength <= sizeof(mHeader.mToken));
 
     mHeader.mTokenLength = aTokenLength;
     random::non_crypto::FillBuffer(mHeader.mToken, aTokenLength);

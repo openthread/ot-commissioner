@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,13 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
-// ASSERT allows side-effect.
-#define ASSERT(aCondition)                  \
+#define SuccessOrDie(aError)                   \
+    do                                         \
+    {                                          \
+        VerifyOrDie((aError) == Error::kNone); \
+    } while (false)
+
+#define VerifyOrDie(aCondition)             \
     do                                      \
     {                                       \
         if (!(aCondition))                  \
@@ -130,7 +135,7 @@ template <typename T> T Decode(const uint8_t *aBuf)
 
 template <typename T> T Decode(const ByteArray &aBuf)
 {
-    ASSERT(aBuf.size() >= sizeof(T));
+    VerifyOrDie(aBuf.size() >= sizeof(T));
     return Decode<T>(&aBuf[0]);
 }
 

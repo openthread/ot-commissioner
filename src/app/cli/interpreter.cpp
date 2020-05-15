@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -271,7 +271,7 @@ Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral
         {
             if (*c == '\'')
             {
-                ASSERT(begin != aLiteral.end());
+                VerifyOrDie(begin != aLiteral.end());
                 expr.emplace_back(begin, c);
                 begin          = aLiteral.end();
                 inSingleQuotes = false;
@@ -320,7 +320,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 exit:
     if (!existingCommissionerId.empty())
     {
-        ASSERT(!error.NoError());
+        assert(!error.NoError());
         error.SetMessage("there is an existing active commissioner: " + existingCommissionerId);
     }
     return error;
@@ -472,7 +472,7 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
     if (CaseInsensitiveEqual(aExpr[1], "enable"))
     {
         uint64_t    eui64;
-        ByteArray   pskd;
+        std::string pskd;
         std::string provisioningUrl;
 
         VerifyOrExit(aExpr.size() >= (type == JoinerType::kMeshCoP ? 5 : 4),
@@ -480,7 +480,7 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
         SuccessOrExit(value = ParseInteger(eui64, aExpr[3]));
         if (type == JoinerType::kMeshCoP)
         {
-            pskd = {aExpr[4].begin(), aExpr[4].end()};
+            pskd = aExpr[4];
             if (aExpr.size() >= 6)
             {
                 provisioningUrl = aExpr[5];
@@ -491,12 +491,12 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "enableall"))
     {
-        ByteArray   pskd;
+        std::string pskd;
         std::string provisioningUrl;
         if (type == JoinerType::kMeshCoP)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
-            pskd = {aExpr[3].begin(), aExpr[3].end()};
+            pskd = aExpr[3];
             if (aExpr.size() >= 5)
             {
                 provisioningUrl = aExpr[4];
@@ -1039,14 +1039,14 @@ void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const Erro
     }
     else
     {
-        ASSERT(aBorderAgent != nullptr);
+        assert(aBorderAgent != nullptr);
         Console::Write(ToString(*aBorderAgent), Console::Color::kGreen);
     }
 }
 
 const std::string Interpreter::Usage(Expression aExpr)
 {
-    ASSERT(aExpr.size() >= 1);
+    assert(aExpr.size() >= 1);
     auto usage = mUsageMap.find(aExpr[0]);
     return usage != mUsageMap.end() ? usage->second : "";
 }

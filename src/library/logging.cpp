@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -49,11 +49,11 @@ std::shared_ptr<Logger> GetLogger(void)
     return sLogger;
 }
 
-void Log(LogLevel aLevel, const std::string &aMessage)
+void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMessage)
 {
     if (GetLogger())
     {
-        GetLogger()->Log(aLevel, aMessage);
+        GetLogger()->Log(aLevel, aRegion, aMessage);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -100,15 +100,14 @@ exit:
 
 std::string Ipv6PrefixToString(ByteArray aPrefix)
 {
-    ASSERT(aPrefix.size() <= 16);
+    VerifyOrDie(aPrefix.size() <= 16);
 
     auto prefixLength = aPrefix.size() * 8;
     aPrefix.resize(16);
 
     Address addr;
-    ASSERT_SUCCESS(addr.Set(aPrefix));
+    SuccessOrDie(addr.Set(aPrefix));
 
-    std::string ret;
     return addr.ToString() + "/" + std::to_string(prefixLength);
 }
 

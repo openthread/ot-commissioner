@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2019, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,6 @@ target_sources(commissioner
         commissioner_impl.hpp
         commissioner_safe.cpp
         commissioner_safe.hpp
-        commissioning_session.cpp
-        commissioning_session.hpp
         cose.cpp
         cose.hpp
         cwt.hpp
@@ -49,6 +47,8 @@ target_sources(commissioner
         endpoint.hpp
         error.cpp
         event.hpp
+        joiner_session.cpp
+        joiner_session.hpp
         logging.cpp
         logging.hpp
         mbedtls_error.cpp
@@ -114,15 +114,15 @@ install(TARGETS commissioner
 ## disabled for them (intended).
 if (BUILD_SHARED_LIBS)
     install(FILES
-                $<TARGET_FILE:cn-cbor::cn-cbor>
-                $<TARGET_FILE:cose>
-                $<TARGET_FILE:mdns>
-                $<TARGET_FILE:mbedtls>
-                $<TARGET_FILE:mbedx509>
-                $<TARGET_FILE:mbedcrypto>
-                $<TARGET_FILE:fmt::fmt>
-                $<TARGET_FILE:event_core_shared>
-                $<TARGET_FILE:event_pthreads_shared>
+            $<TARGET_FILE:cn-cbor::cn-cbor>
+            $<TARGET_FILE:cose>
+            $<TARGET_FILE:mdns>
+            $<TARGET_FILE:mbedtls>
+            $<TARGET_FILE:mbedx509>
+            $<TARGET_FILE:mbedcrypto>
+            $<TARGET_FILE:fmt::fmt>
+            $<TARGET_FILE:event_core_shared>
+            $<TARGET_FILE:event_pthreads_shared>
             DESTINATION lib
     )
 
@@ -134,52 +134,55 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
         DESTINATION include
 )
 
-add_executable(commissioner-test $<$<NOT:$<BOOL:${OT_COMM_TEST}>>:EXCLUDE_FROM_ALL>)
+if (OT_COMM_TEST)
+    add_executable(commissioner-test)
 
-target_sources(commissioner-test
-    PRIVATE
-        coap_secure.hpp
-        coap_secure_test.cpp
-        coap.hpp
-        coap_test.cpp
-        commissioner_impl.hpp
-        commissioner_impl_test.cpp
-        commissioner_safe.hpp
-        commissioner_safe_test.cpp
-        cose.hpp
-        cose_test.cpp
-        dtls.hpp
-        dtls_test.cpp
-        socket.hpp
-        socket_test.cpp
-        token_manager.hpp
-        token_manager_test.cpp
-)
+    target_sources(commissioner-test
+        PRIVATE
+            coap_secure.hpp
+            coap_secure_test.cpp
+            coap.hpp
+            coap_test.cpp
+            commissioner_impl.hpp
+            commissioner_impl_test.cpp
+            commissioner_safe.hpp
+            commissioner_safe_test.cpp
+            cose.hpp
+            cose_test.cpp
+            dtls.hpp
+            dtls_test.cpp
+            socket.hpp
+            socket_test.cpp
+            token_manager.hpp
+            token_manager_test.cpp
+            $<$<BOOL:${OT_COMM_APP}>:$<TARGET_OBJECTS:commissioner-app-test>>
+            $<TARGET_OBJECTS:commissioner-common-test>
+    )
 
-target_link_libraries(commissioner-test
-    PRIVATE
-        Catch2::Catch2
-        cn-cbor::cn-cbor
-        cose
-        mdns
-        mbedtls
-        mbedx509
-        mbedcrypto
-        fmt::fmt
-        event_core
-        event_pthreads
-        commissioner
-        commissioner-common
-        commissioner-app-test
-        commissioner-common-test
-)
+    target_link_libraries(commissioner-test
+        PRIVATE
+            Catch2::Catch2
+            cn-cbor::cn-cbor
+            cose
+            mdns
+            mbedtls
+            mbedx509
+            mbedcrypto
+            fmt::fmt
+            event_core
+            event_pthreads
+            commissioner
+            $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
+            commissioner-common
+    )
 
-target_include_directories(commissioner-test
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-)
+    target_include_directories(commissioner-test
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+    )
 
-set_target_properties(commissioner-test
-    PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
-)
+    set_target_properties(commissioner-test
+        PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+    )
+endif()

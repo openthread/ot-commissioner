@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2019, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ readonly NON_CCM_CONFIG=${TEST_ROOT_DIR}/../../src/app/etc/commissioner/non-ccm-
 
 readonly JOINER_NODE_ID=2
 readonly JOINER_EUI64=0x18b4300000000002
-readonly JOINER_PASSPHRASE=abcd
+readonly JOINER_CREDENTIAL=ABCDEF
 
 ## Thread network parameters
 readonly NETWORK_NAME=openthread-test
@@ -107,13 +107,9 @@ start_otbr() {
 
     sleep 1
 
-    pidof wpantund
-
     sudo otbr-agent -I wpan0 -d 7 -v > "${OTBR_LOG}" 2>&1 &
 
     sleep 1
-
-    pidof otbr-agent
 }
 
 ## Start commissioner daemon.
@@ -175,12 +171,12 @@ start_joiner() {
     local joiner_type=$1
     local joiner_binary=""
     local joining_cmd=""
-    local joiner_passphrase=""
+    local joiner_credential=""
 
     if [ "${joiner_type}" = "meshcop" ]; then
         joiner_binary=${NON_CCM_CLI}
         joining_cmd="start"
-        joiner_passphrase=${JOINER_PASSPHRASE}
+        joiner_credential=${JOINER_CREDENTIAL}
     elif [ "${joiner_type}" = "ae" ]; then
         joiner_binary=${CCM_CLI}
         joining_cmd="startae"
@@ -204,7 +200,7 @@ expect "Done"
 send "channel ${CHANNEL}\r\n"
 expect "Done"
 
-send "joiner ${joining_cmd} ${joiner_passphrase}\r\n"
+send "joiner ${joining_cmd} ${joiner_credential}\r\n"
 set timeout 20
 expect {
     "Join success" {

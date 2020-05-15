@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,8 @@
 
 #include <future>
 
+#include <assert.h>
+
 #include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/logging.hpp"
@@ -44,42 +46,38 @@ namespace ot {
 
 namespace commissioner {
 
-std::shared_ptr<Commissioner> Commissioner::Create(const Config &aConfig, struct event_base *aEventBase)
-{
-    if (aEventBase == nullptr)
-    {
-        auto comm = std::make_shared<CommissionerSafe>();
-
-        // TODO(wgtdkp): pass the error to caller.
-        return comm->Init(aConfig).NoError() ? comm : nullptr;
-    }
-    else
-    {
-        auto comm = std::make_shared<CommissionerImpl>(aEventBase);
-        return comm->Init(aConfig).NoError() ? comm : nullptr;
-    }
-}
-
-CommissionerSafe::CommissionerSafe()
-    : mImpl(mEventBase.Get())
-{
-}
-
-Error CommissionerSafe::Init(const Config &aConfig)
+Error Commissioner::Create(std::shared_ptr<Commissioner> &aCommissioner,
+                           CommissionerHandler &          aHandler,
+                           const Config &                 aConfig)
 {
     Error error;
+    auto  comm = std::make_shared<CommissionerSafe>();
 
-    SuccessOrExit(error = mImpl.Init(aConfig));
+    SuccessOrExit(error = comm->Init(aHandler, aConfig));
+    aCommissioner = comm;
 
-    error = ERROR_IO_ERROR("init libevent failed");
-    VerifyOrExit(mEventBase.Get() != nullptr);
+exit:
+    return error;
+}
+
+Error CommissionerSafe::Init(CommissionerHandler &aHandler, const Config &aConfig)
+{
+    Error                             error;
+    std::shared_ptr<CommissionerImpl> impl;
+
+    VerifyOrExit(mEventBase.Get() != nullptr, error = ERROR_OUT_OF_MEMORY("failed to create event base"));
+
+    error = ERROR_UNKNOWN("failed to initialize event base");
     VerifyOrExit(evthread_use_pthreads() == 0);
     VerifyOrExit(evthread_make_base_notifiable(mEventBase.Get()) == 0);
-
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
 
-    error = ERROR_NONE;
+    impl = std::make_shared<CommissionerImpl>(aHandler, mEventBase.Get());
+    SuccessOrExit(error = impl->Init(aConfig));
+    mImpl = impl;
+
+    StartEventLoopThread();
 
 exit:
     return error;
@@ -87,39 +85,37 @@ exit:
 
 CommissionerSafe::~CommissionerSafe()
 {
-    Stop();
+    StopEventLoopThread();
 }
 
 const Config &CommissionerSafe::GetConfig() const
 {
     // Config is read-only, no synchronization is needed.
-    return mImpl.GetConfig();
+    return mImpl->GetConfig();
 }
 
-Error CommissionerSafe::Start()
+void CommissionerSafe::StartEventLoopThread()
 {
-    Error error;
+    assert(!mEventThread.joinable());
 
-    VerifyOrExit(!mEventThread.joinable(), error = ERROR_INVALID_STATE("the commissioner is running"));
-
-    mEventThread = std::thread([this]() { IgnoreError(mImpl.Start()); });
-
-exit:
-    return error;
+    mEventThread = std::thread([this]() {
+        LOG_INFO(LOG_REGION_MESHCOP, "event loop started in background thread");
+        event_base_loop(mEventBase.Get(), EVLOOP_NO_EXIT_ON_EMPTY);
+    });
 }
 
-// Stop the commissioner running in background.
-void CommissionerSafe::Stop()
+void CommissionerSafe::StopEventLoopThread(void)
 {
     std::promise<void> pro;
 
+    VerifyOrExit(mEventBase.Get() != nullptr && mImpl != nullptr);
     VerifyOrExit(mEventThread.joinable());
 
     // Send `Stop` to the event loop to break it from inside.
     // This makes sure the event loop has been started when we
     // trying to break it.
     PushAsyncRequest([&pro, this]() {
-        mImpl.Stop();
+        event_base_loopbreak(mEventBase.Get());
         pro.set_value();
     });
 
@@ -133,7 +129,7 @@ exit:
 
 void CommissionerSafe::Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)
 {
-    PushAsyncRequest([=]() { mImpl.Connect(aHandler, aAddr, aPort); });
+    PushAsyncRequest([=]() { mImpl->Connect(aHandler, aAddr, aPort); });
 }
 
 Error CommissionerSafe::Connect(const std::string &aAddr, uint16_t aPort)
@@ -147,7 +143,7 @@ Error CommissionerSafe::Connect(const std::string &aAddr, uint16_t aPort)
 
 void CommissionerSafe::Disconnect()
 {
-    PushAsyncRequest([=]() { mImpl.Disconnect(); });
+    PushAsyncRequest([=]() { mImpl->Disconnect(); });
 }
 
 /**
@@ -155,37 +151,37 @@ void CommissionerSafe::Disconnect()
  */
 uint16_t CommissionerSafe::GetSessionId() const
 {
-    return mImpl.GetSessionId();
+    return mImpl->GetSessionId();
 }
 
 State CommissionerSafe::GetState() const
 {
-    return mImpl.GetState();
+    return mImpl->GetState();
 }
 
 bool CommissionerSafe::IsActive() const
 {
-    return mImpl.IsActive();
+    return mImpl->IsActive();
 }
 
 bool CommissionerSafe::IsCcmMode() const
 {
-    return mImpl.IsCcmMode();
+    return mImpl->IsCcmMode();
 }
 
 const std::string &CommissionerSafe::GetDomainName() const
 {
-    return mImpl.GetDomainName();
+    return mImpl->GetDomainName();
 }
 
 void CommissionerSafe::AbortRequests()
 {
-    PushAsyncRequest([=]() { mImpl.AbortRequests(); });
+    PushAsyncRequest([=]() { mImpl->AbortRequests(); });
 }
 
 void CommissionerSafe::Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort)
 {
-    PushAsyncRequest([=]() { mImpl.Petition(aHandler, aAddr, aPort); });
+    PushAsyncRequest([=]() { mImpl->Petition(aHandler, aAddr, aPort); });
 }
 
 Error CommissionerSafe::Petition(std::string &aExistingCommissionerId, const std::string &aAddr, uint16_t aPort)
@@ -205,7 +201,7 @@ Error CommissionerSafe::Petition(std::string &aExistingCommissionerId, const std
 
 void CommissionerSafe::Resign(ErrorHandler aHandler)
 {
-    PushAsyncRequest([=]() { mImpl.Resign(aHandler); });
+    PushAsyncRequest([=]() { mImpl->Resign(aHandler); });
 }
 
 Error CommissionerSafe::Resign()
@@ -219,7 +215,7 @@ Error CommissionerSafe::Resign()
 
 void CommissionerSafe::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
 {
-    PushAsyncRequest([=]() { mImpl.GetCommissionerDataset(aHandler, aDatasetFlags); });
+    PushAsyncRequest([=]() { mImpl->GetCommissionerDataset(aHandler, aDatasetFlags); });
 }
 
 Error CommissionerSafe::GetCommissionerDataset(CommissionerDataset &aDataset, uint16_t aDatasetFlags)
@@ -239,7 +235,7 @@ Error CommissionerSafe::GetCommissionerDataset(CommissionerDataset &aDataset, ui
 
 void CommissionerSafe::SetCommissionerDataset(ErrorHandler aHandler, const CommissionerDataset &aDataset)
 {
-    PushAsyncRequest([=]() { mImpl.SetCommissionerDataset(aHandler, aDataset); });
+    PushAsyncRequest([=]() { mImpl->SetCommissionerDataset(aHandler, aDataset); });
 }
 
 Error CommissionerSafe::SetCommissionerDataset(const CommissionerDataset &aDataset)
@@ -253,7 +249,7 @@ Error CommissionerSafe::SetCommissionerDataset(const CommissionerDataset &aDatas
 
 void CommissionerSafe::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
 {
-    PushAsyncRequest([=]() { mImpl.GetBbrDataset(aHandler, aDatasetFlags); });
+    PushAsyncRequest([=]() { mImpl->GetBbrDataset(aHandler, aDatasetFlags); });
 }
 
 Error CommissionerSafe::GetBbrDataset(BbrDataset &aDataset, uint16_t aDatasetFlags)
@@ -273,7 +269,7 @@ Error CommissionerSafe::GetBbrDataset(BbrDataset &aDataset, uint16_t aDatasetFla
 
 void CommissionerSafe::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
-    PushAsyncRequest([=]() { mImpl.SetBbrDataset(aHandler, aDataset); });
+    PushAsyncRequest([=]() { mImpl->SetBbrDataset(aHandler, aDataset); });
 }
 
 Error CommissionerSafe::SetBbrDataset(const BbrDataset &aDataset)
@@ -287,7 +283,7 @@ Error CommissionerSafe::SetBbrDataset(const BbrDataset &aDataset)
 
 void CommissionerSafe::GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags)
 {
-    PushAsyncRequest([=]() { mImpl.GetActiveDataset(aHandler, aDatasetFlags); });
+    PushAsyncRequest([=]() { mImpl->GetActiveDataset(aHandler, aDatasetFlags); });
 }
 
 Error CommissionerSafe::GetActiveDataset(ActiveOperationalDataset &aDataset, uint16_t aDatasetFlags)
@@ -307,7 +303,7 @@ Error CommissionerSafe::GetActiveDataset(ActiveOperationalDataset &aDataset, uin
 
 void CommissionerSafe::SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aDataset)
 {
-    PushAsyncRequest([=]() { mImpl.SetActiveDataset(aHandler, aDataset); });
+    PushAsyncRequest([=]() { mImpl->SetActiveDataset(aHandler, aDataset); });
 }
 
 Error CommissionerSafe::SetActiveDataset(const ActiveOperationalDataset &aDataset)
@@ -321,7 +317,7 @@ Error CommissionerSafe::SetActiveDataset(const ActiveOperationalDataset &aDatase
 
 void CommissionerSafe::GetPendingDataset(Handler<PendingOperationalDataset> aHandler, uint16_t aDatasetFlags)
 {
-    PushAsyncRequest([=]() { mImpl.GetPendingDataset(aHandler, aDatasetFlags); });
+    PushAsyncRequest([=]() { mImpl->GetPendingDataset(aHandler, aDatasetFlags); });
 }
 
 Error CommissionerSafe::GetPendingDataset(PendingOperationalDataset &aDataset, uint16_t aDatasetFlags)
@@ -341,7 +337,7 @@ Error CommissionerSafe::GetPendingDataset(PendingOperationalDataset &aDataset, u
 
 void CommissionerSafe::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aDataset)
 {
-    PushAsyncRequest([=]() { mImpl.SetPendingDataset(aHandler, aDataset); });
+    PushAsyncRequest([=]() { mImpl->SetPendingDataset(aHandler, aDataset); });
 }
 
 Error CommissionerSafe::SetPendingDataset(const PendingOperationalDataset &aDataset)
@@ -358,7 +354,7 @@ void CommissionerSafe::SetSecurePendingDataset(ErrorHandler                     
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)
 {
-    PushAsyncRequest([=]() { mImpl.SetSecurePendingDataset(aHandler, aPbbrAddr, aMaxRetrievalTimer, aDataset); });
+    PushAsyncRequest([=]() { mImpl->SetSecurePendingDataset(aHandler, aPbbrAddr, aMaxRetrievalTimer, aDataset); });
 }
 
 Error CommissionerSafe::SetSecurePendingDataset(const std::string &              aPbbrAddr,
@@ -374,7 +370,7 @@ Error CommissionerSafe::SetSecurePendingDataset(const std::string &             
 
 void CommissionerSafe::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
 {
-    PushAsyncRequest([=]() { mImpl.CommandReenroll(aHandler, aDstAddr); });
+    PushAsyncRequest([=]() { mImpl->CommandReenroll(aHandler, aDstAddr); });
 }
 
 Error CommissionerSafe::CommandReenroll(const std::string &aDstAddr)
@@ -388,7 +384,7 @@ Error CommissionerSafe::CommandReenroll(const std::string &aDstAddr)
 
 void CommissionerSafe::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
 {
-    PushAsyncRequest([=]() { mImpl.CommandDomainReset(aHandler, aDstAddr); });
+    PushAsyncRequest([=]() { mImpl->CommandDomainReset(aHandler, aDstAddr); });
 }
 
 Error CommissionerSafe::CommandDomainReset(const std::string &aDstAddr)
@@ -404,7 +400,7 @@ void CommissionerSafe::CommandMigrate(ErrorHandler       aHandler,
                                       const std::string &aDstAddr,
                                       const std::string &aDstNetworkName)
 {
-    PushAsyncRequest([=]() { mImpl.CommandMigrate(aHandler, aDstAddr, aDstNetworkName); });
+    PushAsyncRequest([=]() { mImpl->CommandMigrate(aHandler, aDstAddr, aDstNetworkName); });
 }
 
 Error CommissionerSafe::CommandMigrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork)
@@ -421,7 +417,7 @@ void CommissionerSafe::RegisterMulticastListener(Handler<uint8_t>               
                                                  const std::vector<std::string> &aMulticastAddrList,
                                                  uint32_t                        aTimeout)
 {
-    PushAsyncRequest([=]() { mImpl.RegisterMulticastListener(aHandler, aPbbrAddr, aMulticastAddrList, aTimeout); });
+    PushAsyncRequest([=]() { mImpl->RegisterMulticastListener(aHandler, aPbbrAddr, aMulticastAddrList, aTimeout); });
 }
 
 Error CommissionerSafe::RegisterMulticastListener(uint8_t &                       aStatus,
@@ -448,7 +444,7 @@ void CommissionerSafe::AnnounceBegin(ErrorHandler       aHandler,
                                      uint16_t           aPeriod,
                                      const std::string &aDstAddr)
 {
-    PushAsyncRequest([=]() { mImpl.AnnounceBegin(aHandler, aChannelMask, aCount, aPeriod, aDstAddr); });
+    PushAsyncRequest([=]() { mImpl->AnnounceBegin(aHandler, aChannelMask, aCount, aPeriod, aDstAddr); });
 }
 Error CommissionerSafe::AnnounceBegin(uint32_t           aChannelMask,
                                       uint8_t            aCount,
@@ -467,7 +463,7 @@ void CommissionerSafe::PanIdQuery(ErrorHandler       aHandler,
                                   uint16_t           aPanId,
                                   const std::string &aDstAddr)
 {
-    PushAsyncRequest([=]() { mImpl.PanIdQuery(aHandler, aChannelMask, aPanId, aDstAddr); });
+    PushAsyncRequest([=]() { mImpl->PanIdQuery(aHandler, aChannelMask, aPanId, aDstAddr); });
 }
 
 Error CommissionerSafe::PanIdQuery(uint32_t aChannelMask, uint16_t aPanId, const std::string &aDstAddr)
@@ -486,7 +482,7 @@ void CommissionerSafe::EnergyScan(ErrorHandler       aHandler,
                                   uint16_t           aScanDuration,
                                   const std::string &aDstAddr)
 {
-    PushAsyncRequest([=]() { mImpl.EnergyScan(aHandler, aChannelMask, aCount, aPeriod, aScanDuration, aDstAddr); });
+    PushAsyncRequest([=]() { mImpl->EnergyScan(aHandler, aChannelMask, aCount, aPeriod, aScanDuration, aDstAddr); });
 }
 
 Error CommissionerSafe::EnergyScan(uint32_t           aChannelMask,
@@ -504,7 +500,7 @@ Error CommissionerSafe::EnergyScan(uint32_t           aChannelMask,
 
 void CommissionerSafe::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
 {
-    PushAsyncRequest([=]() { mImpl.RequestToken(aHandler, aAddr, aPort); });
+    PushAsyncRequest([=]() { mImpl->RequestToken(aHandler, aAddr, aPort); });
 }
 
 Error CommissionerSafe::RequestToken(ByteArray &aSignedToken, const std::string &aAddr, uint16_t aPort)
@@ -525,45 +521,15 @@ Error CommissionerSafe::RequestToken(ByteArray &aSignedToken, const std::string 
 Error CommissionerSafe::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
 {
     std::promise<Error> pro;
-    PushAsyncRequest([&]() { pro.set_value(mImpl.SetToken(aSignedToken, aSignerCert)); });
+    PushAsyncRequest([&]() { pro.set_value(mImpl->SetToken(aSignedToken, aSignerCert)); });
     return pro.get_future().get();
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetJoinerInfoRequester(JoinerInfoRequester aJoinerInfoRequester)
-{
-    mImpl.SetJoinerInfoRequester(aJoinerInfoRequester);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetCommissioningHandler(CommissioningHandler aCommissioningHandler)
-{
-    mImpl.SetCommissioningHandler(aCommissioningHandler);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetDatasetChangedHandler(ErrorHandler aHandler)
-{
-    mImpl.SetDatasetChangedHandler(aHandler);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetPanIdConflictHandler(PanIdConflictHandler aHandler)
-{
-    mImpl.SetPanIdConflictHandler(aHandler);
-}
-
-// It is not safe to call this after starting the commissioner.
-void CommissionerSafe::SetEnergyReportHandler(EnergyReportHandler aHandler)
-{
-    mImpl.SetEnergyReportHandler(aHandler);
 }
 
 void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
 {
     auto commissionerSafe = reinterpret_cast<CommissionerSafe *>(aContext);
 
-    ASSERT(commissionerSafe != nullptr);
+    VerifyOrDie(commissionerSafe != nullptr);
 
     if (auto asyncReq = commissionerSafe->PopAsyncRequest())
     {
@@ -597,10 +563,6 @@ CommissionerSafe::AsyncRequest CommissionerSafe::PopAsyncRequest()
 CommissionerSafe::EventBaseHolder::EventBaseHolder()
     : mEventBase(event_base_new())
 {
-    if (mEventBase == nullptr)
-    {
-        throw std::bad_alloc();
-    }
 }
 
 CommissionerSafe::EventBaseHolder::~EventBaseHolder()

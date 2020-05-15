@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2019, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -98,7 +98,7 @@ setup_openthread() {
 
 setup_commissioner() {
     set -e
-    pip install --user -r ../../tools/commissioner_thci/requirements.txt
+    pip install --user -r "${TEST_ROOT_DIR}"/../../tools/commissioner_thci/requirements.txt
 }
 
 main() {

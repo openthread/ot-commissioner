@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -82,14 +82,14 @@ static std::string ErrorCodeToString(ErrorCode code)
         return "UNKNOWN";
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         return "UNKNOWN";
     }
 }
 
 Error::Error(ErrorCode aErrorCode, std::string aErrorMessage)
 {
-    ASSERT(aErrorCode != ErrorCode::kNone);
+    VerifyOrDie(aErrorCode != ErrorCode::kNone);
     mState           = std::unique_ptr<State>(new State);
     mState->mCode    = aErrorCode;
     mState->mMessage = aErrorMessage;
@@ -103,7 +103,7 @@ const std::string &Error::EmptyString()
 
 void Error::SetMessage(const std::string &aMessage)
 {
-    ASSERT(!NoError());
+    VerifyOrDie(!NoError());
     mState->mMessage = aMessage;
 }
 

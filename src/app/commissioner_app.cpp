@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,14 @@ namespace ot {
 
 namespace commissioner {
 
+JoinerInfo::JoinerInfo(JoinerType aType, uint64_t aEui64, const std::string &aPSKd, const std::string &aProvisioningUrl)
+    : mType(aType)
+    , mEui64(aEui64)
+    , mPSKd(aPSKd)
+    , mProvisioningUrl(aProvisioningUrl)
+{
+}
+
 Error CommissionerApp::Create(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig)
 {
     Error error;
@@ -61,31 +69,8 @@ exit:
 Error CommissionerApp::Init(const Config &aConfig)
 {
     Error error;
-    auto  commissioner = Commissioner::Create(aConfig, nullptr);
 
-    VerifyOrExit(commissioner != nullptr, error = ERROR_INVALID_ARGS("bad commissioner configuration"));
-    SuccessOrExit(error = commissioner->Start());
-
-    mCommissioner = commissioner;
-    mCommissioner->SetPanIdConflictHandler(
-        [this](const std::string *aPeerAddr, const ChannelMask *aChannelMask, const uint16_t *aPanId, Error aError) {
-            HandlePanIdConflict(aPeerAddr, aChannelMask, aPanId, aError);
-        });
-    mCommissioner->SetEnergyReportHandler(
-        [this](const std::string *aPeerAddr, const ChannelMask *aChannelMask, const ByteArray *aEnergyList,
-               Error aError) { HandleEnergyReport(aPeerAddr, aChannelMask, aEnergyList, aError); });
-    mCommissioner->SetDatasetChangedHandler([this](Error aError) { HandleDatasetChanged(aError); });
-    mCommissioner->SetJoinerInfoRequester(
-        [this](JoinerType aType, const ByteArray &aJoinerId) { return GetJoinerInfo(aType, aJoinerId); });
-
-    // This is the default behavior of OpenThread on-Mesh Commissioner.
-    mCommissioner->SetCommissioningHandler([this](const JoinerInfo &aJoinerInfo, const std::string &aVendorName,
-                                                  const std::string &aVendorModel, const std::string &aVendorSwVersion,
-                                                  const ByteArray &  aVendorStackVersion,
-                                                  const std::string &aProvisioningUrl, const ByteArray &aVendorData) {
-        return HandleCommissioning(aJoinerInfo, aVendorName, aVendorModel, aVendorSwVersion, aVendorStackVersion,
-                                   aProvisioningUrl, aVendorData);
-    });
+    SuccessOrExit(error = Commissioner::Create(mCommissioner, *this, aConfig));
 
     mCommDataset = MakeDefaultCommissionerDataset();
 
@@ -114,6 +99,14 @@ exit:
 void CommissionerApp::Stop()
 {
     IgnoreError(mCommissioner->Resign());
+
+    mJoiners.clear();
+    mPanIdConflicts.clear();
+    mEnergyReports.clear();
+    mActiveDataset  = ActiveOperationalDataset();
+    mPendingDataset = PendingOperationalDataset();
+    mCommDataset    = MakeDefaultCommissionerDataset();
+    mBbrDataset     = BbrDataset();
 }
 
 void CommissionerApp::AbortRequests()
@@ -194,7 +187,7 @@ Error CommissionerApp::GetBorderAgentLocator(uint16_t &aLocator) const
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     // We must have Border Agent Locator in commissioner dataset.
-    ASSERT(mCommDataset.mPresentFlags & CommissionerDataset::kBorderAgentLocatorBit);
+    VerifyOrDie(mCommDataset.mPresentFlags & CommissionerDataset::kBorderAgentLocatorBit);
 
     aLocator = mCommDataset.mBorderAgentLocator;
 
@@ -235,7 +228,7 @@ exit:
 
 Error CommissionerApp::EnableJoiner(JoinerType         aType,
                                     uint64_t           aEui64,
-                                    const ByteArray &  aPSKd,
+                                    const std::string &aPSKd,
                                     const std::string &aProvisioningUrl)
 {
     Error error;
@@ -245,10 +238,12 @@ Error CommissionerApp::EnableJoiner(JoinerType         aType,
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
+    SuccessOrExit(error = ValidatePSKd(aPSKd));
+
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     VerifyOrExit(mJoiners.count({aType, joinerId}) == 0,
-                 error = ERROR_ALREADY_EXISTS("joiner(type={}, eui64={:X}) has already been enabled",
+                 error = ERROR_ALREADY_EXISTS("joiner(type={}, EUI64={:X}) has already been enabled",
                                               utils::to_underlying(aType), aEui64));
 
     Commissioner::AddJoiner(steeringData, joinerId);
@@ -293,7 +288,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::EnableAllJoiners(JoinerType aType, const ByteArray &aPSKd, const std::string &aProvisioningUrl)
+Error CommissionerApp::EnableAllJoiners(JoinerType aType, const std::string &aPSKd, const std::string &aProvisioningUrl)
 {
     Error     error;
     ByteArray joinerId;
@@ -302,6 +297,7 @@ Error CommissionerApp::EnableAllJoiners(JoinerType aType, const ByteArray &aPSKd
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
+    SuccessOrExit(error = ValidatePSKd(aPSKd));
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     // Set steering data to all 1 to enable all joiners.
@@ -337,18 +333,6 @@ Error CommissionerApp::DisableAllJoiners(JoinerType aType)
 
 exit:
     return error;
-}
-
-bool CommissionerApp::IsJoinerCommissioned(JoinerType aType, uint64_t aEui64)
-{
-    // This doesn't work for CCM joiners, since CCM joiners are not
-    // commissioned by the commissioner.
-    auto joiner = mJoiners.find(JoinerKey{aType, Commissioner::ComputeJoinerId(aEui64)});
-    if (joiner == mJoiners.end())
-    {
-        return false;
-    }
-    return joiner->second.mIsCommissioned;
 }
 
 Error CommissionerApp::GetJoinerUdpPort(uint16_t &aJoinerUdpPort, JoinerType aJoinerType) const
@@ -426,7 +410,7 @@ Error CommissionerApp::GetActiveTimestamp(Timestamp &aTimestamp) const
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
-    ASSERT(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit);
+    VerifyOrDie(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit);
     aTimestamp = mActiveDataset.mActiveTimestamp;
 
 exit:
@@ -445,7 +429,7 @@ Error CommissionerApp::GetChannel(Channel &aChannel)
     // TODO(wgtdkp): should we send MGMT_ACTIVE_GET.req for all GetXXX APIs ?
     SuccessOrExit(error = mCommissioner->GetActiveDataset(mActiveDataset, 0xFFFF));
 
-    ASSERT(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kChannelBit);
+    VerifyOrDie(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kChannelBit);
 
     aChannel = mActiveDataset.mChannel;
 
@@ -1094,7 +1078,7 @@ ByteArray &CommissionerApp::GetSteeringData(CommissionerDataset &aDataset, Joine
         return aDataset.mNmkpSteeringData;
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         aDataset.mPresentFlags |= CommissionerDataset::kSteeringDataBit;
         return aDataset.mSteeringData;
     }
@@ -1117,7 +1101,7 @@ uint16_t &CommissionerApp::GetJoinerUdpPort(CommissionerDataset &aDataset, Joine
         return aDataset.mNmkpUdpPort;
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         aDataset.mPresentFlags |= CommissionerDataset::kJoinerUdpPortBit;
         return aDataset.mJoinerUdpPort;
     }
@@ -1234,52 +1218,97 @@ void CommissionerApp::MergeDataset(CommissionerDataset &aDst, const Commissioner
 #undef SET_IF_PRESENT
 }
 
-void CommissionerApp::HandlePanIdConflict(const std::string *aPeerAddr,
-                                          const ChannelMask *aChannelMask,
-                                          const uint16_t *   aPanId,
-                                          Error              aError)
+std::string CommissionerApp::OnJoinerRequest(const ByteArray &aJoinerId)
+{
+    std::string pskd;
+
+    auto joinerInfo = mJoiners.find({JoinerType::kMeshCoP, aJoinerId});
+    if (joinerInfo != mJoiners.end())
+    {
+        ExitNow(pskd = joinerInfo->second.mPSKd);
+    }
+
+    // Check if all joiners has been enabled.
+    joinerInfo = mJoiners.find({JoinerType::kMeshCoP, Commissioner::ComputeJoinerId(0)});
+    if (joinerInfo != mJoiners.end())
+    {
+        ExitNow(pskd = joinerInfo->second.mPSKd);
+    }
+
+exit:
+    return pskd;
+}
+
+void CommissionerApp::OnJoinerConnected(const ByteArray &aJoinerId, Error aError)
+{
+    (void)aJoinerId;
+    (void)aError;
+
+    // TODO(wgtdkp): logging
+}
+
+bool CommissionerApp::OnJoinerFinalize(const ByteArray &  aJoinerId,
+                                       const std::string &aVendorName,
+                                       const std::string &aVendorModel,
+                                       const std::string &aVendorSwVersion,
+                                       const ByteArray &  aVendorStackVersion,
+                                       const std::string &aProvisioningUrl,
+                                       const ByteArray &  aVendorData)
+{
+    (void)aVendorName;
+    (void)aVendorModel;
+    (void)aVendorSwVersion;
+    (void)aVendorStackVersion;
+    (void)aVendorData;
+
+    bool accepted = false;
+
+    auto configuredJoinerInfo = GetJoinerInfo(JoinerType::kMeshCoP, aJoinerId);
+
+    // TODO(deimi): logging
+    VerifyOrExit(configuredJoinerInfo != nullptr, accepted = false);
+    VerifyOrExit(aProvisioningUrl == configuredJoinerInfo->mProvisioningUrl, accepted = false);
+
+    accepted = true;
+
+exit:
+    return accepted;
+}
+
+void CommissionerApp::OnKeepAliveResponse(Error aError)
+{
+    (void)aError;
+
+    // Dummy handler.
+}
+
+void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
 {
     (void)aPeerAddr;
 
-    SuccessOrExit(aError);
-
-    // Main thread will wait for updates to mPanIdConflicts,
-    // which guarantees no concurrent access to it.
-    mPanIdConflicts[*aPanId] = *aChannelMask;
-
-exit:
-    // TODO(wgtdkp): logging
-    return;
+    // FIXME(wgtdkp): synchronization
+    mPanIdConflicts[aPanId] = aChannelMask;
 }
 
-void CommissionerApp::HandleEnergyReport(const std::string *aPeerAddr,
-                                         const ChannelMask *aChannelMask,
-                                         const ByteArray *  aEnergyList,
-                                         Error              aError)
+void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
+                                     const ChannelMask &aChannelMask,
+                                     const ByteArray &  aEnergyList)
 {
     Address addr;
 
-    SuccessOrExit(aError);
-    SuccessOrExit(addr.Set(*aPeerAddr));
+    SuccessOrDie(addr.Set(aPeerAddr));
 
-    // Main thread will wait for updates to mPanIdConflicts,
-    // which guarantees no concurrent access to it.
-    mEnergyReports[addr] = {*aChannelMask, *aEnergyList};
-
-exit:
-    return;
+    // FIXME(wgtdkp): synchronization
+    mEnergyReports[addr] = {aChannelMask, aEnergyList};
 }
 
-void CommissionerApp::HandleDatasetChanged(Error error)
+void CommissionerApp::OnDatasetChanged()
 {
-    // TODO(wgtdkp): logging
-    (void)error;
-
     mCommissioner->GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) {
             if (aError.NoError())
             {
-                // FIXME(wgtdkp): syncronization
+                // FIXME(wgtdkp): synchronization
                 mActiveDataset = *aDataset;
             }
             else
@@ -1293,7 +1322,7 @@ void CommissionerApp::HandleDatasetChanged(Error error)
         [this](const PendingOperationalDataset *aDataset, Error aError) {
             if (aError.NoError())
             {
-                // FIXME(wgtdkp): syncronization
+                // FIXME(wgtdkp): synchronization
                 mPendingDataset = *aDataset;
             }
             else
@@ -1302,6 +1331,24 @@ void CommissionerApp::HandleDatasetChanged(Error error)
             }
         },
         0xFFFF);
+}
+
+Error CommissionerApp::ValidatePSKd(const std::string &aPSKd)
+{
+    Error error = Error::kInvalidArgs;
+
+    VerifyOrExit(aPSKd.size() >= kMinJoinerDeviceCredentialLength && aPSKd.size() <= kMaxJoinerDeviceCredentialLength);
+
+    for (auto c : aPSKd)
+    {
+        VerifyOrExit(isdigit(c) || isupper(c));
+        VerifyOrExit(c != 'I' && c != 'O' && c != 'Q' && c != 'Z');
+    }
+
+    error = Error::kNone;
+
+exit:
+    return error;
 }
 
 const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArray &aJoinerId)
@@ -1317,34 +1364,6 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
         return &joinerInfo->second;
     }
     return nullptr;
-}
-
-bool CommissionerApp::HandleCommissioning(const JoinerInfo & aJoinerInfo,
-                                          const std::string &aVendorName,
-                                          const std::string &aVendorModel,
-                                          const std::string &aVendorSwVersion,
-                                          const ByteArray &  aVendorStackVersion,
-                                          const std::string &aProvisioningUrl,
-                                          const ByteArray &  aVendorData)
-{
-    (void)aVendorName;
-    (void)aVendorModel;
-    (void)aVendorSwVersion;
-    (void)aVendorStackVersion;
-    (void)aVendorData;
-
-    bool accepted = false;
-
-    auto configuredJoinerInfo = GetJoinerInfo(aJoinerInfo.mType, Commissioner::ComputeJoinerId(aJoinerInfo.mEui64));
-
-    // TODO(deimi): logging
-    VerifyOrExit(configuredJoinerInfo != nullptr, accepted = false);
-    VerifyOrExit(aProvisioningUrl == configuredJoinerInfo->mProvisioningUrl, accepted = false);
-
-    accepted = true;
-
-exit:
-    return accepted;
 }
 
 } // namespace commissioner

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Commissioner Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,8 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
     const char *       expire;
     size_t             expireLength;
 
-    LOG_INFO("received token, length = {}, {}", aSignedToken.size(), utils::Hex(aSignedToken));
+    LOG_INFO(LOG_REGION_TOKEN_MANAGER, "received token, length = {}, {}", aSignedToken.size(),
+             utils::Hex(aSignedToken));
 
     VerifyOrExit(!aSignedToken.empty(), error = ERROR_INVALID_ARGS("the signed COM_TOK is empty"));
     SuccessOrExit(error = cose::Sign1Message::Deserialize(coseSign, aSignedToken));
@@ -168,7 +169,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
         coap::ContentFormat contentFormat;
 
         SuccessOrExit(error = aError);
-        ASSERT(aResponse != nullptr);
+        VerifyOrDie(aResponse != nullptr);
 
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
                      error =

@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ public:
      */
     static Error Create(std::shared_ptr<FileLogger> &aFileLogger, const std::string &aFilename, LogLevel aLogLevel);
 
-    void Log(LogLevel aLevel, const std::string &aMsg) override;
+    void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMsg) override;
 
 private:
     FileLogger() = default;

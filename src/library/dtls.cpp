@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -58,20 +58,20 @@ static void HandleMbedtlsDebug(void *, int level, const char *file, int line, co
     switch (level)
     {
     case 1:
-        LOG_CRIT("{}, {}: {}", file, line, str);
+        LOG_CRIT(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
 
     case 2:
-        LOG_WARN("{}, {}: {}", file, line, str);
+        LOG_WARN(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
 
     case 3:
-        LOG_INFO("{}, {}: {}", file, line, str);
+        LOG_INFO(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
 
     case 4:
     default:
-        LOG_DEBUG("{}, {}: {}", file, line, str);
+        LOG_DEBUG(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
     }
 }
@@ -249,7 +249,7 @@ void DtlsSession::Reset()
 {
     if (mState != State::kConnecting && mState != State::kConnected && mState != State::kDisconnected)
     {
-        LOG_WARN("DTLS session is in invalid state");
+        LOG_WARN(LOG_REGION_DTLS, "session(={}) is in invalid state", static_cast<void*>(this));
         ExitNow();
     }
 
@@ -261,7 +261,7 @@ void DtlsSession::Reset()
     {
         if (int fail = mbedtls_ssl_set_hs_ecjpake_password(&mSsl, mPSK.data(), mPSK.size()))
         {
-            LOG_ERROR("reset EC-JPAKE password failed; {}", ErrorFromMbedtlsError(fail).GetMessage());
+            LOG_ERROR(LOG_REGION_DTLS, "reset EC-JPAKE password failed; {}", ErrorFromMbedtlsError(fail).GetMessage());
         }
     }
 
@@ -273,7 +273,7 @@ exit:
 
 void DtlsSession::Connect(ConnectHandler aOnConnected)
 {
-    ASSERT(mState == State::kOpen);
+    assert(mState == State::kOpen);
 
     mOnConnected = aOnConnected;
     mState       = State::kConnecting;
@@ -281,7 +281,7 @@ void DtlsSession::Connect(ConnectHandler aOnConnected)
 
 void DtlsSession::Reconnect()
 {
-    ASSERT(mIsServer);
+    assert(mIsServer);
     Reset();
     Connect(mOnConnected);
 }
@@ -308,7 +308,7 @@ void DtlsSession::Disconnect(Error aError)
     mSocket->Reset();
     Reset();
 
-    LOG_DEBUG("DTLS disconnected");
+    LOG_DEBUG(LOG_REGION_DTLS, "session(={}) disconnected", static_cast<void *>(this));
 
 exit:
     return;
@@ -401,7 +401,7 @@ void DtlsSession::HandleEvent(short aFlags)
         break;
 
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         break;
     }
 
@@ -414,7 +414,7 @@ exit:
 
 Error DtlsSession::SetClientTransportId()
 {
-    ASSERT(mIsServer && !mIsClientIdSet);
+    VerifyOrDie(mIsServer && !mIsClientIdSet);
 
     Error error;
     int   fail;
@@ -451,7 +451,7 @@ Error DtlsSession::Read()
 
     if (rval > 0)
     {
-        LOG_DEBUG("DTLS(object={}) successfully read data: {}", static_cast<void *>(this),
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: {}", static_cast<void *>(this),
                   utils::Hex({buf, buf + rval}));
         mReceiver(*this, {buf, buf + static_cast<size_t>(rval)});
         ExitNow();
@@ -495,7 +495,8 @@ Error DtlsSession::Write(const ByteArray &aBuf, MessageSubType aSubType)
         VerifyOrExit(static_cast<size_t>(rval) == aBuf.size(),
                      error = ERROR_IO_BUSY("written {} bytes of total length {}", rval, aBuf.size()));
 
-        LOG_DEBUG("DTLS(object={}) successfully write data: {}", static_cast<void *>(this), utils::Hex(aBuf));
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully write data: {}", static_cast<void *>(this),
+                  utils::Hex(aBuf));
     }
     else
     {
@@ -548,7 +549,7 @@ Error DtlsSession::Handshake()
         break;
 
     case MBEDTLS_ERR_SSL_TIMEOUT:
-        LOG_ERROR("DTLS: Handshake timeout");
+        LOG_ERROR(LOG_REGION_DTLS, "session(={}) handshake timeout", static_cast<void *>(this));
 
         // Fall through
 
@@ -641,7 +642,7 @@ void DtlsSession::HandshakeTimerCallback(Timer &)
 
     case State::kConnected:
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
     }
 
     if (ShouldStop(error))

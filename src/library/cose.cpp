@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Commissioner Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -245,7 +245,7 @@ const uint8_t *Sign1Message::GetPayload(size_t &aLength)
     cn_cbor *      cbor;
     cn_cbor *      payload;
 
-    ASSERT(mSign != nullptr);
+    VerifyOrDie(mSign != nullptr);
     VerifyOrExit((cbor = COSE_get_cbor(reinterpret_cast<HCOSE>(mSign))) != nullptr);
 
     VerifyOrExit(cbor->type == CN_CBOR_ARRAY && (payload = CborArrayAt(cbor, 2)) != nullptr);

@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Authors.
+ *    Copyright (c) 2020, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ static std::string ToString(LogLevel aLevel)
         ret = "debug";
         break;
     default:
-        ASSERT(false);
+        VerifyOrDie(false);
         break;
     }
 
@@ -123,7 +123,7 @@ exit:
     return error;
 }
 
-void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
+void FileLogger::Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMsg)
 {
     std::lock_guard<std::mutex> _(mLogMutex);
     std::stringstream           logStream;
@@ -131,7 +131,8 @@ void FileLogger::Log(ot::commissioner::LogLevel aLevel, const std::string &aMsg)
     VerifyOrExit(aLevel <= mLogLevel);
     VerifyOrExit(mLogFile != nullptr);
 
-    logStream << "[ " << TimePointToString(Clock::now()) << " ] [ " << ToString(aLevel) << " ] " << aMsg << std::endl;
+    logStream << "[ " << TimePointToString(Clock::now()) << " ] [ " << ToString(aLevel) << " ] [ " << aRegion << " ] "
+              << aMsg << std::endl;
     fputs(logStream.str().c_str(), mLogFile);
 
 exit:

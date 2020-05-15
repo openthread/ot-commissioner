@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ static uint16_t GetSockPort(const sockaddr_storage &aSockAddr)
     }
     else
     {
-        ASSERT(false);
+        VerifyOrDie(false);
     }
 }
 
@@ -92,7 +92,7 @@ void Socket::HandleEvent(evutil_socket_t, short aFlags, void *aSocket)
 {
     auto socket = reinterpret_cast<Socket *>(aSocket);
 
-    ASSERT(socket->mEventHandler != nullptr);
+    VerifyOrDie(socket->mEventHandler != nullptr);
     socket->mEventHandler(aFlags);
 }
 
@@ -173,7 +173,7 @@ uint16_t UdpSocket::GetLocalPort() const
     sockaddr_storage addr;
     socklen_t        len = sizeof(sockaddr_storage);
 
-    ASSERT(getsockname(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
+    VerifyOrDie(getsockname(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
     return GetSockPort(addr);
 }
 
@@ -181,11 +181,10 @@ Address UdpSocket::GetLocalAddr() const
 {
     sockaddr_storage addr;
     socklen_t        len = sizeof(sockaddr_storage);
+    Address          ret;
 
-    ASSERT(getsockname(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
-
-    Address ret;
-    ASSERT(ret.Set(addr).NoError());
+    VerifyOrDie(getsockname(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
+    SuccessOrDie(ret.Set(addr));
     return ret;
 }
 
@@ -194,9 +193,9 @@ uint16_t UdpSocket::GetPeerPort() const
     sockaddr_storage addr;
     socklen_t        len = sizeof(sockaddr_storage);
 
-    ASSERT(mIsConnected);
+    VerifyOrDie(mIsConnected);
 
-    ASSERT(getpeername(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
+    VerifyOrDie(getpeername(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
     return GetSockPort(addr);
 }
 
@@ -204,13 +203,11 @@ Address UdpSocket::GetPeerAddr() const
 {
     sockaddr_storage addr;
     socklen_t        len = sizeof(sockaddr_storage);
+    Address          ret;
 
-    ASSERT(mIsConnected);
-
-    ASSERT(getpeername(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
-
-    Address ret;
-    ASSERT(ret.Set(addr).NoError());
+    VerifyOrDie(mIsConnected);
+    VerifyOrDie(getpeername(mNetCtx.fd, reinterpret_cast<sockaddr *>(&addr), &len) == 0);
+    SuccessOrDie(ret.Set(addr));
     return ret;
 }
 
@@ -222,16 +219,16 @@ void UdpSocket::Reset()
 
 int UdpSocket::Send(const uint8_t *aBuf, size_t aLen)
 {
-    ASSERT(mNetCtx.fd != -1);
-    ASSERT(mIsConnected);
+    VerifyOrDie(mNetCtx.fd != -1);
+    VerifyOrDie(mIsConnected);
 
     return mbedtls_net_send(&mNetCtx, aBuf, aLen);
 }
 
 int UdpSocket::Receive(uint8_t *aBuf, size_t aMaxLen)
 {
-    ASSERT(mNetCtx.fd != -1);
-    ASSERT(mIsConnected);
+    VerifyOrDie(mNetCtx.fd != -1);
+    VerifyOrDie(mIsConnected);
 
     return mbedtls_net_recv(&mNetCtx, aBuf, aMaxLen);
 }
@@ -248,7 +245,8 @@ void UdpSocket::SetEventHandler(EventHandler aEventHandler)
             int rval = mbedtls_net_accept(&mNetCtx, &connectedCtx, nullptr, 0, nullptr);
             if (rval != 0)
             {
-                LOG_INFO("bound UDP socket accept new connection failed: {}", rval);
+                LOG_INFO(LOG_REGION_SOCKET, "UDP socket(={}) accept new connection failed: {}",
+                         static_cast<void *>(this), rval);
             }
             else
             {

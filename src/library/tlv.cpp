@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -360,19 +360,19 @@ uint16_t Tlv::GetTotalLength() const
 
 int8_t Tlv::GetValueAsInt8() const
 {
-    ASSERT(mValue.size() >= sizeof(int8_t));
+    VerifyOrDie(mValue.size() >= sizeof(int8_t));
     return static_cast<int8_t>(mValue[0]);
 }
 
 uint16_t Tlv::GetValueAsUint8() const
 {
-    ASSERT(mValue.size() >= sizeof(uint8_t));
+    VerifyOrDie(mValue.size() >= sizeof(uint8_t));
     return utils::Decode<uint8_t>(mValue);
 }
 
 uint16_t Tlv::GetValueAsUint16() const
 {
-    ASSERT(mValue.size() >= sizeof(uint16_t));
+    VerifyOrDie(mValue.size() >= sizeof(uint16_t));
     return utils::Decode<uint16_t>(mValue);
 }
 
@@ -399,7 +399,7 @@ Error GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope)
     {
         auto tlv = tlv::Tlv::Deserialize(error, offset, aBuf, aScope);
         SuccessOrExit(error);
-        ASSERT(tlv != nullptr);
+        VerifyOrDie(tlv != nullptr);
 
         if (tlv->IsValid())
         {
@@ -408,8 +408,8 @@ Error GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope)
         else
         {
             // Drop invalid TLVs
-            LOG_WARN("dropping invalid/unknown TLV(type={}, value={})", utils::to_underlying(tlv->GetType()),
-                     utils::Hex(tlv->GetValue()));
+            LOG_WARN(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
+                     utils::to_underlying(tlv->GetType()), utils::Hex(tlv->GetValue()));
         }
     }
 

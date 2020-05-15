@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -128,8 +128,8 @@ exit:
 Address Address::FromString(const std::string &aAddr)
 {
     Address ret;
-    auto    error = ret.Set(aAddr);
-    ASSERT(error.NoError());
+
+    SuccessOrDie(ret.Set(aAddr));
     return ret;
 }
 

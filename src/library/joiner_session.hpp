@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Authors.
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,11 @@
 
 /**
  * @file
- *   This file includes definition of 1.1 mesh Commissioning Session.
+ *   This file includes definition of Thread 1.1 joiner session.
  */
 
-#ifndef OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
-#define OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
+#ifndef OT_COMM_LIBRARY_JOINER_SESSION_HPP
+#define OT_COMM_LIBRARY_JOINER_SESSION_HPP
 
 #include <functional>
 #include <map>
@@ -47,50 +47,49 @@ namespace ot {
 
 namespace commissioner {
 
-// The port a 1.1 mesh commissioning server is listen on for
-// incoming DTLS connections from joiner.
-static constexpr uint16_t kCommissioningPort = 9527;
+// The listening port for incoming DTLS connections from joiner.
+static constexpr uint16_t kListeningJoinerPort = 9527;
 
-// The commissioning session timeout value starting from connected. In seconds.
+// The joiner session timeout value starting from connected, in seconds.
 // This is the time duration of waiting for JOIN_FIN.req. After that,
-// the commissioning session will be closed and removed.
-static constexpr uint32_t kCommissioningTimeout = 20;
+// the joiner session will be closed and removed.
+static constexpr uint32_t kJoinerTimeout = 20;
+
+static constexpr uint8_t kLocalExternalAddrMask = 1 << 1;
 
 class CommissionerImpl;
-class CommissioningSession;
+class JoinerSession;
 
-using CommissioningSessionPtr = std::shared_ptr<CommissioningSession>;
+using JoinerSessionPtr = std::shared_ptr<JoinerSession>;
 
 // The session of commissioning a joiner.
-class CommissioningSession : std::enable_shared_from_this<CommissioningSession>
+class JoinerSession : std::enable_shared_from_this<JoinerSession>
 {
 public:
-    using ConnectHandler = std::function<void(CommissioningSession &, Error)>;
+    JoinerSession(CommissionerImpl & aCommImpl,
+                  const ByteArray &  aJoinerId,
+                  const std::string &aJoinerPSkd,
+                  uint16_t           aJoinerUdpPort,
+                  uint16_t           aJoinerRouterLocator,
+                  const Address &    aJoinerAddr,
+                  uint16_t           aJoinerPort,
+                  const Address &    aLocalAddr,
+                  uint16_t           aLocalPort);
+    JoinerSession(JoinerSession &&aOther) = delete;
+    JoinerSession &operator=(JoinerSession &&aOther) = delete;
+    JoinerSession(const JoinerSession &aOther)       = delete;
+    JoinerSession &operator=(const JoinerSession &aOther) = delete;
+    ~JoinerSession()                                      = default;
 
-    CommissioningSession(CommissionerImpl &aCommImpl,
-                         const JoinerInfo &aJoinerInfo,
-                         uint16_t          aJoinerUdpPort,
-                         uint16_t          aJoinerRouterLocator,
-                         const ByteArray & aJoinerIid,
-                         const Address &   aJoinerAddr,
-                         uint16_t          aJoinerPort,
-                         const Address &   aLocalAddr,
-                         uint16_t          aLocalPort);
-    CommissioningSession(CommissioningSession &&aOther) = delete;
-    CommissioningSession &operator=(CommissioningSession &&aOther) = delete;
-    CommissioningSession(const CommissioningSession &aOther)       = delete;
-    CommissioningSession &operator=(const CommissioningSession &aOther) = delete;
-    ~CommissioningSession()                                             = default;
-
+    ByteArray GetJoinerId() const { return mJoinerId; }
     uint16_t  GetJoinerUdpPort() const { return mJoinerUdpPort; }
     uint16_t  GetJoinerRouterLocator() const { return mJoinerRouterLocator; }
-    ByteArray GetJoinerIid() const { return mJoinerIid; }
     Address   GetPeerAddr() const { return mDtlsSession->GetPeerAddr(); }
     uint16_t  GetPeerPort() const { return mDtlsSession->GetPeerPort(); }
 
-    Error Start(ConnectHandler aOnConnected);
+    void Connect();
 
-    void Stop();
+    void Disconnect();
 
     DtlsSession::State GetState() const { return mDtlsSession->GetState(); }
 
@@ -106,11 +105,11 @@ private:
     class RelaySocket : public Socket
     {
     public:
-        RelaySocket(CommissioningSession &aCommissioningSession,
-                    const Address &       aPeerAddr,
-                    uint16_t              aPeerPort,
-                    const Address &       aLocalAddr,
-                    uint16_t              aLocalPort);
+        RelaySocket(JoinerSession &aJoinerSession,
+                    const Address &aPeerAddr,
+                    uint16_t       aPeerPort,
+                    const Address &aLocalAddr,
+                    uint16_t       aLocalPort);
         RelaySocket(RelaySocket &&aOther);
         ~RelaySocket() override = default;
 
@@ -125,26 +124,30 @@ private:
         void RecvJoinerDtlsRecords(const ByteArray &aRecords);
 
     private:
-        CommissioningSession &mCommissioningSession;
-        Address               mPeerAddr;
-        uint16_t              mPeerPort;
-        Address               mLocalAddr;
-        uint16_t              mLocalPort;
-        ByteArray             mRecvBuf;
+        JoinerSession &mJoinerSession;
+        Address        mPeerAddr;
+        uint16_t       mPeerPort;
+        Address        mLocalAddr;
+        uint16_t       mLocalPort;
+        ByteArray      mRecvBuf;
     };
 
     using RelaySocketPtr = std::shared_ptr<RelaySocket>;
+
+    ByteArray GetJoinerIid() const;
+
+    void HandleConnect(Error aError);
 
     Error SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek);
     void  HandleJoinFin(const coap::Request &aJoinFin);
     Error SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept);
 
     CommissionerImpl &mCommImpl;
-    JoinerInfo        mJoinerInfo;
 
-    uint16_t  mJoinerUdpPort;
-    uint16_t  mJoinerRouterLocator;
-    ByteArray mJoinerIid;
+    ByteArray   mJoinerId;
+    std::string mJoinerPSKd;
+    uint16_t    mJoinerUdpPort;
+    uint16_t    mJoinerRouterLocator;
 
     RelaySocketPtr mRelaySocket;
     DtlsSessionPtr mDtlsSession;
@@ -159,4 +162,4 @@ private:
 
 } // namespace ot
 
-#endif // OT_COMM_LIBRARY_COMMISSIONING_SESSION_HPP_
+#endif // OT_COMM_LIBRARY_JOINER_SESSION_HPP

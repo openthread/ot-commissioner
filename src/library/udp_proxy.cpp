@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, The OpenThread Authors.
+ *  Copyright (c) 2019, The OpenThread Commissioner Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,7 @@ void ProxyClient::SendRequest(const coap::Request & aRequest,
                               const Address &       aPeerAddr,
                               uint16_t              aPeerPort)
 {
-    ASSERT(aPeerAddr.IsValid() && aPeerAddr.IsIpv6());
+    VerifyOrDie(aPeerAddr.IsValid() && aPeerAddr.IsIpv6());
     mEndpoint.SetPeerAddr(aPeerAddr);
     mEndpoint.SetPeerPort(aPeerPort);
 
@@ -123,7 +123,8 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
 exit:
     if (!error.NoError())
     {
-        LOG_WARN("handling a UDP_RX.ntf request failed: {}", error.ToString());
+        LOG_WARN(LOG_REGION_COAP, "client(={}) handle UDP_RX.ntf request failed: {}", static_cast<void *>(this),
+                 error.ToString());
     }
     return;
 }

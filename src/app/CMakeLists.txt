@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2019, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -69,24 +69,27 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
-add_library(commissioner-app-test EXCLUDE_FROM_ALL)
+if (OT_COMM_TEST)
+    add_library(commissioner-app-test OBJECT)
 
-target_sources(commissioner-app-test
-    PRIVATE
-        json.hpp
-        json_test.cpp
-)
+    target_sources(commissioner-app-test
+        PRIVATE
+            commissioner_app.hpp
+            commissioner_app_test.cpp
+            json.hpp
+            json_test.cpp
+    )
 
-target_include_directories(commissioner-app-test
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-)
+    target_include_directories(commissioner-app-test
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+    )
 
-target_link_libraries(commissioner-app-test
-    PRIVATE
-        Catch2::Catch2
-        commissioner-app
-        nlohmann_json::nlohmann_json
-)
+    target_link_libraries(commissioner-app-test
+        PRIVATE
+            Catch2::Catch2
+            commissioner-app
+    )
+endif()
 
 add_subdirectory(cli)
