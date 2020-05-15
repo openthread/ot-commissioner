@@ -33,9 +33,6 @@
 
 #include "app/cli/interpreter.hpp"
 
-#include <limits>
-
-#include <assert.h>
 #include <string.h>
 
 #include "app/file_util.hpp"
@@ -321,7 +318,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 exit:
     if (!existingCommissionerId.empty())
     {
-        assert(!error.NoError());
+        ASSERT(!error.NoError());
         error.SetMessage("there is an existing active commissioner: " + existingCommissionerId);
     }
     return error;
@@ -1040,14 +1037,14 @@ void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const Erro
     }
     else
     {
-        assert(aBorderAgent != nullptr);
+        ASSERT(aBorderAgent != nullptr);
         Console::Write(ToString(*aBorderAgent), Console::Color::kGreen);
     }
 }
 
 const std::string Interpreter::Usage(Expression aExpr)
 {
-    assert(aExpr.size() >= 1);
+    ASSERT(aExpr.size() >= 1);
     auto usage = mUsageMap.find(aExpr[0]);
     return usage != mUsageMap.end() ? usage->second : "";
 }

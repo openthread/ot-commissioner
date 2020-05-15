@@ -33,8 +33,6 @@
 
 #include "mbedtls_error.hpp"
 
-#include <assert.h>
-
 #include <mbedtls/error.h>
 #include <mbedtls/ssl.h>
 
@@ -62,7 +60,7 @@ Error ErrorFromMbedtlsError(int aMbedtlsError)
     static constexpr int kMbedtlsErrorHighLevelModuleIdSsl    = 7;
     static constexpr int kMbedtlsErrorMsgMaxLength            = 256;
 
-    assert(aMbedtlsError <= 0);
+    ASSERT(aMbedtlsError <= 0);
 
     ErrorCode errorCode;
 

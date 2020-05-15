@@ -35,8 +35,6 @@
 
 #include <future>
 
-#include <assert.h>
-
 #include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/logging.hpp"
@@ -96,7 +94,7 @@ const Config &CommissionerSafe::GetConfig() const
 
 void CommissionerSafe::StartEventLoopThread()
 {
-    assert(!mEventThread.joinable());
+    ASSERT(!mEventThread.joinable());
 
     mEventThread = std::thread([this]() {
         LOG_INFO(LOG_REGION_MESHCOP, "event loop started in background thread");

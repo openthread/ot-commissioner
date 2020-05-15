@@ -33,8 +33,6 @@
 
 #include "library/commissioner_impl.hpp"
 
-#include <assert.h>
-
 #include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/dtls.hpp"
@@ -357,7 +355,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         CommissionerDataset dataset;
 
         SuccessOrExit(error = aError);
-        assert(aResponse != nullptr);
+        ASSERT(aResponse != nullptr);
 
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
                      error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_COMM_GET.rsp message"));
@@ -1190,7 +1188,7 @@ Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
     Error     error;
     ByteArray signature;
 
-    assert(IsCcmMode());
+    ASSERT(IsCcmMode());
 
     SuccessOrExit(error = mTokenManager.SignMessage(signature, aRequest));
 
@@ -1453,7 +1451,7 @@ Error CommissionerImpl::DecodeChannelMask(ChannelMask &aChannelMask, const ByteA
         offset += entryLength;
     }
 
-    assert(offset == length);
+    ASSERT(offset == length);
 
     aChannelMask = channelMask;
 
@@ -2016,7 +2014,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             mJoinerSessionTimer.Start(session.GetExpirationTime());
         }
 
-        assert(it != mJoinerSessions.end());
+        ASSERT(it != mJoinerSessions.end());
         auto &session = it->second;
         session.RecvJoinerDtlsRecords(dtlsRecords);
     }

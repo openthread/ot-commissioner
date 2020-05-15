@@ -33,13 +33,12 @@
 
 #include "library/dtls.hpp"
 
-#include <assert.h>
-
 #include <mbedtls/debug.h>
 #include <mbedtls/error.h>
 #include <mbedtls/platform.h>
 
 #include "common/error_macros.hpp"
+#include "common/utils.hpp"
 #include "library/logging.hpp"
 #include "library/mbedtls_error.hpp"
 #include "library/openthread/sha256.hpp"
@@ -275,7 +274,7 @@ exit:
 
 void DtlsSession::Connect(ConnectHandler aOnConnected)
 {
-    assert(mState == State::kOpen);
+    ASSERT(mState == State::kOpen);
 
     mOnConnected = aOnConnected;
     mState       = State::kConnecting;
@@ -283,7 +282,7 @@ void DtlsSession::Connect(ConnectHandler aOnConnected)
 
 void DtlsSession::Reconnect()
 {
-    assert(mIsServer);
+    ASSERT(mIsServer);
     Reset();
     Connect(mOnConnected);
 }

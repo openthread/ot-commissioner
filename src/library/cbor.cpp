@@ -33,11 +33,10 @@
 
 #include "library/cbor.hpp"
 
-#include <assert.h>
-
 #include <cn-cbor/cn-cbor.h>
 
 #include "common/error_macros.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
@@ -69,7 +68,7 @@ void CborValue::Move(CborValue &dst, CborValue &src)
 
 Error CborValue::Serialize(uint8_t *aBuf, size_t &aLength, size_t aMaxLength) const
 {
-    assert(mIsRoot && mCbor != nullptr);
+    ASSERT(mIsRoot && mCbor != nullptr);
     ssize_t written = cn_cbor_encoder_write(aBuf, 0, aMaxLength, mCbor);
     if (written == -1)
     {
@@ -95,7 +94,7 @@ Error CborValue::Deserialize(CborValue &aValue, const uint8_t *aBuf, size_t aLen
 
 Error CborMap::Init(void)
 {
-    assert(mCbor == nullptr);
+    ASSERT(mCbor == nullptr);
     mIsRoot = true;
     mCbor   = cn_cbor_map_create(nullptr);
     return mCbor ? ERROR_NONE : ERROR_OUT_OF_MEMORY("create CBOR map");

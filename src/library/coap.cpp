@@ -35,11 +35,11 @@
 
 #include <algorithm>
 
-#include <assert.h>
 #include <ctype.h>
 #include <memory.h>
 
 #include "common/error_macros.hpp"
+#include "common/utils.hpp"
 #include "library/logging.hpp"
 #include "library/openthread/random.hpp"
 
@@ -65,8 +65,9 @@ Message::Message()
 size_t Message::GetHeaderLength() const
 {
     ByteArray buf;
+    Error     error = Serialize(mHeader, buf);
 
-    SuccessOrDie(Serialize(mHeader, buf));
+    ASSERT(error.NoError());
     return buf.size();
 }
 
@@ -512,7 +513,7 @@ void Coap::ReceiveMessage(Endpoint &aEndpoint, std::shared_ptr<Message> aMessage
     }
     else
     {
-        assert(aMessage != nullptr);
+        ASSERT(aMessage != nullptr);
 
         aMessage->SetEndpoint(&aEndpoint);
         if (aMessage->IsRequest())

@@ -36,8 +36,19 @@
 
 #include <string>
 
+#include <assert.h>
+
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
+
+#define ASSERT(aCondition)  \
+    do                      \
+    {                       \
+        assert(aCondition); \
+        if (aCondition)     \
+        {                   \
+        }                   \
+    } while (false)
 
 #define SuccessOrDie(aError)             \
     do                                   \
@@ -54,8 +65,6 @@
             abort();                        \
         }                                   \
     } while (false)
-
-#define ASSERT_SUCCESS(expr) ASSERT((expr).NoError())
 
 #define SuccessOrExit(aError)    \
     do                           \
