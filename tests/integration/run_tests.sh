@@ -54,6 +54,8 @@ run_test_case() {
 
     echo "====== test case: [ ${test_case} ] ======"
 
+    ## Clean intermediate states.
+    sudo rm -rf tmp
     rm -rf "${COMMISSIONER_LOG}"
 
     ## we cannot declare output with `local`,
@@ -71,10 +73,6 @@ run_test_case() {
         echo "------ test output begin ------"
         echo "${output}"
         echo "------ test output end ------"
-
-        echo "------ wpantund log begin ------"
-        cat "${WPANTUND_LOG}"
-        echo "------ wpantund log end ------"
 
         echo "------ otbr log begin ------"
         cat "${OTBR_LOG}"
