@@ -48,7 +48,7 @@ namespace commissioner {
 TEST_CASE("mesh-local-address-basic", "[mesh-local-addr]")
 {
     std::string meshLocalAddr;
-    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC).NoError());
+    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC).IsNone());
     REQUIRE(meshLocalAddr == "fd00::ff:fe00:bbcc");
 }
 
@@ -82,7 +82,7 @@ TEST_CASE("pskc-test-vector-from-thread-1.2.0-spec", "[pskc]")
     const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
     ByteArray         pskc;
 
-    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).NoError());
+    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).IsNone());
     REQUIRE(pskc.size() == kMaxPSKcLength);
     REQUIRE(utils::Hex(pskc) == "c3f59368445a1b6106be420a706d4cc9");
 }
@@ -134,7 +134,7 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     CommissionerHandler dummyHandler;
     struct event_base * eventBase = event_base_new();
     CommissionerImpl    commImpl(dummyHandler, eventBase);
-    REQUIRE(commImpl.Init(config).NoError());
+    REQUIRE(commImpl.Init(config).IsNone());
 
     REQUIRE(commImpl.Connect("::1", 5684).GetCode() == ErrorCode::kUnimplemented);
 

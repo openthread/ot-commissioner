@@ -390,7 +390,7 @@ void DtlsSession::HandleEvent(short aFlags)
     case State::kConnected:
         if (aFlags & EV_READ)
         {
-            while (error.NoError())
+            while (error.IsNone())
             {
                 error = Read();
             }
@@ -511,7 +511,7 @@ exit:
 Error DtlsSession::TryWrite()
 {
     Error error;
-    while (error.NoError() && !mSendQueue.empty())
+    while (error.IsNone() && !mSendQueue.empty())
     {
         auto &messagePair = mSendQueue.front();
 
@@ -572,7 +572,7 @@ Error DtlsSession::Send(const ByteArray &aBuf, MessageSubType aSubType)
     if (mSendQueue.empty())
     {
         error = Write(aBuf, aSubType);
-        if (!error.NoError() && !ShouldStop(error))
+        if (!error.IsNone() && !ShouldStop(error))
         {
             mSendQueue.emplace(aBuf, aSubType);
 

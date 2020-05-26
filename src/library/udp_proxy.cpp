@@ -68,7 +68,7 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
     mBrClient.SendRequest(udpTx, nullptr);
 
 exit:
-    if (!error.NoError())
+    if (!error.IsNone())
     {
         error = Error{error.GetCode(), "sending UDP_TX.ntf message failed, " + error.GetMessage()};
     }
@@ -121,7 +121,7 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
     mCoap.Receive({udpEncap->GetValue().begin() + 4, udpEncap->GetValue().end()});
 
 exit:
-    if (!error.NoError())
+    if (!error.IsNone())
     {
         LOG_WARN(LOG_REGION_COAP, "client(={}) handle UDP_RX.ntf request failed: {}", static_cast<void *>(this),
                  error.ToString());

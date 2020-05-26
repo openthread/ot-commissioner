@@ -80,7 +80,7 @@ private:
         }
 
         std::string ToString() const;
-        bool        NoError() const;
+        bool        IsNone() const;
 
     private:
         Error       mError;

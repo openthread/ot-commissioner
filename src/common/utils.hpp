@@ -51,10 +51,10 @@
         }                            \
     } while (false)
 
-#define SuccessOrDie(aError)             \
-    do                                   \
-    {                                    \
-        VerifyOrDie((aError).NoError()); \
+#define SuccessOrDie(aError)            \
+    do                                  \
+    {                                   \
+        VerifyOrDie((aError).IsNone()); \
     } while (false)
 
 #define VerifyOrDie(aCondition)             \
@@ -67,13 +67,13 @@
         }                                   \
     } while (false)
 
-#define SuccessOrExit(aError)    \
-    do                           \
-    {                            \
-        if (!(aError).NoError()) \
-        {                        \
-            goto exit;           \
-        }                        \
+#define SuccessOrExit(aError)   \
+    do                          \
+    {                           \
+        if (!(aError).IsNone()) \
+        {                       \
+            goto exit;          \
+        }                       \
     } while (false)
 
 #define VerifyOrExit(aCondition, ...) \

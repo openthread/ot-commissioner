@@ -183,11 +183,11 @@ public:
      * Returns true if there is no error.
      *
      */
-    bool NoError() const { return (mState == nullptr); }
+    bool IsNone() const { return (mState == nullptr); }
 
-    ErrorCode GetCode() const { return NoError() ? ErrorCode::kNone : mState->mCode; }
+    ErrorCode GetCode() const { return IsNone() ? ErrorCode::kNone : mState->mCode; }
 
-    const std::string &GetMessage() const { return NoError() ? EmptyString() : mState->mMessage; }
+    const std::string &GetMessage() const { return IsNone() ? EmptyString() : mState->mMessage; }
 
     /**
      * Returns a string representation of this error suitable for

@@ -67,7 +67,7 @@ size_t Message::GetHeaderLength() const
     ByteArray buf;
     Error     error = Serialize(mHeader, buf);
 
-    ASSERT(error.NoError());
+    ASSERT(error.IsNone());
     return buf.size();
 }
 
@@ -459,7 +459,7 @@ void Coap::SendRequest(const Request &aRequest, ResponseHandler aHandler)
     }
 
 exit:
-    if (!error.NoError() && aHandler != nullptr)
+    if (!error.IsNone() && aHandler != nullptr)
     {
         aHandler(nullptr, error);
     }
@@ -504,7 +504,7 @@ void Coap::Receive(Endpoint &aEndpoint, const ByteArray &aBuf)
 
 void Coap::ReceiveMessage(Endpoint &aEndpoint, std::shared_ptr<Message> aMessage, Error error)
 {
-    if (!error.NoError())
+    if (!error.IsNone())
     {
         // Silently drop a bad formatted message
         LOG_INFO(LOG_REGION_COAP, "drop a CoAP message in bad format: {}", error.GetMessage());
@@ -560,7 +560,7 @@ void Coap::HandleRequest(const Request &aRequest)
     }
 
 exit:
-    if (!error.NoError())
+    if (!error.IsNone())
     {
         LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this), error.ToString());
     }
@@ -667,7 +667,7 @@ void Coap::Retransmit(Timer &)
                          static_cast<void *>(this), uri, requestHolder.mRetransmissionCount);
 
                 auto error = Send(*requestHolder.mRequest);
-                if (!error.NoError())
+                if (!error.IsNone())
                 {
                     LOG_WARN(LOG_REGION_COAP, "client(={}) retransmit request {} failed: {}", static_cast<void *>(this),
                              uri, error.ToString());
@@ -1057,7 +1057,7 @@ std::shared_ptr<Message> Message::Deserialize(Error &aError, const ByteArray &aB
             error = ERROR_BAD_FORMAT("bad CoAP option (number={}", number);
         }
 
-        if (!error.NoError())
+        if (!error.IsNone())
         {
             if (IsCriticalOption(number))
             {
@@ -1089,7 +1089,7 @@ std::shared_ptr<Message> Message::Deserialize(Error &aError, const ByteArray &aB
     }
 
 exit:
-    if (!error.NoError())
+    if (!error.IsNone())
     {
         message = nullptr;
     }

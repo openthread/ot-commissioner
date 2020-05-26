@@ -241,20 +241,20 @@ void Interpreter::Print(const Value &aValue)
     {
         output += "\n";
     }
-    output += aValue.NoError() ? "[done]" : "[failed]";
-    auto color = aValue.NoError() ? Console::Color::kGreen : Console::Color::kRed;
+    output += aValue.IsNone() ? "[done]" : "[failed]";
+    auto color = aValue.IsNone() ? Console::Color::kGreen : Console::Color::kRed;
 
     mConsole.Write(output, color);
 }
 
 std::string Interpreter::Value::ToString() const
 {
-    return NoError() ? mData : mError.ToString();
+    return IsNone() ? mData : mError.ToString();
 }
 
-bool Interpreter::Value::NoError() const
+bool Interpreter::Value::IsNone() const
 {
-    return mError.NoError();
+    return mError.IsNone();
 }
 
 Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral)
@@ -318,7 +318,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 exit:
     if (!existingCommissionerId.empty())
     {
-        ASSERT(!error.NoError());
+        ASSERT(!error.IsNone());
         error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }
     return error;
@@ -1031,7 +1031,7 @@ exit:
 
 void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError)
 {
-    if (!aError.NoError())
+    if (!aError.IsNone())
     {
         Console::Write(aError.ToString(), Console::Color::kRed);
     }

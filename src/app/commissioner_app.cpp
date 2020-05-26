@@ -89,7 +89,7 @@ Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
     SuccessOrExit(error = SyncNetworkData());
 
 exit:
-    if (!error.NoError() && !IsActive())
+    if (!error.IsNone() && !IsActive())
     {
         Stop();
     }
@@ -1306,7 +1306,7 @@ void CommissionerApp::OnDatasetChanged()
 {
     mCommissioner->GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) {
-            if (aError.NoError())
+            if (aError.IsNone())
             {
                 // FIXME(wgtdkp): synchronization
                 mActiveDataset = *aDataset;
@@ -1320,7 +1320,7 @@ void CommissionerApp::OnDatasetChanged()
 
     mCommissioner->GetPendingDataset(
         [this](const PendingOperationalDataset *aDataset, Error aError) {
-            if (aError.NoError())
+            if (aError.IsNone())
             {
                 // FIXME(wgtdkp): synchronization
                 mPendingDataset = *aDataset;

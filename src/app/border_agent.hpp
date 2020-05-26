@@ -161,7 +161,7 @@ struct BorderAgent
  * This function is the callback of a discovered Border Agent.
  *
  * @param[in] aBorderAgent   The discovered Border Agent. Not null
- *                           only when aError.NoError() is true.
+ *                           only when aError.IsNone() is true.
  * @param[in] aError         The error;
  *
  */

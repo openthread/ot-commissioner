@@ -103,7 +103,7 @@ const std::string &Error::EmptyString()
 
 std::string Error::ToString() const
 {
-    if (NoError())
+    if (IsNone())
     {
         return ErrorCodeToString(ErrorCode::kNone);
     }

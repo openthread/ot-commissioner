@@ -128,7 +128,7 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     REQUIRE(serverSocket->Bind(kServerAddr, kServerPort) == 0);
     DtlsSession dtlsServer{eventBase, true, serverSocket};
 
-    REQUIRE(dtlsServer.Init(config).NoError());
+    REQUIRE(dtlsServer.Init(config).IsNone());
 
     dtlsServer.SetReceiver([&kHello, eventBase](Endpoint &, const ByteArray &aBuf) {
         REQUIRE(aBuf == kHello);
@@ -137,7 +137,7 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     });
 
     auto serverConnected = [](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError.NoError());
+        REQUIRE(aError.IsNone());
         REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
     };
     dtlsServer.Connect(serverConnected);
@@ -155,13 +155,13 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     REQUIRE(clientSocket->Connect(kServerAddr, kServerPort) == 0);
     DtlsSession dtlsClient{eventBase, false, clientSocket};
 
-    REQUIRE(dtlsClient.Init(config).NoError());
+    REQUIRE(dtlsClient.Init(config).IsNone());
 
     auto clientConnected = [&kHello](DtlsSession &aSession, Error aError) {
-        REQUIRE(aError.NoError());
+        REQUIRE(aError.IsNone());
         REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
 
-        REQUIRE(aSession.Send(kHello, MessageSubType::kNone).NoError());
+        REQUIRE(aSession.Send(kHello, MessageSubType::kNone).IsNone());
     };
     dtlsClient.Connect(clientConnected);
 

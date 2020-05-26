@@ -108,9 +108,9 @@ int main(int argc, const char *argv[])
     gInterpreter.Run();
 
 exit:
-    if (!error.NoError())
+    if (!error.IsNone())
     {
         Console::Write("start OT-commissioner CLI failed: " + error.ToString(), Console::Color::kRed);
     }
-    return error.NoError() ? 0 : -1;
+    return error.IsNone() ? 0 : -1;
 }
