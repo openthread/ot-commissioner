@@ -76,6 +76,7 @@ public:
     std::string ToString() const;
 
     // Invalid address string is not acceptable.
+    // For only unittests.
     static Address FromString(const std::string &aAddr);
 
 private:

@@ -86,10 +86,8 @@ Error Message::AppendOption(OptionType aNumber, const OptionValue &aValue)
 {
     Error error;
 
-    if (!IsValidOption(aNumber, aValue))
-    {
-        ExitNow(error = ERROR_INVALID_ARGS("invalid CoAP option (number={})", aNumber));
-    }
+    VerifyOrExit(IsValidOption(aNumber, aValue),
+                 error = ERROR_INVALID_ARGS("invalid CoAP option (number={})", aNumber));
 
     if (aNumber == OptionType::kUriPath)
     {

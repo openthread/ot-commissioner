@@ -415,7 +415,7 @@ Error TokenManager::VerifySignature(const ByteArray &aSignature, const coap::Mes
     cose::Sign1Message sign1Msg;
     CborMap            publicKey;
 
-    VerifyOrExit(!aSignature.empty());
+    VerifyOrExit(!aSignature.empty(), error = ERROR_INVALID_ARGS("the signature is empty"));
     SuccessOrExit(error = cose::Sign1Message::Deserialize(sign1Msg, aSignature));
 
     SuccessOrExit(error = PrepareSigningContent(externalData, aSignedMessage));

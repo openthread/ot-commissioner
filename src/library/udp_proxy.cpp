@@ -70,7 +70,7 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
 exit:
     if (!error.NoError())
     {
-        error.SetMessage("sending UDP_TX.ntf message failed, " + error.GetMessage());
+        error = Error{error.GetCode(), "sending UDP_TX.ntf message failed, " + error.GetMessage()};
     }
     return error;
 }

@@ -148,7 +148,7 @@ enum class ErrorCode : int
     kRejected = 16,
 
     /**
-     * The error is out of the address space of OT Commissioner/
+     * The error is out of the address space of OT Commissioner.
      */
     kUnknown = 17,
 };
@@ -171,7 +171,7 @@ public:
      * human-readable string containing more detailed information.
      *
      */
-    Error(ErrorCode aErrorCode, std::string aErrorMessage);
+    Error(ErrorCode aErrorCode, const std::string &aErrorMessage);
 
     // Copy the specified error.
     Error(const Error &aError);
@@ -188,8 +188,6 @@ public:
     ErrorCode GetCode() const { return NoError() ? ErrorCode::kNone : mState->mCode; }
 
     const std::string &GetMessage() const { return NoError() ? EmptyString() : mState->mMessage; }
-
-    void SetMessage(const std::string &aMessage);
 
     /**
      * Returns a string representation of this error suitable for

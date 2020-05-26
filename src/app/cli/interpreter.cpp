@@ -319,7 +319,7 @@ exit:
     if (!existingCommissionerId.empty())
     {
         ASSERT(!error.NoError());
-        error.SetMessage("there is an existing active commissioner: " + existingCommissionerId);
+        error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }
     return error;
 }
@@ -567,16 +567,16 @@ exit:
 Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
 {
     Value value;
-    bool  IsSet;
+    bool  isSet;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
-        IsSet = false;
+        isSet = false;
     }
     else if (CaseInsensitiveEqual(aExpr[1], "set"))
     {
-        IsSet = true;
+        isSet = true;
     }
     else
     {
@@ -586,14 +586,14 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     if (CaseInsensitiveEqual(aExpr[2], "activetimestamp"))
     {
         Timestamp activeTimestamp;
-        VerifyOrExit(!IsSet, value = ERROR_INVALID_ARGS("cannot set activetimestamp"));
+        VerifyOrExit(!isSet, value = ERROR_INVALID_ARGS("cannot set activetimestamp"));
         SuccessOrExit(value = mCommissioner->GetActiveTimestamp(activeTimestamp));
         value = ToString(activeTimestamp);
     }
     else if (CaseInsensitiveEqual(aExpr[2], "channel"))
     {
         Channel channel;
-        if (IsSet)
+        if (isSet)
         {
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 6, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -611,7 +611,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "channelmask"))
     {
         ChannelMask channelMask;
-        if (IsSet)
+        if (isSet)
         {
             SuccessOrExit(value = ParseChannelMask(channelMask, aExpr, 3));
             SuccessOrExit(value = mCommissioner->SetChannelMask(channelMask));
@@ -625,7 +625,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "xpanid"))
     {
         ByteArray xpanid;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = utils::Hex(xpanid, aExpr[3]));
@@ -640,7 +640,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "meshlocalprefix"))
     {
         std::string prefix;
-        if (IsSet)
+        if (isSet)
         {
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -656,7 +656,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "networkmasterkey"))
     {
         ByteArray masterKey;
-        if (IsSet)
+        if (isSet)
         {
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -673,7 +673,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "networkname"))
     {
         std::string networkName;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = mCommissioner->SetNetworkName(aExpr[3]));
@@ -687,7 +687,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "panid"))
     {
         uint16_t panid;
-        if (IsSet)
+        if (isSet)
         {
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -704,7 +704,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "pskc"))
     {
         ByteArray pskc;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = utils::Hex(pskc, aExpr[3]));
@@ -719,7 +719,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "securitypolicy"))
     {
         SecurityPolicy policy;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = ParseInteger(policy.mRotationTime, aExpr[3]));
@@ -735,7 +735,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "active"))
     {
         ActiveOperationalDataset dataset;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = ActiveDatasetFromJson(dataset, aExpr[3]));
@@ -750,7 +750,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "pending"))
     {
         PendingOperationalDataset dataset;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = PendingDatasetFromJson(dataset, aExpr[3]));
@@ -774,23 +774,23 @@ exit:
 Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
 {
     Value value;
-    bool  IsSet;
+    bool  isSet;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
-        IsSet = false;
+        isSet = false;
     }
     else if (CaseInsensitiveEqual(aExpr[1], "set"))
     {
-        IsSet = true;
+        isSet = true;
     }
     else
     {
         ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
     }
 
-    if (aExpr.size() == 2 && !IsSet)
+    if (aExpr.size() == 2 && !isSet)
     {
         BbrDataset dataset;
         SuccessOrExit(value = mCommissioner->GetBbrDataset(dataset, 0xFFFF));
@@ -802,7 +802,7 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
     if (CaseInsensitiveEqual(aExpr[2], "trihostname"))
     {
         std::string triHostname;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = mCommissioner->SetTriHostname(aExpr[3]));
@@ -816,7 +816,7 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "reghostname"))
     {
         std::string regHostname;
-        if (IsSet)
+        if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = mCommissioner->SetRegistrarHostname(aExpr[3]));
@@ -830,13 +830,13 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[2], "regaddr"))
     {
         std::string regAddr;
-        VerifyOrExit(!IsSet, value = ERROR_INVALID_ARGS("cannot set  read-only Registrar Address"));
+        VerifyOrExit(!isSet, value = ERROR_INVALID_ARGS("cannot set  read-only Registrar Address"));
         SuccessOrExit(value = mCommissioner->GetRegistrarIpv6Addr(regAddr));
         value = regAddr;
     }
     else
     {
-        if (IsSet)
+        if (isSet)
         {
             BbrDataset dataset;
             SuccessOrExit(value = BbrDatasetFromJson(dataset, aExpr[2]));

@@ -31,6 +31,7 @@
  *   This file defines test cases for CoAP implementation.
  */
 
+#include "common/error_macros.hpp"
 #include "library/coap.hpp"
 
 #include <catch2/catch.hpp>
@@ -48,6 +49,7 @@ TEST_CASE("coap-message-header", "[coap]")
         auto      message = std::make_shared<Message>(Type::kAcknowledgment, Code::kGet);
         ByteArray buffer;
         Error     error;
+
         REQUIRE(message->Serialize(buffer).NoError());
         REQUIRE(buffer.size() == 4);
         REQUIRE(buffer[0] == ((1 << 6) | (utils::to_underlying(message->GetType()) << 4) | 0));
@@ -67,6 +69,7 @@ TEST_CASE("coap-message-header", "[coap]")
     {
         ByteArray buffer{0xcc};
         Error     error;
+
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
         REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
     }
@@ -75,6 +78,7 @@ TEST_CASE("coap-message-header", "[coap]")
     {
         ByteArray buffer{0xc0, 0x00, 0x00, 0x00};
         Error     error;
+
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
         REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
     }
@@ -84,6 +88,7 @@ TEST_CASE("coap-message-header", "[coap]")
         ByteArray buffer{0x40, 0x00, 0x00, 0x00};
         Error     error;
         auto      message = Message::Deserialize(error, buffer);
+
         REQUIRE(message != nullptr);
         REQUIRE(error.NoError());
 
@@ -98,6 +103,7 @@ TEST_CASE("coap-message-header", "[coap]")
     {
         ByteArray buffer{0x41, 0x00, 0x00, 0x00};
         Error     error;
+
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
         REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
     }
@@ -106,8 +112,8 @@ TEST_CASE("coap-message-header", "[coap]")
     {
         ByteArray buffer{0x41, 0x00, 0x00, 0x00, 0xfa};
         Error     error;
+        auto      message = Message::Deserialize(error, buffer);
 
-        auto message = Message::Deserialize(error, buffer);
         REQUIRE(message != nullptr);
         REQUIRE(error.NoError());
 
@@ -244,6 +250,7 @@ TEST_CASE("coap-message-payload", "[coap]")
         ByteArray buffer{0x40, 0x00, 0x00, 0x00, 0xFF};
         Error     error;
         auto      message = Message::Deserialize(error, buffer);
+
         REQUIRE(message == nullptr);
         REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
     }
@@ -253,6 +260,7 @@ TEST_CASE("coap-message-payload", "[coap]")
         ByteArray buffer{0x40, 0x00, 0x00, 0x00, 0xFF, 0xfa, 0xce};
         Error     error;
         auto      message = Message::Deserialize(error, buffer);
+
         REQUIRE(message != nullptr);
         REQUIRE(error.NoError());
         REQUIRE(message->GetPayload() == ByteArray{0xfa, 0xce});
@@ -260,14 +268,15 @@ TEST_CASE("coap-message-payload", "[coap]")
 
     SECTION("non-empty payload serialization / deserialization")
     {
+        ByteArray buffer;
+        Error     error;
+
         Message message{Type::kConfirmable, Code::kDelete};
         message.Append("hello");
-
-        ByteArray buffer;
         REQUIRE(message.Serialize(buffer).NoError());
 
-        Error error;
-        auto  msg = Message::Deserialize(error, buffer);
+        auto msg = Message::Deserialize(error, buffer);
+
         REQUIRE(msg != nullptr);
         REQUIRE(error.NoError());
         REQUIRE(msg->GetPayload() == ByteArray{'h', 'e', 'l', 'l', 'o'});
@@ -300,7 +309,7 @@ public:
             mSendQueue.emplace(aBuf);
             event_active(&mPeer->mSendEvent, 0, 0);
         }
-        return Error();
+        return ERROR_NONE;
     }
 
     Address GetPeerAddr() const override { return mPeer->mAddr; }
