@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   The file includes definition of commissioner error.
+ *   The file includes definition of commissioner errors.
  */
 
 #ifndef OT_COMM_ERROR_HPP_
@@ -44,7 +44,7 @@ namespace ot {
 namespace commissioner {
 
 /**
- * The canonical error codes for OT Commissioner APIs.
+ * @brief The canonical error codes for OT Commissioner APIs.
  *
  */
 enum class ErrorCode : int
@@ -154,7 +154,7 @@ enum class ErrorCode : int
 };
 
 /**
- * Denotes error of a call in OT Commissioner.
+ * @brief The error of a call in OT Commissioner.
  *
  */
 class OT_COMM_MUST_USE_RESULT Error

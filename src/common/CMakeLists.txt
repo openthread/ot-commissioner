@@ -32,6 +32,7 @@ target_sources(commissioner-common
     PRIVATE
         address.cpp
         address.hpp
+        error.cpp
         error_macros.hpp
         time.cpp
         time.hpp
