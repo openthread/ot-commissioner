@@ -33,13 +33,14 @@
 
 #include "library/token_manager.hpp"
 
-#include <mbedtls/x509_crt.h>
+#include <assert.h>
 
-#include "library/tlv.hpp"
+#include <mbedtls/x509_crt.h>
 
 #include "library/cose.hpp"
 #include "library/cwt.hpp"
 #include "library/logging.hpp"
+#include "library/tlv.hpp"
 #include "library/uri.hpp"
 
 namespace ot {
@@ -220,32 +221,30 @@ exit:
 
 Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
 {
-    Error          error = Error::kInvalidArgs;
+    Error          error = Error::kNone;
+    CborMap        token;
     CborMap        cnf;
     CborMap        coseKey;
     const uint8_t *kid       = nullptr;
     size_t         kidLength = 0;
 
-    mSignedToken = aSignedToken;
-    SuccessOrExit(error = VerifyToken(mToken, aSignedToken, aPublicKey));
-
-    SuccessOrExit(error = mToken.Get(cwt::kCnf, cnf));
+    SuccessOrExit(error = VerifyToken(token, aSignedToken, aPublicKey));
+    SuccessOrExit(error = token.Get(cwt::kCnf, cnf));
     SuccessOrExit(error = cnf.Get(cwt::kCoseKey, coseKey));
     SuccessOrExit(error = coseKey.Get(cose::kKeyId, kid, kidLength));
 
-    error = Error::kNone;
+    mSignedToken = aSignedToken;
+
+    // We need to re-extract the token into a CBOR object, because a CBOR object
+    // directly reference to raw data in the signed-token buffer.
+    error = VerifyToken(mToken, mSignedToken, aPublicKey);
+    assert(error == Error::kNone);
 
     // The mSequenceNumber is always associated with mToken & mSignedToken.
     mSequenceNumber = 0;
     mKeyId          = {kid, kid + kidLength};
 
 exit:
-    if (error != Error::kNone)
-    {
-        mToken.Free();
-        mSignedToken.clear();
-    }
-
     return error;
 }
 
