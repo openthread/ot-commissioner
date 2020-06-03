@@ -222,29 +222,35 @@ exit:
 Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
 {
     Error          error = Error::kNone;
-    CborMap        token;
+    ByteArray      oldSignedToken;
+    CborMap        oldToken;
     CborMap        cnf;
     CborMap        coseKey;
     const uint8_t *kid       = nullptr;
     size_t         kidLength = 0;
 
-    SuccessOrExit(error = VerifyToken(token, aSignedToken, aPublicKey));
-    SuccessOrExit(error = token.Get(cwt::kCnf, cnf));
+    oldSignedToken = mSignedToken;
+    mSignedToken = aSignedToken;
+    CborValue::Move(oldToken, mToken);
+
+    // Commissioner Token as a CBOR object references to raw data in the signed Token buffer.
+    // So we need to verify on 'mSignedToken' rather than 'aSignedToken'.
+    SuccessOrExit(error = VerifyToken(mToken, mSignedToken, aPublicKey));
+    SuccessOrExit(error = mToken.Get(cwt::kCnf, cnf));
     SuccessOrExit(error = cnf.Get(cwt::kCoseKey, coseKey));
     SuccessOrExit(error = coseKey.Get(cose::kKeyId, kid, kidLength));
-
-    mSignedToken = aSignedToken;
-
-    // We need to re-extract the token into a CBOR object, because a CBOR object
-    // directly reference to raw data in the signed-token buffer.
-    error = VerifyToken(mToken, mSignedToken, aPublicKey);
-    assert(error == Error::kNone);
 
     // The mSequenceNumber is always associated with mToken & mSignedToken.
     mSequenceNumber = 0;
     mKeyId          = {kid, kid + kidLength};
 
 exit:
+    if (error != Error::kNone)
+    {
+        mSignedToken = oldSignedToken;
+        CborValue::Move(mToken, oldToken);
+    }
+
     return error;
 }
 
