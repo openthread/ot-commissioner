@@ -230,7 +230,7 @@ Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_con
     size_t         kidLength = 0;
 
     oldSignedToken = mSignedToken;
-    mSignedToken = aSignedToken;
+    mSignedToken   = aSignedToken;
     CborValue::Move(oldToken, mToken);
 
     // Commissioner Token as a CBOR object references to raw data in the signed Token buffer.
