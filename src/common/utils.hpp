@@ -41,14 +41,14 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
-#define ASSERT(aCondition)           \
-    do                               \
-    {                                \
-        bool condition = aCondition; \
-        assert(condition);           \
-        if (condition)               \
-        {                            \
-        }                            \
+#define ASSERT(aCondition)             \
+    do                                 \
+    {                                  \
+        bool condition = (aCondition); \
+        assert(condition);             \
+        if (condition)                 \
+        {                              \
+        }                              \
     } while (false)
 
 #define SuccessOrDie(aError)            \
