@@ -86,7 +86,7 @@ start_otbr() {
     pidof otbr-agent && die "killing otbr-agent failed"
 
     sudo rm -rf ${OTBR_SETTINGS_PATH}
-    sudo otbr-agent -I wpan0 -d 7 -v "${NON_CCM_RCP}" 1 > "${OTBR_LOG}" 2>&1 &
+    sudo otbr-agent -I wpan0 -d 7 -v "spinel+hdlc+forkpty://${NON_CCM_RCP}?forkpty-arg=1" > "${OTBR_LOG}" 2>&1 &
 
     sleep 10
 }
