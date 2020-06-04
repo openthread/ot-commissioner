@@ -183,7 +183,7 @@ public:
      * Returns true if there is no error.
      *
      */
-    bool IsNone() const { return (mState == nullptr); }
+    bool IsNone() const { return mState == nullptr; }
 
     ErrorCode GetCode() const { return IsNone() ? ErrorCode::kNone : mState->mCode; }
 
