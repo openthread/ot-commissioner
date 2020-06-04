@@ -35,12 +35,11 @@
 
 #include <mbedtls/x509_crt.h>
 
-#include "library/tlv.hpp"
-
 #include "library/cose.hpp"
 #include "library/cwt.hpp"
 #include "library/logging.hpp"
 #include "library/mbedtls_error.hpp"
+#include "library/tlv.hpp"
 #include "library/uri.hpp"
 
 namespace ot {
@@ -229,14 +228,20 @@ exit:
 Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
 {
     Error          error;
+    ByteArray      oldSignedToken;
+    CborMap        oldToken;
     CborMap        cnf;
     CborMap        coseKey;
     const uint8_t *kid       = nullptr;
     size_t         kidLength = 0;
 
-    mSignedToken = aSignedToken;
-    SuccessOrExit(error = VerifyToken(mToken, aSignedToken, aPublicKey));
+    oldSignedToken = mSignedToken;
+    mSignedToken   = aSignedToken;
+    CborValue::Move(oldToken, mToken);
 
+    // Commissioner Token as a CBOR object references to raw data in the signed Token buffer.
+    // So we need to verify on 'mSignedToken' rather than 'aSignedToken'.
+    SuccessOrExit(error = VerifyToken(mToken, mSignedToken, aPublicKey));
     SuccessOrExit(error = mToken.Get(cwt::kCnf, cnf));
     SuccessOrExit(error = cnf.Get(cwt::kCoseKey, coseKey));
     SuccessOrExit(error = coseKey.Get(cose::kKeyId, kid, kidLength));
@@ -248,8 +253,8 @@ Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_con
 exit:
     if (!error.IsNone())
     {
-        mToken.Free();
-        mSignedToken.clear();
+        mSignedToken = oldSignedToken;
+        CborValue::Move(mToken, oldToken);
     }
 
     return error;
