@@ -138,11 +138,10 @@ enum class ErrorCode : int
     /**
      * The commissioner is not in a valid state that the operation can be processed.
      */
-
     kInvalidState = 15,
 
     /**
-     * The operational has been rejected. For example, petition could be rejected
+     * The operational was rejected. For example, petition could be rejected
      * because of existing active commissioner.
      */
     kRejected = 16,
