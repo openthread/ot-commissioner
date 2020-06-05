@@ -141,7 +141,7 @@ enum class ErrorCode : int
     kInvalidState = 15,
 
     /**
-     * The operational was rejected. For example, petition could be rejected
+     * The operation was rejected. For example, petition could be rejected
      * because of existing active commissioner.
      */
     kRejected = 16,
