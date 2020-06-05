@@ -78,7 +78,7 @@ private:
 #define SuccessOrThrow(aError)                               \
     do                                                       \
     {                                                        \
-        if (!aError.IsNone())                                \
+        if (aError != ::ot::commissioner::ErrorCode::kNone)  \
         {                                                    \
             throw ::ot::commissioner::JsonException(aError); \
         }                                                    \

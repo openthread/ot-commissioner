@@ -292,7 +292,7 @@ void DtlsSession::Disconnect(Error aError)
     VerifyOrExit(mState == State::kConnecting || mState == State::kConnected);
 
     // Send close notify if the connected session is cancelled by user.
-    if (mState == State::kConnected && aError.GetCode() == ErrorCode::kCancelled)
+    if (mState == State::kConnected && aError == ErrorCode::kCancelled)
     {
         // We don't care if the notify has been successfully delivered.
         mbedtls_ssl_close_notify(&mSsl);
@@ -390,7 +390,7 @@ void DtlsSession::HandleEvent(short aFlags)
     case State::kConnected:
         if (aFlags & EV_READ)
         {
-            while (error.IsNone())
+            while (error == ErrorCode::kNone)
             {
                 error = Read();
             }
@@ -511,7 +511,7 @@ exit:
 Error DtlsSession::TryWrite()
 {
     Error error;
-    while (error.IsNone() && !mSendQueue.empty())
+    while (error == ErrorCode::kNone && !mSendQueue.empty())
     {
         auto &messagePair = mSendQueue.front();
 
@@ -572,7 +572,7 @@ Error DtlsSession::Send(const ByteArray &aBuf, MessageSubType aSubType)
     if (mSendQueue.empty())
     {
         error = Write(aBuf, aSubType);
-        if (!error.IsNone() && !ShouldStop(error))
+        if (error != ErrorCode::kNone && !ShouldStop(error))
         {
             mSendQueue.emplace(aBuf, aSubType);
 

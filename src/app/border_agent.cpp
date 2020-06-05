@@ -84,7 +84,7 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 
         mdns_query_recv(socket, buf, sizeof(buf), HandleRecord, &curBorderAgentOrErrorMsg, 1);
 
-        if (!curBorderAgentOrErrorMsg.mError.IsNone())
+        if (curBorderAgentOrErrorMsg.mError != ErrorCode::kNone)
         {
             aBorderAgentHandler(nullptr, curBorderAgentOrErrorMsg.mError);
         }
@@ -146,7 +146,7 @@ static int HandleRecord(const struct sockaddr *from,
     (void)ttl;
 
     *reinterpret_cast<struct sockaddr *>(&fromAddrStorage) = *from;
-    if (!fromAddr.Set(fromAddrStorage).IsNone())
+    if (fromAddr.Set(fromAddrStorage) != ErrorCode::kNone)
     {
         ExitNow(error = ERROR_BAD_FORMAT("invalid source address of mDNS response"));
     }
@@ -177,7 +177,7 @@ static int HandleRecord(const struct sockaddr *from,
         mdns_record_parse_a(data, size, offset, length, &addr);
 
         *reinterpret_cast<struct sockaddr_in *>(&addrStorage) = addr;
-        if (!fromAddr.Set(addrStorage).IsNone())
+        if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
         {
             ExitNow(error = ERROR_BAD_FORMAT("invalid IPv4 address in A record"));
         }
@@ -200,7 +200,7 @@ static int HandleRecord(const struct sockaddr *from,
         mdns_record_parse_aaaa(data, size, offset, length, &addr);
 
         *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
-        if (!fromAddr.Set(addrStorage).IsNone())
+        if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
         {
             ExitNow(error = ERROR_BAD_FORMAT("invalid IPv6 address in AAAA record"));
         }

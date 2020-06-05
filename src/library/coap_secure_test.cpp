@@ -129,18 +129,18 @@ TEST_CASE("coap-secure-basic", "[coaps]")
 
                           Response response{Type::kAcknowledgment, Code::kChanged};
                           response.Append("world");
-                          REQUIRE(coapsServer.SendResponse(aRequest, response).IsNone());
+                          REQUIRE(coapsServer.SendResponse(aRequest, response) == ErrorCode::kNone);
                       }};
-    REQUIRE(coapsServer.AddResource(resHello).IsNone());
+    REQUIRE(coapsServer.AddResource(resHello) == ErrorCode::kNone);
 
     auto onServerConnected = [&coapsServer](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError.IsNone());
+        REQUIRE(aError == ErrorCode::kNone);
         REQUIRE(&aSession == &coapsServer.GetDtlsSession());
         REQUIRE(aSession.GetLocalPort() == kServerPort);
     };
 
-    REQUIRE(coapsServer.Init(config).IsNone());
-    REQUIRE(coapsServer.Start(onServerConnected, kServerAddr, kServerPort).IsNone());
+    REQUIRE(coapsServer.Init(config) == ErrorCode::kNone);
+    REQUIRE(coapsServer.Start(onServerConnected, kServerAddr, kServerPort) == ErrorCode::kNone);
 
     // Setup coap secure client
     config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
@@ -152,15 +152,15 @@ TEST_CASE("coap-secure-basic", "[coaps]")
     config.mOwnKey.push_back(0);
 
     CoapSecure coapsClient{eventBase, false};
-    REQUIRE(coapsClient.Init(config).IsNone());
+    REQUIRE(coapsClient.Init(config) == ErrorCode::kNone);
     auto onClientConnected = [&coapsClient, eventBase](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError.IsNone());
+        REQUIRE(aError == ErrorCode::kNone);
         REQUIRE(aSession.GetPeerPort() == kServerPort);
 
         Request request{Type::kConfirmable, Code::kPost};
-        REQUIRE(request.SetUriPath("/hello").IsNone());
+        REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
         auto onResponse = [eventBase](const Response *aResponse, Error aError) {
-            REQUIRE(aError.IsNone());
+            REQUIRE(aError == ErrorCode::kNone);
             REQUIRE(aResponse != nullptr);
             REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
             REQUIRE(aResponse->GetCode() == Code::kChanged);

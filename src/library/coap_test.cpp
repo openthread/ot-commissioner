@@ -50,7 +50,7 @@ TEST_CASE("coap-message-header", "[coap]")
         ByteArray buffer;
         Error     error;
 
-        REQUIRE(message->Serialize(buffer).IsNone());
+        REQUIRE(message->Serialize(buffer) == ErrorCode::kNone);
         REQUIRE(buffer.size() == 4);
         REQUIRE(buffer[0] == ((1 << 6) | (utils::to_underlying(message->GetType()) << 4) | 0));
         REQUIRE(buffer[1] == utils::to_underlying(message->GetCode()));
@@ -59,7 +59,7 @@ TEST_CASE("coap-message-header", "[coap]")
 
         message = Message::Deserialize(error, buffer);
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetType() == Type::kAcknowledgment);
         REQUIRE(message->GetCode() == Code::kGet);
@@ -71,7 +71,7 @@ TEST_CASE("coap-message-header", "[coap]")
         Error     error;
 
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
-        REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
+        REQUIRE(error == ErrorCode::kBadFormat);
     }
 
     SECTION("minimum Message header with invalid Version")
@@ -80,7 +80,7 @@ TEST_CASE("coap-message-header", "[coap]")
         Error     error;
 
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
-        REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
+        REQUIRE(error == ErrorCode::kBadFormat);
     }
 
     SECTION("minimum Message header with valid Version")
@@ -90,7 +90,7 @@ TEST_CASE("coap-message-header", "[coap]")
         auto      message = Message::Deserialize(error, buffer);
 
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetVersion() == kVersion1);
         REQUIRE(message->GetType() == Type::kConfirmable);
@@ -105,7 +105,7 @@ TEST_CASE("coap-message-header", "[coap]")
         Error     error;
 
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
-        REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
+        REQUIRE(error == ErrorCode::kBadFormat);
     }
 
     SECTION("non-zero token length and token is provided")
@@ -115,7 +115,7 @@ TEST_CASE("coap-message-header", "[coap]")
         auto      message = Message::Deserialize(error, buffer);
 
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetToken() == ByteArray{0xfa});
     }
@@ -126,7 +126,7 @@ TEST_CASE("coap-message-header", "[coap]")
         Error     error;
 
         REQUIRE(Message::Deserialize(error, buffer) == nullptr);
-        REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
+        REQUIRE(error == ErrorCode::kBadFormat);
     }
 }
 
@@ -139,7 +139,7 @@ TEST_CASE("coap-message-options", "[coap]")
 
         auto message = Message::Deserialize(error, buffer);
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetOptionNum() == 0);
     }
@@ -151,7 +151,7 @@ TEST_CASE("coap-message-options", "[coap]")
 
         auto message = Message::Deserialize(error, buffer);
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetOptionNum() == 0);
     }
@@ -163,7 +163,7 @@ TEST_CASE("coap-message-options", "[coap]")
 
         auto message = Message::Deserialize(error, buffer);
         REQUIRE(message == nullptr);
-        REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
+        REQUIRE(error == ErrorCode::kBadFormat);
     }
 
     SECTION("single option serialization & deserialization")
@@ -172,8 +172,8 @@ TEST_CASE("coap-message-options", "[coap]")
         ByteArray buffer;
         Error     error;
 
-        REQUIRE(message->SetContentFormat(ContentFormat::kCBOR).IsNone());
-        REQUIRE(message->Serialize(buffer).IsNone());
+        REQUIRE(message->SetContentFormat(ContentFormat::kCBOR) == ErrorCode::kNone);
+        REQUIRE(message->Serialize(buffer) == ErrorCode::kNone);
 
         REQUIRE(buffer.size() == 4 + 2);
         REQUIRE(buffer[4] == 0xc1);
@@ -181,12 +181,12 @@ TEST_CASE("coap-message-options", "[coap]")
 
         message = Message::Deserialize(error, buffer);
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetOptionNum() == 1);
 
         ContentFormat contentFormat;
-        REQUIRE(message->GetContentFormat(contentFormat).IsNone());
+        REQUIRE(message->GetContentFormat(contentFormat) == ErrorCode::kNone);
         REQUIRE(contentFormat == ContentFormat::kCBOR);
     }
 
@@ -198,11 +198,11 @@ TEST_CASE("coap-message-options", "[coap]")
         ByteArray buffer;
         Error     error;
 
-        REQUIRE(message->SetUriPath(".well-known/est/rv/").IsNone());
-        REQUIRE(message->SetContentFormat(ContentFormat::kCBOR).IsNone());
-        REQUIRE(message->SetAccept(ContentFormat::kCoseSign1).IsNone());
+        REQUIRE(message->SetUriPath(".well-known/est/rv/") == ErrorCode::kNone);
+        REQUIRE(message->SetContentFormat(ContentFormat::kCBOR) == ErrorCode::kNone);
+        REQUIRE(message->SetAccept(ContentFormat::kCoseSign1) == ErrorCode::kNone);
         REQUIRE(message->GetOptionNum() == 3);
-        REQUIRE(message->Serialize(buffer).IsNone());
+        REQUIRE(message->Serialize(buffer) == ErrorCode::kNone);
 
         auto expectedBuffer = ByteArray{0x40, 0x01,
                                         0x00, 0x00, // header
@@ -223,22 +223,22 @@ TEST_CASE("coap-message-options", "[coap]")
 
         message = Message::Deserialize(error, buffer);
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
 
         REQUIRE(message->GetOptionNum() == 3);
 
         ContentFormat contentFormat;
-        REQUIRE(message->GetContentFormat(contentFormat).IsNone());
+        REQUIRE(message->GetContentFormat(contentFormat) == ErrorCode::kNone);
         REQUIRE(contentFormat == ContentFormat::kCBOR);
 
         std::string uriPath;
-        REQUIRE(message->GetUriPath(uriPath).IsNone());
+        REQUIRE(message->GetUriPath(uriPath) == ErrorCode::kNone);
 
         // ".well-known/est/rv/" is normalized to "/.well-known/est/rv"
         REQUIRE(uriPath == "/.well-known/est/rv");
 
         ContentFormat accept;
-        REQUIRE(message->GetAccept(accept).IsNone());
+        REQUIRE(message->GetAccept(accept) == ErrorCode::kNone);
         REQUIRE(accept == ContentFormat::kCoseSign1);
     }
 }
@@ -252,7 +252,7 @@ TEST_CASE("coap-message-payload", "[coap]")
         auto      message = Message::Deserialize(error, buffer);
 
         REQUIRE(message == nullptr);
-        REQUIRE(error.GetCode() == ErrorCode::kBadFormat);
+        REQUIRE(error == ErrorCode::kBadFormat);
     }
 
     SECTION("payload marker present and there is payload")
@@ -262,7 +262,7 @@ TEST_CASE("coap-message-payload", "[coap]")
         auto      message = Message::Deserialize(error, buffer);
 
         REQUIRE(message != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
         REQUIRE(message->GetPayload() == ByteArray{0xfa, 0xce});
     }
 
@@ -273,12 +273,12 @@ TEST_CASE("coap-message-payload", "[coap]")
 
         Message message{Type::kConfirmable, Code::kDelete};
         message.Append("hello");
-        REQUIRE(message.Serialize(buffer).IsNone());
+        REQUIRE(message.Serialize(buffer) == ErrorCode::kNone);
 
         auto msg = Message::Deserialize(error, buffer);
 
         REQUIRE(msg != nullptr);
-        REQUIRE(error.IsNone());
+        REQUIRE(error == ErrorCode::kNone);
         REQUIRE(msg->GetPayload() == ByteArray{'h', 'e', 'l', 'l', 'o'});
     }
 }
@@ -342,7 +342,7 @@ private:
 TEST_CASE("coap-message-confirmable", "[coap]")
 {
     Address localhost;
-    REQUIRE(localhost.Set("127.0.0.1").IsNone());
+    REQUIRE(localhost.Set("127.0.0.1") == ErrorCode::kNone);
 
     auto eventBase = event_base_new();
     REQUIRE(eventBase != nullptr);
@@ -355,47 +355,43 @@ TEST_CASE("coap-message-confirmable", "[coap]")
     Coap coap0{eventBase, peer0};
     Coap coap1{eventBase, peer1};
 
-    REQUIRE(
-        coap1
-            .AddResource(
-                {"/hello",
-                 [&coap1](const Request &aRequest) {
+    REQUIRE(coap1.AddResource(
+                {"/hello", [&coap1](const Request &aRequest) {
                      REQUIRE(aRequest.IsRequest());
                      REQUIRE(aRequest.GetType() == Type::kConfirmable);
                      REQUIRE(aRequest.GetCode() == Code::kGet);
 
                      ContentFormat contentFormat;
-                     REQUIRE(aRequest.GetContentFormat(contentFormat).IsNone());
+                     REQUIRE(aRequest.GetContentFormat(contentFormat) == ErrorCode::kNone);
                      REQUIRE(contentFormat == ContentFormat::kTextPlain);
 
                      std::string uriPath;
-                     REQUIRE(aRequest.GetUriPath(uriPath).IsNone());
+                     REQUIRE(aRequest.GetUriPath(uriPath) == ErrorCode::kNone);
                      REQUIRE(uriPath == "/hello");
 
                      REQUIRE(aRequest.GetPayload() == ByteArray{'h', 'e', 'l', 'l', 'o', ',', ' ', 'C', 'o', 'A', 'P'});
 
                      Response response{Type::kAcknowledgment, Code::kContent};
-                     REQUIRE(response.SetContentFormat(ContentFormat::kTextPlain).IsNone());
+                     REQUIRE(response.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
                      response.Append("Ack...");
-                     REQUIRE(coap1.SendResponse(aRequest, response).IsNone());
-                 }})
-            .IsNone());
+                     REQUIRE(coap1.SendResponse(aRequest, response) == ErrorCode::kNone);
+                 }}) == ErrorCode::kNone);
 
     SECTION("basic confirmable message send/recv")
     {
         Message request{Type::kConfirmable, Code::kGet};
-        REQUIRE(request.SetUriPath("/hello").IsNone());
-        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain).IsNone());
+        REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
+        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
         request.Append("hello, CoAP");
 
         coap0.SendRequest(request, [&eventBase](const Response *aResponse, Error aError) {
             REQUIRE(aResponse != nullptr);
-            REQUIRE(aError.IsNone());
+            REQUIRE(aError == ErrorCode::kNone);
 
             REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
 
             ContentFormat contentFormat;
-            REQUIRE(aResponse->GetContentFormat(contentFormat).IsNone());
+            REQUIRE(aResponse->GetContentFormat(contentFormat) == ErrorCode::kNone);
             REQUIRE(contentFormat == ContentFormat::kTextPlain);
 
             REQUIRE(aResponse->GetPayload() == ByteArray{'A', 'c', 'k', '.', '.', '.'});
@@ -407,20 +403,20 @@ TEST_CASE("coap-message-confirmable", "[coap]")
     SECTION("basic confirmable message retransmission")
     {
         Message request{Type::kConfirmable, Code::kGet};
-        REQUIRE(request.SetUriPath("/hello").IsNone());
-        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain).IsNone());
+        REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
+        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
         request.Append("hello, CoAP");
 
         // Drop the message to trigger retransmission
         peer0.SetDropMessage(true);
         coap0.SendRequest(request, [&eventBase](const Response *aResponse, Error aError) {
             REQUIRE(aResponse != nullptr);
-            REQUIRE(aError.IsNone());
+            REQUIRE(aError == ErrorCode::kNone);
 
             REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
 
             ContentFormat contentFormat;
-            REQUIRE(aResponse->GetContentFormat(contentFormat).IsNone());
+            REQUIRE(aResponse->GetContentFormat(contentFormat) == ErrorCode::kNone);
             REQUIRE(contentFormat == ContentFormat::kTextPlain);
 
             REQUIRE(aResponse->GetPayload() == ByteArray{'A', 'c', 'k', '.', '.', '.'});
@@ -433,15 +429,15 @@ TEST_CASE("coap-message-confirmable", "[coap]")
     SECTION("basic confirmable message timeout")
     {
         Message request{Type::kConfirmable, Code::kGet};
-        REQUIRE(request.SetUriPath("/hello").IsNone());
-        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain).IsNone());
+        REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
+        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
         request.Append("hello, CoAP");
 
         // Drop the message to trigger timeout
         peer0.SetDropMessage(true);
         coap0.SendRequest(request, [&eventBase](const Response *aResponse, Error aError) {
             REQUIRE(aResponse == nullptr);
-            REQUIRE(aError.GetCode() == ErrorCode::kTimeout);
+            REQUIRE(aError == ErrorCode::kTimeout);
 
             event_base_loopbreak(eventBase);
         });

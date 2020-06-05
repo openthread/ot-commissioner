@@ -180,14 +180,15 @@ public:
     Error &operator=(Error &&aError) noexcept;
 
     /**
-     * Returns true if there is no error.
+     * Two errors are considered equal when their error codes are equal.
      *
      */
-    bool IsNone() const { return (mState == nullptr); }
+    bool operator==(const Error &aOther) const { return GetCode() == aOther.GetCode(); }
+    bool operator!=(const Error &aOther) const { return !(*this == aOther); }
 
-    ErrorCode GetCode() const { return IsNone() ? ErrorCode::kNone : mState->mCode; }
+    ErrorCode GetCode() const { return (mState == nullptr) ? ErrorCode::kNone : mState->mCode; }
 
-    const std::string &GetMessage() const { return IsNone() ? EmptyString() : mState->mMessage; }
+    const std::string &GetMessage() const { return (mState == nullptr) ? EmptyString() : mState->mMessage; }
 
     /**
      * Returns a string representation of this error suitable for
@@ -245,6 +246,26 @@ inline Error &Error::operator=(Error &&aError) noexcept
         mState = std::move(aError.mState);
     }
     return *this;
+}
+
+inline bool operator==(const Error &aError, const ErrorCode &aErrorCode)
+{
+    return aError.GetCode() == aErrorCode;
+}
+
+inline bool operator!=(const Error &aError, const ErrorCode &aErrorCode)
+{
+    return !(aError == aErrorCode);
+}
+
+inline bool operator==(const ErrorCode &aErrorCode, const Error &aError)
+{
+    return aError == aErrorCode;
+}
+
+inline bool operator!=(const ErrorCode &aErrorCode, const Error &aError)
+{
+    return !(aErrorCode == aError);
 }
 
 } // namespace commissioner

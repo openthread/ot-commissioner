@@ -81,7 +81,7 @@ void JoinerSession::Connect()
     }
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         HandleConnect(error);
     }
@@ -192,7 +192,7 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
     VerifyOrExit(accepted, error = ERROR_REJECTED("joiner(ID={}) is rejected", utils::Hex(mJoinerId)));
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         LOG_WARN(LOG_REGION_JOINER_SESSION, "session(={}) handle JOIN_FIN.req failed: {}", static_cast<void *>(this),
                  error.ToString());
@@ -255,12 +255,12 @@ int JoinerSession::RelaySocket::Send(const uint8_t *aBuf, size_t aLen)
     SuccessOrExit(error = mJoinerSession.SendRlyTx({aBuf, aBuf + aLen}, includeKek));
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         LOG_ERROR(LOG_REGION_JOINER_SESSION, "session(={}) send RLY_TX.ntf failed: {}",
                   static_cast<void *>(&mJoinerSession), error.ToString());
     }
-    return error.IsNone() ? static_cast<int>(aLen) : MBEDTLS_ERR_NET_SEND_FAILED;
+    return error == ErrorCode::kNone ? static_cast<int>(aLen) : MBEDTLS_ERR_NET_SEND_FAILED;
 }
 
 int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen)

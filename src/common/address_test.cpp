@@ -48,7 +48,7 @@ TEST_CASE("address-from-string", "[address]")
 
     SECTION("IPv4 loopback address")
     {
-        REQUIRE(addr.Set("127.0.0.1").IsNone());
+        REQUIRE(addr.Set("127.0.0.1") == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv4());
 
@@ -57,7 +57,7 @@ TEST_CASE("address-from-string", "[address]")
 
     SECTION("IPv6 loopback address")
     {
-        REQUIRE(addr.Set("::1").IsNone());
+        REQUIRE(addr.Set("::1") == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
@@ -67,7 +67,7 @@ TEST_CASE("address-from-string", "[address]")
     SECTION("IPv6 prefix")
     {
         const static std::string kPrefix = "2001:db8:3c4d:15::";
-        REQUIRE(addr.Set(kPrefix).IsNone());
+        REQUIRE(addr.Set(kPrefix) == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
@@ -105,7 +105,7 @@ TEST_CASE("address-from-sockaddr", "[address]")
         sockaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         sockaddr.sin_port        = htons(5684);
 
-        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)).IsNone());
+        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv4());
 
@@ -120,7 +120,7 @@ TEST_CASE("address-from-sockaddr", "[address]")
         sockaddr.sin6_addr   = in6addr_loopback;
         sockaddr.sin6_port   = htons(5684);
 
-        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)).IsNone());
+        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
@@ -134,7 +134,7 @@ TEST_CASE("address-negative-tests", "[address]")
 
     SECTION("invalid ipv4 address should fail")
     {
-        REQUIRE(addr.Set("127.0.0.1.2").GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(addr.Set("127.0.0.1.2") == ErrorCode::kInvalidArgs);
         REQUIRE(!addr.IsValid());
         REQUIRE(!addr.IsIpv4());
         REQUIRE(!addr.IsIpv6());
@@ -142,7 +142,7 @@ TEST_CASE("address-negative-tests", "[address]")
 
     SECTION("invalid ipv6 address should fail")
     {
-        REQUIRE(addr.Set("::1::2").GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(addr.Set("::1::2") == ErrorCode::kInvalidArgs);
         REQUIRE(!addr.IsValid());
         REQUIRE(!addr.IsIpv4());
         REQUIRE(!addr.IsIpv6());

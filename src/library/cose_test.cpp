@@ -76,26 +76,26 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
     mbedtls_pk_init(&publicKey);
     mbedtls_pk_init(&privateKey);
 
-    REQUIRE(
-        TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}).IsNone());
-    REQUIRE(
-        TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}).IsNone());
+    REQUIRE(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}) ==
+            ErrorCode::kNone);
+    REQUIRE(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}) ==
+            ErrorCode::kNone);
 
     SECTION("cose sign without external data")
     {
         ByteArray    signature;
         Sign1Message msg;
 
-        REQUIRE(msg.Init(kInitFlagsNone).IsNone());
-        REQUIRE(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly).IsNone());
-        REQUIRE(msg.SetContent(content).IsNone());
-        REQUIRE(msg.Sign(privateKey).IsNone());
+        REQUIRE(msg.Init(kInitFlagsNone) == ErrorCode::kNone);
+        REQUIRE(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly) == ErrorCode::kNone);
+        REQUIRE(msg.SetContent(content) == ErrorCode::kNone);
+        REQUIRE(msg.Sign(privateKey) == ErrorCode::kNone);
 
-        REQUIRE(msg.Serialize(signature).IsNone());
+        REQUIRE(msg.Serialize(signature) == ErrorCode::kNone);
         msg.Free();
 
-        REQUIRE(Sign1Message::Deserialize(msg, signature).IsNone());
-        REQUIRE(msg.Validate(publicKey).IsNone());
+        REQUIRE(Sign1Message::Deserialize(msg, signature) == ErrorCode::kNone);
+        REQUIRE(msg.Validate(publicKey) == ErrorCode::kNone);
     }
 
     SECTION("cose sign with external data")
@@ -103,18 +103,18 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
         ByteArray    signature;
         Sign1Message msg;
 
-        REQUIRE(msg.Init(kInitFlagsNone).IsNone());
-        REQUIRE(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly).IsNone());
-        REQUIRE(msg.SetContent({}).IsNone());
-        REQUIRE(msg.SetExternalData(externalData).IsNone());
-        REQUIRE(msg.Sign(privateKey).IsNone());
+        REQUIRE(msg.Init(kInitFlagsNone) == ErrorCode::kNone);
+        REQUIRE(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly) == ErrorCode::kNone);
+        REQUIRE(msg.SetContent({}) == ErrorCode::kNone);
+        REQUIRE(msg.SetExternalData(externalData) == ErrorCode::kNone);
+        REQUIRE(msg.Sign(privateKey) == ErrorCode::kNone);
 
-        REQUIRE(msg.Serialize(signature).IsNone());
+        REQUIRE(msg.Serialize(signature) == ErrorCode::kNone);
         msg.Free();
 
-        REQUIRE(Sign1Message::Deserialize(msg, signature).IsNone());
-        REQUIRE(msg.SetExternalData(externalData).IsNone());
-        REQUIRE(msg.Validate(publicKey).IsNone());
+        REQUIRE(Sign1Message::Deserialize(msg, signature) == ErrorCode::kNone);
+        REQUIRE(msg.SetExternalData(externalData) == ErrorCode::kNone);
+        REQUIRE(msg.Validate(publicKey) == ErrorCode::kNone);
     }
 
     SECTION("cose key construction")
@@ -123,24 +123,24 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
         ByteArray encodedCoseKey;
         CborMap   coseKey;
 
-        REQUIRE(MakeCoseKey(encodedCoseKey, publicKey, keyId).IsNone());
-        REQUIRE(CborMap::Deserialize(coseKey, &encodedCoseKey[0], encodedCoseKey.size()).IsNone());
+        REQUIRE(MakeCoseKey(encodedCoseKey, publicKey, keyId) == ErrorCode::kNone);
+        REQUIRE(CborMap::Deserialize(coseKey, &encodedCoseKey[0], encodedCoseKey.size()) == ErrorCode::kNone);
 
         uint8_t buf[1024];
         size_t  bufLength = 0;
-        REQUIRE(coseKey.Serialize(buf, bufLength, sizeof(buf)).IsNone());
+        REQUIRE(coseKey.Serialize(buf, bufLength, sizeof(buf)) == ErrorCode::kNone);
 
         int keyType = 0;
-        REQUIRE(coseKey.Get(cose::kKeyType, keyType).IsNone());
+        REQUIRE(coseKey.Get(cose::kKeyType, keyType) == ErrorCode::kNone);
         REQUIRE(keyType == cose::kKeyTypeEC2);
 
         int ec2Curve = 0;
-        REQUIRE(coseKey.Get(cose::kKeyEC2Curve, ec2Curve).IsNone());
+        REQUIRE(coseKey.Get(cose::kKeyEC2Curve, ec2Curve) == ErrorCode::kNone);
         REQUIRE(ec2Curve == cose::kKeyEC2CurveP256);
 
         const uint8_t *x;
         size_t         xlen;
-        REQUIRE(coseKey.Get(cose::kKeyEC2X, x, xlen).IsNone());
+        REQUIRE(coseKey.Get(cose::kKeyEC2X, x, xlen) == ErrorCode::kNone);
         INFO(utils::Hex(ByteArray{x, x + xlen}));
         INFO(xlen);
 
@@ -152,7 +152,7 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
 
         const uint8_t *y;
         size_t         ylen;
-        REQUIRE(coseKey.Get(cose::kKeyEC2Y, y, ylen).IsNone());
+        REQUIRE(coseKey.Get(cose::kKeyEC2Y, y, ylen) == ErrorCode::kNone);
         INFO(utils::Hex(ByteArray{y, y + ylen}));
         INFO(ylen);
 

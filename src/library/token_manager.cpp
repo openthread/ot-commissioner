@@ -143,7 +143,7 @@ exit:
 void TokenManager::RequestToken(Commissioner::Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
 {
     auto onConnected = [this, aHandler](const DtlsSession &, Error aError) {
-        if (!aError.IsNone())
+        if (aError != ErrorCode::kNone)
         {
             aHandler(nullptr, aError);
         }
@@ -173,7 +173,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
                      error =
                          ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED, but got {}", aResponse->GetCode()));
-        VerifyOrExit(aResponse->GetContentFormat(contentFormat).IsNone(),
+        VerifyOrExit(aResponse->GetContentFormat(contentFormat) == ErrorCode::kNone,
                      error = ERROR_BAD_FORMAT("cannot find valid CoAP Content Format option"));
         VerifyOrExit(
             contentFormat == coap::ContentFormat::kCoseSign1,
@@ -182,7 +182,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
         SuccessOrExit(error = SetToken(aResponse->GetPayload(), mDomainCAPublicKey));
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
@@ -203,7 +203,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
     mRegistrarClient.SendRequest(request, onResponse);
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -251,7 +251,7 @@ Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_con
     mKeyId          = {kid, kid + kidLength};
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         mSignedToken = oldSignedToken;
         CborValue::Move(mToken, oldToken);
@@ -372,7 +372,7 @@ Error TokenManager::PrepareSigningContent(ByteArray &aContent, const coap::Messa
     bool          isPendingSet = false;
     ByteArray     content;
 
-    VerifyOrExit(aMessage.GetUriPath(uri).IsNone(),
+    VerifyOrExit(aMessage.GetUriPath(uri) == ErrorCode::kNone,
                  error = ERROR_INVALID_ARGS("the CoAP message has no valid URI Path option"));
 
     isActiveSet  = uri == uri::kMgmtActiveSet;

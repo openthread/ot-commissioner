@@ -166,7 +166,7 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
     offset += length;
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         tlv = nullptr;
     }

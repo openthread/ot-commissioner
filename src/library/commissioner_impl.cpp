@@ -249,7 +249,7 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
     Error error;
 
     auto onConnected = [this, aHandler](Error aError) {
-        if (!aError.IsNone())
+        if (aError != ErrorCode::kNone)
         {
             aHandler(nullptr, aError);
         }
@@ -275,7 +275,7 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
     }
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -365,7 +365,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         aHandler(&dataset, error);
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
@@ -384,7 +384,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_GET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -422,7 +422,7 @@ void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const Commi
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_SET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -456,7 +456,7 @@ void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aD
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -482,7 +482,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
         aHandler(&dataset, error);
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
@@ -502,7 +502,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -529,7 +529,7 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
         aHandler(&dataset, error);
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
@@ -551,7 +551,7 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_GET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -597,7 +597,7 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_SET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -628,7 +628,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         aHandler(&dataset, error);
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
@@ -650,7 +650,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_GET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -687,7 +687,7 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_SET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -737,7 +737,7 @@ void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_SEC_PENDING_SET.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -803,7 +803,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_NET_MIGRATE.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -839,7 +839,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         aHandler(&status, error);
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
@@ -872,7 +872,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
     LOG_DEBUG(LOG_REGION_MGMT, "sent MLR.req");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -924,7 +924,7 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
 exit:
-    if (!error.IsNone() || request.IsNonConfirmable())
+    if (error != ErrorCode::kNone || request.IsNonConfirmable())
     {
         aHandler(error);
     }
@@ -974,7 +974,7 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
 exit:
-    if (!error.IsNone() || request.IsNonConfirmable())
+    if (error != ErrorCode::kNone || request.IsNonConfirmable())
     {
         aHandler(error);
     }
@@ -1028,7 +1028,7 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
 exit:
-    if (!error.IsNone() || request.IsNonConfirmable())
+    if (error != ErrorCode::kNone || request.IsNonConfirmable())
     {
         aHandler(error);
     }
@@ -1102,7 +1102,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
                  GetKeepAliveInterval().count() / 1000);
 
     exit:
-        if (!error.IsNone())
+        if (error != ErrorCode::kNone)
         {
             mState = State::kDisabled;
         }
@@ -1127,7 +1127,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
     LOG_DEBUG(LOG_REGION_MESHCOP, "sent petition request");
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
     }
@@ -1142,7 +1142,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     auto onResponse = [this](const coap::Response *aResponse, Error aError) {
         Error error = HandleStateResponse(aResponse, aError);
 
-        if (error.IsNone())
+        if (error == ErrorCode::kNone)
         {
             mKeepAliveTimer.Start(GetKeepAliveInterval());
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
@@ -1177,7 +1177,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     LOG_DEBUG(LOG_REGION_MESHCOP, "sent keep alive message: keepAlive={}", aKeepAlive);
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         LOG_WARN(LOG_REGION_MESHCOP, "sending keep alive message failed: {}", error.ToString());
     }
@@ -1829,7 +1829,7 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
@@ -1871,7 +1871,7 @@ void CommissionerImpl::HandlePanIdConflict(const coap::Request &aRequest)
     mCommissionerHandler.OnPanIdConflict(peerAddr, channelMask, panId);
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         LOG_WARN(LOG_REGION_MGMT, "handle MGMT_PANID_CONFLICT.ans from {} failed: {}", peerAddr, error.ToString());
     }
@@ -1902,7 +1902,7 @@ void CommissionerImpl::HandleEnergyReport(const coap::Request &aRequest)
     mCommissionerHandler.OnEnergyReport(peerAddr, channelMask, energyList);
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         LOG_WARN(LOG_REGION_MGMT, "handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, error.ToString());
     }
@@ -2020,7 +2020,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     }
 
 exit:
-    if (!error.IsNone())
+    if (error != ErrorCode::kNone)
     {
         LOG_ERROR(LOG_REGION_JOINER_SESSION, "failed to handle RLY_RX.ntf message: {}", error.ToString());
     }

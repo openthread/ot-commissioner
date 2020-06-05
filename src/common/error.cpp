@@ -103,11 +103,16 @@ const std::string &Error::EmptyString()
 
 std::string Error::ToString() const
 {
-    if (IsNone())
+    std::string ret;
+    if (GetCode() == ErrorCode::kNone)
     {
-        return ErrorCodeToString(ErrorCode::kNone);
+        ret = ErrorCodeToString(ErrorCode::kNone);
     }
-    return ErrorCodeToString(mState->mCode) + ": " + mState->mMessage;
+    else
+    {
+        ret = ErrorCodeToString(mState->mCode) + ": " + mState->mMessage;
+    }
+    return ret;
 }
 
 } // namespace commissioner

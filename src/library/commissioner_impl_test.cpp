@@ -48,7 +48,7 @@ namespace commissioner {
 TEST_CASE("mesh-local-address-basic", "[mesh-local-addr]")
 {
     std::string meshLocalAddr;
-    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC).IsNone());
+    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC) == ErrorCode::kNone);
     REQUIRE(meshLocalAddr == "fd00::ff:fe00:bbcc");
 }
 
@@ -70,7 +70,7 @@ TEST_CASE("mesh-local-address-invalid-args", "[mesh-local-addr]")
 
     SECTION("invalid prefix format")
     {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::48", 0xBBCC).GetCode() == ErrorCode::kInvalidArgs);
+        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::48", 0xBBCC) == ErrorCode::kInvalidArgs);
     }
 }
 
@@ -82,7 +82,7 @@ TEST_CASE("pskc-test-vector-from-thread-1.2.0-spec", "[pskc]")
     const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
     ByteArray         pskc;
 
-    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).IsNone());
+    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == ErrorCode::kNone);
     REQUIRE(pskc.size() == kMaxPSKcLength);
     REQUIRE(utils::Hex(pskc) == "c3f59368445a1b6106be420a706d4cc9");
 }
@@ -134,45 +134,45 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     CommissionerHandler dummyHandler;
     struct event_base * eventBase = event_base_new();
     CommissionerImpl    commImpl(dummyHandler, eventBase);
-    REQUIRE(commImpl.Init(config).IsNone());
+    REQUIRE(commImpl.Init(config) == ErrorCode::kNone);
 
-    REQUIRE(commImpl.Connect("::1", 5684).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.Connect("::1", 5684) == ErrorCode::kUnimplemented);
 
     std::string existingCommissionerId;
-    REQUIRE(commImpl.Petition(existingCommissionerId, "::1", 5684).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.Resign().GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.Petition(existingCommissionerId, "::1", 5684) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.Resign() == ErrorCode::kUnimplemented);
 
     CommissionerDataset commDataset;
-    REQUIRE(commImpl.GetCommissionerDataset(commDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetCommissionerDataset({}).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.GetCommissionerDataset(commDataset, 0xFFFF) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetCommissionerDataset({}) == ErrorCode::kUnimplemented);
 
     BbrDataset bbrDataset;
-    REQUIRE(commImpl.GetBbrDataset(bbrDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetBbrDataset({}).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.GetBbrDataset(bbrDataset, 0xFFFF) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetBbrDataset({}) == ErrorCode::kUnimplemented);
 
     ActiveOperationalDataset activeDataset;
-    REQUIRE(commImpl.GetActiveDataset(activeDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetActiveDataset({}).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.GetActiveDataset(activeDataset, 0xFFFF) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetActiveDataset({}) == ErrorCode::kUnimplemented);
 
     PendingOperationalDataset pendingDataset;
-    REQUIRE(commImpl.GetPendingDataset(pendingDataset, 0xFFFF).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetPendingDataset({}).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetSecurePendingDataset(kDstAddr, 30, {}).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.GetPendingDataset(pendingDataset, 0xFFFF) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetPendingDataset({}) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetSecurePendingDataset(kDstAddr, 30, {}) == ErrorCode::kUnimplemented);
 
-    REQUIRE(commImpl.CommandReenroll(kDstAddr).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.CommandDomainReset(kDstAddr).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.CommandMigrate(kDstAddr, "designated-net").GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.CommandReenroll(kDstAddr) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.CommandDomainReset(kDstAddr) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.CommandMigrate(kDstAddr, "designated-net") == ErrorCode::kUnimplemented);
 
     uint8_t mlrStatus;
     REQUIRE(commImpl.RegisterMulticastListener(mlrStatus, kDstAddr, {"ff02::9"}, 300).GetCode() ==
             ErrorCode::kUnimplemented);
 
-    REQUIRE(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr).GetCode() == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.EnergyScan(0xFFFFFFFF, 10, 10, 20, kDstAddr).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.EnergyScan(0xFFFFFFFF, 10, 10, 20, kDstAddr) == ErrorCode::kUnimplemented);
 
     ByteArray signedToken;
-    REQUIRE(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684).GetCode() == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684) == ErrorCode::kUnimplemented);
 
     event_base_free(eventBase);
 }

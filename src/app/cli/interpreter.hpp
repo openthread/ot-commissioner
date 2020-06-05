@@ -79,8 +79,11 @@ private:
         {
         }
 
+        bool operator==(const ErrorCode &aErrorCode) const { return mError.GetCode() == aErrorCode; }
+        bool operator!=(const ErrorCode &aErrorCode) const { return !(*this == aErrorCode); }
+
         std::string ToString() const;
-        bool        IsNone() const;
+        bool        HasNoError() const;
 
     private:
         Error       mError;
