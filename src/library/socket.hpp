@@ -74,8 +74,6 @@ public:
 
     bool IsConnected() const { return mIsConnected; }
 
-    virtual void Reset();
-
     virtual int Send(const uint8_t *aBuf, size_t aLen) = 0;
 
     virtual int Receive(uint8_t *aBuf, size_t aMaxLen) = 0;
@@ -120,8 +118,6 @@ public:
     Address  GetLocalAddr() const override;
     uint16_t GetPeerPort() const override;
     Address  GetPeerAddr() const override;
-
-    void Reset() override;
 
     int Send(const uint8_t *aBuf, size_t aLen) override;
 

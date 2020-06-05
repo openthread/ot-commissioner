@@ -329,7 +329,6 @@ void DtlsSession::Disconnect(Error aError)
     }
 
     // Reset to the initial state.
-    mSocket->Reset();
     Reset();
 
     LOG_DEBUG(LOG_REGION_DTLS, "session={} disconnected", static_cast<void *>(this));

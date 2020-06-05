@@ -67,11 +67,6 @@ Socket::Socket(struct event_base *aEventBase)
 
 Socket::~Socket()
 {
-    Reset();
-}
-
-void Socket::Reset()
-{
     if (mEvent.ev_base != nullptr)
     {
         event_del(&mEvent);
@@ -120,6 +115,10 @@ int UdpSocket::Connect(const std::string &aHost, uint16_t aPort)
 {
     auto portStr = std::to_string(aPort);
 
+    if (mNetCtx.fd >= 0) {
+        mbedtls_net_free(&mNetCtx);
+    }
+
     // Connect
     int rval = mbedtls_net_connect(&mNetCtx, aHost.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
     VerifyOrExit(rval == 0);
@@ -145,6 +144,10 @@ exit:
 int UdpSocket::Bind(const std::string &aBindIp, uint16_t aPort)
 {
     auto portStr = std::to_string(aPort);
+
+    if (mNetCtx.fd >= 0) {
+        mbedtls_net_free(&mNetCtx);
+    }
 
     // Bind
     int rval = mbedtls_net_bind(&mNetCtx, aBindIp.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
@@ -211,15 +214,9 @@ Address UdpSocket::GetPeerAddr() const
     return ret;
 }
 
-void UdpSocket::Reset()
-{
-    Socket::Reset();
-    mbedtls_net_free(&mNetCtx);
-}
-
 int UdpSocket::Send(const uint8_t *aBuf, size_t aLen)
 {
-    VerifyOrDie(mNetCtx.fd != -1);
+    VerifyOrDie(mNetCtx.fd >= 0);
     VerifyOrDie(mIsConnected);
 
     return mbedtls_net_send(&mNetCtx, aBuf, aLen);
@@ -227,7 +224,7 @@ int UdpSocket::Send(const uint8_t *aBuf, size_t aLen)
 
 int UdpSocket::Receive(uint8_t *aBuf, size_t aMaxLen)
 {
-    VerifyOrDie(mNetCtx.fd != -1);
+    VerifyOrDie(mNetCtx.fd >= 0);
     VerifyOrDie(mIsConnected);
 
     return mbedtls_net_recv(&mNetCtx, aBuf, aMaxLen);
