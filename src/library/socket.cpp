@@ -115,7 +115,8 @@ int UdpSocket::Connect(const std::string &aHost, uint16_t aPort)
 {
     auto portStr = std::to_string(aPort);
 
-    if (mNetCtx.fd >= 0) {
+    if (mNetCtx.fd >= 0)
+    {
         mbedtls_net_free(&mNetCtx);
     }
 
@@ -145,7 +146,8 @@ int UdpSocket::Bind(const std::string &aBindIp, uint16_t aPort)
 {
     auto portStr = std::to_string(aPort);
 
-    if (mNetCtx.fd >= 0) {
+    if (mNetCtx.fd >= 0)
+    {
         mbedtls_net_free(&mNetCtx);
     }
 
