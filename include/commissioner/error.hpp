@@ -163,14 +163,21 @@ public:
      * The default error is none error.
      *
      */
-    Error() {}
+    Error()
+        : mCode(ErrorCode::kNone)
+    {
+    }
 
     /**
      * Creates a error with the specified error code and message as a
      * human-readable string containing more detailed information.
      *
      */
-    Error(ErrorCode aErrorCode, const std::string &aErrorMessage);
+    Error(ErrorCode aErrorCode, const std::string &aErrorMessage)
+        : mCode(aErrorCode)
+        , mMessage(aErrorMessage)
+    {
+    }
 
     // Copy the specified error.
     Error(const Error &aError);
@@ -185,9 +192,9 @@ public:
     bool operator==(const Error &aOther) const { return GetCode() == aOther.GetCode(); }
     bool operator!=(const Error &aOther) const { return !(*this == aOther); }
 
-    ErrorCode GetCode() const { return (mState == nullptr) ? ErrorCode::kNone : mState->mCode; }
+    ErrorCode GetCode() const { return mCode; }
 
-    const std::string &GetMessage() const { return (mState == nullptr) ? EmptyString() : mState->mMessage; }
+    const std::string &GetMessage() const { return mMessage; }
 
     /**
      * Returns a string representation of this error suitable for
@@ -205,45 +212,33 @@ public:
     void IgnoreError() const {}
 
 private:
-    static const std::string &EmptyString();
-
-    struct State
-    {
-        ErrorCode   mCode;
-        std::string mMessage;
-    };
-
-    // `None` error has a `NULL` mState. Otherwise, `mState` points to
-    // a `State` structure containing the error code and message(s).
-    // This is for performance, because a `None` error is the usual case.
-    std::unique_ptr<State> mState;
+    ErrorCode   mCode;
+    std::string mMessage;
 };
 
 inline Error::Error(const Error &aError)
-    : mState((aError.mState == nullptr) ? nullptr : new State(*aError.mState))
+    : mCode(aError.mCode)
+    , mMessage(aError.mMessage)
 {
 }
 
 inline Error &Error::operator=(const Error &aError)
 {
-    if (mState != aError.mState)
-    {
-        mState.reset((aError.mState == nullptr) ? nullptr : new State(*aError.mState));
-    }
+    mCode    = aError.mCode;
+    mMessage = aError.mMessage;
     return *this;
 }
 
 inline Error::Error(Error &&aError) noexcept
-    : mState(std::move(aError.mState))
+    : mCode(std::move(aError.mCode))
+    , mMessage(std::move(aError.mMessage))
 {
 }
 
 inline Error &Error::operator=(Error &&aError) noexcept
 {
-    if (mState != aError.mState)
-    {
-        mState = std::move(aError.mState);
-    }
+    mCode    = std::move(aError.mCode);
+    mMessage = std::move(aError.mMessage);
     return *this;
 }
 

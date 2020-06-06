@@ -87,20 +87,6 @@ static std::string ErrorCodeToString(ErrorCode code)
     }
 }
 
-Error::Error(ErrorCode aErrorCode, const std::string &aErrorMessage)
-{
-    VerifyOrDie(aErrorCode != ErrorCode::kNone);
-    mState           = std::unique_ptr<State>(new State);
-    mState->mCode    = aErrorCode;
-    mState->mMessage = aErrorMessage;
-}
-
-const std::string &Error::EmptyString()
-{
-    static std::string &empty = *new std::string;
-    return empty;
-}
-
 std::string Error::ToString() const
 {
     std::string ret;
@@ -110,7 +96,7 @@ std::string Error::ToString() const
     }
     else
     {
-        ret = ErrorCodeToString(mState->mCode) + ": " + mState->mMessage;
+        ret = ErrorCodeToString(GetCode()) + ": " + mMessage;
     }
     return ret;
 }
