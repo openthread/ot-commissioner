@@ -27,7 +27,7 @@
 #
 
 cmake_minimum_required(VERSION 3.13.1)
-project(ot-commissioner VERSION 1.0.0)
+project(ot-commissioner VERSION 0.1.0)
 
 option(OT_COMM_ANDROID          "Build with Android NDK" OFF)
 option(OT_COMM_APP              "Build the CLI App" ON)
