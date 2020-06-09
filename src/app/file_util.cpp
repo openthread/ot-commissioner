@@ -36,6 +36,9 @@
 
 #include <algorithm>
 
+#include <string.h>
+
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
@@ -44,11 +47,20 @@ namespace commissioner {
 
 Error WriteFile(const std::string &aData, const std::string &aFilename)
 {
-    Error error = Error::kNone;
-
+    Error error;
     FILE *f = fopen(aFilename.c_str(), "w");
 
-    VerifyOrExit(f != NULL, error = Error::kNotFound);
+    if (f == nullptr)
+    {
+        if (errno == ENOENT)
+        {
+            ExitNow(error = ERROR_NOT_FOUND("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+        else
+        {
+            ExitNow(error = ERROR_IO_ERROR("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+    }
 
     fputs(aData.c_str(), f);
 
@@ -63,11 +75,21 @@ exit:
 
 Error ReadFile(std::string &aData, const std::string &aFilename)
 {
-    Error error = Error::kNone;
+    Error error;
 
     FILE *f = fopen(aFilename.c_str(), "r");
 
-    VerifyOrExit(f != NULL, error = Error::kNotFound);
+    if (f == nullptr)
+    {
+        if (errno == ENOENT)
+        {
+            ExitNow(error = ERROR_NOT_FOUND("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+        else
+        {
+            ExitNow(error = ERROR_IO_ERROR("cannot open file '{}', {}", aFilename, strerror(errno)));
+        }
+    }
 
     while (true)
     {
@@ -87,7 +109,7 @@ exit:
 
 Error ReadPemFile(ByteArray &aData, const std::string &aFilename)
 {
-    Error error = Error::kNone;
+    Error error;
 
     std::string str;
 
@@ -102,7 +124,7 @@ exit:
 
 Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
 {
-    Error       error = Error::kNone;
+    Error       error;
     std::string hexString;
     ByteArray   data;
 

@@ -35,8 +35,6 @@
 
 #include <future>
 
-#include <assert.h>
-
 #include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/logging.hpp"
@@ -62,10 +60,12 @@ exit:
 
 Error CommissionerSafe::Init(CommissionerHandler &aHandler, const Config &aConfig)
 {
-    Error                             error = Error::kFailed;
+    Error                             error;
     std::shared_ptr<CommissionerImpl> impl;
 
-    VerifyOrExit(mEventBase.Get() != nullptr, error = Error::kOutOfMemory);
+    VerifyOrExit(mEventBase.Get() != nullptr, error = ERROR_OUT_OF_MEMORY("failed to create event base"));
+
+    error = ERROR_UNKNOWN("failed to initialize event base");
     VerifyOrExit(evthread_use_pthreads() == 0);
     VerifyOrExit(evthread_make_base_notifiable(mEventBase.Get()) == 0);
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
@@ -94,7 +94,7 @@ const Config &CommissionerSafe::GetConfig() const
 
 void CommissionerSafe::StartEventLoopThread()
 {
-    assert(!mEventThread.joinable());
+    ASSERT(!mEventThread.joinable());
 
     mEventThread = std::thread([this]() {
         LOG_INFO(LOG_REGION_MESHCOP, "event loop started in background thread");

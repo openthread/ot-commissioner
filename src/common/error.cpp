@@ -39,50 +39,66 @@ namespace ot {
 
 namespace commissioner {
 
-const std::string ErrorToString(const Error &aError)
+// Returns the std::string representation of the status code.
+static std::string ErrorCodeToString(ErrorCode code)
 {
-    switch (aError)
+    switch (code)
     {
-    case Error::kNone:
-        return "None";
-    case Error::kAbort:
-        return "Abort";
-    case Error::kAlready:
-        return "Already";
-    case Error::kBadFormat:
-        return "BadFormat";
-    case Error::kBadOption:
-        return "BadOption";
-    case Error::kBusy:
-        return "Busy";
-    case Error::kFailed:
-        return "Failed";
-    case Error::kInvalidArgs:
-        return "InvalidArgs";
-    case Error::kInvalidAddr:
-        return "InvalidAddr";
-    case Error::kInvalidState:
-        return "InvalidState";
-    case Error::kNotFound:
-        return "NotFound";
-    case Error::kNotImplemented:
-        return "NotImplemented";
-    case Error::kOutOfMemory:
-        return "OutOfMemory";
-    case Error::kReject:
-        return "Reject";
-    case Error::kSecurity:
-        return "Security";
-    case Error::kTimeout:
-        return "Timeout";
-    case Error::kTransportBusy:
-        return "TransportBusy";
-    case Error::kTransportFailed:
-        return "TransportFailed";
+    case ErrorCode::kNone:
+        return "NONE";
+    case ErrorCode::kCancelled:
+        return "CANCELLED";
+    case ErrorCode::kInvalidArgs:
+        return "INVALID_ARGS";
+    case ErrorCode::kInvalidCommand:
+        return "INVALID_COMMAND";
+    case ErrorCode::kTimeout:
+        return "TIMEOUT";
+    case ErrorCode::kNotFound:
+        return "NOT_FOUND";
+    case ErrorCode::kSecurity:
+        return "SECURITY";
+    case ErrorCode::kUnimplemented:
+        return "UNIMPLEMENTED";
+    case ErrorCode::kBadFormat:
+        return "BAD_FORMAT";
+    case ErrorCode::kBusy:
+        return "BUSY";
+    case ErrorCode::kOutOfMemory:
+        return "OUT_OF_MEMORY";
+    case ErrorCode::kIOError:
+        return "IO_ERROR";
+    case ErrorCode::kIOBusy:
+        return "IO_BUSY";
+    case ErrorCode::kAlreadyExists:
+        return "ALREADY_EXISTS";
+    case ErrorCode::kAborted:
+        return "ABORTED";
+    case ErrorCode::kInvalidState:
+        return "INVALID_STATE";
+    case ErrorCode::kRejected:
+        return "REJECTED";
+    case ErrorCode::kUnknown:
+        return "UNKNOWN";
+
     default:
         VerifyOrDie(false);
-        return "";
+        return "UNKNOWN";
     }
+}
+
+std::string Error::ToString() const
+{
+    std::string ret;
+    if (GetCode() == ErrorCode::kNone)
+    {
+        ret = ErrorCodeToString(ErrorCode::kNone);
+    }
+    else
+    {
+        ret = ErrorCodeToString(GetCode()) + ": " + mMessage;
+    }
+    return ret;
 }
 
 } // namespace commissioner

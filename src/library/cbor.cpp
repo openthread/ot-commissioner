@@ -33,9 +33,10 @@
 
 #include "library/cbor.hpp"
 
-#include <assert.h>
-
 #include <cn-cbor/cn-cbor.h>
+
+#include "common/error_macros.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
@@ -67,96 +68,115 @@ void CborValue::Move(CborValue &dst, CborValue &src)
 
 Error CborValue::Serialize(uint8_t *aBuf, size_t &aLength, size_t aMaxLength) const
 {
-    assert(mIsRoot && mCbor != nullptr);
+    ASSERT(mIsRoot && mCbor != nullptr);
     ssize_t written = cn_cbor_encoder_write(aBuf, 0, aMaxLength, mCbor);
     if (written == -1)
-        return Error::kOutOfMemory;
+    {
+        return ERROR_OUT_OF_MEMORY("serialize CBOR value");
+    }
+
     aLength = written;
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Error CborValue::Deserialize(CborValue &aValue, const uint8_t *aBuf, size_t aLength)
 {
     cn_cbor *cbor = cn_cbor_decode(aBuf, aLength, nullptr);
     if (cbor == nullptr)
-        return Error::kBadFormat;
+    {
+        return ERROR_BAD_FORMAT("deserialie CBOR value");
+    }
+
     aValue.mIsRoot = true;
     aValue.mCbor   = cbor;
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Error CborMap::Init(void)
 {
-    assert(mCbor == nullptr);
+    ASSERT(mCbor == nullptr);
     mIsRoot = true;
     mCbor   = cn_cbor_map_create(nullptr);
-    return mCbor ? Error::kNone : Error::kOutOfMemory;
+    return mCbor ? ERROR_NONE : ERROR_OUT_OF_MEMORY("create CBOR map");
 }
 
 Error CborMap::Put(int aKey, const CborMap &aMap)
 {
     aMap.mIsRoot = false;
-    return cn_cbor_mapput_int(mCbor, aKey, aMap.mCbor, nullptr) ? Error::kNone : Error::kOutOfMemory;
+    return cn_cbor_mapput_int(mCbor, aKey, aMap.mCbor, nullptr) ? ERROR_NONE
+                                                                : ERROR_OUT_OF_MEMORY("CBOR map insert map");
 }
 
 Error CborMap::Put(int aKey, int aValue)
 {
     cn_cbor *cborInt = cn_cbor_int_create(aValue, nullptr);
     bool     succeed = cborInt && cn_cbor_mapput_int(mCbor, aKey, cborInt, nullptr);
-    return succeed ? Error::kNone : Error::kOutOfMemory;
+    return succeed ? ERROR_NONE : ERROR_OUT_OF_MEMORY("CBOR map insert integer");
 }
 
 Error CborMap::Put(int aKey, const uint8_t *aBytes, size_t aLength)
 {
     cn_cbor *cborBytes = cn_cbor_data_create(aBytes, aLength, nullptr);
     bool     succeed   = cborBytes && cn_cbor_mapput_int(mCbor, aKey, cborBytes, nullptr);
-    return succeed ? Error::kNone : Error::kOutOfMemory;
+    return succeed ? ERROR_NONE : ERROR_OUT_OF_MEMORY("CBOR map insert bytes");
 }
 
 Error CborMap::Put(int aKey, const char *aStr)
 {
     cn_cbor *cborStr = cn_cbor_string_create(aStr, nullptr);
     bool     succeed = cborStr && cn_cbor_mapput_int(mCbor, aKey, cborStr, nullptr);
-    return succeed ? Error::kNone : Error::kOutOfMemory;
+    return succeed ? ERROR_NONE : ERROR_OUT_OF_MEMORY("CBOR map insert string");
 }
 
 Error CborMap::Get(int aKey, CborMap &aMap) const
 {
     cn_cbor *cbor = cn_cbor_mapget_int(mCbor, aKey);
     if (cbor == nullptr)
-        return Error::kNotFound;
+    {
+        return ERROR_NOT_FOUND("CBOR map cannot find entry of {}", aKey);
+    }
+
     aMap.mIsRoot = false;
     aMap.mCbor   = cbor;
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Error CborMap::Get(int aKey, int &aInt) const
 {
     cn_cbor *cborInt = cn_cbor_mapget_int(mCbor, aKey);
     if (cborInt == nullptr)
-        return Error::kNotFound;
+    {
+        return ERROR_NOT_FOUND("CBOR map cannot find entry of {}", aKey);
+    }
+
     aInt = cborInt->v.sint;
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Error CborMap::Get(int aKey, const uint8_t *&aBytes, size_t &aLength) const
 {
     cn_cbor *cborBytes = cn_cbor_mapget_int(mCbor, aKey);
     if (cborBytes == nullptr)
-        return Error::kNotFound;
+    {
+        return ERROR_NOT_FOUND("CBOR map cannot find entry of {}", aKey);
+    }
+
     aBytes  = cborBytes->v.bytes;
     aLength = cborBytes->length;
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 Error CborMap::Get(int aKey, const char *&aStr, size_t &aLength) const
 {
     cn_cbor *cborStr = cn_cbor_mapget_int(mCbor, aKey);
     if (cborStr == nullptr)
-        return Error::kNotFound;
+    {
+        return ERROR_NOT_FOUND("CBOR map cannot find entry of {}", aKey);
+    }
+
     aStr    = cborStr->v.str;
     aLength = cborStr->length;
-    return Error::kNone;
+    return ERROR_NONE;
 }
 
 } // namespace commissioner

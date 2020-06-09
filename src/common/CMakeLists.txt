@@ -32,10 +32,16 @@ target_sources(commissioner-common
     PRIVATE
         address.cpp
         address.hpp
+        error.cpp
+        error_macros.hpp
         time.cpp
         time.hpp
         utils.cpp
         utils.hpp
+)
+
+target_link_libraries(commissioner-common
+    PUBLIC fmt::fmt
 )
 
 target_include_directories(commissioner-common
