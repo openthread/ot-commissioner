@@ -73,7 +73,7 @@ public:
     CommissionerImpl(const CommissionerImpl &aCommissioner) = delete;
     const CommissionerImpl &operator=(const CommissionerImpl &aCommissioner) = delete;
 
-    Error Init(const Config &aConfig);
+    Error Init(const Config &aConfig) override;
 
     ~CommissionerImpl() override = default;
 

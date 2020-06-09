@@ -67,7 +67,9 @@ Error CommissionerApp::Init(const Config &aConfig)
 {
     Error error;
 
-    SuccessOrExit(error = Commissioner::Create(mCommissioner, *this, aConfig));
+    mCommissioner = Commissioner::Create(*this);
+    VerifyOrExit(mCommissioner != nullptr, error = Error::kOutOfMemory);
+    SuccessOrExit(error = mCommissioner->Init(aConfig));
 
     mCommDataset = MakeDefaultCommissionerDataset();
 
