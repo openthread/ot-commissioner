@@ -75,8 +75,7 @@ if [ "$(uname)" = "Linux" ]; then
                          ninja-build \
                          python-setuptools \
                          python-pip \
-                         lcov \
-                         swig -y
+                         lcov -y
 
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
@@ -100,8 +99,7 @@ elif [ "$(uname)" = "Darwin" ]; then
                  llvm@6 \
                  cmake \
                  ninja \
-                 lcov \
-                 swig && true
+                 lcov && true
 
     sudo ln -s "$(brew --prefix llvm@6)/bin/clang-format" /usr/local/bin/clang-format-6.0
 

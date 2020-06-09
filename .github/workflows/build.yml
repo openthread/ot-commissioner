@@ -153,12 +153,13 @@ jobs:
           cmake --build build
 
   java-binding:
-    runs-on: ubuntu-18.04
+    runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
         run: |
           script/bootstrap.sh
+          brew install swig --HEAD
       - name: Build
         run: |
           cmake -GNinja                          \
