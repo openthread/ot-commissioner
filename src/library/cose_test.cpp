@@ -31,6 +31,8 @@
  *   This file defines test cases for COSE.
  */
 
+#if OT_COMM_CCM_ENABLE
+
 #include "library/cose.hpp"
 
 #include <catch2/catch.hpp>
@@ -171,3 +173,5 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_CCM_ENABLE

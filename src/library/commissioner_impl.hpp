@@ -265,7 +265,9 @@ private:
 
     ProxyClient mProxyClient;
 
+#if OT_COMM_CCM_ENABLE
     TokenManager mTokenManager;
+#endif
 
     coap::Resource mResourceDatasetChanged;
     coap::Resource mResourcePanIdConflict;

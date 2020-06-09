@@ -90,6 +90,11 @@ target_link_libraries(commissioner
         commissioner-common
 )
 
+target_compile_definitions(commissioner
+    PRIVATE
+        $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CCM_ENABLE=1, OT_COMM_CCM_ENABLE=0>
+)
+
 target_include_directories(commissioner
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -172,6 +177,11 @@ if (OT_COMM_TEST)
             commissioner
             $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
             commissioner-common
+    )
+
+    target_compile_definitions(commissioner-test
+        PRIVATE
+            $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CCM_ENABLE=1, OT_COMM_CCM_ENABLE=0>
     )
 
     target_include_directories(commissioner-test

@@ -29,6 +29,8 @@
 #ifndef OT_COMM_LIBRARY_TOKEN_MANAGER_HPP_
 #define OT_COMM_LIBRARY_TOKEN_MANAGER_HPP_
 
+#if OT_COMM_CCM_ENABLE
+
 #include <mbedtls/pk.h>
 
 #include <commissioner/commissioner.hpp>
@@ -138,5 +140,7 @@ private:
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_CCM_ENABLE
 
 #endif // OT_COMM_LIBRARY_TOKEN_MANAGER_HPP_

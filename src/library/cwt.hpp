@@ -35,6 +35,8 @@
 #ifndef OT_COMM_LIBRARY_CWT_HPP_
 #define OT_COMM_LIBRARY_CWT_HPP_
 
+#if OT_COMM_CCM_ENABLE
+
 namespace ot {
 
 namespace commissioner {
@@ -57,5 +59,7 @@ static const int kCoseKey             = 1;
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_CCM_ENABLE
 
 #endif // OT_COMM_LIBRARY_CWT_HPP_

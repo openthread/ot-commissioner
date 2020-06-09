@@ -31,6 +31,8 @@
  *   This file defines test cases for token management.
  */
 
+#if OT_COMM_CCM_ENABLE
+
 #include "library/token_manager.hpp"
 
 #include <catch2/catch.hpp>
@@ -125,3 +127,5 @@ TEST_CASE("signing-message", "[token]")
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_CCM_ENABLE

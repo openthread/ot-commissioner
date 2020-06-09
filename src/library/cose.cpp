@@ -31,6 +31,8 @@
  *   This file implements COSE.
  */
 
+#if OT_COMM_CCM_ENABLE
+
 #include "library/cose.hpp"
 
 #include <mbedtls/bignum.h>
@@ -318,3 +320,5 @@ exit:
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_CCM_ENABLE

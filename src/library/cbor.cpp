@@ -31,6 +31,8 @@
  *   This file implements CBOR.
  */
 
+#if OT_COMM_CCM_ENABLE
+
 #include "library/cbor.hpp"
 
 #include <assert.h>
@@ -162,3 +164,5 @@ Error CborMap::Get(int aKey, const char *&aStr, size_t &aLength) const
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_CCM_ENABLE
