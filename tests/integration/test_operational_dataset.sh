@@ -32,7 +32,7 @@
 test_active_dataset_set_network_name() {
     set -e
 
-    start_otbr "${NON_CCM_NCP}" "eth0"
+    start_otbr
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -48,7 +48,7 @@ test_active_dataset_set_network_name() {
 test_pending_dataset_set_channel() {
     set -e
 
-    start_otbr "${NON_CCM_NCP}" "eth0"
+    start_otbr
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"

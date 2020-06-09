@@ -43,11 +43,10 @@ readonly OPENTHREAD_BRANCH=master
 readonly OPENTHREAD=${RUNTIME_DIR}/openthread
 
 readonly NON_CCM_CLI=${RUNTIME_DIR}/ot-cli-ftd-non-ccm
-readonly NON_CCM_NCP=${RUNTIME_DIR}/ot-ncp-ftd-non-ccm
+readonly NON_CCM_RCP=${RUNTIME_DIR}/ot-rcp-non-ccm
+readonly OT_CTL=${RUNTIME_DIR}/ot-ctl
 
-readonly WPANTUND_CONF=/etc/wpantund.conf
-
-readonly WPANTUND_LOG=${RUNTIME_DIR}/wpantund.log
+readonly OTBR_SETTINGS_PATH=/var/lib/thread
 readonly OTBR_LOG=${RUNTIME_DIR}/otbr.log
 
 ## '/usr/local' is the by default installing directory.
@@ -80,40 +79,16 @@ executable_or_die() {
   [ -x "$1" ] || die "Missing executable: $1"
 }
 
-## Start otbr agent.
-## Args: $1: the NCP firmware.
-##       $2: the backbone interface.
 start_otbr() {
     set -e
-    sudo killall -9 wpantund || true
     sudo killall -9 otbr-agent || true
-
     sleep 1
-    pidof wpantund && die "killing wpantund failed"
     pidof otbr-agent && die "killing otbr-agent failed"
 
-    local ncp=$1
+    sudo rm -rf ${OTBR_SETTINGS_PATH}
+    sudo otbr-agent -I wpan0 -d 7 -v "spinel+hdlc+forkpty://${NON_CCM_RCP}?forkpty-arg=1" > "${OTBR_LOG}" 2>&1 &
 
-    sudo chmod 777 ${WPANTUND_CONF}
-    sudo echo "Config:NCP:SocketPath \"system:${ncp} 1\"" > ${WPANTUND_CONF}
-
-    ## Run wpantund in different directory, because it creates
-    ## intermediate sub-directory leading to permission issue when
-    ## creating flash file of CLI nodes which are started without
-    ## root privilege.
-    mkdir -p wpantund-tmp && cd wpantund-tmp
-    sudo wpantund -c ${WPANTUND_CONF} -d 7 > "${WPANTUND_LOG}" 2>&1 &
-    cd -
-
-    sleep 1
-
-    pidof wpantund
-
-    sudo otbr-agent -I wpan0 -d 7 -v > "${OTBR_LOG}" 2>&1 &
-
-    sleep 1
-
-    pidof otbr-agent
+    sleep 10
 }
 
 ## Start commissioner daemon.
@@ -225,15 +200,13 @@ form_network() {
     set -e
     local pskc=$1
 
-    sudo wpanctl leave
+    sudo "${OT_CTL}" channel "${CHANNEL}"
+    sudo "${OT_CTL}" panid "${PANID}"
+    sudo "${OT_CTL}" extpanid "${XPANID}"
+    sudo "${OT_CTL}" pskc "${pskc}"
+    sudo "${OT_CTL}" masterkey "${MASTERKEY}"
+    sudo "${OT_CTL}" ifconfig up
+    sudo "${OT_CTL}" thread start
 
-    sudo wpanctl -I wpan0 setprop Daemon:AutoAssociateAfterReset false
-    sudo wpanctl -I wpan0 setprop Network:PSKc --data ${pskc}
-    sudo wpanctl -I wpan0 setprop Network:Key --data ${MASTERKEY}
-    sudo wpanctl -I wpan0 setprop Network:XPANID ${XPANID}
-    sudo wpanctl -I wpan0 setprop Network:PANID ${PANID}
-    sudo wpanctl -I wpan0 form ${NETWORK_NAME} -c ${CHANNEL}
-
-    echo "======================================"
-    sudo wpanctl status
+    sleep 3
 }

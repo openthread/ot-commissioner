@@ -66,12 +66,12 @@ namespace commissioner {
 class CommissionerSafe : public Commissioner
 {
 public:
-    explicit CommissionerSafe(CommissionerHandler &aHandler);
+    CommissionerSafe() = default;
 
     CommissionerSafe(const CommissionerSafe &aCommissioner) = delete;
     const CommissionerSafe &operator=(const CommissionerSafe &aCommissioner) = delete;
 
-    Error Init(const Config &aConfig);
+    Error Init(CommissionerHandler &aHandler, const Config &aConfig);
 
     ~CommissionerSafe() override;
 
@@ -88,12 +88,6 @@ public:
     const std::string &GetDomainName() const override;
 
     void AbortRequests() override;
-
-    // Start the commissioner event loop in background.
-    Error Start() override;
-
-    // Stop the commissioner running in background.
-    void Stop() override;
 
     void  Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error Connect(const std::string &aAddr, uint16_t aPort) override;
@@ -196,6 +190,9 @@ private:
     void         PushAsyncRequest(AsyncRequest &&aAsyncRequest);
     AsyncRequest PopAsyncRequest();
 
+    void StartEventLoopThread();
+    void StopEventLoopThread();
+
 private:
     class EventBaseHolder
     {
@@ -208,9 +205,12 @@ private:
         struct event_base *mEventBase;
     };
 
+    // The EventBaseHolder needs to be the first member so that
+    // it is constructed before any other members and destructed
+    // after any other members.
     EventBaseHolder mEventBase;
 
-    CommissionerImpl mImpl;
+    std::shared_ptr<CommissionerImpl> mImpl;
 
     // The event used to synchronize between the mEventThread
     // and user thread. It will be activated by user calls

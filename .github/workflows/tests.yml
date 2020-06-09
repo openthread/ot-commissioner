@@ -1,6 +1,5 @@
-#!/bin/bash
 #
-#  Copyright (c) 2019, The OpenThread Commissioner Authors.
+#  Copyright (c) 2020, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -27,12 +26,40 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-set -e
+name: Tests
 
-upload_coverage() {
-    bash <(curl -s https://codecov.io/bash)
-}
+on: [push, pull_request]
 
-if [ "$TRAVIS_OS_NAME" = "linux" ] && [ ${OT_COMM_CXX_STANDARD} = "11" ] && [ "$CC" = "gcc" ]; then
-    upload_coverage
-fi
+jobs:
+  integration-tests:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Bootstrap
+        run: |
+          script/bootstrap.sh
+      - name: Build
+        run: |
+          cmake -GNinja                           \
+                -DCMAKE_CXX_STANDARD=11           \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
+                -DCMAKE_BUILD_TYPE=Release        \
+                -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_COVERAGE=ON             \
+                -S . -B build
+          cmake --build build
+          sudo cmake --install build
+          commissioner-cli -v
+      - name: Run unittests
+        run: |
+          ./build/tests/commissioner-test
+      - name: Run integration tests
+        run: |
+          cd tests/integration
+          ./bootstrap.sh
+          ./run_tests.sh
+      - name: Upload coverage to Codecov
+        run: |
+          lcov --directory build/ --capture --output-file coverage.info
+          lcov --list coverage.info
+          bash <(curl -s https://codecov.io/bash) -f coverage.info
