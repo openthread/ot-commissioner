@@ -41,7 +41,7 @@ endif()
 
 add_subdirectory(common)
 
-if (OT_COMM_JAVA)
+if (OT_COMM_JAVA_BINDING)
     add_subdirectory(java)
 endif()
 

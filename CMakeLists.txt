@@ -32,7 +32,7 @@ project(ot-commissioner VERSION 1.0.0)
 option(OT_COMM_ANDROID          "Build with Android NDK" OFF)
 option(OT_COMM_APP              "Build the CLI App" ON)
 option(OT_COMM_COVERAGE         "Enable coverage reporting" OFF)
-option(OT_COMM_JAVA             "Build Java binding" OFF)
+option(OT_COMM_JAVA_BINDING     "Build Java binding" OFF)
 option(OT_COMM_TEST             "Build tests" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
