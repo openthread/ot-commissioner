@@ -59,7 +59,8 @@ if [ "$(uname)" = "Linux" ]; then
     ## FIXME(wgtdkp): this is only apt install
     ## Install packages
     sudo apt-get update
-    sudo apt-get install wget \
+    sudo apt-get install -y \
+                         wget \
                          libssl-dev \
                          build-essential \
                          software-properties-common \
@@ -75,7 +76,7 @@ if [ "$(uname)" = "Linux" ]; then
                          ninja-build \
                          python-setuptools \
                          python-pip \
-                         lcov -y
+                         lcov
 
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
