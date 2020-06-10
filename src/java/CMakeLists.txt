@@ -57,6 +57,11 @@ swig_add_library(commissioner-java
 
 swig_link_libraries(commissioner-java commissioner)
 
+target_compile_options(commissioner-java
+    PRIVATE
+        -fno-strict-aliasing
+)
+
 install(TARGETS commissioner-java
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)

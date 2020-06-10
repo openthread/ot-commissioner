@@ -146,6 +146,17 @@ namespace commissioner {
                                                     const std::vector<std::string> &aMulticastAddrList,
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
+
+    // Remove operators and move constructor of Error.
+    %ignore Error::operator=(const Error &aError);
+    %ignore Error::Error(Error &&aError) noexcept;
+    %ignore Error::operator=(Error &&aError) noexcept;
+    %ignore Error::operator==(const Error &aOther) const;
+    %ignore Error::operator!=(const Error &aOther) const;
+    %ignore operator==(const Error &aError, const ErrorCode &aErrorCode);
+    %ignore operator!=(const Error &aError, const ErrorCode &aErrorCode);
+    %ignore operator==(const ErrorCode &aErrorCode, const Error &aError);
+    %ignore operator!=(const ErrorCode &aErrorCode, const Error &aError);
 }
 }
 
