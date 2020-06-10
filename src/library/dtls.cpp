@@ -401,7 +401,7 @@ void DtlsSession::HandleEvent(short aFlags)
         break;
 
     default:
-        VerifyOrDie(false);
+        // Ignore incoming data when the DTLS session is disconnected.
         break;
     }
 
