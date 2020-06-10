@@ -77,8 +77,8 @@ target_sources(commissioner
 
 target_link_libraries(commissioner
     PRIVATE
-        cn-cbor::cn-cbor
-        cose
+        $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
+        $<$<BOOL:${OT_COMM_CCM}>:cose>
         mdns
         mbedtls
         mbedx509
@@ -117,8 +117,8 @@ install(TARGETS commissioner
 ## disabled for them (intended).
 if (BUILD_SHARED_LIBS)
     install(FILES
-            $<TARGET_FILE:cn-cbor::cn-cbor>
-            $<TARGET_FILE:cose>
+            $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cn-cbor::cn-cbor>>
+            $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cose>>
             $<TARGET_FILE:mdns>
             $<TARGET_FILE:mbedtls>
             $<TARGET_FILE:mbedx509>
@@ -165,8 +165,8 @@ if (OT_COMM_TEST)
     target_link_libraries(commissioner-test
         PRIVATE
             Catch2::Catch2
-            cn-cbor::cn-cbor
-            cose
+            $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
+            $<$<BOOL:${OT_COMM_CCM}>:cose>
             mdns
             mbedtls
             mbedx509
