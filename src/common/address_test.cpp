@@ -48,58 +48,48 @@ TEST_CASE("address-from-string", "[address]")
 
     SECTION("IPv4 loopback address")
     {
-        REQUIRE(addr.Set("127.0.0.1") == Error::kNone);
+        REQUIRE(addr.Set("127.0.0.1") == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv4());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == "127.0.0.1");
+        REQUIRE(addr.ToString() == "127.0.0.1");
     }
 
     SECTION("IPv6 loopback address")
     {
-        REQUIRE(addr.Set("::1") == Error::kNone);
+        REQUIRE(addr.Set("::1") == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == "::1");
+        REQUIRE(addr.ToString() == "::1");
     }
 
     SECTION("IPv6 prefix")
     {
         const static std::string kPrefix = "2001:db8:3c4d:15::";
-        REQUIRE(addr.Set(kPrefix) == Error::kNone);
+        REQUIRE(addr.Set(kPrefix) == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == kPrefix);
+        REQUIRE(addr.ToString() == kPrefix);
     }
 
     SECTION("IPv4 FromString")
     {
-        auto addr = Address::FromString("127.0.0.1");
+        addr = Address::FromString("127.0.0.1");
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv4());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == "127.0.0.1");
+        REQUIRE(addr.ToString() == "127.0.0.1");
     }
 
     SECTION("IPv6 FromString")
     {
-        auto addr = Address::FromString("::1");
+        addr = Address::FromString("::1");
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == "::1");
+        REQUIRE(addr.ToString() == "::1");
     }
 }
 
@@ -115,13 +105,11 @@ TEST_CASE("address-from-sockaddr", "[address]")
         sockaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         sockaddr.sin_port        = htons(5684);
 
-        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == Error::kNone);
+        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv4());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == "127.0.0.1");
+        REQUIRE(addr.ToString() == "127.0.0.1");
     }
 
     SECTION("ipv6 socket address")
@@ -132,13 +120,11 @@ TEST_CASE("address-from-sockaddr", "[address]")
         sockaddr.sin6_addr   = in6addr_loopback;
         sockaddr.sin6_port   = htons(5684);
 
-        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == Error::kNone);
+        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == ErrorCode::kNone);
         REQUIRE(addr.IsValid());
         REQUIRE(addr.IsIpv6());
 
-        std::string ip;
-        REQUIRE(addr.ToString(ip) == Error::kNone);
-        REQUIRE(ip == "::1");
+        REQUIRE(addr.ToString() == "::1");
     }
 }
 
@@ -148,24 +134,18 @@ TEST_CASE("address-negative-tests", "[address]")
 
     SECTION("invalid ipv4 address should fail")
     {
-        REQUIRE(addr.Set("127.0.0.1.2") == Error::kInvalidArgs);
+        REQUIRE(addr.Set("127.0.0.1.2") == ErrorCode::kInvalidArgs);
         REQUIRE(!addr.IsValid());
         REQUIRE(!addr.IsIpv4());
         REQUIRE(!addr.IsIpv6());
-
-        std::string ip;
-        REQUIRE(addr.ToString(ip) != Error::kNone);
     }
 
     SECTION("invalid ipv6 address should fail")
     {
-        REQUIRE(addr.Set("::1::2") == Error::kInvalidArgs);
+        REQUIRE(addr.Set("::1::2") == ErrorCode::kInvalidArgs);
         REQUIRE(!addr.IsValid());
         REQUIRE(!addr.IsIpv4());
         REQUIRE(!addr.IsIpv6());
-
-        std::string ip;
-        REQUIRE(addr.ToString(ip) != Error::kNone);
     }
 }
 

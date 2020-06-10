@@ -35,6 +35,7 @@
 
 #include <set>
 
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 #include "library/logging.hpp"
 
@@ -112,11 +113,9 @@ bool IsExtendedTlv(Type aType)
     }
 }
 
-Error Tlv::Serialize(ByteArray &aBuf) const
+void Tlv::Serialize(ByteArray &aBuf) const
 {
-    Error error = Error::kNone;
-
-    VerifyOrExit(IsValid(), error = Error::kInvalidState);
+    ASSERT(IsValid());
 
     utils::Encode(aBuf, utils::to_underlying(GetType()));
 
@@ -136,31 +135,30 @@ Error Tlv::Serialize(ByteArray &aBuf) const
     }
 
     aBuf.insert(aBuf.end(), mValue.begin(), mValue.end());
-
-exit:
-    return error;
 }
 
 TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, Scope aScope)
 {
-    Error    error  = Error::kNone;
+    Error    error;
     size_t   offset = aOffset;
     uint8_t  type;
     uint16_t length;
     TlvPtr   tlv = nullptr;
 
-    VerifyOrExit(offset + 2 <= aBuf.size(), error = Error::kBadFormat);
+    VerifyOrExit(offset + 2 <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of TLV"));
     type   = aBuf[offset++];
     length = aBuf[offset++];
     if (length == kEscapeLength)
     {
-        VerifyOrExit(offset + 2 <= aBuf.size(), error = Error::kBadFormat);
+        VerifyOrExit(offset + 2 <= aBuf.size(),
+                     error = ERROR_BAD_FORMAT("premature end of Extended TLV(type={})", type));
 
         length = (aBuf[offset++] << 8) & 0xFF00;
         length |= (aBuf[offset++]) & 0x00FF;
     }
 
-    VerifyOrExit(offset + length <= aBuf.size(), error = Error::kBadFormat);
+    VerifyOrExit(offset + length <= aBuf.size(),
+                 error = ERROR_BAD_FORMAT("premature end of TLV(type={}, length={})", type, length));
 
     tlv = std::make_shared<Tlv>(utils::from_underlying<Type>(type), aScope);
     tlv->SetValue(&aBuf[offset], length);
@@ -168,7 +166,7 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
     offset += length;
 
 exit:
-    if (error != Error::kNone)
+    if (error != ErrorCode::kNone)
     {
         tlv = nullptr;
     }
@@ -176,6 +174,7 @@ exit:
     {
         aOffset = offset;
     }
+
     aError = error;
     return tlv;
 }
@@ -393,7 +392,7 @@ ByteArray &Tlv::GetValue()
 
 Error GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope)
 {
-    Error  error  = Error::kNone;
+    Error  error;
     size_t offset = 0;
 
     while (offset < aBuf.size())

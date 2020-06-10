@@ -66,7 +66,7 @@ JoinerSession::JoinerSession(CommissionerImpl & aCommImpl,
 
 void JoinerSession::Connect()
 {
-    Error error = Error::kNone;
+    Error error;
 
     auto dtlsConfig = GetDtlsConfig(mCommImpl.GetConfig());
     dtlsConfig.mPSK = {mJoinerPSKd.begin(), mJoinerPSKd.end()};
@@ -81,7 +81,7 @@ void JoinerSession::Connect()
     }
 
 exit:
-    if (error != Error::kNone)
+    if (error != ErrorCode::kNone)
     {
         HandleConnect(error);
     }
@@ -89,7 +89,7 @@ exit:
 
 void JoinerSession::Disconnect()
 {
-    mDtlsSession->Disconnect(Error::kAbort);
+    mDtlsSession->Disconnect(ERROR_ABORTED("the joiner commissioning session was aborted"));
 }
 
 ByteArray JoinerSession::GetJoinerIid() const
@@ -111,7 +111,7 @@ void JoinerSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
 
 Error JoinerSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek)
 {
-    Error         error = Error::kNone;
+    Error         error;
     coap::Request rlyTx{coap::Type::kNonConfirmable, coap::Code::kPost};
 
     SuccessOrExit(error = rlyTx.SetUriPath(uri::kRelayTx));
@@ -123,7 +123,7 @@ Error JoinerSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek)
 
     if (aIncludeKek)
     {
-        VerifyOrExit(!mDtlsSession->GetKek().empty(), error = Error::kInvalidState);
+        VerifyOrExit(!mDtlsSession->GetKek().empty(), error = ERROR_INVALID_STATE("DTLS KEK is not available"));
         SuccessOrExit(error = AppendTlv(rlyTx, {tlv::Type::kJoinerRouterKEK, mDtlsSession->GetKek()}));
     }
 
@@ -141,7 +141,7 @@ exit:
 void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
 {
     bool        accepted = false;
-    Error       error    = Error::kNone;
+    Error       error;
     tlv::TlvSet tlvSet;
     tlv::TlvPtr stateTlv              = nullptr;
     tlv::TlvPtr vendorNameTlv         = nullptr;
@@ -154,26 +154,25 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
 
     SuccessOrExit(error = GetTlvSet(tlvSet, aJoinFin));
 
-    VerifyOrExit((stateTlv = tlvSet[tlv::Type::kState]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(stateTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((stateTlv = tlvSet[tlv::Type::kState]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid State TLV found"));
 
-    VerifyOrExit((vendorNameTlv = tlvSet[tlv::Type::kVendorName]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorNameTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorNameTlv = tlvSet[tlv::Type::kVendorName]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor Name TLV found"));
 
-    VerifyOrExit((vendorModelTlv = tlvSet[tlv::Type::kVendorModel]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorModelTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorModelTlv = tlvSet[tlv::Type::kVendorModel]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor Model TLV found"));
 
-    VerifyOrExit((vendorSwVersionTlv = tlvSet[tlv::Type::kVendorSWVersion]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorSwVersionTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorSwVersionTlv = tlvSet[tlv::Type::kVendorSWVersion]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor SW Version TLV found"));
 
-    VerifyOrExit((vendorStackVersionTlv = tlvSet[tlv::Type::kVendorStackVersion]) != nullptr, error = Error::kNotFound);
-    VerifyOrExit(vendorStackVersionTlv->IsValid(), error = Error::kBadFormat);
+    VerifyOrExit((vendorStackVersionTlv = tlvSet[tlv::Type::kVendorStackVersion]) != nullptr,
+                 error = ERROR_BAD_FORMAT("no valid Vendor Stack Version TLV found"));
 
     if (auto provisioningUrlTlv = tlvSet[tlv::Type::kProvisioningURL])
     {
         auto vendorDataTlv = tlvSet[tlv::Type::kVendorData];
-        VerifyOrExit(vendorDataTlv != nullptr, error = Error::kNotFound);
-        VerifyOrExit(vendorDataTlv->IsValid(), error = Error::kBadFormat);
+        VerifyOrExit(vendorDataTlv != nullptr, error = ERROR_BAD_FORMAT("no valid Vendor Data TLV found"));
 
         provisioningUrl = provisioningUrlTlv->GetValueAsString();
         vendorData      = vendorDataTlv->GetValue();
@@ -190,13 +189,13 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
     accepted = mCommImpl.mCommissionerHandler.OnJoinerFinalize(
         mJoinerId, vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
         vendorSwVersionTlv->GetValueAsString(), vendorStackVersionTlv->GetValue(), provisioningUrl, vendorData);
-    VerifyOrExit(accepted, error = Error::kReject);
+    VerifyOrExit(accepted, error = ERROR_REJECTED("joiner(ID={}) is rejected", utils::Hex(mJoinerId)));
 
 exit:
-    if (error != Error::kNone)
+    if (error != ErrorCode::kNone)
     {
         LOG_WARN(LOG_REGION_JOINER_SESSION, "session(={}) handle JOIN_FIN.req failed: {}", static_cast<void *>(this),
-                 ErrorToString(error));
+                 error.ToString());
     }
 
     IgnoreError(SendJoinFinResponse(aJoinFin, accepted));
@@ -206,7 +205,7 @@ exit:
 
 Error JoinerSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
 {
-    Error          error = Error::kNone;
+    Error          error;
     coap::Response joinFin{coap::Type::kAcknowledgment, coap::Code::kChanged};
     SuccessOrExit(error = AppendTlv(joinFin, {tlv::Type::kState, aAccept ? tlv::kStateAccept : tlv::kStateReject}));
 
@@ -256,12 +255,12 @@ int JoinerSession::RelaySocket::Send(const uint8_t *aBuf, size_t aLen)
     SuccessOrExit(error = mJoinerSession.SendRlyTx({aBuf, aBuf + aLen}, includeKek));
 
 exit:
-    if (error != Error::kNone)
+    if (error != ErrorCode::kNone)
     {
         LOG_ERROR(LOG_REGION_JOINER_SESSION, "session(={}) send RLY_TX.ntf failed: {}",
-                  static_cast<void *>(&mJoinerSession), ErrorToString(error));
+                  static_cast<void *>(&mJoinerSession), error.ToString());
     }
-    return error == Error::kNone ? static_cast<int>(aLen) : MBEDTLS_ERR_NET_SEND_FAILED;
+    return error == ErrorCode::kNone ? static_cast<int>(aLen) : MBEDTLS_ERR_NET_SEND_FAILED;
 }
 
 int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen)

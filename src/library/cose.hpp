@@ -93,6 +93,7 @@ public:
     // OpenThread hates destructor.
     void Free();
 
+    // Validate the COSE SIGN1 message with given public key encoded as a COSE key.
     Error Validate(const CborMap &aCborPublicKey);
 
     Error Validate(const mbedtls_pk_context &aPublicKey);
