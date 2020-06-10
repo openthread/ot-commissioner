@@ -60,7 +60,7 @@ class JsonException : public std::invalid_argument
 {
 public:
     explicit JsonException(Error aError)
-        : std::invalid_argument(ErrorToString(aError))
+        : std::invalid_argument(aError.GetMessage())
         , mError(aError)
     {
     }
@@ -78,7 +78,7 @@ private:
 #define SuccessOrThrow(aError)                               \
     do                                                       \
     {                                                        \
-        if (aError != ::ot::commissioner::Error::kNone)      \
+        if (aError != ::ot::commissioner::ErrorCode::kNone)  \
         {                                                    \
             throw ::ot::commissioner::JsonException(aError); \
         }                                                    \
@@ -440,6 +440,7 @@ static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
     if (aJson.contains("MeshLocalPrefix"))
     {
         std::string prefix = aJson["MeshLocalPrefix"];
+
         SuccessOrThrow(Ipv6PrefixFromString(aDataset.mMeshLocalPrefix, prefix));
         aDataset.mPresentFlags |= ActiveOperationalDataset::kMeshLocalPrefixBit;
     };
@@ -526,14 +527,20 @@ static void to_json(Json &aJson, const EnergyReport &aEnergyReport)
 
 Error NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson)
 {
+    Error error;
+
     try
     {
         aNetworkData = Json::parse(StripComments(aJson));
-        return Error::kNone;
+    } catch (JsonException &e)
+    {
+        error = e.GetError();
     } catch (std::exception &e)
     {
-        return Error::kBadFormat;
+        error = {ErrorCode::kInvalidArgs, e.what()};
     }
+
+    return error;
 }
 
 std::string NetworkDataToJson(const NetworkData &aNetworkData)
@@ -549,13 +556,12 @@ Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::stri
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error    = Error::kNone;
     } catch (JsonException &e)
     {
         error = e.GetError();
     } catch (std::exception &e)
     {
-        error = Error::kBadFormat;
+        error = {ErrorCode::kInvalidArgs, e.what()};
     }
 
     return error;
@@ -574,13 +580,12 @@ Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error    = Error::kNone;
     } catch (JsonException &e)
     {
         error = e.GetError();
     } catch (std::exception &e)
     {
-        error = Error::kBadFormat;
+        error = {ErrorCode::kInvalidArgs, e.what()};
     }
 
     return error;
@@ -599,13 +604,12 @@ Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::strin
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error    = Error::kNone;
     } catch (JsonException &e)
     {
         error = e.GetError();
     } catch (std::exception &e)
     {
-        error = Error::kBadFormat;
+        error = {ErrorCode::kInvalidArgs, e.what()};
     }
 
     return error;
@@ -624,13 +628,12 @@ Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::str
     try
     {
         aDataset = Json::parse(StripComments(aJson));
-        error    = Error::kNone;
     } catch (JsonException &e)
     {
         error = e.GetError();
     } catch (std::exception &e)
     {
-        error = Error::kBadFormat;
+        error = {ErrorCode::kInvalidArgs, e.what()};
     }
 
     return error;
@@ -649,13 +652,12 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson)
     try
     {
         aConfig = Json::parse(StripComments(aJson));
-        error   = Error::kNone;
     } catch (JsonException &e)
     {
         error = e.GetError();
     } catch (std::exception &e)
     {
-        error = Error::kBadFormat;
+        error = {ErrorCode::kInvalidArgs, e.what()};
     }
 
     return error;
@@ -675,14 +677,11 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     // the JSON library will map `aEnergyReportMap` into JSON array.
     for (auto &kv : aEnergyReportMap)
     {
-        auto &      deviceAddr = kv.first;
-        auto &      report     = kv.second;
-        std::string addr;
+        auto &deviceAddr = kv.first;
+        auto &report     = kv.second;
 
         VerifyOrDie(deviceAddr.IsValid());
-        SuccessOrDie(deviceAddr.ToString(addr));
-
-        json[addr] = report;
+        json[deviceAddr.ToString()] = report;
     }
     return json.dump(/* indent */ 4);
 }

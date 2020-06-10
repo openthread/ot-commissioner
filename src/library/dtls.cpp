@@ -37,7 +37,10 @@
 #include <mbedtls/error.h>
 #include <mbedtls/platform.h>
 
+#include "common/error_macros.hpp"
+#include "common/utils.hpp"
 #include "library/logging.hpp"
+#include "library/mbedtls_error.hpp"
 #include "library/openthread/sha256.hpp"
 
 namespace ot {
@@ -72,57 +75,6 @@ static void HandleMbedtlsDebug(void *, int level, const char *file, int line, co
         LOG_DEBUG(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
     }
-}
-
-/**
- * This function convert mbedtls error to OT Commissioner error.
- *
- * For the implementation details, please reference to <mbedtls/error.h>.
- *
- */
-static Error ErrorFromMbedtlsError(int aMbedtlsError)
-{
-    // See <mbedtls/error.h> for the constants.
-    static constexpr int kMbedtlsErrorLowLevelNetBegin        = -0x0052;
-    static constexpr int kMbedtlsErrorLowLevelNetEnd          = -0x0042;
-    static constexpr int kMbedtlsErrorHighLevelModuleIdMask   = 0x7000;
-    static constexpr int kMbedtlsErrorHighLevelModuleIdOffset = 12;
-    static constexpr int kMbedtlsErrorHighLevelModuleIdCipher = 6;
-    static constexpr int kMbedtlsErrorHighLevelModuleIdSsl    = 7;
-
-    VerifyOrDie(aMbedtlsError <= 0);
-
-    Error error;
-
-    uint16_t highLevelModuleId = (static_cast<uint16_t>(-aMbedtlsError) & kMbedtlsErrorHighLevelModuleIdMask) >>
-                                 kMbedtlsErrorHighLevelModuleIdOffset;
-
-    if (aMbedtlsError == 0)
-    {
-        error = Error::kNone;
-    }
-    else if (aMbedtlsError == MBEDTLS_ERR_SSL_WANT_READ || aMbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ||
-             aMbedtlsError == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS || aMbedtlsError == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS)
-    {
-        error = Error::kTransportBusy;
-    }
-    else if (aMbedtlsError >= kMbedtlsErrorLowLevelNetBegin && aMbedtlsError <= kMbedtlsErrorLowLevelNetEnd)
-    {
-        // Low-level NET error.
-        error = Error::kTransportFailed;
-    }
-    else if (highLevelModuleId == kMbedtlsErrorHighLevelModuleIdCipher ||
-             highLevelModuleId == kMbedtlsErrorHighLevelModuleIdSsl)
-    {
-        // High-level SSL or CIPHER error.
-        error = Error::kSecurity;
-    }
-    else
-    {
-        error = Error::kFailed;
-    }
-
-    return error;
 }
 
 DtlsConfig GetDtlsConfig(const Config &aConfig)
@@ -182,10 +134,13 @@ void DtlsSession::FreeMbedtls()
 
 Error DtlsSession::Init(const DtlsConfig &aConfig)
 {
-    int rval;
+    Error error;
 
-    rval = mbedtls_ssl_config_defaults(&mConfig, mIsServer, MBEDTLS_SSL_TRANSPORT_DATAGRAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    VerifyOrExit(rval == 0);
+    if (int fail = mbedtls_ssl_config_defaults(&mConfig, mIsServer, MBEDTLS_SSL_TRANSPORT_DATAGRAM,
+                                               MBEDTLS_SSL_PRESET_DEFAULT))
+    {
+        ExitNow(error = ErrorFromMbedtlsError(fail));
+    }
 
     mbedtls_ssl_conf_authmode(&mConfig, kAuthMode);
 
@@ -212,20 +167,26 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     // X509
     if (aConfig.mCaChain.size() != 0 || aConfig.mOwnCert.size() != 0 || aConfig.mOwnKey.size() != 0)
     {
-        rval = mbedtls_x509_crt_parse(&mCaChain, &aConfig.mCaChain[0], aConfig.mCaChain.size());
-        VerifyOrExit(rval == 0);
-
-        rval = mbedtls_x509_crt_parse(&mOwnCert, &aConfig.mOwnCert[0], aConfig.mOwnCert.size());
-        VerifyOrExit(rval == 0);
-
-        rval = mbedtls_pk_parse_key(&mOwnKey, &aConfig.mOwnKey[0], aConfig.mOwnKey.size(), nullptr, 0);
-        VerifyOrExit(rval == 0);
+        if (int fail = mbedtls_x509_crt_parse(&mCaChain, &aConfig.mCaChain[0], aConfig.mCaChain.size()))
+        {
+            ExitNow(error = ERROR_INVALID_ARGS("bad CA certificate; {}", ErrorFromMbedtlsError(fail).GetMessage()));
+        }
+        if (int fail = mbedtls_x509_crt_parse(&mOwnCert, &aConfig.mOwnCert[0], aConfig.mOwnCert.size()))
+        {
+            ExitNow(error = ERROR_INVALID_ARGS("bad certificate; {}", ErrorFromMbedtlsError(fail).GetMessage()));
+        }
+        if (int fail = mbedtls_pk_parse_key(&mOwnKey, &aConfig.mOwnKey[0], aConfig.mOwnKey.size(), nullptr, 0))
+        {
+            ExitNow(error = ERROR_INVALID_ARGS("bad private key; {}", ErrorFromMbedtlsError(fail).GetMessage()));
+        }
 
         mCipherSuites.push_back(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 
         mbedtls_ssl_conf_ca_chain(&mConfig, &mCaChain, nullptr);
-        rval = mbedtls_ssl_conf_own_cert(&mConfig, &mOwnCert, &mOwnKey);
-        VerifyOrExit(rval == 0);
+        if (int fail = mbedtls_ssl_conf_own_cert(&mConfig, &mOwnCert, &mOwnKey))
+        {
+            ExitNow(error = ErrorFromMbedtlsError(fail));
+        }
     }
 
     mCipherSuites.push_back(0);
@@ -234,17 +195,19 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     mbedtls_ssl_conf_export_keys_cb(&mConfig, HandleMbedtlsExportKeys, this);
 
     // RNG & Entropy
-    rval = mbedtls_ctr_drbg_seed(&mCtrDrbg, mbedtls_entropy_func, &mEntropy, nullptr, 0);
-    VerifyOrExit(rval == 0);
-
+    if (int fail = mbedtls_ctr_drbg_seed(&mCtrDrbg, mbedtls_entropy_func, &mEntropy, nullptr, 0))
+    {
+        ExitNow(error = ErrorFromMbedtlsError(fail));
+    }
     mbedtls_ssl_conf_rng(&mConfig, mbedtls_ctr_drbg_random, &mCtrDrbg);
 
     // Cookie
     if (mIsServer)
     {
-        rval = mbedtls_ssl_cookie_setup(&mCookie, mbedtls_ctr_drbg_random, &mCtrDrbg);
-        VerifyOrExit(rval == 0);
-
+        if (int fail = mbedtls_ssl_cookie_setup(&mCookie, mbedtls_ctr_drbg_random, &mCtrDrbg))
+        {
+            ExitNow(error = ErrorFromMbedtlsError(fail));
+        }
         mbedtls_ssl_conf_dtls_cookies(&mConfig, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check, &mCookie);
     }
 
@@ -255,30 +218,41 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     // Timer
     mbedtls_ssl_set_timer_cb(&mSsl, &mHandshakeTimer, DtlsTimer::SetDelay, DtlsTimer::GetDelay);
 
-    rval = mbedtls_ssl_conf_max_frag_len(&mConfig, KMaxFragmentLengthCode);
-    VerifyOrExit(rval == 0);
+    if (int fail = mbedtls_ssl_conf_max_frag_len(&mConfig, KMaxFragmentLengthCode))
+    {
+        ExitNow(error = ErrorFromMbedtlsError(fail));
+    }
 
     // MTU
     mbedtls_ssl_set_mtu(&mSsl, kMaxTransmissionUnit);
 
     // Setup
-    rval = mbedtls_ssl_setup(&mSsl, &mConfig);
-    VerifyOrExit(rval == 0);
+    if (int fail = mbedtls_ssl_setup(&mSsl, &mConfig))
+    {
+        ExitNow(error = ErrorFromMbedtlsError(fail));
+    }
 
     // Set EC-JPAKE password after initializing the SSL object.
     if (!aConfig.mPSK.empty())
     {
-        rval = mbedtls_ssl_set_hs_ecjpake_password(&mSsl, &aConfig.mPSK[0], aConfig.mPSK.size());
-        VerifyOrExit(rval == 0);
+        if (int fail = mbedtls_ssl_set_hs_ecjpake_password(&mSsl, aConfig.mPSK.data(), aConfig.mPSK.size()))
+        {
+            ExitNow(error =
+                        ERROR_SECURITY("set DTLS pre-shared key failed; {}", ErrorFromMbedtlsError(fail).GetMessage()));
+        }
     }
 
 exit:
-    return ErrorFromMbedtlsError(rval);
+    return error;
 }
 
 void DtlsSession::Reset()
 {
-    VerifyOrExit(mState == State::kConnecting || mState == State::kConnected || mState == State::kDisconnected);
+    if (mState != State::kConnecting && mState != State::kConnected && mState != State::kDisconnected)
+    {
+        LOG_WARN(LOG_REGION_DTLS, "session(={}) is in invalid state", static_cast<void *>(this));
+        ExitNow();
+    }
 
     mbedtls_ssl_session_reset(&mSsl);
 
@@ -286,7 +260,10 @@ void DtlsSession::Reset()
 
     if (!mPSK.empty())
     {
-        mbedtls_ssl_set_hs_ecjpake_password(&mSsl, &mPSK[0], mPSK.size());
+        if (int fail = mbedtls_ssl_set_hs_ecjpake_password(&mSsl, mPSK.data(), mPSK.size()))
+        {
+            LOG_ERROR(LOG_REGION_DTLS, "reset EC-JPAKE password failed; {}", ErrorFromMbedtlsError(fail).GetMessage());
+        }
     }
 
     mState = State::kOpen;
@@ -297,7 +274,7 @@ exit:
 
 void DtlsSession::Connect(ConnectHandler aOnConnected)
 {
-    VerifyOrDie(mState == State::kOpen);
+    ASSERT(mState == State::kOpen);
 
     mOnConnected = aOnConnected;
     mState       = State::kConnecting;
@@ -305,7 +282,7 @@ void DtlsSession::Connect(ConnectHandler aOnConnected)
 
 void DtlsSession::Reconnect()
 {
-    VerifyOrDie(mIsServer);
+    ASSERT(mIsServer);
     Reset();
     Connect(mOnConnected);
 }
@@ -314,8 +291,8 @@ void DtlsSession::Disconnect(Error aError)
 {
     VerifyOrExit(mState == State::kConnecting || mState == State::kConnected);
 
-    // Send close notify if the connected session is aborted by user.
-    if (mState == State::kConnected && aError == Error::kAbort)
+    // Send close notify if the connected session is cancelled by user.
+    if (mState == State::kConnected && aError == ErrorCode::kCancelled)
     {
         // We don't care if the notify has been successfully delivered.
         mbedtls_ssl_close_notify(&mSsl);
@@ -331,7 +308,7 @@ void DtlsSession::Disconnect(Error aError)
     // Reset to the initial state.
     Reset();
 
-    LOG_DEBUG(LOG_REGION_DTLS, "session={} disconnected", static_cast<void *>(this));
+    LOG_DEBUG(LOG_REGION_DTLS, "session(={}) disconnected", static_cast<void *>(this));
 
 exit:
     return;
@@ -391,7 +368,7 @@ int DtlsSession::HandleMbedtlsExportKeys(const unsigned char *,
 
 void DtlsSession::HandleEvent(short aFlags)
 {
-    Error error = Error::kNone;
+    Error error;
 
     if (mIsServer && !mIsClientIdSet)
     {
@@ -412,7 +389,7 @@ void DtlsSession::HandleEvent(short aFlags)
     case State::kConnected:
         if (aFlags & EV_READ)
         {
-            while (error == Error::kNone)
+            while (error == ErrorCode::kNone)
             {
                 error = Read();
             }
@@ -438,15 +415,16 @@ exit:
 Error DtlsSession::SetClientTransportId()
 {
     VerifyOrDie(mIsServer && !mIsClientIdSet);
-    Error error    = Error::kNone;
-    int   rval     = 0;
+
+    Error error;
+    int   fail;
     auto  peerAddr = GetPeerAddr();
 
-    VerifyOrExit(peerAddr.IsValid(), error = Error::kInvalidAddr);
+    VerifyOrExit(peerAddr.IsValid(), error = ERROR_INVALID_STATE("has no valid peer address"));
 
-    rval = mbedtls_ssl_set_client_transport_id(&mSsl, reinterpret_cast<const uint8_t *>(&peerAddr.GetRaw()[0]),
+    fail = mbedtls_ssl_set_client_transport_id(&mSsl, reinterpret_cast<const uint8_t *>(peerAddr.GetRaw().data()),
                                                peerAddr.GetRaw().size());
-    SuccessOrExit(error = ErrorFromMbedtlsError(rval));
+    SuccessOrExit(error = ErrorFromMbedtlsError(fail));
 
     mIsClientIdSet = true;
 
@@ -456,17 +434,18 @@ exit:
 
 bool DtlsSession::ShouldStop(Error aError)
 {
-    return aError != Error::kNone && aError != Error::kTransportBusy;
+    return aError.GetCode() != ErrorCode::kNone && aError.GetCode() != ErrorCode::kBusy &&
+           aError.GetCode() != ErrorCode::kIOBusy;
 }
 
 Error DtlsSession::Read()
 {
-    int   rval  = 0;
-    Error error = Error::kNone;
+    int   rval = 0;
+    Error error;
 
     uint8_t buf[kMaxContentLength];
 
-    VerifyOrExit(mState == State::kConnected, error = Error::kTransportBusy);
+    VerifyOrExit(mState == State::kConnected, error = ERROR_INVALID_STATE("the DTLS session is not connected"));
 
     rval = mbedtls_ssl_read(&mSsl, buf, sizeof(buf));
 
@@ -475,7 +454,7 @@ Error DtlsSession::Read()
         LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: {}", static_cast<void *>(this),
                   utils::Hex({buf, buf + rval}));
         mReceiver(*this, {buf, buf + static_cast<size_t>(rval)});
-        ExitNow(error = Error::kNone);
+        ExitNow();
     }
 
     switch (rval)
@@ -483,7 +462,7 @@ Error DtlsSession::Read()
     case 0:
         // \c 0 if the read end of the underlying transport was closed
         // - in this case you must stop using the context (see below)
-        error = Error::kTransportFailed;
+        error = ERROR_IO_ERROR("underlying transport of the DTLS session was closed");
         break;
 
     case MBEDTLS_ERR_SSL_CLIENT_RECONNECT:
@@ -502,10 +481,10 @@ exit:
 
 Error DtlsSession::Write(const ByteArray &aBuf, MessageSubType aSubType)
 {
-    int   rval  = 0;
-    Error error = Error::kNone;
+    int   rval = 0;
+    Error error;
 
-    VerifyOrExit(mState == State::kConnected, error = Error::kTransportBusy);
+    VerifyOrExit(mState == State::kConnected, error = ERROR_INVALID_STATE("the DTLS session is not connected"));
 
     mSocket->SetSubType(aSubType);
     rval = mbedtls_ssl_write(&mSsl, &aBuf[0], aBuf.size());
@@ -513,14 +492,16 @@ Error DtlsSession::Write(const ByteArray &aBuf, MessageSubType aSubType)
 
     if (rval >= 0)
     {
-        VerifyOrExit(static_cast<size_t>(rval) == aBuf.size(), error = Error::kInvalidArgs);
+        VerifyOrExit(static_cast<size_t>(rval) == aBuf.size(),
+                     error = ERROR_IO_BUSY("written {} bytes of total length {}", rval, aBuf.size()));
 
         LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully write data: {}", static_cast<void *>(this),
                   utils::Hex(aBuf));
-        ExitNow(error = Error::kNone);
     }
-
-    error = ErrorFromMbedtlsError(rval);
+    else
+    {
+        error = ErrorFromMbedtlsError(rval);
+    }
 
 exit:
     return error;
@@ -528,27 +509,23 @@ exit:
 
 Error DtlsSession::TryWrite()
 {
-    Error error = Error::kNone;
-    while (error == Error::kNone && !mSendQueue.empty())
+    Error error;
+    while (error == ErrorCode::kNone && !mSendQueue.empty())
     {
         auto &messagePair = mSendQueue.front();
-        error             = Write(messagePair.first, messagePair.second);
-        if (error == Error::kNone)
-        {
-            mSendQueue.pop();
-        }
-        else
-        {
-            break;
-        }
+
+        SuccessOrExit(error = Write(messagePair.first, messagePair.second));
+        mSendQueue.pop();
     }
+
+exit:
     return error;
 }
 
 Error DtlsSession::Handshake()
 {
-    int   rval  = 0;
-    Error error = Error::kNone;
+    int   rval = 0;
+    Error error;
 
     VerifyOrExit(mState == State::kConnecting);
 
@@ -559,7 +536,7 @@ Error DtlsSession::Handshake()
         mState = State::kConnected;
         if (mOnConnected != nullptr)
         {
-            mOnConnected(*this, Error::kNone);
+            mOnConnected(*this, ERROR_NONE);
             mOnConnected = nullptr;
         }
     }
@@ -568,7 +545,7 @@ Error DtlsSession::Handshake()
     {
     case MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED:
         Reconnect();
-        error = Error::kNone;
+        error = ERROR_NONE;
         break;
 
     case MBEDTLS_ERR_SSL_TIMEOUT:
@@ -587,19 +564,19 @@ exit:
 
 Error DtlsSession::Send(const ByteArray &aBuf, MessageSubType aSubType)
 {
-    Error error = Error::kNone;
+    Error error;
 
-    VerifyOrExit(mState == State::kConnecting || mState == State::kConnected, error = Error::kInvalidState);
+    VerifyOrExit(mState == State::kConnected, error = ERROR_INVALID_STATE("the DTLS session is not connected"));
 
     if (mSendQueue.empty())
     {
         error = Write(aBuf, aSubType);
-        if (error == Error::kTransportBusy)
+        if (error != ErrorCode::kNone && !ShouldStop(error))
         {
             mSendQueue.emplace(aBuf, aSubType);
 
-            // hide Error::kTransportBusy from caller.
-            error = Error::kNone;
+            // hide non-critical error (IO Busy) from caller.
+            error = ERROR_NONE;
         }
     }
     else
@@ -655,7 +632,7 @@ void DtlsSession::DtlsTimer::SetDelay(void *aDtlsTimer, uint32_t aIntermediate, 
 
 void DtlsSession::HandshakeTimerCallback(Timer &)
 {
-    Error error = Error::kNone;
+    Error error;
 
     switch (mState)
     {

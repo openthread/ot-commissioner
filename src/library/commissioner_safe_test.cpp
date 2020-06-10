@@ -51,7 +51,7 @@ TEST_CASE("stop-immediately-after-starting", "[commissioner]")
     // This creates an CommissionerSafe instance.
     auto commissioner = Commissioner::Create(dummyHandler);
     REQUIRE(commissioner != nullptr);
-    REQUIRE(commissioner->Init(config) == Error::kNone);
+    REQUIRE(commissioner->Init(config) == ErrorCode::kNone);
 }
 
 } // namespace commissioner

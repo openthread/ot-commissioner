@@ -57,16 +57,37 @@ public:
     void AbortCommand();
 
 private:
-    struct Value
+    /**
+     * The result value of an Expression processed by the Interpreter.
+     * Specifically, it is an union of Error and std::string.
+     *
+     */
+    class Value
     {
-        Error       mError;
-        std::string mMessage;
+    public:
+        Value() = default;
 
-        Value(Error aError = Error::kNotImplemented, const std::string &aMessage = "")
-            : mError(aError)
-            , mMessage(aMessage)
+        // Allow implicit conversion from std::string to Value.
+        Value(std::string aData)
+            : mData(aData)
         {
         }
+
+        // Allow implicit conversion from Error to Value.
+        Value(Error aError)
+            : mError(aError)
+        {
+        }
+
+        bool operator==(const ErrorCode &aErrorCode) const { return mError.GetCode() == aErrorCode; }
+        bool operator!=(const ErrorCode &aErrorCode) const { return !(*this == aErrorCode); }
+
+        std::string ToString() const;
+        bool        HasNoError() const;
+
+    private:
+        Error       mError;
+        std::string mData;
     };
 
     using Expression = std::vector<std::string>;
@@ -101,7 +122,7 @@ private:
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
-    static void BorderAgentHandler(const BorderAgent *aBorderAgent, const std::string *aErrorMessage);
+    static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 
     static const std::string Usage(Expression aExpr);
     static Error             GetJoinerType(JoinerType &aType, const std::string &aStr);

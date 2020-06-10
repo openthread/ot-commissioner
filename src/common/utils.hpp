@@ -36,13 +36,25 @@
 
 #include <string>
 
+#include <assert.h>
+
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
-#define SuccessOrDie(aError)                   \
-    do                                         \
-    {                                          \
-        VerifyOrDie((aError) == Error::kNone); \
+#define ASSERT(aCondition)             \
+    do                                 \
+    {                                  \
+        bool condition = (aCondition); \
+        assert(condition);             \
+        if (condition)                 \
+        {                              \
+        }                              \
+    } while (false)
+
+#define SuccessOrDie(aError)                       \
+    do                                             \
+    {                                              \
+        VerifyOrDie((aError) == ErrorCode::kNone); \
     } while (false)
 
 #define VerifyOrDie(aCondition)             \
@@ -55,13 +67,13 @@
         }                                   \
     } while (false)
 
-#define SuccessOrExit(aError)                             \
-    do                                                    \
-    {                                                     \
-        if ((aError) != ::ot::commissioner::Error::kNone) \
-        {                                                 \
-            goto exit;                                    \
-        }                                                 \
+#define SuccessOrExit(aError)             \
+    do                                    \
+    {                                     \
+        if ((aError) != ErrorCode::kNone) \
+        {                                 \
+            goto exit;                    \
+        }                                 \
     } while (false)
 
 #define VerifyOrExit(aCondition, ...) \

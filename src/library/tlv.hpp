@@ -158,7 +158,7 @@ public:
     Tlv(Type aType, uint32_t aValue, Scope aScope = Scope::kMeshCoP);
     Tlv(Type aType, uint64_t aValue, Scope aScope = Scope::kMeshCoP);
 
-    Error         Serialize(ByteArray &aBuf) const;
+    void          Serialize(ByteArray &aBuf) const;
     static TlvPtr Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, Scope aScope = Scope::kMeshCoP);
 
     bool     IsValid() const;

@@ -97,7 +97,7 @@ public:
     using MilliSeconds = std::chrono::milliseconds;
     using Seconds      = std::chrono::seconds;
 
-    static std::shared_ptr<CommissionerApp> Create(const Config &aConfig);
+    static Error Create(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);
     ~CommissionerApp() = default;
 
     // Handle commissioner events.

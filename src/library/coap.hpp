@@ -458,6 +458,8 @@ public:
         return ByteArray(mHeader.mToken, mHeader.mToken + len);
     }
 
+    size_t GetOptionNum() const { return mOptions.size(); }
+
     Error SetUriPath(const std::string &aUriPath);
     Error GetUriPath(std::string &aUriPath) const { return GetOption(aUriPath, OptionType::kUriPath); }
 
@@ -467,46 +469,11 @@ public:
     }
     Error GetAccept(ContentFormat &aAcceptFormat) const;
 
-    Error SetIfMatch(const ByteArray &aETag) { return AppendOption(OptionType::kIfMatch, aETag); }
-    Error GetIfMatch(ByteArray &aETag) const { return GetOption(aETag, OptionType::kIfMatch); }
-
-    Error SetETag(const ByteArray &aETag) { return AppendOption(OptionType::kETag, aETag); }
-    Error GetETag(ByteArray &aETag) const { return GetOption(aETag, OptionType::kETag); }
-
-    Error SetIfNoneMatch() { return AppendOption(OptionType::kIfNonMatch, 0); }
-    Error GetIfNonMatch() const
-    {
-        return GetOption(OptionType::kIfNonMatch) == nullptr ? Error::kNotFound : Error::kNone;
-    }
-
-    Error SetLocationPath(const std::string &aLocationPath)
-    {
-        return AppendOption(OptionType::kLocationPath, aLocationPath);
-    }
-    Error GetLocationPath(std::string &aLocationPath) const
-    {
-        return GetOption(aLocationPath, OptionType::kLocationPath);
-    }
-
     Error SetContentFormat(ContentFormat aContentFormat)
     {
         return AppendOption(OptionType::kContentFormat, utils::to_underlying(aContentFormat));
     }
     Error GetContentFormat(ContentFormat &aContentFormat) const;
-
-    Error SetMaxAge(uint32_t aMaxAge) { return AppendOption(OptionType::kMaxAge, aMaxAge); }
-    Error GetMaxAge(uint32_t &aMaxAge) const { return GetOption(aMaxAge, OptionType::kMaxAge); }
-
-    Error SetProxyUri(const std::string &aProxyUri);
-    Error GetProxyUri(std::string &aProxyUri) const;
-
-    Error SetProxyScheme(const std::string &aProxyScheme);
-    Error GetProxyScheme(std::string &aProxyScheme) const;
-
-    Error SetSize1(uint32_t aSize1);
-    Error GetSize1(uint32_t &aSize1) const;
-
-    size_t GetOptionNum() const { return mOptions.size(); }
 
     bool IsEmpty(void) const { return (GetCode() == Code::kEmpty); };
 
@@ -656,11 +623,7 @@ public:
     // Send the response corresponding to specified request.
     Error SendResponse(const Request &aRequest, Response &aResponse);
 
-    Error SendEmptyChanged(const Request &aRequest)
-    {
-        return (aRequest.GetType() == Type::kConfirmable ? SendHeaderResponse(Code::kChanged, aRequest)
-                                                         : Error::kInvalidArgs);
-    }
+    Error SendEmptyChanged(const Request &aRequest);
 
     Error SendAck(const Request &aRequest) { return SendEmptyMessage(Type::kAcknowledgment, aRequest); }
 

@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2020, The OpenThread Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -26,69 +26,30 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OT_COMM_COMMON_ADDRESS_HPP_
-#define OT_COMM_COMMON_ADDRESS_HPP_
+/**
+ * @file
+ *   This file defines mbedtls error facilities.
+ */
 
-#include <string>
+#ifndef MBEDTLS_ERROR_HPP_
+#define MBEDTLS_ERROR_HPP_
 
-#include <sys/socket.h>
-
-#include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-class Address
-{
-public:
-    Address() = default;
-
-    bool operator==(const Address &aOther) const { return mBytes == aOther.mBytes; }
-
-    bool operator!=(const Address &aOther) const { return !(*this == aOther); }
-
-    bool operator<(const Address &aOther) const { return mBytes < aOther.mBytes; }
-
-    bool IsValid() const { return !mBytes.empty(); }
-
-    bool IsIpv4() const { return mBytes.size() == kIpv4Size; }
-
-    bool IsIpv6() const { return mBytes.size() == kIpv6Size; }
-
-    bool IsMulticast() const { return IsValid() && mBytes[0] == kMulticastPrefix; }
-
-    Error Set(const ByteArray &aRawAddr);
-
-    Error Set(const std::string &aIp);
-
-    Error Set(const sockaddr_storage &aSockAddr);
-
-    const ByteArray &GetRaw() const { return mBytes; }
-
-    /**
-     * Returns the string representation of the IP address.
-     *
-     * @return "INVALID_ADDR" if the address is not valid.
-     *
-     */
-    std::string ToString() const;
-
-    // Invalid address string is not acceptable.
-    // For only unittests.
-    static Address FromString(const std::string &aAddr);
-
-private:
-    static constexpr size_t  kIpv4Size        = 4;
-    static constexpr size_t  kIpv6Size        = 16;
-    static constexpr uint8_t kMulticastPrefix = 0xFF;
-
-    ByteArray mBytes;
-};
+/**
+ * This function convert mbedtls error to OT Commissioner error.
+ *
+ * @param[in]  aMbedtlsError  A mbedtls error code. Must <= 0;
+ *
+ */
+Error ErrorFromMbedtlsError(int aMbedtlsError);
 
 } // namespace commissioner
 
 } // namespace ot
 
-#endif // OT_COMM_COMMON_ADDRESS_HPP_
+#endif // MBEDTLS_ERROR_HPP_

@@ -295,6 +295,7 @@ struct BbrDataset
  *
  * @param[out] aPrefix  A prefix in raw byte array.
  * @param[in]  aStr     A prefix string.
+ *
  * @return Error::kNone, succeed; Otherwise, failed.
  */
 Error Ipv6PrefixFromString(ByteArray &aPrefix, const std::string &aStr);
