@@ -107,7 +107,6 @@ public:
     {
         mDtlsSession.Disconnect(aError);
         mCoap.ClearRequestsAndResponses();
-        mSocket->Reset();
     }
 
     Error AddResource(const Resource &aResource) { return mCoap.AddResource(aResource); }
