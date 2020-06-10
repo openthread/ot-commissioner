@@ -54,6 +54,9 @@
 // Remove the 'm' prefix of all members.
 %rename("%(regex:/^(m)(.*)/\\2/)s") "";
 
+// Convert first character of function names to lowercase.
+%rename("%(firstlowercase)s", %$isfunction) "";
+
 // Insert the code of loading native shared library into generated Java class.
 %pragma(java) jniclasscode=%{
     static {
