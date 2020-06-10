@@ -149,9 +149,9 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mResourceUdpRx(uri::kUdpRx, [this](const coap::Request &aRequest) { mProxyClient.HandleUdpRx(aRequest); })
     , mResourceRlyRx(uri::kRelayRx, [this](const coap::Request &aRequest) { HandleRlyRx(aRequest); })
     , mProxyClient(mEventBase, mBrClient)
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
     , mTokenManager(mEventBase)
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE
     , mResourceDatasetChanged(uri::kMgmtDatasetChanged,
                               [this](const coap::Request &aRequest) { HandleDatasetChanged(aRequest); })
     , mResourcePanIdConflict(uri::kMgmtPanidConflict,
@@ -177,14 +177,14 @@ Error CommissionerImpl::Init(const Config &aConfig)
 
     SuccessOrExit(error = mBrClient.Init(GetDtlsConfig(mConfig)));
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         // It is not good to leave the token manager uninitialized in non-CCM mode.
         // TODO(wgtdkp): create TokenManager only in CCM Mode.
         SuccessOrExit(error = mTokenManager.Init(mConfig));
     }
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 exit:
     return error;
@@ -343,12 +343,12 @@ void CommissionerImpl::AbortRequests()
     mProxyClient.AbortRequests();
     mBrClient.AbortRequests();
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         mTokenManager.AbortRequests();
     }
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 }
 
 void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
@@ -1049,7 +1049,7 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
     }
     else
     {
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
         mTokenManager.RequestToken(aHandler, aAddr, aPort);
 #else
         (void)aAddr;
@@ -1065,7 +1065,7 @@ Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray 
 
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
     error = mTokenManager.SetToken(aSignedToken, aSignerCert);
 #else
     (void)aSignedToken;
@@ -1209,7 +1209,7 @@ Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
 
     ASSERT(IsCcmMode());
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
     SuccessOrExit(error = mTokenManager.SignMessage(signature, aRequest));
 
     SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kCommissionerToken, mTokenManager.GetToken(), aScope}));

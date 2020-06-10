@@ -37,7 +37,7 @@
 #ifndef OT_COMM_LIBRARY_COSE_HPP_
 #define OT_COMM_LIBRARY_COSE_HPP_
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 #include <stddef.h>
 #include <stdint.h>
@@ -123,6 +123,6 @@ Error MakeCoseKey(ByteArray &aEncodedCoseKey, const mbedtls_pk_context &aKey, co
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 #endif // OT_COMM_LIBRARY_COSE_HPP_

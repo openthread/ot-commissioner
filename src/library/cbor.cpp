@@ -31,7 +31,7 @@
  *   This file implements CBOR.
  */
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 #include "library/cbor.hpp"
 
@@ -185,4 +185,4 @@ Error CborMap::Get(int aKey, const char *&aStr, size_t &aLength) const
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE

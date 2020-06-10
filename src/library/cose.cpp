@@ -31,7 +31,7 @@
  *   This file implements COSE.
  */
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 #include "library/cose.hpp"
 
@@ -343,4 +343,4 @@ exit:
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE

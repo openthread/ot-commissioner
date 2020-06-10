@@ -259,7 +259,7 @@ private:
 
     ProxyClient mProxyClient;
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
     TokenManager mTokenManager;
 #endif
 

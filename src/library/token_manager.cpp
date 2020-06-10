@@ -31,7 +31,7 @@
  *   This file implements the Commissioner Token Manager.
  */
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 #include "library/token_manager.hpp"
 
@@ -485,4 +485,4 @@ void TokenManager::MoveMbedtlsKey(mbedtls_pk_context &aDes, mbedtls_pk_context &
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE

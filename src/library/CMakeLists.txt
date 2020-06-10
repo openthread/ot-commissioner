@@ -93,7 +93,7 @@ target_link_libraries(commissioner
 
 target_compile_definitions(commissioner
     PRIVATE
-        $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CCM_ENABLE=1, OT_COMM_CCM_ENABLE=0>
+        $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CONFIG_CCM_ENABLE=1, OT_COMM_CONFIG_CCM_ENABLE=0>
 )
 
 target_include_directories(commissioner
@@ -182,7 +182,7 @@ if (OT_COMM_TEST)
 
     target_compile_definitions(commissioner-test
         PRIVATE
-            $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CCM_ENABLE=1, OT_COMM_CCM_ENABLE=0>
+            $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CONFIG_CCM_ENABLE=1, OT_COMM_CONFIG_CCM_ENABLE=0>
     )
 
     target_include_directories(commissioner-test

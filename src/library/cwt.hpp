@@ -35,7 +35,7 @@
 #ifndef OT_COMM_LIBRARY_CWT_HPP_
 #define OT_COMM_LIBRARY_CWT_HPP_
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 namespace ot {
 
@@ -60,6 +60,6 @@ static const int kCoseKey             = 1;
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 #endif // OT_COMM_LIBRARY_CWT_HPP_

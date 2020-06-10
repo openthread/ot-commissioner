@@ -31,7 +31,7 @@
  *   This file defines test cases for COSE.
  */
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 #include "library/cose.hpp"
 
@@ -174,4 +174,4 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE

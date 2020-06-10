@@ -31,7 +31,7 @@
  *   This file defines test cases for token management.
  */
 
-#if OT_COMM_CCM_ENABLE
+#if OT_COMM_CONFIG_CCM_ENABLE
 
 #include "library/token_manager.hpp"
 
@@ -128,4 +128,4 @@ TEST_CASE("signing-message", "[token]")
 
 } // namespace ot
 
-#endif // OT_COMM_CCM_ENABLE
+#endif // OT_COMM_CONFIG_CCM_ENABLE
