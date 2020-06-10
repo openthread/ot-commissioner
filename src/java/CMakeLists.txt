@@ -55,7 +55,10 @@ swig_add_library(commissioner-java
     LANGUAGE java
     SOURCES commissioner.i)
 
-swig_link_libraries(commissioner-java commissioner)
+swig_link_libraries(commissioner-java
+    commissioner
+    commissioner-common
+)
 
 target_compile_options(commissioner-java
     PRIVATE
