@@ -204,9 +204,11 @@ private:
     static Error EncodePendingOperationalDataset(coap::Request &aRequest, const PendingOperationalDataset &aDataset);
     static Error EncodeChannelMask(ByteArray &aBuf, const ChannelMask &aChannelMask);
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     static Error     DecodeBbrDataset(BbrDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeBbrDataset(coap::Request &aRequest, const BbrDataset &aDataset);
     static ByteArray GetBbrDatasetTlvs(uint16_t aDatasetFlags);
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
     static Error     DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
@@ -217,7 +219,9 @@ private:
     // Set @p aKeepAlive to false to resign the commissioner role.
     void SendKeepAlive(Timer &aTimer, bool aKeepAlive = true);
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP);
+#endif
 
     Duration GetKeepAliveInterval() const { return std::chrono::seconds(mConfig.mKeepAliveInterval); };
 
