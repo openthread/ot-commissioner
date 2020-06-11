@@ -402,6 +402,9 @@ void DtlsSession::HandleEvent(short aFlags)
 
     default:
         // Ignore incoming data when the DTLS session is disconnected.
+
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) received event %x in state {}", static_cast<void *>(this), aFlags,
+                  GetStateString());
         break;
     }
 
