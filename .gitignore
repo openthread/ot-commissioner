@@ -67,4 +67,4 @@ venv/
 
 # Java
 *.java
-com/google/openthread/commissioner
+io/openthread/commissioner

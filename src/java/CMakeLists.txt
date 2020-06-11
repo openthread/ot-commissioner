@@ -26,8 +26,8 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-set(JAVA_PACKAGE_NAME com.google.openthread.commissioner)
-set(JAVA_OUTFILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/com/google/openthread/commissioner)
+set(JAVA_PACKAGE_NAME io.openthread.commissioner)
+set(JAVA_OUTFILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/io/openthread/commissioner)
 
 find_package(SWIG 4.0 REQUIRED)
 find_package(Java REQUIRED)
@@ -40,7 +40,7 @@ endif()
 include(UseSWIG)
 include(UseJava)
 
-set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/com/google/openthread/commissioner)
+set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/io/openthread/commissioner)
 
 list(APPEND CMAKE_SWIG_FLAGS "-package;${JAVA_PACKAGE_NAME}")
 
@@ -60,6 +60,8 @@ swig_link_libraries(commissioner-java
     commissioner-common
 )
 
+## GCC is too strict on this in optimization mode, see http://www.swig.org/Doc3.0/Java.html#Java_compiling_dynamic
+## for explanations.
 target_compile_options(commissioner-java
     PRIVATE
         -fno-strict-aliasing
