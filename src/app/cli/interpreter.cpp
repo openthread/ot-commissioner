@@ -224,7 +224,8 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
     if (evaluator == mEvaluatorMap.end())
     {
-        ExitNow(value = ERROR_INVALID_ARGS("invalid commands: {}; type 'help' for all commands", aExpr.front()));
+        ExitNow(value =
+                    ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' for all commands", aExpr.front()));
     }
 
     value = evaluator->second(this, aExpr);
@@ -1016,7 +1017,8 @@ Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
         {
             data += kv.first + "\n";
         }
-        data += "\ntype 'help <command>' for help of specific command.";
+        data += "\ntype 'help <command>' for help of specific command.";]
+        value = data;
     }
     else
     {
