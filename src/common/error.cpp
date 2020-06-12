@@ -45,7 +45,7 @@ static std::string ErrorCodeToString(ErrorCode code)
     switch (code)
     {
     case ErrorCode::kNone:
-        return "NONE";
+        return "OK";
     case ErrorCode::kCancelled:
         return "CANCELLED";
     case ErrorCode::kInvalidArgs:

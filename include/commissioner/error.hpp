@@ -198,7 +198,7 @@ public:
 
     /**
      * Returns a string representation of this error suitable for
-     * printing. Returns the string `"NONE"` for success.
+     * printing. Returns the string `"OK"` for success.
      *
      */
     std::string ToString() const;

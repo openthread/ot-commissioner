@@ -52,11 +52,11 @@ TEST_CASE("error-message", "[error]")
 
 TEST_CASE("error-to-string", "[error]")
 {
-    SECTION("default Error object should return 'NONE' as string representation")
+    SECTION("default Error object should return 'OK' as string representation")
     {
         Error error;
 
-        REQUIRE(error.ToString() == "NONE");
+        REQUIRE(error.ToString() == "OK");
     }
 }
 
