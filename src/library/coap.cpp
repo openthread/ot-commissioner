@@ -249,8 +249,8 @@ Error Message::Serialize(OptionType         aOptionNumber,
                  error = ERROR_INVALID_ARGS("option (number={}) is not valid", aOptionNumber));
 
     length = 1;
-    length += delta < kOption1ByteExtensionOffset ? 0 : (delta < kOption2ByteExtensionOffset ? 1 : 2);
-    length += valueLength < kOption1ByteExtensionOffset ? 0 : (valueLength < kOption2ByteExtensionOffset ? 1 : 2);
+    length += delta < kOption1ByteExtension ? 0 : (delta < kOption2ByteExtension ? 1 : 2);
+    length += valueLength < kOption1ByteExtension ? 0 : (valueLength < kOption2ByteExtension ? 1 : 2);
 
     aBuf.resize(aBuf.size() + length);
 
@@ -316,8 +316,8 @@ Error Message::Deserialize(OptionType &     aOptionNumber,
     valueLength = aBuf[firstByte] & 0x0f;
 
     length = 1;
-    length += delta < kOption1ByteExtensionOffset ? 0 : (delta < kOption2ByteExtensionOffset ? 1 : 2);
-    length += valueLength < kOption1ByteExtensionOffset ? 0 : (valueLength < kOption2ByteExtensionOffset ? 1 : 2);
+    length += delta < kOption1ByteExtension ? 0 : (delta < kOption2ByteExtension ? 1 : 2);
+    length += valueLength < kOption1ByteExtension ? 0 : (valueLength < kOption2ByteExtension ? 1 : 2);
 
     VerifyOrExit(firstByte + length <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of a CoAP option"));
 
