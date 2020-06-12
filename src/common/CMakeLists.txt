@@ -64,6 +64,7 @@ if (OT_COMM_TEST)
         PRIVATE
             address.hpp
             address_test.cpp
+            error_test.cpp
     )
 
     target_include_directories(commissioner-common-test
