@@ -228,7 +228,7 @@ exit:
 
 bool Message::Header::IsValid() const
 {
-    return mVersion == kVersion1 && mTokenLength >= 0 && mTokenLength <= kMaxTokenLength;
+    return mVersion == kVersion1 && mTokenLength <= kMaxTokenLength;
 }
 
 Error Message::Serialize(OptionType         aOptionNumber,

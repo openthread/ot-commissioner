@@ -190,7 +190,10 @@ TEST_CASE("coap-message-options", "[coap]")
         REQUIRE(contentFormat == ContentFormat::kCBOR);
     }
 
-    SECTION("single URI path option serialization & deserialization") {}
+    SECTION("single URI path option serialization & deserialization")
+    {
+        // TODO(wgtdkp):
+    }
 
     SECTION("multiple options serialization & deserialization")
     {
