@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2020, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,77 +28,54 @@
 
 /**
  * @file
- *   The file implements errors.
+ *   This file defines test cases for Error class.
  */
 
-#include <commissioner/error.hpp>
+#include "commissioner/error.hpp"
 
-#include "common/utils.hpp"
+#include <catch2/catch.hpp>
 
 namespace ot {
 
 namespace commissioner {
 
-// Returns the std::string representation of the status code.
-static std::string ErrorCodeToString(ErrorCode code)
+TEST_CASE("error-message", "[error]")
 {
-    switch (code)
+    SECTION("default Error object has no error message")
     {
-    case ErrorCode::kNone:
-        return "OK";
-    case ErrorCode::kCancelled:
-        return "CANCELLED";
-    case ErrorCode::kInvalidArgs:
-        return "INVALID_ARGS";
-    case ErrorCode::kInvalidCommand:
-        return "INVALID_COMMAND";
-    case ErrorCode::kTimeout:
-        return "TIMEOUT";
-    case ErrorCode::kNotFound:
-        return "NOT_FOUND";
-    case ErrorCode::kSecurity:
-        return "SECURITY";
-    case ErrorCode::kUnimplemented:
-        return "UNIMPLEMENTED";
-    case ErrorCode::kBadFormat:
-        return "BAD_FORMAT";
-    case ErrorCode::kBusy:
-        return "BUSY";
-    case ErrorCode::kOutOfMemory:
-        return "OUT_OF_MEMORY";
-    case ErrorCode::kIOError:
-        return "IO_ERROR";
-    case ErrorCode::kIOBusy:
-        return "IO_BUSY";
-    case ErrorCode::kAlreadyExists:
-        return "ALREADY_EXISTS";
-    case ErrorCode::kAborted:
-        return "ABORTED";
-    case ErrorCode::kInvalidState:
-        return "INVALID_STATE";
-    case ErrorCode::kRejected:
-        return "REJECTED";
-    case ErrorCode::kUnknown:
-        return "UNKNOWN";
+        Error error;
 
-    default:
-        VerifyOrDie(false);
-        return "UNKNOWN";
+        REQUIRE(error.GetCode() == ErrorCode::kNone);
+        REQUIRE(error.GetMessage().empty());
     }
 }
 
-std::string Error::ToString() const
+TEST_CASE("error-to-string", "[error]")
 {
-    std::string ret;
-    if (GetCode() == ErrorCode::kNone)
+    SECTION("default Error object should return 'OK' as string representation")
     {
-        ret = ErrorCodeToString(ErrorCode::kNone);
+        Error error;
+
+        REQUIRE(error.ToString() == "OK");
     }
-    else
+}
+
+TEST_CASE("error-comparison", "[error]")
+{
+    SECTION("default Error objects should be equal to each other")
     {
-        ret = ErrorCodeToString(GetCode()) + ": " + mMessage;
+        Error lhs;
+        Error rhs;
+
+        REQUIRE(lhs == rhs);
     }
-    return ret;
+
+    SECTION("default Error object should be equal to ErrorCode::kNone")
+    {
+        Error error;
+
+        REQUIRE(error == ErrorCode::kNone);
+    }
 }
 
 } // namespace commissioner
