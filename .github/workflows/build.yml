@@ -159,7 +159,7 @@ jobs:
       - name: Bootstrap
         run: |
           script/bootstrap.sh
-          brew install swig --HEAD
+          brew install swig@4
       - name: Build
         run: |
           cmake -GNinja                          \
