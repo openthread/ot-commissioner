@@ -66,12 +66,15 @@ namespace commissioner {
 class CommissionerSafe : public Commissioner
 {
 public:
-    CommissionerSafe() = default;
+    CommissionerSafe(CommissionerHandler &aHandler)
+        : mHandler(aHandler)
+    {
+    }
 
     CommissionerSafe(const CommissionerSafe &aCommissioner) = delete;
     const CommissionerSafe &operator=(const CommissionerSafe &aCommissioner) = delete;
 
-    Error Init(CommissionerHandler &aHandler, const Config &aConfig);
+    Error Init(const Config &aConfig) override;
 
     ~CommissionerSafe() override;
 
@@ -204,6 +207,8 @@ private:
     private:
         struct event_base *mEventBase;
     };
+
+    CommissionerHandler &mHandler;
 
     // The EventBaseHolder needs to be the first member so that
     // it is constructed before any other members and destructed

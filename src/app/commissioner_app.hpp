@@ -48,7 +48,6 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/network_data.hpp>
 
-#include "app/border_agent.hpp"
 #include "common/address.hpp"
 
 namespace ot {

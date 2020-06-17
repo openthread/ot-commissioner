@@ -327,19 +327,28 @@ public:
     /**
      * @brief Create an instance of the commissioner.
      *
-     * @param[out] aCommissioner  The created commissioner instance.
-     * @param[in]  aHandler       A handler of commissioner events.
-     * @param[in]  aConfig        A commissioner configuration.
+     * @param[in]  aHandler  A handler of commissioner events.
      *
-     * @retval Error::kNone  Successfully created a commissioner instance.
-     * @retval ...           Failed to create a commissioner instance.
+     * @return A shared_ptr of the created Commissioner instance.
+     *
+     * @note Before being initialized with Commissioner::Init, the Commissioner
+     *       instance has the default configuration created by Config().
      *
      */
-    static Error Create(std::shared_ptr<Commissioner> &aCommissioner,
-                        CommissionerHandler &          aHandler,
-                        const Config &                 aConfig);
+    static std::shared_ptr<Commissioner> Create(CommissionerHandler &aHandler);
 
     virtual ~Commissioner() = default;
+
+    /**
+     * @brief Initialize with given configuration.
+     *
+     * @param[in]  aConfig  A Commissioner configuration.
+     *
+     * @retval Error::kNone  Successfully initialized the Commissioner.
+     * @retval ...           Failed to initialize the Commissioner.
+     *
+     */
+    virtual Error Init(const Config &aConfig) = 0;
 
     /**
      * @brief Get the configuration.

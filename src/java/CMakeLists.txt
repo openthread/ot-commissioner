@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Commissioner Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,23 +26,47 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-if (CMAKE_BUILD_TYPE AND OT_COMM_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-g -O0 --coverage)
-    add_link_options(--coverage)
+set(JAVA_PACKAGE_NAME io.openthread.commissioner)
+set(JAVA_OUTFILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/io/openthread/commissioner)
+
+find_package(SWIG 4.0 REQUIRED)
+find_package(Java REQUIRED)
+
+if (NOT OT_COMM_ANDROID)
+    find_package(JNI REQUIRED)
+    include_directories(${JNI_INCLUDE_DIRS})
 endif()
 
-## We don't use target-based functions for enforcing any targets
-## under this directory be compiled with the options.
-add_compile_options(-Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces)
+include(UseSWIG)
+include(UseJava)
 
-if (OT_COMM_APP)
-    add_subdirectory(app)
-endif()
+set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/io/openthread/commissioner)
 
-add_subdirectory(common)
+list(APPEND CMAKE_SWIG_FLAGS "-package;${JAVA_PACKAGE_NAME}")
 
-if (OT_COMM_JAVA_BINDING)
-    add_subdirectory(java)
-endif()
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
-add_subdirectory(library)
+set_property(SOURCE commissioner.i PROPERTY CPLUSPLUS ON)
+
+set(UseSWIG_TARGET_NAME_PREFERENCE LEGACY)
+
+swig_add_library(commissioner-java
+    TYPE SHARED
+    LANGUAGE java
+    SOURCES commissioner.i)
+
+swig_link_libraries(commissioner-java
+    commissioner
+    commissioner-common
+)
+
+## GCC is too strict on this in optimization mode, see http://www.swig.org/Doc3.0/Java.html#Java_compiling_dynamic
+## for explanations.
+target_compile_options(commissioner-java
+    PRIVATE
+        -fno-strict-aliasing
+)
+
+install(TARGETS commissioner-java
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)

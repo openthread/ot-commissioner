@@ -152,6 +152,25 @@ jobs:
                 -S . -B build
           cmake --build build
 
+  java-binding:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+      - name: Bootstrap
+        run: |
+          script/bootstrap.sh
+          brew install swig@4
+      - name: Build
+        run: |
+          cmake -GNinja                          \
+                -DBUILD_SHARED_LIBS=ON           \
+                -DCMAKE_CXX_STANDARD=11          \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+                -DCMAKE_BUILD_TYPE=Release       \
+                -DOT_COMM_JAVA_BINDING=ON        \
+                -S . -B build
+          cmake --build build
+
   fmt-format-check:
     runs-on: ubuntu-18.04
     steps:

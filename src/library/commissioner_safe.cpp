@@ -44,21 +44,12 @@ namespace ot {
 
 namespace commissioner {
 
-Error Commissioner::Create(std::shared_ptr<Commissioner> &aCommissioner,
-                           CommissionerHandler &          aHandler,
-                           const Config &                 aConfig)
+std::shared_ptr<Commissioner> Commissioner::Create(CommissionerHandler &aHandler)
 {
-    Error error;
-    auto  comm = std::make_shared<CommissionerSafe>();
-
-    SuccessOrExit(error = comm->Init(aHandler, aConfig));
-    aCommissioner = comm;
-
-exit:
-    return error;
+    return std::make_shared<CommissionerSafe>(aHandler);
 }
 
-Error CommissionerSafe::Init(CommissionerHandler &aHandler, const Config &aConfig)
+Error CommissionerSafe::Init(const Config &aConfig)
 {
     Error                             error;
     std::shared_ptr<CommissionerImpl> impl;
@@ -71,7 +62,7 @@ Error CommissionerSafe::Init(CommissionerHandler &aHandler, const Config &aConfi
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
     VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
 
-    impl = std::make_shared<CommissionerImpl>(aHandler, mEventBase.Get());
+    impl = std::make_shared<CommissionerImpl>(mHandler, mEventBase.Get());
     SuccessOrExit(error = impl->Init(aConfig));
     mImpl = impl;
 
