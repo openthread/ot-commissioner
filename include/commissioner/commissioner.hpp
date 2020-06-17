@@ -331,7 +331,7 @@ public:
      *
      * @return A shared_ptr of the created Commissioner instance.
      *
-     * @Note Before being initialized with Commissioner::Init, the Commissioner
+     * @note Before being initialized with Commissioner::Init, the Commissioner
      *       instance has the default configuration created by Config().
      *
      */
