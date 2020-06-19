@@ -36,6 +36,7 @@
 
 #include <vector>
 
+#include <stddef.h>
 #include <stdint.h>
 
 #if defined(__clang__)
