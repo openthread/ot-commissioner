@@ -117,6 +117,10 @@ int UdpSocket::Connect(const std::string &aHost, uint16_t aPort)
 
     // Free the fd if already opened.
     mbedtls_net_free(&mNetCtx);
+    if (mEvent.ev_base != nullptr)
+    {
+        event_del(&mEvent);
+    }
 
     // Connect
     int rval = mbedtls_net_connect(&mNetCtx, aHost.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
@@ -146,6 +150,10 @@ int UdpSocket::Bind(const std::string &aBindIp, uint16_t aPort)
 
     // Free the fd if already opened.
     mbedtls_net_free(&mNetCtx);
+    if (mEvent.ev_base != nullptr)
+    {
+        event_del(&mEvent);
+    }
 
     // Bind
     int rval = mbedtls_net_bind(&mNetCtx, aBindIp.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
