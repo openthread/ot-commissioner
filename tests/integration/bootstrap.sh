@@ -55,7 +55,10 @@ setup_otbr() {
 
 setup_openthread() {
     set -e
-    git clone "${OPENTHREAD_REPO}" "${OPENTHREAD}" --branch "${OPENTHREAD_BRANCH}" --depth=1
+
+    if [[ ! -d ${OPENTHREAD} ]]; then
+        git clone "${OPENTHREAD_REPO}" "${OPENTHREAD}" --branch "${OPENTHREAD_BRANCH}" --depth=1
+    fi
 
     cd "${OPENTHREAD}"
 
@@ -67,9 +70,7 @@ setup_openthread() {
     cp ${ot_build_dir}/examples/apps/ncp/ot-rcp "${NON_CCM_RCP}"
     cp ${ot_build_dir}/examples/apps/cli/ot-cli-ftd "${NON_CCM_CLI}"
 
-    rm -rf build
-
-    cmake -DOT_PLATFORM=posix -DOT_DAEMON=ON -S . -B build
+    cmake -DOT_PLATFORM=posix -DOT_DAEMON=ON -DOT_COVERAGE=ON -S . -B build
     cmake --build build
     cp build/src/posix/ot-ctl "${OT_CTL}"
 
@@ -89,9 +90,7 @@ main() {
         setup_otbr
     fi
 
-    if [ ! -d "${OPENTHREAD}" ]; then
-        setup_openthread
-    fi
+    setup_openthread
 
     setup_commissioner
 }
