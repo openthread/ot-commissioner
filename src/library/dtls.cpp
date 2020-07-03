@@ -454,8 +454,8 @@ Error DtlsSession::Read()
 
     if (rval > 0)
     {
-        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: {}", static_cast<void *>(this),
-                  utils::Hex({buf, buf + rval}));
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: len={}, {}", static_cast<void *>(this),
+                  rval, utils::Hex({buf, buf + rval}));
         mReceiver(*this, {buf, buf + static_cast<size_t>(rval)});
         ExitNow();
     }
@@ -498,8 +498,8 @@ Error DtlsSession::Write(const ByteArray &aBuf, MessageSubType aSubType)
         VerifyOrExit(static_cast<size_t>(rval) == aBuf.size(),
                      error = ERROR_IO_BUSY("written {} bytes of total length {}", rval, aBuf.size()));
 
-        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully write data: {}", static_cast<void *>(this),
-                  utils::Hex(aBuf));
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully write data: len={}, {}", static_cast<void *>(this),
+                  aBuf.size(), utils::Hex(aBuf));
     }
     else
     {
