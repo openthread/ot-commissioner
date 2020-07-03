@@ -40,7 +40,7 @@ readonly OTBR=${RUNTIME_DIR}/ot-br-posix
 
 readonly OPENTHREAD_REPO=https://github.com/openthread/openthread
 readonly OPENTHREAD_BRANCH=master
-readonly OPENTHREAD=${OPENTHREAD:-"${RUNTIME_DIR}/openthread"}
+readonly OPENTHREAD=${OT_COMM_OPENTHREAD:-"${RUNTIME_DIR}/openthread"}
 
 readonly NON_CCM_CLI=${RUNTIME_DIR}/ot-cli-ftd-non-ccm
 readonly NON_CCM_RCP=${RUNTIME_DIR}/ot-rcp-non-ccm
