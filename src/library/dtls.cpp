@@ -454,8 +454,8 @@ Error DtlsSession::Read()
 
     if (rval > 0)
     {
-        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: len={}, {}", static_cast<void *>(this),
-                  rval, utils::Hex({buf, buf + rval}));
+        LOG_DEBUG(LOG_REGION_DTLS, "session(={}) successfully read data: len={}, {}", static_cast<void *>(this), rval,
+                  utils::Hex({buf, buf + rval}));
         mReceiver(*this, {buf, buf + static_cast<size_t>(rval)});
         ExitNow();
     }
