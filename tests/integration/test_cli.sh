@@ -40,6 +40,8 @@ test_network_sync()
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "network sync"
     stop_commissioner
+
+    stop_otbr
 }
 
 test_get_commissioner_dataset()
@@ -53,4 +55,6 @@ test_get_commissioner_dataset()
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "commdataset get"
     stop_commissioner
+
+    stop_otbr
 }

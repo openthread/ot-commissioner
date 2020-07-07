@@ -41,4 +41,6 @@ test_discover() {
     send_command_to_commissioner "borderagent discover"
 
     stop_commissioner
+
+    stop_otbr
 }

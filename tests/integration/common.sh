@@ -81,14 +81,23 @@ executable_or_die() {
 
 start_otbr() {
     set -e
-    sudo killall -9 otbr-agent || true
-    sleep 1
-    pidof otbr-agent && die "killing otbr-agent failed"
+
+    if pidof otbr-agent; then
+        stop_otbr
+    fi
 
     sudo rm -rf ${OTBR_SETTINGS_PATH}
     sudo otbr-agent -I wpan0 -d 7 -v "spinel+hdlc+forkpty://${NON_CCM_RCP}?forkpty-arg=1" > "${OTBR_LOG}" 2>&1 &
 
     sleep 10
+}
+
+stop_otbr() {
+    set -e
+
+    sudo killall otbr-agent || true
+    sleep 1
+    (pidof otbr-agent && die "killing otbr-agent failed") || true
 }
 
 ## Start commissioner daemon.

@@ -45,6 +45,8 @@ test_joining() {
     start_joiner "meshcop"
 
     stop_commissioner
+
+    stop_otbr
 }
 
 test_joining_fail() {
@@ -59,4 +61,6 @@ test_joining_fail() {
     start_joiner "meshcop" && return 1
 
     stop_commissioner
+
+    stop_otbr
 }

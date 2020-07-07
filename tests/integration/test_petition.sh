@@ -39,4 +39,6 @@ test_petition() {
     send_command_to_commissioner "start :: 49191"
     send_command_to_commissioner "active"
     stop_commissioner
+
+    stop_otbr
 }
