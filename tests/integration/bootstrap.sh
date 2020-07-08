@@ -45,7 +45,9 @@ setup_otbr() {
     cd "${OTBR}"
 
     ./script/bootstrap
-    ./script/setup
+    rm -rf "${OTBR}/third_party/openthread/repo"
+    ln -s "${OPENTHREAD}" "${OTBR}/third_party/openthread/repo"
+    OTBR_OPTIONS="-DOTBR_COVERAGE=ON -DOT_COVERAGE=ON" ./script/setup
 
     ## Stop otbr-agent
     sudo service otbr-agent stop
@@ -71,7 +73,7 @@ setup_openthread() {
     cp ${ot_build_dir}/examples/apps/cli/ot-cli-ftd "${NON_CCM_CLI}"
 
     cmake -DOT_PLATFORM=posix -DOT_DAEMON=ON -DOT_COVERAGE=ON -S . -B build
-    cmake --build build
+    cmake --build build -j
     cp build/src/posix/ot-ctl "${OT_CTL}"
 
     cd -
@@ -86,11 +88,11 @@ main() {
     set -e
     mkdir -p "${RUNTIME_DIR}"
 
+    setup_openthread
+
     if (( SKIP_BUILDING_OTBR == 0 )) && [ ! -d "${OTBR}" ]; then
         setup_otbr
     fi
-
-    setup_openthread
 
     setup_commissioner
 }

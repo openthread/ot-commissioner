@@ -44,4 +44,6 @@ test_energy_scan() {
     # TODO(wgtdkp): verify the result
     send_command_to_commissioner "energy report"
     stop_commissioner
+
+    stop_otbr
 }

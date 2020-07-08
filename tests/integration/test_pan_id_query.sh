@@ -44,4 +44,6 @@ test_pan_id_query() {
     ## TODO(wgtdkp): verify the result
     send_command_to_commissioner "panid conflict 0xaabb"
     stop_commissioner
+
+    stop_otbr
 }

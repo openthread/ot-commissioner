@@ -43,6 +43,8 @@ test_active_dataset_set_network_name() {
     ## TODO(wgtdkp): verify the result
     send_command_to_commissioner "opdataset get networkname"
     stop_commissioner
+
+    stop_otbr
 }
 
 test_pending_dataset_set_channel() {
@@ -59,6 +61,8 @@ test_pending_dataset_set_channel() {
     ## TODO(wgtdkp): wait and verify the result
     send_command_to_commissioner "opdataset get channel"
     stop_commissioner
+
+    stop_otbr
 }
 
 test_secure_pending_dataset() {
