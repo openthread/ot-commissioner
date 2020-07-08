@@ -44,11 +44,10 @@ setup_otbr() {
 
     cd "${OTBR}"
 
-    export OTBR_OPTIONS="-DOTBR_COVERAGE=ON -DOT_COVERAGE=ON"
     ./script/bootstrap
     rm -rf "${OTBR}/third_party/openthread/repo"
     ln -s "${OPENTHREAD}" "${OTBR}/third_party/openthread/repo"
-    ./script/setup
+    OTBR_OPTIONS="-DOTBR_COVERAGE=ON -DOT_COVERAGE=ON" ./script/setup
 
     ## Stop otbr-agent
     sudo service otbr-agent stop
