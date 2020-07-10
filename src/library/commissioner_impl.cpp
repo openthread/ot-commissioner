@@ -2009,7 +2009,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
             session.Connect();
 
-            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning timer started, expiration-time={}",
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner session timer started, expiration-time={}",
                      TimePointToString(session.GetExpirationTime()));
             mJoinerSessionTimer.Start(session.GetExpirationTime());
         }
@@ -2043,7 +2043,7 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
         {
             it = mJoinerSessions.erase(it);
 
-            LOG_INFO(LOG_REGION_JOINER_SESSION, "commissioning session (joiner ID={}) removed",
+            LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner session (joiner ID={}) removed",
                      utils::Hex(session.GetJoinerId()));
         }
         else
