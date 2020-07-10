@@ -153,7 +153,7 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mProxyClient(mEventBase, mBrClient)
 #if OT_COMM_CONFIG_CCM_ENABLE
     , mTokenManager(mEventBase)
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
     , mResourceDatasetChanged(uri::kMgmtDatasetChanged,
                               [this](const coap::Request &aRequest) { HandleDatasetChanged(aRequest); })
     , mResourcePanIdConflict(uri::kMgmtPanidConflict,
@@ -186,7 +186,7 @@ Error CommissionerImpl::Init(const Config &aConfig)
         // TODO(wgtdkp): create TokenManager only in CCM Mode.
         SuccessOrExit(error = mTokenManager.Init(mConfig));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
 exit:
     return error;
@@ -355,7 +355,7 @@ void CommissionerImpl::AbortRequests()
     {
         mTokenManager.AbortRequests();
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 }
 
 void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
@@ -431,7 +431,7 @@ void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const Commi
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -578,7 +578,7 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -626,7 +626,7 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -681,7 +681,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -720,7 +720,7 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -941,7 +941,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -997,7 +997,7 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -1049,7 +1049,7 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -1105,7 +1105,7 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -1219,7 +1219,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mState = State::kPetitioning;
 
@@ -1271,7 +1271,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mKeepAliveTimer.Start(GetKeepAliveInterval());
 
@@ -1931,7 +1931,7 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     {
         SuccessOrExit(error = SignRequest(request));
     }
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 

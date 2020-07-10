@@ -208,7 +208,7 @@ private:
     static Error     DecodeBbrDataset(BbrDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeBbrDataset(coap::Request &aRequest, const BbrDataset &aDataset);
     static ByteArray GetBbrDatasetTlvs(uint16_t aDatasetFlags);
-#endif // OT_COMM_CONFIG_CCM_ENABLE
+#endif
 
     static Error     DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
