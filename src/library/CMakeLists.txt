@@ -78,8 +78,8 @@ target_sources(commissioner
 
 target_link_libraries(commissioner
     PRIVATE
-        cn-cbor::cn-cbor
-        cose
+        $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
+        $<$<BOOL:${OT_COMM_CCM}>:cose>
         mdns
         mbedtls
         mbedx509
@@ -89,6 +89,11 @@ target_link_libraries(commissioner
         event_pthreads
         $<$<NOT:$<BOOL:${OT_COMM_ANDROID}>>:pthread>
         commissioner-common
+)
+
+target_compile_definitions(commissioner
+    PRIVATE
+        $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CONFIG_CCM_ENABLE=1, OT_COMM_CONFIG_CCM_ENABLE=0>
 )
 
 target_include_directories(commissioner
@@ -113,8 +118,8 @@ install(TARGETS commissioner
 ## disabled for them (intended).
 if (BUILD_SHARED_LIBS)
     install(FILES
-            $<TARGET_FILE:cn-cbor::cn-cbor>
-            $<TARGET_FILE:cose>
+            $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cn-cbor::cn-cbor>>
+            $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cose>>
             $<TARGET_FILE:mdns>
             $<TARGET_FILE:mbedtls>
             $<TARGET_FILE:mbedx509>
@@ -161,8 +166,8 @@ if (OT_COMM_TEST)
     target_link_libraries(commissioner-test
         PRIVATE
             Catch2::Catch2
-            cn-cbor::cn-cbor
-            cose
+            $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
+            $<$<BOOL:${OT_COMM_CCM}>:cose>
             mdns
             mbedtls
             mbedx509
@@ -173,6 +178,11 @@ if (OT_COMM_TEST)
             commissioner
             $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
             commissioner-common
+    )
+
+    target_compile_definitions(commissioner-test
+        PRIVATE
+            $<IF:$<BOOL:${OT_COMM_CCM}>, OT_COMM_CONFIG_CCM_ENABLE=1, OT_COMM_CONFIG_CCM_ENABLE=0>
     )
 
     target_include_directories(commissioner-test

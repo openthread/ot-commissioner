@@ -28,12 +28,15 @@
 
 add_subdirectory(Catch2/repo)
 
-set(CN_CBOR_FATAL_WARNINGS OFF CACHE BOOL "Disable -Werror and /W4")
-set(CN_CBOR_COVERALLS OFF CACHE BOOL "Disable generating coveralls data")
-set(CN_CBOR_BUILD_TESTS OFF CACHE BOOL "Disable compiling cbor tests")
-add_subdirectory(cn-cbor/repo)
+if (OT_COMM_CCM)
+    set(CN_CBOR_FATAL_WARNINGS OFF CACHE BOOL "Disable -Werror and /W4")
+    set(CN_CBOR_COVERALLS OFF CACHE BOOL "Disable generating coveralls data")
+    set(CN_CBOR_BUILD_TESTS OFF CACHE BOOL "Disable compiling cbor tests")
+    add_subdirectory(cn-cbor/repo)
 
-add_subdirectory(COSE-C)
+    add_subdirectory(COSE-C)
+endif()
+
 add_subdirectory(fmtlib/repo)
 add_subdirectory(json/repo)
 

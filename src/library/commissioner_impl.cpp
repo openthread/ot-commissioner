@@ -42,6 +42,8 @@
 #include "library/openthread/sha256.hpp"
 #include "library/uri.hpp"
 
+#define CCM_NOT_IMPLEMENTED "CCM features not implemented"
+
 namespace ot {
 
 namespace commissioner {
@@ -149,7 +151,9 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mResourceUdpRx(uri::kUdpRx, [this](const coap::Request &aRequest) { mProxyClient.HandleUdpRx(aRequest); })
     , mResourceRlyRx(uri::kRelayRx, [this](const coap::Request &aRequest) { HandleRlyRx(aRequest); })
     , mProxyClient(mEventBase, mBrClient)
+#if OT_COMM_CONFIG_CCM_ENABLE
     , mTokenManager(mEventBase)
+#endif
     , mResourceDatasetChanged(uri::kMgmtDatasetChanged,
                               [this](const coap::Request &aRequest) { HandleDatasetChanged(aRequest); })
     , mResourcePanIdConflict(uri::kMgmtPanidConflict,
@@ -175,12 +179,14 @@ Error CommissionerImpl::Init(const Config &aConfig)
 
     SuccessOrExit(error = mBrClient.Init(GetDtlsConfig(mConfig)));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         // It is not good to leave the token manager uninitialized in non-CCM mode.
         // TODO(wgtdkp): create TokenManager only in CCM Mode.
         SuccessOrExit(error = mTokenManager.Init(mConfig));
     }
+#endif
 
 exit:
     return error;
@@ -205,6 +211,11 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
     if (aConfig.mEnableCcm)
     {
         tlv::Tlv domainNameTlv{tlv::Type::kDomainName, aConfig.mDomainName};
+
+#if !OT_COMM_CONFIG_CCM_ENABLE
+        ExitNow(error = ERROR_INVALID_ARGS(CCM_NOT_IMPLEMENTED));
+#endif
+
         VerifyOrExit(!aConfig.mDomainName.empty(), error = ERROR_INVALID_ARGS("missing Domain Name for CCM network"));
         VerifyOrExit(domainNameTlv.IsValid(),
                      error = ERROR_INVALID_ARGS("Domain Name is too long (length={})", aConfig.mDomainName.size()));
@@ -338,10 +349,13 @@ void CommissionerImpl::AbortRequests()
 {
     mProxyClient.AbortRequests();
     mBrClient.AbortRequests();
+
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         mTokenManager.AbortRequests();
     }
+#endif
 }
 
 void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
@@ -412,10 +426,12 @@ void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const Commi
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodeCommissionerDataset(request, aDataset));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -428,6 +444,7 @@ exit:
     }
 }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
     Error error;
@@ -461,7 +478,15 @@ exit:
         aHandler(error);
     }
 }
+#else
+void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
+{
+    (void)aDataset;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
 {
     Error error;
@@ -507,6 +532,13 @@ exit:
         aHandler(nullptr, error);
     }
 }
+#else
+void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
+{
+    (void)aDatasetFlags;
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags)
 {
@@ -541,10 +573,12 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
         SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
     }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -587,10 +621,12 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodeActiveOperationalDataset(request, aDataset));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -640,10 +676,12 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
     }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -677,10 +715,12 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodePendingOperationalDataset(request, aDataset));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mBrClient.SendRequest(request, onResponse);
 
@@ -693,6 +733,7 @@ exit:
     }
 }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
                                                const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
@@ -742,17 +783,40 @@ exit:
         aHandler(error);
     }
 }
+#else
+void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
+                                               const std::string &              aPbbrAddr,
+                                               uint32_t                         aMaxRetrievalTimer,
+                                               const PendingOperationalDataset &aDataset)
+{
+    (void)aPbbrAddr;
+    (void)aMaxRetrievalTimer;
+    (void)aDataset;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
 {
+#if OT_COMM_CONFIG_CCM_ENABLE
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtReenroll);
+#else
+    (void)aDstAddr;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+#endif
 }
 
 void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
 {
+#if OT_COMM_CONFIG_CCM_ENABLE
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtDomainReset);
+#else
+    (void)aDstAddr;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+#endif
 }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
                                       const std::string &aDstAddr,
                                       const std::string &aDstNetworkName)
@@ -808,6 +872,16 @@ exit:
         aHandler(error);
     }
 }
+#else
+void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
+                                      const std::string &aDstAddr,
+                                      const std::string &aDstNetworkName)
+{
+    (void)aDstAddr;
+    (void)aDstNetworkName;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>                aHandler,
                                                  const std::string &             aPbbrAddr,
@@ -862,10 +936,12 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kThreadTimeout, aTimeout, tlv::Scope::kThread}));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kThreadIpv6Addresses, rawAddresses, tlv::Scope::kThread}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -916,10 +992,12 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCount, aCount}));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kPeriod, aPeriod}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -966,10 +1044,12 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kChannelMask, channelMask}));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kPanId, aPanId}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -1020,10 +1100,12 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kPeriod, aPeriod}));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kScanDuration, aScanDuration}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
@@ -1034,6 +1116,7 @@ exit:
     }
 }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
 {
     if (!IsCcmMode())
@@ -1045,18 +1128,34 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
         mTokenManager.RequestToken(aHandler, aAddr, aPort);
     }
 }
+#else
+void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
+{
+    (void)aAddr;
+    (void)aPort;
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
 {
     Error error;
 
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
-
     error = mTokenManager.SetToken(aSignedToken, aSignerCert);
 
 exit:
     return error;
 }
+#else
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+{
+    (void)aSignedToken;
+    (void)aSignerCert;
+    return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
+}
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 {
@@ -1115,10 +1214,12 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
     SuccessOrExit(error = request.SetUriPath(uri::kPetitioning));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerId, mConfig.mId}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mState = State::kPetitioning;
 
@@ -1165,10 +1266,12 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kState, state}));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mKeepAliveTimer.Start(GetKeepAliveInterval());
 
@@ -1183,6 +1286,7 @@ exit:
     }
 }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
 {
     Error     error;
@@ -1198,6 +1302,7 @@ Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
 exit:
     return error;
 }
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 Error AppendTlv(coap::Message &aMessage, const tlv::Tlv &aTlv)
 {
@@ -1565,6 +1670,7 @@ exit:
     return error;
 }
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 Error CommissionerImpl::DecodeBbrDataset(BbrDataset &aDataset, const coap::Response &aResponse)
 {
     Error       error;
@@ -1647,6 +1753,7 @@ ByteArray CommissionerImpl::GetBbrDatasetTlvs(uint16_t aDatasetFlags)
     }
     return tlvTypes;
 }
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 Error CommissionerImpl::DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse)
 {
@@ -1814,17 +1921,17 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
         aHandler(HandleStateResponse(aResponse, aError));
     };
 
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("requesting to {} is only valid in CCM Mode", aUriPath));
-
     SuccessOrExit(error = dstAddr.Set(aDstAddr));
 
     SuccessOrExit(error = request.SetUriPath(aUriPath));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
 
+#if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
         SuccessOrExit(error = SignRequest(request));
     }
+#endif
 
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
 
