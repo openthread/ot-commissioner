@@ -42,6 +42,8 @@
 #include "library/openthread/sha256.hpp"
 #include "library/uri.hpp"
 
+#define CCM_NOT_IMPLEMENTED "CCM features not implemented"
+
 namespace ot {
 
 namespace commissioner {
@@ -211,7 +213,7 @@ Error CommissionerImpl::ValidateConfig(const Config &aConfig)
         tlv::Tlv domainNameTlv{tlv::Type::kDomainName, aConfig.mDomainName};
 
 #if !OT_COMM_CONFIG_CCM_ENABLE
-        ExitNow(error = ERROR_INVALID_ARGS("CCM teatures not supported"));
+        ExitNow(error = ERROR_INVALID_ARGS(CCM_NOT_IMPLEMENTED));
 #endif
 
         VerifyOrExit(!aConfig.mDomainName.empty(), error = ERROR_INVALID_ARGS("missing Domain Name for CCM network"));
@@ -480,7 +482,7 @@ exit:
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
     (void)aDataset;
-    aHandler(ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -534,7 +536,7 @@ exit:
 void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
 {
     (void)aDatasetFlags;
-    aHandler(nullptr, ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -790,7 +792,7 @@ void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     
     (void)aPbbrAddr;
     (void)aMaxRetrievalTimer;
     (void)aDataset;
-    aHandler(ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -800,7 +802,7 @@ void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string 
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtReenroll);
 #else
     (void)aDstAddr;
-    aHandler(ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 #endif
 }
 
@@ -810,7 +812,7 @@ void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::stri
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtDomainReset);
 #else
     (void)aDstAddr;
-    aHandler(ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 #endif
 }
 
@@ -877,7 +879,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
 {
     (void)aDstAddr;
     (void)aDstNetworkName;
-    aHandler(ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -1131,7 +1133,7 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
 {
     (void)aAddr;
     (void)aPort;
-    aHandler(nullptr, ERROR_UNIMPLEMENTED("CCM features not implemented"));
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -1151,7 +1153,7 @@ Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray 
 {
     (void)aSignedToken;
     (void)aSignerCert;
-    return ERROR_UNIMPLEMENTED("CCM features not implemented");
+    return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
