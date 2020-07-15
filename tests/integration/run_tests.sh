@@ -74,10 +74,6 @@ run_test_case() {
         echo "${output}"
         echo "------ test output end ------"
 
-        echo "------ otbr log begin ------"
-        cat "${OTBR_LOG}"
-        echo "------ otbr log end ------"
-
         echo "------ commissioner daemon log begin ------"
         cat "${COMMISSIONER_DAEMON_LOG}"
         echo "------ commissioner daemon log end ------"

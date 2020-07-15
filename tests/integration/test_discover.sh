@@ -32,7 +32,7 @@
 test_discover() {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -42,5 +42,5 @@ test_discover() {
 
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }

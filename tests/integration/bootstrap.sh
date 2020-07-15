@@ -29,31 +29,8 @@
 
 ## This file bootstrap dependencies of integration tests.
 ##
-## Accepted environment variables:
-##   - OT_COMM_SKIP_BUILDING_OTBR  Control if skip building ot-br-posix from source,
-##                                 This is useful when ot-br-posix is pre-installed.
-##
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
-
-readonly SKIP_BUILDING_OTBR=${OT_COMM_SKIP_BUILDING_OTBR:=0}
-
-setup_otbr() {
-    set -e
-    git clone "${OTBR_REPO}" "${OTBR}" --branch "${OTBR_BRANCH}" --depth=1
-
-    cd "${OTBR}"
-
-    ./script/bootstrap
-    rm -rf "${OTBR}/third_party/openthread/repo"
-    ln -s "${OPENTHREAD}" "${OTBR}/third_party/openthread/repo"
-    OTBR_OPTIONS="-DOTBR_COVERAGE=ON -DOT_COVERAGE=ON" ./script/setup
-
-    ## Stop otbr-agent
-    sudo service otbr-agent stop
-
-    cd -
-}
 
 setup_openthread() {
     set -e
@@ -64,17 +41,17 @@ setup_openthread() {
 
     cd "${OPENTHREAD}"
 
-    git clean -xfd
-    ./bootstrap
+    OT_CMAKE_NINJA_TARGET="package" OT_CMAKE_BUILD_DIR="${OPENTHREAD}/build/package/openthread-sim" "${OPENTHREAD}/script/cmake-build" simulation -DOT_COVERAGE=ON
+    OT_CMAKE_NINJA_TARGET="package" OT_CMAKE_BUILD_DIR="${OPENTHREAD}/build/package/openthread-daemon" "${OPENTHREAD}/script/cmake-build" posix -DOT_DAEMON=ON -DOT_PLATFORM_NETIF=ON -DOT_PLATFORM_UDP=ON -DOT_COVERAGE=ON
+    sudo dpkg -i "${OPENTHREAD}/build/package/openthread-sim"/openthread-simulation-*.deb
+    sudo dpkg -i "${OPENTHREAD}/build/package/openthread-daemon"/openthread-daemon-*.deb
 
-    local ot_build_dir=$(VIRTUAL_TIME=0 ./script/test clean build | grep 'Build files have been written to: ' | cut -d: -f2 | tr -d ' ')
+    rm "${OT_CTL}" "${OT_DAEMON}" "${NON_CCM_RCP}" "${NON_CCM_CLI}" || true
 
-    cp ${ot_build_dir}/examples/apps/ncp/ot-rcp "${NON_CCM_RCP}"
-    cp ${ot_build_dir}/examples/apps/cli/ot-cli-ftd "${NON_CCM_CLI}"
-
-    cmake -DOT_PLATFORM=posix -DOT_DAEMON=ON -DOT_COVERAGE=ON -S . -B build
-    cmake --build build -j
-    cp build/src/posix/ot-ctl "${OT_CTL}"
+    ln -s "$(which ot-ctl)" "${OT_CTL}"
+    ln -s "$(which ot-daemon)" "${OT_DAEMON}"
+    ln -s "$(which ot-rcp)" "${NON_CCM_RCP}"
+    ln -s "$(which ot-cli-ftd)" "${NON_CCM_CLI}"
 
     cd -
 }
@@ -89,10 +66,6 @@ main() {
     mkdir -p "${RUNTIME_DIR}"
 
     setup_openthread
-
-    if (( SKIP_BUILDING_OTBR == 0 )) && [ ! -d "${OTBR}" ]; then
-        setup_otbr
-    fi
 
     setup_commissioner
 }

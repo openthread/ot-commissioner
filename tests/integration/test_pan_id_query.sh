@@ -32,7 +32,7 @@
 test_pan_id_query() {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -45,5 +45,5 @@ test_pan_id_query() {
     send_command_to_commissioner "panid conflict 0xaabb"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }

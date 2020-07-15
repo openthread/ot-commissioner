@@ -33,7 +33,7 @@ test_network_sync()
 {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -41,14 +41,14 @@ test_network_sync()
     send_command_to_commissioner "network sync"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }
 
 test_get_commissioner_dataset()
 {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -56,5 +56,5 @@ test_get_commissioner_dataset()
     send_command_to_commissioner "commdataset get"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }
