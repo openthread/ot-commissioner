@@ -54,13 +54,19 @@ Error CommissionerSafe::Init(const Config &aConfig)
     Error                             error;
     std::shared_ptr<CommissionerImpl> impl;
 
+    // The default timeout value (1 day) for non-IO events (events with fd < 0).
+    constexpr struct timeval kDefaultNonIoEventTimeout = {3600 * 24, 0};
+
     VerifyOrExit(mEventBase.Get() != nullptr, error = ERROR_OUT_OF_MEMORY("failed to create event base"));
 
     error = ERROR_UNKNOWN("failed to initialize event base");
     VerifyOrExit(evthread_use_pthreads() == 0);
     VerifyOrExit(evthread_make_base_notifiable(mEventBase.Get()) == 0);
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
-    VerifyOrExit(event_add(&mInvokeEvent, nullptr) == 0);
+
+    // We add the event with a timeout value so that the event loop will not
+    // exit prematurely because of no events.
+    VerifyOrExit(event_add(&mInvokeEvent, &kDefaultNonIoEventTimeout) == 0);
 
     impl = std::make_shared<CommissionerImpl>(mHandler, mEventBase.Get());
     SuccessOrExit(error = impl->Init(aConfig));
@@ -89,7 +95,7 @@ void CommissionerSafe::StartEventLoopThread()
 
     mEventThread = std::thread([this]() {
         LOG_INFO(LOG_REGION_MESHCOP, "event loop started in background thread");
-        event_base_loop(mEventBase.Get(), EVLOOP_NO_EXIT_ON_EMPTY);
+        event_base_loop(mEventBase.Get(), 0);
     });
 }
 
