@@ -144,7 +144,7 @@ int MockSocket::Connect(MockSocketPtr aPeerSocket)
     mIsConnected = true;
 
     // Setup Event
-    int rval = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
+    int rval = event_assign(&mEvent, mEventBase, -1, EV_PERSIST, HandleEvent, this);
     VerifyOrExit(rval == 0);
     VerifyOrExit((rval = event_add(&mEvent, nullptr)) == 0);
 

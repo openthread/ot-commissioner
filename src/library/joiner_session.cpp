@@ -232,7 +232,7 @@ JoinerSession::RelaySocket::RelaySocket(JoinerSession &aJoinerSession,
 
     mIsConnected = true;
 
-    fail = event_assign(&mEvent, mEventBase, -1, EV_PERSIST | EV_READ | EV_WRITE | EV_ET, HandleEvent, this);
+    fail = event_assign(&mEvent, mEventBase, -1, EV_PERSIST, HandleEvent, this);
     VerifyOrDie(fail == 0);
     VerifyOrDie((fail = event_add(&mEvent, nullptr)) == 0);
 }
