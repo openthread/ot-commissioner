@@ -74,6 +74,10 @@ run_test_case() {
         echo "${output}"
         echo "------ test output end ------"
 
+        echo "------ ot-daemon log begin ------"
+        cat "${OT_DAEMON_LOG}"
+        echo "------ ot-daemon log end ------"
+
         echo "------ commissioner daemon log begin ------"
         cat "${COMMISSIONER_DAEMON_LOG}"
         echo "------ commissioner daemon log end ------"

@@ -44,6 +44,7 @@ readonly OT_CTL=${RUNTIME_DIR}/ot-ctl
 readonly OT_DAEMON=${RUNTIME_DIR}/ot-daemon
 
 readonly OT_DAEMON_SETTINGS_PATH=${RUNTIME_DIR}/tmp
+readonly OT_DAEMON_LOG=${RUNTIME_DIR}/ot-daemon.log
 
 ## '/usr/local' is the by default installing directory.
 readonly COMMISSIONER_CLI=/usr/local/bin/commissioner-cli
@@ -85,7 +86,7 @@ start_daemon() {
     fi
 
     sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
-    sudo "${OT_DAEMON}" "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" &
+    sudo "${OT_DAEMON}" "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
 
     sleep 10
 }
