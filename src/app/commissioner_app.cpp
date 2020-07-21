@@ -302,7 +302,10 @@ Error CommissionerApp::EnableAllJoiners(JoinerType aType, const std::string &aPS
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
-    SuccessOrExit(error = ValidatePSKd(aPSKd));
+    if (aType == JoinerType::kMeshCoP)
+    {
+        SuccessOrExit(error = ValidatePSKd(aPSKd));
+    }
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     // Set steering data to all 1 to enable all joiners.
