@@ -240,7 +240,10 @@ Error CommissionerApp::EnableJoiner(JoinerType         aType,
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
-    SuccessOrExit(error = ValidatePSKd(aPSKd));
+    if (aType == JoinerType::kMeshCoP)
+    {
+        SuccessOrExit(error = ValidatePSKd(aPSKd));
+    }
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
