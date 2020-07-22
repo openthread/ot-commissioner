@@ -32,15 +32,12 @@
 test_discover() {
     set -e
 
-    start_otbr
-    form_network "${PSKC}"
-
+    start_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## TODO(wgtdkp): verify the output
     send_command_to_commissioner "borderagent discover"
 
     stop_commissioner
-
-    stop_otbr
+    stop_mdns_service
 }

@@ -32,7 +32,7 @@
 test_active_dataset_set_network_name() {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -44,13 +44,13 @@ test_active_dataset_set_network_name() {
     send_command_to_commissioner "opdataset get networkname"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }
 
 test_pending_dataset_set_channel() {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -62,7 +62,7 @@ test_pending_dataset_set_channel() {
     send_command_to_commissioner "opdataset get channel"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }
 
 test_secure_pending_dataset() {
