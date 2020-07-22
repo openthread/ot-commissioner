@@ -218,3 +218,20 @@ form_network() {
 
     sleep 3
 }
+
+start_mdns_service() {
+    sudo service avahi-daemon restart
+    avahi-publish --domain=local \
+                  -s "A fake border agent" \
+                  _meshcop._udp \
+                  12345 \
+                  "nn=test-net" \
+                  "xp=01234567" &
+
+    ## Wait for the service to start.
+    sleep 3
+}
+
+stop_mdns_service() {
+    sudo killall avahi-publish
+}
