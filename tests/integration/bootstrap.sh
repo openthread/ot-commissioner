@@ -68,7 +68,6 @@ setup_border_agent_mdns_service() {
     ## Install the Border Agent service configure file to
     ## the default directory read by avahi-daemon.
     sudo cp "${CUR_DIR}/../etc/avahi/services/border-agent.service" /etc/avahi/services
-    sudo service dbus restart
 }
 
 main() {
