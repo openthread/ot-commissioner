@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   This file defines test cases for Error class.
+ *   This file defines test cases for utils.
  */
 
 #include "common/utils.hpp"
