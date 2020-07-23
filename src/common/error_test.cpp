@@ -33,6 +33,8 @@
 
 #include "commissioner/error.hpp"
 
+#include "common/error_macros.hpp"
+
 #include <catch2/catch.hpp>
 
 namespace ot {
@@ -57,6 +59,32 @@ TEST_CASE("error-to-string", "[error]")
         Error error;
 
         REQUIRE(error.ToString() == "OK");
+    }
+
+    SECTION("non-OK errors return its string representation (not required by the class Error API)")
+    {
+// Check if the error string starts with the error name.
+#define CHECK_ERROR_STR(aErrorName) REQUIRE(ERROR_##aErrorName("").ToString().find(#aErrorName) == 0)
+
+        CHECK_ERROR_STR(CANCELLED);
+        CHECK_ERROR_STR(INVALID_ARGS);
+        CHECK_ERROR_STR(INVALID_COMMAND);
+        CHECK_ERROR_STR(TIMEOUT);
+        CHECK_ERROR_STR(NOT_FOUND);
+        CHECK_ERROR_STR(SECURITY);
+        CHECK_ERROR_STR(UNIMPLEMENTED);
+        CHECK_ERROR_STR(BAD_FORMAT);
+        CHECK_ERROR_STR(BUSY);
+        CHECK_ERROR_STR(OUT_OF_MEMORY);
+        CHECK_ERROR_STR(IO_ERROR);
+        CHECK_ERROR_STR(IO_BUSY);
+        CHECK_ERROR_STR(ALREADY_EXISTS);
+        CHECK_ERROR_STR(ABORTED);
+        CHECK_ERROR_STR(INVALID_STATE);
+        CHECK_ERROR_STR(REJECTED);
+        CHECK_ERROR_STR(UNKNOWN);
+
+#undef CHECK_ERROR_STR
     }
 }
 
