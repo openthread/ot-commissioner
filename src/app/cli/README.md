@@ -68,7 +68,7 @@ type 'help <command>' for help of specific command.
 
 All commands are synchronous, which means the command will not return until success, an error occurs, or a time out.
 
-To abort a command, send signal `Interrupt` to OT Commissioner, which is `CTRL + C` for a Linux machine.
+To cancel a command, send signal `Interrupt` to OT Commissioner, which is `CTRL + C` for a Linux machine.
 
 ### Help
 
