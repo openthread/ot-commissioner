@@ -58,3 +58,17 @@ test_get_commissioner_dataset()
 
     stop_daemon
 }
+
+test_cancel_command() {
+    set -e
+
+    start_commissioner "${NON_CCM_CONFIG}"
+
+    ## Expecting error CANCELLED after sending SIGINT
+    send_command_to_commissioner "borderagent discover" "CANCELLED" &
+    sleep 1
+
+    pkill -s SIGINT "${COMMISSIONER_CLI}"
+
+    stop_commissioner
+}
