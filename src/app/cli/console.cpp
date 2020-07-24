@@ -73,9 +73,6 @@ void Console::Write(const std::string &aLine, Color aColor)
     case Color::kGreen:
         colorCode = "\u001b[32m";
         break;
-    case Color::kYellow:
-        colorCode = "\u001b[33m";
-        break;
     case Color::kBlue:
         colorCode = "\u001b[34m";
         break;
