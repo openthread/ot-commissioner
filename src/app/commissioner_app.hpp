@@ -126,7 +126,7 @@ public:
     Error Start(std::string &aExistingCommissionerId, const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
     void  Stop();
 
-    void AbortRequests();
+    void CancelRequests();
 
     // Returns if current commissioner is in active state.
     // Should always be true if starting the commissioner app has succeed.

@@ -169,9 +169,9 @@ const std::string &CommissionerSafe::GetDomainName() const
     return mImpl->GetDomainName();
 }
 
-void CommissionerSafe::AbortRequests()
+void CommissionerSafe::CancelRequests()
 {
-    PushAsyncRequest([=]() { mImpl->AbortRequests(); });
+    PushAsyncRequest([=]() { mImpl->CancelRequests(); });
 }
 
 void CommissionerSafe::Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort)

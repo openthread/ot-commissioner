@@ -87,11 +87,6 @@ exit:
     }
 }
 
-void JoinerSession::Disconnect()
-{
-    mDtlsSession->Disconnect(ERROR_ABORTED("the joiner session was aborted"));
-}
-
 ByteArray JoinerSession::GetJoinerIid() const
 {
     auto joinerIid = mJoinerId;

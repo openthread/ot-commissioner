@@ -79,7 +79,7 @@ static Interpreter gInterpreter;
 
 static void HandleSignalInterrupt(int)
 {
-    gInterpreter.AbortCommand();
+    gInterpreter.CancelCommand();
 }
 
 int main(int argc, const char *argv[])
