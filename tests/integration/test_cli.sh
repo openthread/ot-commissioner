@@ -68,7 +68,7 @@ test_cancel_command() {
     send_command_to_commissioner "borderagent discover" "CANCELLED" &
     sleep 1
 
-    pkill -s SIGINT "${COMMISSIONER_CLI}"
+    pkill --signal SIGINT "${COMMISSIONER_CLI}"
 
     stop_commissioner
 }
