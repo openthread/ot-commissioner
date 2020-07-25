@@ -33,6 +33,8 @@
 
 #include "commissioner/error.hpp"
 
+#include "common/error_macros.hpp"
+
 #include <catch2/catch.hpp>
 
 namespace ot {
@@ -57,6 +59,33 @@ TEST_CASE("error-to-string", "[error]")
         Error error;
 
         REQUIRE(error.ToString() == "OK");
+    }
+
+    SECTION("non-OK errors return their string representations (not required by the class Error API)")
+    {
+// Check if the error string starts with the error name.
+#define CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(aErrorName) \
+    REQUIRE(ERROR_##aErrorName("").ToString().find(#aErrorName) == 0)
+
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(CANCELLED);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_ARGS);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_COMMAND);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(TIMEOUT);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(NOT_FOUND);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(SECURITY);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(UNIMPLEMENTED);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(BAD_FORMAT);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(BUSY);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(OUT_OF_MEMORY);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(IO_ERROR);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(IO_BUSY);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(ALREADY_EXISTS);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(ABORTED);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_STATE);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(REJECTED);
+        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(UNKNOWN);
+
+#undef CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME
     }
 }
 
