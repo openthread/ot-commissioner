@@ -207,6 +207,8 @@ void Interpreter::CancelCommand()
     {
         mCommissioner->Stop();
     }
+
+    CancelDiscoverBorderAgent();
 }
 
 Interpreter::Expression Interpreter::Read()

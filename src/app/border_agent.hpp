@@ -177,6 +177,14 @@ using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, c
  */
 Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);
 
+/**
+ * Cancel the call to DiscoverBorderAgent.
+ *
+ * This function is thread-safe.
+ *
+ */
+void CancelDiscoverBorderAgent();
+
 } // namespace commissioner
 
 } // namespace ot
