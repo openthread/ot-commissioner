@@ -115,7 +115,7 @@ template <typename E> constexpr E from_underlying(typename std::underlying_type<
 }
 
 /**
- * This function encodes an integer into the end of a byte array with big endian.
+ * This function encodes an integer into the end of a byte array in big endian.
  *
  * @tparam T         The integer type.
  * @param  aBuf      The byte array encoding to.
