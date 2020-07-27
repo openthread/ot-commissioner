@@ -43,30 +43,66 @@ TEST_CASE("integer-encoding-decoding", "[utils]")
 {
     ByteArray buf;
 
-    buf = utils::Encode<uint8_t>(0xFC);
-    REQUIRE(buf == ByteArray{0xFC});
-    utils::Encode<uint8_t>(buf, 0xFB);
-    REQUIRE(buf == ByteArray{0xFC, 0xFB});
+    SECTION("8 bits integers")
+    {
+        buf = utils::Encode<uint8_t>(0xFC);
+        REQUIRE(buf == ByteArray{0xFC});
+        utils::Encode<uint8_t>(buf, 0xFB);
+        REQUIRE(buf == ByteArray{0xFC, 0xFB});
 
-    REQUIRE(utils::Decode<int8_t>(utils::Encode<int8_t>(0xFD)) == static_cast<int8_t>(0xFD));
+        REQUIRE(utils::Decode<int8_t>(utils::Encode<int8_t>(0xFD)) == static_cast<int8_t>(0xFD));
+    }
 
-    buf = utils::Encode<uint32_t>(0x00010203);
-    REQUIRE(buf == ByteArray{0x00, 0x01, 0x02, 0x03});
-    REQUIRE(utils::Decode<uint32_t>(buf) == 0x00010203);
+    SECTION("16 bits integers")
+    {
+        buf = utils::Encode<uint16_t>(0x010F);
+        REQUIRE(buf == ByteArray{0x01, 0x0F});
+        REQUIRE(utils::Decode<uint16_t>(buf) == 0x010F);
+
+        REQUIRE(utils::Decode<int16_t>(utils::Encode<int16_t>(0xFDFC)) == static_cast<int16_t>(0xFDFC));
+    }
+
+    SECTION("32 bits integers")
+    {
+        buf = utils::Encode<uint32_t>(0x00010E0F);
+        REQUIRE(buf == ByteArray{0x00, 0x01, 0x0E, 0x0F});
+        REQUIRE(utils::Decode<uint32_t>(buf) == 0x00010E0F);
+
+        REQUIRE(utils::Decode<int32_t>(utils::Encode<int32_t>(0xFDFCFBFA)) == static_cast<int32_t>(0xFDFCFBFA));
+    }
+
+    SECTION("64 bits integers")
+    {
+        buf = utils::Encode<uint64_t>(0x00010E0F00010E0F);
+        REQUIRE(buf == ByteArray{0x00, 0x01, 0x0E, 0x0F, 0x00, 0x01, 0x0E, 0x0F});
+        REQUIRE(utils::Decode<uint64_t>(buf) == 0x00010E0F00010E0F);
+
+        REQUIRE(utils::Decode<int64_t>(utils::Encode<int64_t>(0xFDFCFBFAF9F8F7F6)) ==
+                static_cast<int64_t>(0xFDFCFBFAF9F8F7F6));
+    }
 }
 
-TEST_CASE("hex-encoding-decoing", "[utils]")
+TEST_CASE("hex-encoding-decoding", "[utils]")
 {
     ByteArray   buf;
     std::string hexStr;
 
-    hexStr = utils::Hex(ByteArray{0x00, 0x01, 0x02, 0x03});
-    REQUIRE(hexStr == "00010203");
-    REQUIRE(utils::Hex(buf, hexStr) == ErrorCode::kNone);
-    REQUIRE(buf == ByteArray{0x00, 0x01, 0x02, 0x03});
+    SECTION("a byte array equals to itself after encoding and decoding")
+    {
+        hexStr = utils::Hex(ByteArray{0x00, 0x01, 0x02, 0x03});
+        REQUIRE(hexStr == "00010203");
+        REQUIRE(utils::Hex(buf, hexStr) == ErrorCode::kNone);
+        REQUIRE(buf == ByteArray{0x00, 0x01, 0x02, 0x03});
+    }
+
+    SECTION("decoding empty HEX string results nothing")
+    {
+        REQUIRE(utils::Hex(buf, hexStr) == ErrorCode::kNone);
+        REQUIRE(buf.empty());
+    }
 }
 
-TEST_CASE("hex-negative-decoing", "[utils]")
+TEST_CASE("hex-negative-decoding", "[utils]")
 {
     ByteArray buf;
 

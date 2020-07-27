@@ -114,6 +114,14 @@ template <typename E> constexpr E from_underlying(typename std::underlying_type<
     return static_cast<E>(e);
 }
 
+/**
+ * This function encodes an integer into the end of a byte array with big endian.
+ *
+ * @tparam T         The integer type.
+ * @param  aBuf      The byte array encoding to.
+ * @param  aInteger  The integer to be encoded.
+ *
+ */
 template <typename T> void Encode(ByteArray &aBuf, T aInteger)
 {
     auto length = aBuf.size();
@@ -132,10 +140,22 @@ template <typename T> ByteArray Encode(T aInteger)
     return buf;
 }
 
-// The @paBuf must have a length of at least sizeof(T).
-template <typename T> T Decode(const uint8_t *aBuf)
+/**
+ * This function decodes an integer from the begin of a byte array in big endian.
+ *
+ * @tparam T     The integer type.
+ * @param  aBuf  The byte array to decode the integer from. It is the user to guarantee
+ *               that the byte array has a minimum length of sizeof(T).
+ *
+ * @return The decoded integer value.
+ *
+ */
+template <typename T> T Decode(const uint8_t *aBuf, size_t aLength)
 {
     T ret = 0;
+
+    ASSERT(aLength >= sizeof(T));
+
     for (size_t i = 0; i < sizeof(T); ++i)
     {
         ret = (ret << 8) | aBuf[i];
@@ -145,8 +165,7 @@ template <typename T> T Decode(const uint8_t *aBuf)
 
 template <typename T> T Decode(const ByteArray &aBuf)
 {
-    VerifyOrDie(aBuf.size() >= sizeof(T));
-    return Decode<T>(&aBuf[0]);
+    return Decode<T>(aBuf.data(), aBuf.size());
 }
 
 template <> void Encode<uint8_t>(ByteArray &aBuf, uint8_t aInteger);
