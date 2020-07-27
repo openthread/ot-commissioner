@@ -111,9 +111,9 @@ void CommissionerApp::Stop()
     mBbrDataset     = BbrDataset();
 }
 
-void CommissionerApp::AbortRequests()
+void CommissionerApp::CancelRequests()
 {
-    mCommissioner->AbortRequests();
+    mCommissioner->CancelRequests();
 }
 
 bool CommissionerApp::IsActive() const

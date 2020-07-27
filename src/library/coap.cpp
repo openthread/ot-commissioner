@@ -400,11 +400,11 @@ Coap::Coap(struct event_base *aEventBase, Endpoint &aEndpoint)
 
 void Coap::ClearRequestsAndResponses(void)
 {
-    AbortRequests();
+    CancelRequests();
     mResponsesCache.Clear();
 }
 
-void Coap::AbortRequests()
+void Coap::CancelRequests()
 {
     while (!mRequestsCache.IsEmpty())
     {
