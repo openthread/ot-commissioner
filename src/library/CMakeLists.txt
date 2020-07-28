@@ -167,7 +167,6 @@ if (OT_COMM_TEST)
             Catch2::Catch2
             $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
             $<$<BOOL:${OT_COMM_CCM}>:cose>
-            mdns
             mbedtls
             mbedx509
             mbedcrypto
