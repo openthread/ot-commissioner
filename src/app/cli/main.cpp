@@ -31,6 +31,8 @@
  *   The file is the entrance of the commissioner CLI.
  */
 
+#include <thread>
+
 #include <signal.h>
 
 #include "app/cli/interpreter.hpp"
@@ -76,30 +78,41 @@ static void PrintVersion()
 }
 
 static Interpreter gInterpreter;
+static sigset_t    gSignalSet;
 
-static void HandleSignalInterrupt(int)
+static void HandleSignalInterrupt()
 {
-    gInterpreter.CancelCommand();
+    int signalNum = 0;
+
+    while (true)
+    {
+        sigwait(&gSignalSet, &signalNum);
+        gInterpreter.CancelCommand();
+    }
 }
 
 int main(int argc, const char *argv[])
 {
-    Error error;
-
+    Error  error;
     Config config;
 
     if (argc < 2 || ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
     {
         PrintUsage(argv[0]);
-        return 0;
+        ExitNow();
     }
     else if (ToLower(argv[1]) == "-v" || ToLower(argv[1]) == "--version")
     {
         PrintVersion();
-        return 0;
+        ExitNow();
     }
 
-    signal(SIGINT, HandleSignalInterrupt);
+    // Block signals in this thread and subsequently spawned threads.
+    sigemptyset(&gSignalSet);
+    sigaddset(&gSignalSet, SIGINT);
+    pthread_sigmask(SIG_BLOCK, &gSignalSet, nullptr);
+
+    std::thread(HandleSignalInterrupt).detach();
 
     Console::Write(kLogo, Console::Color::kBlue);
 
