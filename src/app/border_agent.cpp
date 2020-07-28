@@ -241,11 +241,11 @@ static int HandleRecord(const struct sockaddr *from,
                     ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'sb' is invalid: value={}", utils::Hex(bitmap)));
                 }
 
-                borderAgent.mState.mConnectionMode = (bitmap[0] >> 5);
-                borderAgent.mState.mThreadIfStatus = (bitmap[0] << 3) >> 6;
-                borderAgent.mState.mAvailability   = (bitmap[0] << 5) >> 6;
-                borderAgent.mState.mBbrIsActive    = (bitmap[0] << 7) >> 7;
-                borderAgent.mState.mBbrIsPrimary   = (bitmap[1] >> 7);
+                borderAgent.mState.mConnectionMode = (bitmap[3] & 0x07);
+                borderAgent.mState.mThreadIfStatus = (bitmap[3] & 0x18) >> 3;
+                borderAgent.mState.mAvailability   = (bitmap[3] & 0x60) >> 5;
+                borderAgent.mState.mBbrIsActive    = (bitmap[3] & 0x80) >> 7;
+                borderAgent.mState.mBbrIsPrimary   = (bitmap[2] & 0x01);
                 borderAgent.mPresentFlags |= BorderAgent::kStateBit;
             }
             else if (key == "nn")

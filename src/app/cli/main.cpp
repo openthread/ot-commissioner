@@ -87,7 +87,7 @@ static void HandleSignalInterrupt()
     while (true)
     {
         sigwait(&gSignalSet, &signalNum);
-        gInterpreter.AbortCommand();
+        gInterpreter.CancelCommand();
     }
 }
 

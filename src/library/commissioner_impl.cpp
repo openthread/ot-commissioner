@@ -345,15 +345,15 @@ const std::string &CommissionerImpl::GetDomainName() const
     return mConfig.mDomainName;
 }
 
-void CommissionerImpl::AbortRequests()
+void CommissionerImpl::CancelRequests()
 {
-    mProxyClient.AbortRequests();
-    mBrClient.AbortRequests();
+    mProxyClient.CancelRequests();
+    mBrClient.CancelRequests();
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
-        mTokenManager.AbortRequests();
+        mTokenManager.CancelRequests();
     }
 #endif
 }

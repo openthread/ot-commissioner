@@ -64,7 +64,7 @@ public:
 
     const std::string &GetDomainName() const;
 
-    void AbortRequests() { mRegistrarClient.AbortRequests(); }
+    void CancelRequests() { mRegistrarClient.CancelRequests(); }
 
     // Request Commissioner Token from registrar.
     // The protocol is described in `doc/registrar-connector.md`.

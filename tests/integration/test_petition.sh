@@ -32,7 +32,7 @@
 test_petition() {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -40,5 +40,5 @@ test_petition() {
     send_command_to_commissioner "active"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }

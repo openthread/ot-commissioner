@@ -89,8 +89,6 @@ public:
 
     void Connect();
 
-    void Disconnect();
-
     DtlsSession::State GetState() const { return mDtlsSession->GetState(); }
 
     bool Disabled() const { return mDtlsSession->GetState() == DtlsSession::State::kOpen; }

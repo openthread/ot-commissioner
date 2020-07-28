@@ -94,7 +94,7 @@ public:
 
     void HandleUdpRx(const coap::Request &aUdpRx);
 
-    void AbortRequests() { mCoap.AbortRequests(); }
+    void CancelRequests() { mCoap.CancelRequests(); }
 
 private:
     ProxyEndpoint mEndpoint;

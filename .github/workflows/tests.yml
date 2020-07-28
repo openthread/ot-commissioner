@@ -50,7 +50,10 @@ jobs:
                 -S . -B build
           cmake --build build
           sudo cmake --install build
+      - name: Test CLI options
+        run: |
           commissioner-cli -v
+          commissioner-cli -h
       - name: Run unittests
         run: |
           ./build/tests/commissioner-test

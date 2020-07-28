@@ -34,10 +34,6 @@ readonly TEST_ROOT_DIR=${CUR_DIR}
 
 readonly RUNTIME_DIR=/tmp/test-ot-commissioner
 
-readonly OTBR_REPO=https://github.com/openthread/ot-br-posix
-readonly OTBR_BRANCH=master
-readonly OTBR=${RUNTIME_DIR}/ot-br-posix
-
 readonly OPENTHREAD_REPO=https://github.com/openthread/openthread
 readonly OPENTHREAD_BRANCH=master
 readonly OPENTHREAD=${OT_COMM_OPENTHREAD:-"${RUNTIME_DIR}/openthread"}
@@ -45,9 +41,10 @@ readonly OPENTHREAD=${OT_COMM_OPENTHREAD:-"${RUNTIME_DIR}/openthread"}
 readonly NON_CCM_CLI=${RUNTIME_DIR}/ot-cli-ftd-non-ccm
 readonly NON_CCM_RCP=${RUNTIME_DIR}/ot-rcp-non-ccm
 readonly OT_CTL=${RUNTIME_DIR}/ot-ctl
+readonly OT_DAEMON=${RUNTIME_DIR}/ot-daemon
 
-readonly OTBR_SETTINGS_PATH=/var/lib/thread
-readonly OTBR_LOG=${RUNTIME_DIR}/otbr.log
+readonly OT_DAEMON_SETTINGS_PATH=${RUNTIME_DIR}/tmp
+readonly OT_DAEMON_LOG=${RUNTIME_DIR}/ot-daemon.log
 
 ## '/usr/local' is the by default installing directory.
 readonly COMMISSIONER_CLI=/usr/local/bin/commissioner-cli
@@ -79,25 +76,27 @@ executable_or_die() {
   [ -x "$1" ] || die "Missing executable: $1"
 }
 
-start_otbr() {
+start_daemon() {
     set -e
 
-    if pidof otbr-agent; then
-        stop_otbr
+    cd "${RUNTIME_DIR}"
+
+    if pidof ot-daemon; then
+        stop_daemon
     fi
 
-    sudo rm -rf ${OTBR_SETTINGS_PATH}
-    sudo otbr-agent -I wpan0 -d 7 -v "spinel+hdlc+forkpty://${NON_CCM_RCP}?forkpty-arg=1" > "${OTBR_LOG}" 2>&1 &
+    sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
+    sudo "${OT_DAEMON}" "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
 
     sleep 10
 }
 
-stop_otbr() {
+stop_daemon() {
     set -e
 
-    sudo killall otbr-agent || true
+    sudo killall ot-daemon || true
     sleep 1
-    (pidof otbr-agent && die "killing otbr-agent failed") || true
+    (pidof ot-daemon && die "killing ot-daemon failed") || true
 }
 
 ## Start commissioner daemon.
@@ -176,7 +175,7 @@ start_joiner() {
     fi
 
     echo "starting ${joiner_type} joiner..."
-    expect -f-  <<EOF || return 1
+    sudo expect -f-  <<EOF || return 1
 spawn ${joiner_binary} ${JOINER_NODE_ID}
 
 send "factoryreset\r\n"
@@ -218,4 +217,17 @@ form_network() {
     sudo "${OT_CTL}" thread start
 
     sleep 3
+}
+
+start_border_agent_mdns_service() {
+    ## See etc/avahi/services/border-agent.service
+    ## for the service registration.
+    sudo service avahi-daemon restart
+
+    ## Wait for the service to start.
+    sleep 3
+}
+
+stop_border_agent_mdns_service() {
+    sudo service avahi-daemon stop
 }

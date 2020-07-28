@@ -32,7 +32,7 @@
 test_announce_begin() {
     set -e
 
-    start_otbr
+    start_daemon
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -41,5 +41,5 @@ test_announce_begin() {
     send_command_to_commissioner "announce 0xffffffff 2 32 ff02::2"
     stop_commissioner
 
-    stop_otbr
+    stop_daemon
 }
