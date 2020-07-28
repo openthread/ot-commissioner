@@ -80,7 +80,6 @@ target_link_libraries(commissioner
     PRIVATE
         $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
         $<$<BOOL:${OT_COMM_CCM}>:cose>
-        mdns
         mbedtls
         mbedx509
         mbedcrypto
@@ -120,7 +119,7 @@ if (BUILD_SHARED_LIBS)
     install(FILES
             $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cn-cbor::cn-cbor>>
             $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cose>>
-            $<TARGET_FILE:mdns>
+            $<$<BOOL:${OT_COMM_APP}>:$<TARGET_FILE:mdns>>
             $<TARGET_FILE:mbedtls>
             $<TARGET_FILE:mbedx509>
             $<TARGET_FILE:mbedcrypto>
