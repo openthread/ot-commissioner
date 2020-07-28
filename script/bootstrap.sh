@@ -29,7 +29,7 @@
 
 set -e
 
-readonly MIN_CMAKE_VERSION="3.13.1"
+readonly MIN_CMAKE_VERSION="3.10.1"
 
 ## Match the version to see if current version is greater than or euqal to required version.
 ## Args: $1 current version

@@ -26,7 +26,7 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-cmake_minimum_required(VERSION 3.13.1)
+cmake_minimum_required(VERSION 3.10.1)
 project(ot-commissioner VERSION 0.1.0)
 
 option(OT_COMM_ANDROID          "Build with Android NDK" OFF)
