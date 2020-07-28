@@ -107,7 +107,7 @@ elif [ "$(uname)" = "Darwin" ]; then
     ## Install latest cmake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         brew unlink cmake
-        brew install cmake --HEAD
+        brew install cmake@3.10.1
     }
 else
     echo "platform $(uname) is not fully supported"
