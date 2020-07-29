@@ -64,6 +64,9 @@ test_cancel_command() {
 
     start_commissioner "${NON_CCM_CONFIG}"
 
+    ## Make sure that the mDNS service has been stopped.
+    stop_border_agent_mdns_service
+
     ## Expecting error CANCELLED after sending SIGINT
     send_command_to_commissioner "borderagent discover" "CANCELLED" &
     sleep 1
