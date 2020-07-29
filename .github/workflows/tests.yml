@@ -42,6 +42,7 @@ jobs:
           sudo apt-get install avahi-daemon avahi-utils -y
       - name: Build
         run: |
+          mkdir build && cd build
           cmake -GNinja                           \
                 -DCMAKE_CXX_STANDARD=11           \
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
@@ -49,9 +50,9 @@ jobs:
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
                 -DOT_COMM_COVERAGE=ON             \
                 -DOT_COMM_CCM=OFF                 \
-                -S . -B build
-          cmake --build build
-          sudo cmake --install build
+                ..
+          ninja
+          sudo ninja install
           commissioner-cli -v
       - name: Run unittests
         run: |
