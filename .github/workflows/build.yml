@@ -118,6 +118,7 @@ jobs:
           brew install cmake@3.10.1
           script/bootstrap.sh
       - name: CMake version
+        run: |
           cmake --version
       - name: Build
         run: |
