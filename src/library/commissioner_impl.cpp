@@ -1439,7 +1439,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto channel = tlvSet[tlv::Type::kChannel])
     {
-        const auto &value        = channel->GetValue();
+        const ByteArray &value   = channel->GetValue();
         dataset.mChannel.mPage   = value[0];
         dataset.mChannel.mNumber = utils::Decode<uint16_t>(value.data() + 1, value.size() - 1);
         dataset.mPresentFlags |= ActiveOperationalDataset::kChannelBit;
