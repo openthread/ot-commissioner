@@ -66,5 +66,6 @@ if (OT_COMM_TEST)
             ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+            ${PROJECT_SOURCE_DIR}/third_party/fmtlib/repo/include
     )
 endif()
