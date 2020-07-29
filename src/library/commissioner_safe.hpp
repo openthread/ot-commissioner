@@ -90,7 +90,7 @@ public:
 
     const std::string &GetDomainName() const override;
 
-    void AbortRequests() override;
+    void CancelRequests() override;
 
     void  Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error Connect(const std::string &aAddr, uint16_t aPort) override;

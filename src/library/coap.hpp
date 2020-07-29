@@ -598,10 +598,10 @@ public:
     Coap(struct event_base *aEventBase, Endpoint &aEndpoint);
     virtual ~Coap() = default;
 
-    // Abort all outstanding requests
-    void AbortRequests();
+    // Cancel all outstanding requests
+    void CancelRequests();
 
-    // Clear/Abort requests and clear response caches.
+    // Clear/Cancel requests and clear response caches.
     void ClearRequestsAndResponses(void);
 
     size_t GetPendingRequestsNum() const { return mRequestsCache.Count(); }

@@ -121,7 +121,7 @@ public:
 
     const DtlsSession &GetDtlsSession() const { return mDtlsSession; }
 
-    void AbortRequests() { mCoap.AbortRequests(); }
+    void CancelRequests() { mCoap.CancelRequests(); }
 
 private:
     UdpSocketPtr mSocket;

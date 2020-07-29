@@ -132,6 +132,22 @@ TEST_CASE("address-negative-tests", "[address]")
 {
     Address addr;
 
+    SECTION("invalid address ToString should fail")
+    {
+        REQUIRE(addr.Set(addr.ToString()) == ErrorCode::kInvalidArgs);
+        REQUIRE(!addr.IsValid());
+        REQUIRE(!addr.IsIpv4());
+        REQUIRE(!addr.IsIpv6());
+    }
+
+    SECTION("invalid raw address should fail")
+    {
+        REQUIRE(addr.Set(ByteArray{0, 0, 0}) == ErrorCode::kInvalidArgs);
+        REQUIRE(!addr.IsValid());
+        REQUIRE(!addr.IsIpv4());
+        REQUIRE(!addr.IsIpv6());
+    }
+
     SECTION("invalid ipv4 address should fail")
     {
         REQUIRE(addr.Set("127.0.0.1.2") == ErrorCode::kInvalidArgs);

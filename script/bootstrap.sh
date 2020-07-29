@@ -51,11 +51,6 @@ match_version() {
 if [ "$(uname)" = "Linux" ]; then
     echo "OS is Linux"
 
-    ## Enable linux IPv6 forwarding
-    echo 0 | sudo tee /proc/sys/net/ipv6/conf/all/disable_ipv6
-    echo 1 | sudo tee /proc/sys/net/ipv6/conf/all/forwarding
-    echo 1 | sudo tee /proc/sys/net/ipv4/conf/all/forwarding
-
     ## FIXME(wgtdkp): this is only apt install
     ## Install packages
     sudo apt-get update

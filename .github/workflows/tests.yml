@@ -38,8 +38,6 @@ jobs:
       - name: Bootstrap
         run: |
           script/bootstrap.sh
-          sudo apt-get update
-          sudo apt-get install avahi-daemon avahi-utils -y
       - name: Build
         run: |
           mkdir build && cd build
@@ -53,7 +51,10 @@ jobs:
                 ..
           ninja
           sudo ninja install
+      - name: Test CLI options
+        run: |
           commissioner-cli -v
+          commissioner-cli -h
       - name: Run unittests
         run: |
           ./build/tests/commissioner-test

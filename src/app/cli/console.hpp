@@ -51,7 +51,6 @@ public:
         kWhite,
         kRed,
         kGreen,
-        kYellow,
         kBlue,
     };
 

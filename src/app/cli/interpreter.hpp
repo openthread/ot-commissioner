@@ -54,7 +54,7 @@ public:
 
     void Run();
 
-    void AbortCommand();
+    void CancelCommand();
 
 private:
     /**

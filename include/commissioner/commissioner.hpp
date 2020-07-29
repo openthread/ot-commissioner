@@ -434,10 +434,10 @@ public:
     virtual const std::string &GetDomainName() const = 0;
 
     /**
-     * @brief Abort all outstanding requests.
+     * @brief Cancel all outstanding requests.
      *
      */
-    virtual void AbortRequests() = 0;
+    virtual void CancelRequests() = 0;
 
     /**
      * @brief Asynchronously petition to a Thread network.

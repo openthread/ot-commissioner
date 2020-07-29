@@ -197,11 +197,11 @@ exit:
     return;
 }
 
-void Interpreter::AbortCommand()
+void Interpreter::CancelCommand()
 {
     if (mCommissioner->IsActive())
     {
-        mCommissioner->AbortRequests();
+        mCommissioner->CancelRequests();
     }
     else
     {
