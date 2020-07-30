@@ -26,61 +26,57 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner)
-
-target_sources(commissioner
-    PRIVATE
-        cbor.cpp
-        cbor.hpp
-        coap.cpp
-        coap.hpp
-        coap_secure.hpp
-        commissioner_impl.cpp
-        commissioner_impl.hpp
-        commissioner_safe.cpp
-        commissioner_safe.hpp
-        cose.cpp
-        cose.hpp
-        cwt.hpp
-        dtls.cpp
-        dtls.hpp
-        endpoint.hpp
-        event.hpp
-        joiner_session.cpp
-        joiner_session.hpp
-        logging.cpp
-        logging.hpp
-        mbedtls_error.cpp
-        mbedtls_error.hpp
-        message.hpp
-        network_data.cpp
-        openthread/bloom_filter.cpp
-        openthread/bloom_filter.hpp
-        openthread/crc16.cpp
-        openthread/crc16.hpp
-        openthread/pbkdf2_cmac.cpp
-        openthread/pbkdf2_cmac.hpp
-        openthread/random.cpp
-        openthread/random.hpp
-        openthread/sha256.cpp
-        openthread/sha256.hpp
-        socket.cpp
-        socket.hpp
-        timer.hpp
-        tlv.cpp
-        tlv.hpp
-        token_manager.cpp
-        token_manager.hpp
-        udp_proxy.cpp
-        udp_proxy.hpp
-        uri.hpp
+add_library(commissioner
+    cbor.cpp
+    cbor.hpp
+    coap.cpp
+    coap.hpp
+    coap_secure.hpp
+    commissioner_impl.cpp
+    commissioner_impl.hpp
+    commissioner_safe.cpp
+    commissioner_safe.hpp
+    cose.cpp
+    cose.hpp
+    cwt.hpp
+    dtls.cpp
+    dtls.hpp
+    endpoint.hpp
+    event.hpp
+    joiner_session.cpp
+    joiner_session.hpp
+    logging.cpp
+    logging.hpp
+    mbedtls_error.cpp
+    mbedtls_error.hpp
+    message.hpp
+    network_data.cpp
+    openthread/bloom_filter.cpp
+    openthread/bloom_filter.hpp
+    openthread/crc16.cpp
+    openthread/crc16.hpp
+    openthread/pbkdf2_cmac.cpp
+    openthread/pbkdf2_cmac.hpp
+    openthread/random.cpp
+    openthread/random.hpp
+    openthread/sha256.cpp
+    openthread/sha256.hpp
+    socket.cpp
+    socket.hpp
+    timer.hpp
+    tlv.cpp
+    tlv.hpp
+    token_manager.cpp
+    token_manager.hpp
+    udp_proxy.cpp
+    udp_proxy.hpp
+    uri.hpp
 )
 
 target_link_libraries(commissioner
     PRIVATE
         $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
         $<$<BOOL:${OT_COMM_CCM}>:cose>
-        mdns
         mbedtls
         mbedx509
         mbedcrypto
@@ -120,7 +116,7 @@ if (BUILD_SHARED_LIBS)
     install(FILES
             $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cn-cbor::cn-cbor>>
             $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cose>>
-            $<TARGET_FILE:mdns>
+            $<$<BOOL:${OT_COMM_APP}>:$<TARGET_FILE:mdns>>
             $<TARGET_FILE:mbedtls>
             $<TARGET_FILE:mbedx509>
             $<TARGET_FILE:mbedcrypto>
@@ -139,28 +135,25 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
 )
 
 if (OT_COMM_TEST)
-    add_executable(commissioner-test)
-
-    target_sources(commissioner-test
-        PRIVATE
-            coap_secure.hpp
-            coap_secure_test.cpp
-            coap.hpp
-            coap_test.cpp
-            commissioner_impl.hpp
-            commissioner_impl_test.cpp
-            commissioner_safe.hpp
-            commissioner_safe_test.cpp
-            cose.hpp
-            cose_test.cpp
-            dtls.hpp
-            dtls_test.cpp
-            socket.hpp
-            socket_test.cpp
-            token_manager.hpp
-            token_manager_test.cpp
-            $<$<BOOL:${OT_COMM_APP}>:$<TARGET_OBJECTS:commissioner-app-test>>
-            $<TARGET_OBJECTS:commissioner-common-test>
+    add_executable(commissioner-test
+        coap_secure.hpp
+        coap_secure_test.cpp
+        coap.hpp
+        coap_test.cpp
+        commissioner_impl.hpp
+        commissioner_impl_test.cpp
+        commissioner_safe.hpp
+        commissioner_safe_test.cpp
+        cose.hpp
+        cose_test.cpp
+        dtls.hpp
+        dtls_test.cpp
+        socket.hpp
+        socket_test.cpp
+        token_manager.hpp
+        token_manager_test.cpp
+        $<$<BOOL:${OT_COMM_APP}>:$<TARGET_OBJECTS:commissioner-app-test>>
+        $<TARGET_OBJECTS:commissioner-common-test>
     )
 
     target_link_libraries(commissioner-test
@@ -168,7 +161,6 @@ if (OT_COMM_TEST)
             Catch2::Catch2
             $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
             $<$<BOOL:${OT_COMM_CCM}>:cose>
-            mdns
             mbedtls
             mbedx509
             mbedcrypto

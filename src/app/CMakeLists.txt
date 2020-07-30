@@ -26,20 +26,17 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-app)
-
-target_sources(commissioner-app
-    PRIVATE
-        commissioner_app.cpp
-        commissioner_app.hpp
-        border_agent.cpp
-        border_agent.hpp
-        file_logger.cpp
-        file_logger.hpp
-        file_util.cpp
-        file_util.hpp
-        json.cpp
-        json.hpp
+add_library(commissioner-app
+    commissioner_app.cpp
+    commissioner_app.hpp
+    border_agent.cpp
+    border_agent.hpp
+    file_logger.cpp
+    file_logger.hpp
+    file_util.cpp
+    file_util.hpp
+    json.cpp
+    json.hpp
 )
 
 target_link_libraries(commissioner-app
@@ -70,25 +67,18 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 if (OT_COMM_TEST)
-    add_library(commissioner-app-test OBJECT)
-
-    target_sources(commissioner-app-test
-        PRIVATE
-            commissioner_app.hpp
-            commissioner_app_test.cpp
-            json.hpp
-            json_test.cpp
+    add_library(commissioner-app-test OBJECT
+        commissioner_app.hpp
+        commissioner_app_test.cpp
+        json.hpp
+        json_test.cpp
     )
 
     target_include_directories(commissioner-app-test
         PRIVATE
+            ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/src
-    )
-
-    target_link_libraries(commissioner-app-test
-        PRIVATE
-            Catch2::Catch2
-            commissioner-app
+            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
     )
 endif()
 

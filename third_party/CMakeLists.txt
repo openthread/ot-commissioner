@@ -26,7 +26,9 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_subdirectory(Catch2/repo)
+if (OT_COMM_TEST)
+    add_subdirectory(Catch2/repo)
+endif()
 
 if (OT_COMM_CCM)
     set(CN_CBOR_FATAL_WARNINGS OFF CACHE BOOL "Disable -Werror and /W4")
@@ -38,9 +40,15 @@ if (OT_COMM_CCM)
 endif()
 
 add_subdirectory(fmtlib/repo)
-add_subdirectory(json/repo)
+
+if (OT_COMM_APP)
+    add_subdirectory(json/repo)
+endif()
 
 add_subdirectory(libevent)
 
 add_subdirectory(mbedtls)
-add_subdirectory(mdns/repo)
+
+if (OT_COMM_APP)
+    add_subdirectory(mdns/repo)
+endif()
