@@ -147,6 +147,7 @@ stop_commissioner() {
 send_command_to_commissioner() {
     set -e
     local command=$1
+    local expect_error=$2
     local result
     result=$(${COMMISSIONER_CTL} execute "${command}")
 
