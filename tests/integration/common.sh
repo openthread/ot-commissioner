@@ -53,8 +53,8 @@ readonly COMMISSIONER_CTL=/usr/local/bin/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
 readonly COMMISSIONER_LOG=./commissioner.log
 
-readonly CCM_TOKEN=/usr/local/etc/commissioner/token.hex
-readonly CCM_CA_CERT=/usr/local/etc/commissioner/trust-anchor.pem
+readonly CCM_TOKEN=/usr/local/etc/commissioner/credentials/token.hex
+readonly CCM_CA_CERT=/usr/local/etc/commissioner/credentials/trust-anchor.pem
 readonly NON_CCM_CONFIG=/usr/local/etc/commissioner/non-ccm-config.json
 
 readonly JOINER_NODE_ID=2

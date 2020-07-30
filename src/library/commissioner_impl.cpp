@@ -796,15 +796,27 @@ void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
+#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
 {
-#if OT_COMM_CONFIG_CCM_ENABLE
+    Error error;
+
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtReenroll);
+
+exit:
+    if (error != ERROR_NONE)
+    {
+        aHandler(error);
+    }
+}
 #else
+void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
+{
     (void)aDstAddr;
     aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-#endif
 }
+#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
 {
@@ -1921,6 +1933,8 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         aHandler(HandleStateResponse(aResponse, aError));
     };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     SuccessOrExit(error = dstAddr.Set(aDstAddr));
 
