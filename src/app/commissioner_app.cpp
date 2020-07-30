@@ -883,15 +883,7 @@ exit:
 
 Error CommissionerApp::Reenroll(const std::string &aDstAddr)
 {
-    Error error;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
-
-    SuccessOrExit(error = mCommissioner->CommandReenroll(aDstAddr));
-
-exit:
-    return error;
+    return mCommissioner->CommandReenroll(aDstAddr);
 }
 
 Error CommissionerApp::DomainReset(const std::string &aDstAddr)
