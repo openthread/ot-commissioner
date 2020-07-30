@@ -139,7 +139,11 @@ stop_commissioner() {
 }
 
 ## Send command to commissioner.
-## Args: $1: the command.
+## Args:
+##   $1: the command.
+##   $2: the expected error (optional). The command
+##       is expected to success if this argument is
+##       not specified.
 send_command_to_commissioner() {
     set -e
     local command=$1
@@ -149,7 +153,11 @@ send_command_to_commissioner() {
     echo "${result}"
     [ -n "${result}" ] || return 1
 
-    echo "${result}" | grep -q "\[done\]" || return 1
+    if [ -z "${expect_error}" ]; then
+        echo "${result}" | grep -q "\[done\]" || return 1
+    else
+        echo "${result}" | grep -q "${expect_error}" || return 1
+    fi
 }
 
 ## Start a joiner
