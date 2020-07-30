@@ -53,7 +53,9 @@ readonly COMMISSIONER_CTL=/usr/local/bin/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
 readonly COMMISSIONER_LOG=./commissioner.log
 
-readonly NON_CCM_CONFIG=${TEST_ROOT_DIR}/../../src/app/etc/commissioner/non-ccm-config.json
+readonly CCM_TOKEN=/usr/local/etc/commissioner/token.hex
+readonly CCM_CA_CERT=/usr/local/etc/commissioner/trust-anchor.pem
+readonly NON_CCM_CONFIG=/usr/local/etc/commissioner/non-ccm-config.json
 
 readonly JOINER_NODE_ID=2
 readonly JOINER_EUI64=0x18b4300000000002
@@ -132,6 +134,7 @@ init_commissioner() {
 ## Stop commissioner
 stop_commissioner() {
     set -e
+    send_command_to_commissioner "stop"
     ${COMMISSIONER_CTL} exit || true
 }
 
