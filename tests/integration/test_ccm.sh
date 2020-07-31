@@ -51,13 +51,15 @@ test_ccm_bbr_dataset()
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
-    send_command_to_commissioner "bbrdataset get trihostname" "UNIMPLEMENTED"
     send_command_to_commissioner "bbrdataset set trihostname [fdaa:bb::de6]" "UNIMPLEMENTED"
-    send_command_to_commissioner "bbrdataset get reghostname" "UNIMPLEMENTED"
     send_command_to_commissioner "bbrdataset set reghostname [fdaa:bb::de6]" "UNIMPLEMENTED"
-    send_command_to_commissioner "bbrdataset get regaddr" "UNIMPLEMENTED"
-    send_command_to_commissioner "bbrdataset get" "UNIMPLEMENTED"
     send_command_to_commissioner "bbrdataset set '{\"trihostname\":\"[fdaa:bb::de6]\"}'" "UNIMPLEMENTED"
+    send_command_to_commissioner "bbrdataset get" "UNIMPLEMENTED"
+
+    send_command_to_commissioner "bbrdataset get trihostname" "NOT_FOUND"
+    send_command_to_commissioner "bbrdataset get reghostname" "NOT_FOUND"
+    send_command_to_commissioner "bbrdataset get regaddr" "NOT_FOUND"
+
     send_command_to_commissioner "bbrdataset invalid-command" "INVALID_COMMAND"
 
     stop_commissioner
