@@ -780,9 +780,6 @@ Error CommissionerApp::GetTriHostname(std::string &aHostname) const
 {
     Error error;
 
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
-
     VerifyOrExit(mBbrDataset.mPresentFlags & BbrDataset::kTriHostnameBit,
                  error = ERROR_NOT_FOUND("cannot find valid TRI Hostname in BBR Dataset"));
     aHostname = mBbrDataset.mTriHostname;
@@ -795,9 +792,6 @@ Error CommissionerApp::SetTriHostname(const std::string &aHostname)
 {
     Error      error;
     BbrDataset bbrDataset;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
 
     bbrDataset.mTriHostname = aHostname;
     bbrDataset.mPresentFlags |= BbrDataset::kTriHostnameBit;
@@ -814,9 +808,6 @@ Error CommissionerApp::GetRegistrarHostname(std::string &aHostname) const
 {
     Error error;
 
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
-
     VerifyOrExit(mBbrDataset.mPresentFlags & BbrDataset::kRegistrarHostnameBit,
                  error = ERROR_NOT_FOUND("cannot find valid Registrar Hostname in BBR Dataset"));
     aHostname = mBbrDataset.mRegistrarHostname;
@@ -829,9 +820,6 @@ Error CommissionerApp::SetRegistrarHostname(const std::string &aHostname)
 {
     Error      error;
     BbrDataset bbrDataset;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
 
     bbrDataset.mRegistrarHostname = aHostname;
     bbrDataset.mPresentFlags |= BbrDataset::kRegistrarHostnameBit;
@@ -847,9 +835,6 @@ exit:
 Error CommissionerApp::GetRegistrarIpv6Addr(std::string &aIpv6Addr) const
 {
     Error error;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
 
     VerifyOrExit(mBbrDataset.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit,
                  error = ERROR_NOT_FOUND("cannot find valid Registrar IPv6 Address in BBR Dataset"));
