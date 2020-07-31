@@ -126,26 +126,6 @@ public:
     void  SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset) override;
     Error SetPendingDataset(const PendingOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
-    void  SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                  const std::string &              aPbbrAddr,
-                                  uint32_t                         aMaxRetrievalTimer,
-                                  const PendingOperationalDataset &aDataset) override;
-    Error SetSecurePendingDataset(const std::string &, uint32_t, const PendingOperationalDataset &) override
-    {
-        return ERROR_UNIMPLEMENTED("");
-    }
-
-    void  CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr) override;
-    Error CommandReenroll(const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
-
-    void  CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr) override;
-    Error CommandDomainReset(const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
-
-    void  CommandMigrate(ErrorHandler       aHandler,
-                         const std::string &aDstAddr,
-                         const std::string &aDstNetworkName) override;
-    Error CommandMigrate(const std::string &, const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
-
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
                                     const std::string &             aPbbrAddr,
                                     const std::vector<std::string> &aMulticastAddrList,
@@ -178,6 +158,28 @@ public:
     {
         return ERROR_UNIMPLEMENTED("");
     }
+
+    // Commercial Commissioning features.
+
+    void  SetSecurePendingDataset(ErrorHandler                     aHandler,
+                                  const std::string &              aPbbrAddr,
+                                  uint32_t                         aMaxRetrievalTimer,
+                                  const PendingOperationalDataset &aDataset) override;
+    Error SetSecurePendingDataset(const std::string &, uint32_t, const PendingOperationalDataset &) override
+    {
+        return ERROR_UNIMPLEMENTED("");
+    }
+
+    void  CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr) override;
+    Error CommandReenroll(const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
+
+    void  CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr) override;
+    Error CommandDomainReset(const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
+
+    void  CommandMigrate(ErrorHandler       aHandler,
+                         const std::string &aDstAddr,
+                         const std::string &aDstNetworkName) override;
+    Error CommandMigrate(const std::string &, const std::string &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }

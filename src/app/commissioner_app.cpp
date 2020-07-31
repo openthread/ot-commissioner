@@ -888,28 +888,12 @@ Error CommissionerApp::Reenroll(const std::string &aDstAddr)
 
 Error CommissionerApp::DomainReset(const std::string &aDstAddr)
 {
-    Error error;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
-
-    SuccessOrExit(error = mCommissioner->CommandDomainReset(aDstAddr));
-
-exit:
-    return error;
+    return mCommissioner->CommandDomainReset(aDstAddr);
 }
 
 Error CommissionerApp::Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork)
 {
-    Error error;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
-
-    SuccessOrExit(error = mCommissioner->CommandMigrate(aDstAddr, aDesignatedNetwork));
-
-exit:
-    return error;
+    return mCommissioner->CommandMigrate(aDstAddr, aDesignatedNetwork);
 }
 
 Error CommissionerApp::RegisterMulticastListener(const std::vector<std::string> &aMulticastAddrList, Seconds aTimeout)

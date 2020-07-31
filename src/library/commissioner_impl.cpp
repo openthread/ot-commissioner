@@ -783,25 +783,13 @@ exit:
         aHandler(error);
     }
 }
-#else
-void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
-                                               uint32_t                         aMaxRetrievalTimer,
-                                               const PendingOperationalDataset &aDataset)
-{
-    (void)aPbbrAddr;
-    (void)aMaxRetrievalTimer;
-    (void)aDataset;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
 
-#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
 {
     Error error;
 
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("the commissioner is not in CCM Mode"));
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("en-enroll a device is not in CCM Mode"));
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtReenroll);
 
 exit:
@@ -810,25 +798,22 @@ exit:
         aHandler(error);
     }
 }
-#else
-void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
-{
-    (void)aDstAddr;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
 {
-#if OT_COMM_CONFIG_CCM_ENABLE
+    Error error;
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("resetting a device is not in CCM Mode"));
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtDomainReset);
-#else
-    (void)aDstAddr;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-#endif
+
+exit:
+    if (error != ERROR_NONE)
+    {
+        aHandler(error);
+    }
 }
 
-#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
                                       const std::string &aDstAddr,
                                       const std::string &aDstNetworkName)
@@ -858,6 +843,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
         aHandler(error);
     };
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("Migrating a Device is only valid in CCM Mode"));
 
     SuccessOrExit(error = dstAddr.Set(aDstAddr));
@@ -884,7 +870,53 @@ exit:
         aHandler(error);
     }
 }
+
+void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
+{
+    if (!IsCcmMode())
+    {
+        aHandler(nullptr, ERROR_INVALID_STATE("requesting COM_TOK is only valid in CCM Mode"));
+    }
+    else
+    {
+        mTokenManager.RequestToken(aHandler, aAddr, aPort);
+    }
+}
+
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+{
+    Error error;
+
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
+    error = mTokenManager.SetToken(aSignedToken, aSignerCert);
+
+exit:
+    return error;
+}
 #else
+void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
+                                               const std::string &              aPbbrAddr,
+                                               uint32_t                         aMaxRetrievalTimer,
+                                               const PendingOperationalDataset &aDataset)
+{
+    (void)aPbbrAddr;
+    (void)aMaxRetrievalTimer;
+    (void)aDataset;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
+{
+    (void)aDstAddr;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
+{
+    (void)aDstAddr;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
 void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
                                       const std::string &aDstAddr,
                                       const std::string &aDstNetworkName)
@@ -892,6 +924,20 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
     (void)aDstAddr;
     (void)aDstNetworkName;
     aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
+{
+    (void)aAddr;
+    (void)aPort;
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+{
+    (void)aSignedToken;
+    (void)aSignerCert;
+    return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -1127,47 +1173,6 @@ exit:
         aHandler(error);
     }
 }
-
-#if OT_COMM_CONFIG_CCM_ENABLE
-void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
-{
-    if (!IsCcmMode())
-    {
-        aHandler(nullptr, ERROR_INVALID_STATE("requesting COM_TOK is only valid in CCM Mode"));
-    }
-    else
-    {
-        mTokenManager.RequestToken(aHandler, aAddr, aPort);
-    }
-}
-#else
-void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
-{
-    (void)aAddr;
-    (void)aPort;
-    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
-
-#if OT_COMM_CONFIG_CCM_ENABLE
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
-{
-    Error error;
-
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
-    error = mTokenManager.SetToken(aSignedToken, aSignerCert);
-
-exit:
-    return error;
-}
-#else
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
-{
-    (void)aSignedToken;
-    (void)aSignerCert;
-    return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 {
@@ -1933,8 +1938,6 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         aHandler(HandleStateResponse(aResponse, aError));
     };
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     SuccessOrExit(error = dstAddr.Set(aDstAddr));
 
