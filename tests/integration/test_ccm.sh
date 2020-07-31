@@ -71,7 +71,6 @@ test_ccm_reenroll()
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
     send_command_to_commissioner "reenroll fdde:ad00:beef:0:0:ff:fe00:fc00" "UNIMPLEMENTED"
-    send_command_to_commissioner "reenroll invalid-command" "INVALID_COMMAND"
 
     stop_commissioner
 }
@@ -84,7 +83,6 @@ test_ccm_domainreset()
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
     send_command_to_commissioner "domainreset fdde:ad00:beef:0:0:ff:fe00:fc00" "UNIMPLEMENTED"
-    send_command_to_commissioner "domainreset invalid-command" "INVALID_COMMAND"
 
     stop_commissioner
 }
@@ -97,7 +95,6 @@ test_ccm_migrate()
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
     send_command_to_commissioner "migrate fdde:ad00:beef:0:0:ff:fe00:fc00 second-net" "UNIMPLEMENTED"
-    send_command_to_commissioner "migrate invalid-command" "INVALID_COMMAND"
 
     stop_commissioner
 }

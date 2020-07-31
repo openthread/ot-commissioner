@@ -444,102 +444,6 @@ exit:
     }
 }
 
-#if OT_COMM_CONFIG_CCM_ENABLE
-void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
-{
-    Error error;
-
-    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
-
-    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        aHandler(HandleStateResponse(aResponse, aError));
-    };
-
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_SET.req is only valid in CCM mode"));
-    VerifyOrExit((aDataset.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit) == 0,
-                 error = ERROR_INVALID_ARGS("trying to set Registrar IPv6 Address which is read-only"));
-
-    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrSet));
-    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
-    SuccessOrExit(error = EncodeBbrDataset(request, aDataset));
-
-    if (IsCcmMode())
-    {
-        SuccessOrExit(error = SignRequest(request));
-    }
-
-    mBrClient.SendRequest(request, onResponse);
-
-    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
-
-exit:
-    if (error != ErrorCode::kNone)
-    {
-        aHandler(error);
-    }
-}
-#else
-void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
-{
-    (void)aDataset;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
-
-#if OT_COMM_CONFIG_CCM_ENABLE
-void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
-{
-    Error error;
-
-    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
-    ByteArray     datasetList = GetBbrDatasetTlvs(aDatasetFlags);
-
-    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        Error      error;
-        BbrDataset dataset;
-
-        SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_BBR_GET.rsp message"));
-
-        SuccessOrExit(error = DecodeBbrDataset(dataset, *aResponse));
-
-        aHandler(&dataset, error);
-
-    exit:
-        if (error != ErrorCode::kNone)
-        {
-            aHandler(nullptr, error);
-        }
-    };
-
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_GET.req is only valid in CCM mode"));
-
-    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrGet));
-
-    if (!datasetList.empty())
-    {
-        SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
-    }
-
-    mBrClient.SendRequest(request, onResponse);
-
-    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
-
-exit:
-    if (error != ErrorCode::kNone)
-    {
-        aHandler(nullptr, error);
-    }
-}
-#else
-void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
-{
-    (void)aDatasetFlags;
-    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
-
 void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags)
 {
     Error         error;
@@ -734,6 +638,88 @@ exit:
 }
 
 #if OT_COMM_CONFIG_CCM_ENABLE
+void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
+{
+    Error error;
+
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+
+    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        aHandler(HandleStateResponse(aResponse, aError));
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_SET.req is only valid in CCM mode"));
+    VerifyOrExit((aDataset.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit) == 0,
+                 error = ERROR_INVALID_ARGS("trying to set Registrar IPv6 Address which is read-only"));
+
+    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrSet));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
+    SuccessOrExit(error = EncodeBbrDataset(request, aDataset));
+
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+
+    mBrClient.SendRequest(request, onResponse);
+
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
+void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
+{
+    Error error;
+
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    ByteArray     datasetList = GetBbrDatasetTlvs(aDatasetFlags);
+
+    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error      error;
+        BbrDataset dataset;
+
+        SuccessOrExit(error = aError);
+        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
+                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_BBR_GET.rsp message"));
+
+        SuccessOrExit(error = DecodeBbrDataset(dataset, *aResponse));
+
+        aHandler(&dataset, error);
+
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_GET.req is only valid in CCM mode"));
+
+    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrGet));
+
+    if (!datasetList.empty())
+    {
+        SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
+    }
+
+    mBrClient.SendRequest(request, onResponse);
+
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(nullptr, error);
+    }
+}
+
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
                                                const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
@@ -894,6 +880,18 @@ exit:
     return error;
 }
 #else
+void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
+{
+    (void)aDataset;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
+{
+    (void)aDatasetFlags;
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
                                                const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
