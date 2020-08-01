@@ -226,11 +226,16 @@ public:
     Error SetBbrDataset(const BbrDataset &aDataset);
 
     /*
-     * Command APIs
+     * Commercial Commissioning features
      */
-    Error Reenroll(const std::string &aDstAddr);
-    Error DomainReset(const std::string &aDstAddr);
-    Error Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork);
+
+    Error            Reenroll(const std::string &aDstAddr);
+    Error            DomainReset(const std::string &aDstAddr);
+    Error            Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork);
+    const ByteArray &GetToken() const;
+    Error            RequestToken(const std::string &aAddr, uint16_t aPort);
+    Error            SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert);
+
     Error RegisterMulticastListener(const std::vector<std::string> &aMulticastAddrList, Seconds aTimeout);
     Error AnnounceBegin(uint32_t aChannelMask, uint8_t aCount, MilliSeconds aPeriod, const std::string &aDtsAddr);
     Error PanIdQuery(uint32_t aChannelMask, uint16_t aPanId, const std::string &aDstAddr);
@@ -243,15 +248,8 @@ public:
     const EnergyReport *   GetEnergyReport(const Address &aDstAddr) const;
     const EnergyReportMap &GetAllEnergyReports() const;
 
-    /*
-     * Others
-     */
-    // Get current domain name.
     const std::string &GetDomainName() const;
     Error              GetPrimaryBbrAddr(std::string &aAddr);
-    const ByteArray &  GetToken() const;
-    Error              RequestToken(const std::string &aAddr, uint16_t aPort);
-    Error              SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert);
 
 private:
     CommissionerApp() = default;

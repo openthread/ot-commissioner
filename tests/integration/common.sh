@@ -53,7 +53,9 @@ readonly COMMISSIONER_CTL=/usr/local/bin/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
 readonly COMMISSIONER_LOG=./commissioner.log
 
-readonly NON_CCM_CONFIG=${TEST_ROOT_DIR}/../../src/app/etc/commissioner/non-ccm-config.json
+readonly CCM_TOKEN=/usr/local/etc/commissioner/credentials/token.hex
+readonly CCM_CA_CERT=/usr/local/etc/commissioner/credentials/trust-anchor.pem
+readonly NON_CCM_CONFIG=/usr/local/etc/commissioner/non-ccm-config.json
 
 readonly JOINER_NODE_ID=2
 readonly JOINER_EUI64=0x18b4300000000002
@@ -132,21 +134,31 @@ init_commissioner() {
 ## Stop commissioner
 stop_commissioner() {
     set -e
+    send_command_to_commissioner "stop"
     ${COMMISSIONER_CTL} exit || true
 }
 
 ## Send command to commissioner.
-## Args: $1: the command.
+## Args:
+##   $1: the command.
+##   $2: the expected error (optional). The command
+##       is expected to success if this argument is
+##       not specified.
 send_command_to_commissioner() {
     set -e
     local command=$1
+    local expect_error=$2
     local result
     result=$(${COMMISSIONER_CTL} execute "${command}")
 
     echo "${result}"
     [ -n "${result}" ] || return 1
 
-    echo "${result}" | grep -q "\[done\]" || return 1
+    if [ -z "${expect_error}" ]; then
+        echo "${result}" | grep -q "\[done\]" || return 1
+    else
+        echo "${result}" | grep -q "${expect_error}" || return 1
+    fi
 }
 
 ## Start a joiner

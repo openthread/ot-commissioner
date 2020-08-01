@@ -444,102 +444,6 @@ exit:
     }
 }
 
-#if OT_COMM_CONFIG_CCM_ENABLE
-void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
-{
-    Error error;
-
-    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
-
-    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        aHandler(HandleStateResponse(aResponse, aError));
-    };
-
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_SET.req is only valid in CCM mode"));
-    VerifyOrExit((aDataset.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit) == 0,
-                 error = ERROR_INVALID_ARGS("trying to set Registrar IPv6 Address which is read-only"));
-
-    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrSet));
-    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
-    SuccessOrExit(error = EncodeBbrDataset(request, aDataset));
-
-    if (IsCcmMode())
-    {
-        SuccessOrExit(error = SignRequest(request));
-    }
-
-    mBrClient.SendRequest(request, onResponse);
-
-    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
-
-exit:
-    if (error != ErrorCode::kNone)
-    {
-        aHandler(error);
-    }
-}
-#else
-void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
-{
-    (void)aDataset;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
-
-#if OT_COMM_CONFIG_CCM_ENABLE
-void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
-{
-    Error error;
-
-    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
-    ByteArray     datasetList = GetBbrDatasetTlvs(aDatasetFlags);
-
-    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        Error      error;
-        BbrDataset dataset;
-
-        SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_BBR_GET.rsp message"));
-
-        SuccessOrExit(error = DecodeBbrDataset(dataset, *aResponse));
-
-        aHandler(&dataset, error);
-
-    exit:
-        if (error != ErrorCode::kNone)
-        {
-            aHandler(nullptr, error);
-        }
-    };
-
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_GET.req is only valid in CCM mode"));
-
-    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrGet));
-
-    if (!datasetList.empty())
-    {
-        SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
-    }
-
-    mBrClient.SendRequest(request, onResponse);
-
-    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
-
-exit:
-    if (error != ErrorCode::kNone)
-    {
-        aHandler(nullptr, error);
-    }
-}
-#else
-void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
-{
-    (void)aDatasetFlags;
-    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
-
 void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags)
 {
     Error         error;
@@ -734,6 +638,88 @@ exit:
 }
 
 #if OT_COMM_CONFIG_CCM_ENABLE
+void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
+{
+    Error error;
+
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+
+    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        aHandler(HandleStateResponse(aResponse, aError));
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_SET.req is only valid in CCM mode"));
+    VerifyOrExit((aDataset.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit) == 0,
+                 error = ERROR_INVALID_ARGS("trying to set Registrar IPv6 Address which is read-only"));
+
+    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrSet));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
+    SuccessOrExit(error = EncodeBbrDataset(request, aDataset));
+
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+
+    mBrClient.SendRequest(request, onResponse);
+
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
+void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
+{
+    Error error;
+
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    ByteArray     datasetList = GetBbrDatasetTlvs(aDatasetFlags);
+
+    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error      error;
+        BbrDataset dataset;
+
+        SuccessOrExit(error = aError);
+        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
+                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_BBR_GET.rsp message"));
+
+        SuccessOrExit(error = DecodeBbrDataset(dataset, *aResponse));
+
+        aHandler(&dataset, error);
+
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_GET.req is only valid in CCM mode"));
+
+    SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrGet));
+
+    if (!datasetList.empty())
+    {
+        SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
+    }
+
+    mBrClient.SendRequest(request, onResponse);
+
+    LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(nullptr, error);
+    }
+}
+
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
                                                const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
@@ -783,40 +769,37 @@ exit:
         aHandler(error);
     }
 }
-#else
-void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
-                                               uint32_t                         aMaxRetrievalTimer,
-                                               const PendingOperationalDataset &aDataset)
-{
-    (void)aPbbrAddr;
-    (void)aMaxRetrievalTimer;
-    (void)aDataset;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
 {
-#if OT_COMM_CONFIG_CCM_ENABLE
+    Error error;
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("en-enroll a device is not in CCM Mode"));
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtReenroll);
-#else
-    (void)aDstAddr;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-#endif
+
+exit:
+    if (error != ERROR_NONE)
+    {
+        aHandler(error);
+    }
 }
 
 void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
 {
-#if OT_COMM_CONFIG_CCM_ENABLE
+    Error error;
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("resetting a device is not in CCM Mode"));
     SendProxyMessage(aHandler, aDstAddr, uri::kMgmtDomainReset);
-#else
-    (void)aDstAddr;
-    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-#endif
+
+exit:
+    if (error != ERROR_NONE)
+    {
+        aHandler(error);
+    }
 }
 
-#if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
                                       const std::string &aDstAddr,
                                       const std::string &aDstNetworkName)
@@ -846,6 +829,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
         aHandler(error);
     };
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("Migrating a Device is only valid in CCM Mode"));
 
     SuccessOrExit(error = dstAddr.Set(aDstAddr));
@@ -872,7 +856,65 @@ exit:
         aHandler(error);
     }
 }
+
+void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
+{
+    if (!IsCcmMode())
+    {
+        aHandler(nullptr, ERROR_INVALID_STATE("requesting COM_TOK is only valid in CCM Mode"));
+    }
+    else
+    {
+        mTokenManager.RequestToken(aHandler, aAddr, aPort);
+    }
+}
+
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+{
+    Error error;
+
+    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
+    error = mTokenManager.SetToken(aSignedToken, aSignerCert);
+
+exit:
+    return error;
+}
 #else
+void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
+{
+    (void)aDataset;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags)
+{
+    (void)aDatasetFlags;
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
+                                               const std::string &              aPbbrAddr,
+                                               uint32_t                         aMaxRetrievalTimer,
+                                               const PendingOperationalDataset &aDataset)
+{
+    (void)aPbbrAddr;
+    (void)aMaxRetrievalTimer;
+    (void)aDataset;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr)
+{
+    (void)aDstAddr;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr)
+{
+    (void)aDstAddr;
+    aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
 void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
                                       const std::string &aDstAddr,
                                       const std::string &aDstNetworkName)
@@ -880,6 +922,20 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
     (void)aDstAddr;
     (void)aDstNetworkName;
     aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
+{
+    (void)aAddr;
+    (void)aPort;
+    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
+}
+
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+{
+    (void)aSignedToken;
+    (void)aSignerCert;
+    return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
@@ -1115,47 +1171,6 @@ exit:
         aHandler(error);
     }
 }
-
-#if OT_COMM_CONFIG_CCM_ENABLE
-void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
-{
-    if (!IsCcmMode())
-    {
-        aHandler(nullptr, ERROR_INVALID_STATE("requesting COM_TOK is only valid in CCM Mode"));
-    }
-    else
-    {
-        mTokenManager.RequestToken(aHandler, aAddr, aPort);
-    }
-}
-#else
-void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort)
-{
-    (void)aAddr;
-    (void)aPort;
-    aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
-
-#if OT_COMM_CONFIG_CCM_ENABLE
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
-{
-    Error error;
-
-    VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
-    error = mTokenManager.SetToken(aSignedToken, aSignerCert);
-
-exit:
-    return error;
-}
-#else
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
-{
-    (void)aSignedToken;
-    (void)aSignerCert;
-    return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
-}
-#endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::SendPetition(PetitionHandler aHandler)
 {
