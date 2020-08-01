@@ -40,7 +40,7 @@ endif()
 include(UseSWIG)
 include(UseJava)
 
-set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/io/openthread/commissioner)
+set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/io/openthread/commissioner)
 
 list(APPEND CMAKE_SWIG_FLAGS "-package;${JAVA_PACKAGE_NAME}")
 
@@ -70,3 +70,14 @@ target_compile_options(commissioner-java
 install(TARGETS commissioner-java
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
+
+## It is useful that the output directory can be configured when
+## OT commissioner is integrated with an existing Android application.
+if (OT_COMM_JAVA_BINDING_OUTDIR)
+    add_custom_command(TARGET commissioner-java POST_BUILD
+        COMMAND mkdir -p ${OT_COMM_JAVA_BINDING_OUTDIR}/io/openthread/commissioner
+        COMMAND cp io/openthread/commissioner/*.java ${OT_COMM_JAVA_BINDING_OUTDIR}/io/openthread/commissioner
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "packing generated Java source files..."
+    )
+endif()
