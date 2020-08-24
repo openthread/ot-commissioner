@@ -1510,7 +1510,8 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
         dataset.mPresentFlags |= ActiveOperationalDataset::kSecurityPolicyBit;
     }
 
-    aDataset = dataset;
+    dataset.mRawTlvs = aResponse.GetPayload();
+    aDataset         = dataset;
 
 exit:
     return error;
