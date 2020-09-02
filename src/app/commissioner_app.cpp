@@ -826,13 +826,18 @@ Error CommissionerApp::SetRegistrarHostname(const std::string &aHostname)
 {
     Error      error;
     BbrDataset bbrDataset;
+    BbrDataset bbrDatasetWithRegAddr;
 
     bbrDataset.mRegistrarHostname = aHostname;
     bbrDataset.mPresentFlags |= BbrDataset::kRegistrarHostnameBit;
 
     SuccessOrExit(error = mCommissioner->SetBbrDataset(bbrDataset));
+    SuccessOrExit(error = mCommissioner->GetBbrDataset(bbrDatasetWithRegAddr, BbrDataset::kRegistrarIpv6AddrBit));
+    VerifyOrExit(bbrDatasetWithRegAddr.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit,
+                 error = ERROR_BAD_FORMAT("cannot resolve the Registrar Hostname: {}", aHostname));
 
     MergeDataset(mBbrDataset, bbrDataset);
+    MergeDataset(mBbrDataset, bbrDatasetWithRegAddr);
 
 exit:
     return error;
