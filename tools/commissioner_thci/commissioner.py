@@ -554,6 +554,15 @@ class ICommissioner(object):
         """
         pass
 
+    @abstractmethod
+    def getCommissioningLogs(self):
+        """Get Commissioning logs
+
+        Returns:
+           Commissioning logs
+        """
+        pass
+
     class Timestamp:
         """Timestamp class in operational dataset"""
 

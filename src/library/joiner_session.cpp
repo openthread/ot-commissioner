@@ -180,6 +180,8 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
              vendorSwVersionTlv->GetValueAsString(), utils::Hex(vendorStackVersionTlv->GetValue()), provisioningUrl,
              utils::Hex(vendorData));
 
+    LOG_INFO(LOG_REGION_THCI, "session(={}) received JOIN_FIN.req: {}", utils::Hex(aJoinFin.GetPayload()));
+
     // Validation done, request commissioning by user.
     accepted = mCommImpl.mCommissionerHandler.OnJoinerFinalize(
         mJoinerId, vendorNameTlv->GetValueAsString(), vendorModelTlv->GetValueAsString(),
@@ -193,12 +195,10 @@ exit:
                  error.ToString());
     }
 
-    IgnoreError(SendJoinFinResponse(aJoinFin, accepted));
-    LOG_INFO(LOG_REGION_JOINER_SESSION, "session(={}) sent JOIN_FIN.rsp: accepted={}", static_cast<void *>(this),
-             accepted);
+    SendJoinFinResponse(aJoinFin, accepted);
 }
 
-Error JoinerSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
+void JoinerSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept)
 {
     Error          error;
     coap::Response joinFin{coap::Type::kAcknowledgment, coap::Code::kChanged};
@@ -207,8 +207,16 @@ Error JoinerSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool 
     joinFin.SetSubType(MessageSubType::kJoinFinResponse);
     SuccessOrExit(error = mCoap.SendResponse(aJoinFinReq, joinFin));
 
+    LOG_INFO(LOG_REGION_JOINER_SESSION, "session(={}) sent JOIN_FIN.rsp: accepted={}", static_cast<void *>(this),
+             aAccept);
+
+    LOG_INFO(LOG_REGION_THCI, "session(={}) sent JOIN_FIN.rsp: {}", utils::Hex(joinFin.GetPayload()));
+
 exit:
-    return error;
+    if (error != ErrorCode::kNone)
+    {
+        LOG_WARN(LOG_REGION_JOINER_SESSION, "session(={}) sent JOIN_FIN.rsp failed: %s", error.ToString());
+    }
 }
 
 JoinerSession::RelaySocket::RelaySocket(JoinerSession &aJoinerSession,
