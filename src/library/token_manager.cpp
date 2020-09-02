@@ -380,9 +380,12 @@ Error TokenManager::PrepareSigningContent(ByteArray &aContent, const coap::Messa
     isActiveSet  = signingUri == uri::kMgmtActiveSet;
     isPendingSet = signingUri == uri::kMgmtPendingSet;
 
-    if (signingUri == uri::kPetitioning) {
+    if (signingUri == uri::kPetitioning)
+    {
         signingUri = uri::kLeaderPetitioning;
-    } else if (signingUri == uri::kKeepAlive) {
+    }
+    else if (signingUri == uri::kKeepAlive)
+    {
         signingUri = uri::kLeaderKeepAlive;
     }
 

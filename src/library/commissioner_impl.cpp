@@ -1362,7 +1362,7 @@ Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Err
     if (stateTlv != nullptr)
     {
         VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
-                    error = ERROR_REJECTED("the request was rejected by peer"));
+                     error = ERROR_REJECTED("the request was rejected by peer"));
     }
 
 exit:
