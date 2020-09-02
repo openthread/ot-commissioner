@@ -827,24 +827,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        Error error;
-
-        SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
-
-        if (!aResponse->GetPayload().empty())
-        {
-            auto stateTlv = GetTlv(tlv::Type::kState, *aResponse);
-            VerifyOrExit(stateTlv != nullptr, error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
-            VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
-                         error = ERROR_REJECTED("request was rejected by peer"));
-        }
-
-    exit:
-        aHandler(error);
+        aHandler(HandleStateResponse(aResponse, aError, /* aStateTlvIsMandatory */ false));
     };
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
@@ -1363,7 +1346,7 @@ tlv::TlvPtr GetTlv(tlv::Type aTlvType, const coap::Message &aMessage, tlv::Scope
     return tlv::GetTlv(aTlvType, aMessage.GetPayload(), aScope);
 }
 
-Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Error aError)
+Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory)
 {
     Error       error;
     tlv::TlvPtr stateTlv = nullptr;
@@ -1373,10 +1356,14 @@ Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Err
                  error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
     VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
                  error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
-    VerifyOrExit((stateTlv = GetTlv(tlv::Type::kState, *aResponse)) != nullptr,
+    stateTlv = GetTlv(tlv::Type::kState, *aResponse);
+    VerifyOrExit((stateTlv != nullptr || !aStateTlvIsMandatory),
                  error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
-    VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
-                 error = ERROR_REJECTED("the request was rejected by peer"));
+    if (stateTlv != nullptr)
+    {
+        VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
+                    error = ERROR_REJECTED("the request was rejected by peer"));
+    }
 
 exit:
     return error;
@@ -1952,7 +1939,7 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        aHandler(HandleStateResponse(aResponse, aError));
+        aHandler(HandleStateResponse(aResponse, aError, /* aStateTlvIsMandatory */ false));
     };
 
     SuccessOrExit(error = dstAddr.Set(aDstAddr));

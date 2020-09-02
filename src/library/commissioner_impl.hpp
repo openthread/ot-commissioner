@@ -197,7 +197,7 @@ private:
     static Error ValidateConfig(const Config &aConfig);
     void         LoggingConfig();
 
-    static Error HandleStateResponse(const coap::Response *aResponse, Error aError);
+    static Error HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory=true);
 
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);
     static ByteArray GetPendingOperationalDatasetTlvs(uint16_t aDatasetFlags);
