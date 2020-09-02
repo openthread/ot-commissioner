@@ -406,7 +406,8 @@ class OTCommissioner(ICommissioner):
 
     def getCommissioningLogs(self):
         processed_logs = []
-        thci_logs = self._command("grep \"\\[ thci \\]\" {}".format(self.log_file))
+        thci_logs = self._command("grep \"\\[ thci \\]\" {}".format(
+            self.log_file))
         for log in thci_logs:
             encrypted_packet = PlatformDiagnosticPacket()
             if "JOIN_FIN.req:" in log:
@@ -415,16 +416,19 @@ class OTCommissioner(ICommissioner):
                 encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.IN
                 encrypted_packet.Type = PlatformDiagnosticPacket_Type.JOIN_FIN_req
                 encrypted_packet.TLVsLength = len(payload)
-                encrypted_packet.TLVs = PlatformPackets.read(encrypted_packet.Type, payload)
+                encrypted_packet.TLVs = PlatformPackets.read(
+                    encrypted_packet.Type, payload)
             elif "JOIN_FIN.rsp:" in log:
                 hex_value = encrypted_packet.split("JOIN_FIN.rsp:")[-1].strip()
                 payload = list(bytearray.fromhex(hex_value))
                 encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.OUT
                 encrypted_packet.Type = PlatformDiagnosticPacket_Type.JOIN_FIN_rsp
                 encrypted_packet.TLVsLength = len(payload)
-                encrypted_packet.TLVs = PlatformPackets.read(encrypted_packet.Type, payload)
+                encrypted_packet.TLVs = PlatformPackets.read(
+                    encrypted_packet.Type, payload)
             else:
-                raise commissioner.Error("bad commissioner thci log: {}".format(log))
+                raise commissioner.Error(
+                    "bad commissioner thci log: {}".format(log))
             processed_logs.append(encrypted_packet)
         return processed_logs
 
