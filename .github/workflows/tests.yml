@@ -47,6 +47,7 @@ jobs:
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
                 -DOT_COMM_COVERAGE=ON             \
+                -DOT_COMM_COMMISSIONING_LOG=ON    \
                 -DOT_COMM_CCM=OFF                 \
                 ..
           ninja

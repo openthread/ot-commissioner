@@ -180,8 +180,10 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
              vendorSwVersionTlv->GetValueAsString(), utils::Hex(vendorStackVersionTlv->GetValue()), provisioningUrl,
              utils::Hex(vendorData));
 
+#if OT_COMM_CONFIG_COMMISSIONING_LOG_ENABLE
     LOG_INFO(LOG_REGION_THCI, "session(={}) received JOIN_FIN.req: {}", static_cast<void *>(this),
              utils::Hex(aJoinFin.GetPayload()));
+#endif
 
     // Validation done, request commissioning by user.
     accepted = mCommImpl.mCommissionerHandler.OnJoinerFinalize(
@@ -211,8 +213,10 @@ void JoinerSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool a
     LOG_INFO(LOG_REGION_JOINER_SESSION, "session(={}) sent JOIN_FIN.rsp: accepted={}", static_cast<void *>(this),
              aAccept);
 
+#if OT_COMM_CONFIG_COMMISSIONING_LOG_ENABLE
     LOG_INFO(LOG_REGION_THCI, "session(={}) sent JOIN_FIN.rsp: {}", static_cast<void *>(this),
              utils::Hex(joinFin.GetPayload()));
+#endif
 
 exit:
     if (error != ErrorCode::kNone)
