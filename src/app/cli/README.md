@@ -2,10 +2,6 @@
 
 Use the OT Commissioner CLI to configure and manage OT Commissioner.
 
-## Build & Configuration
-
-Please follow the guide at https://openthread.google.cn/guides/commissioner/build to build and configure OT Commissioner.
-
 ## Commands
 
 Type `help` to get a command list:
