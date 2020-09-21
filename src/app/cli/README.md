@@ -8,8 +8,10 @@ Use the OT Commissioner CLI to configure and manage OT Commissioner.
 ot-commissioner $ ./script/bootstrap.sh
 ot-commissioner $ mkdir build && cd build
 build $ cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
-build $ ninja -j16
+build $ ninja
 ```
+
+_Note: For Raspberry Pi, please build with `ninja -j1` to avoid memory exhaustion._
 
 ## Configuration
 
