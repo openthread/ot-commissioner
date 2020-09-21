@@ -31,7 +31,7 @@ To learn more about OpenThread, visit [openthread.io](https://openthread.io).
 
 ## Getting started
 
-See [OT Commissioner guides](https://openthread.io/guides/commissioner) to get started. Reference to [OT Commissioner CLI document](src/app/cli/README.md) for all CLI commands.
+See [OT Commissioner guide](https://openthread.io/guides/commissioner) to get started. Reference to [OT Commissioner CLI documentation](src/app/cli/README.md) for all CLI commands.
 
 ## Contributing
 
