@@ -117,6 +117,9 @@ public:
     void  GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetActiveDataset(ActiveOperationalDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
+    void  GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags) override;
+    Error GetRawActiveDataset(ByteArray &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
+
     void  SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aActiveDataset) override;
     Error SetActiveDataset(const ActiveOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
@@ -199,7 +202,7 @@ private:
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);
     static ByteArray GetPendingOperationalDatasetTlvs(uint16_t aDatasetFlags);
 
-    static Error DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const coap::Response &aResponse);
+    static Error DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload);
     static Error DecodePendingOperationalDataset(PendingOperationalDataset &aDataset, const coap::Response &aResponse);
     static Error DecodeChannelMask(ChannelMask &aChannelMask, const ByteArray &aBuf);
     static Error EncodeActiveOperationalDataset(coap::Request &aRequest, const ActiveOperationalDataset &aDataset);

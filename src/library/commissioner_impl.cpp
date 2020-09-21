@@ -446,23 +446,40 @@ exit:
 
 void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags)
 {
+    auto rawDatasetHandler = [aHandler](const ByteArray *aRawDataset, Error aError) {
+        Error                    error;
+        ActiveOperationalDataset dataset;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, *aRawDataset));
+        VerifyOrExit(dataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit,
+                     error = ERROR_BAD_FORMAT("Active Timestamp is not included in MGMT_ACTIVE_GET.rsp"));
+
+        aHandler(&dataset, error);
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+
+    GetRawActiveDataset(rawDatasetHandler, aDatasetFlags);
+}
+
+void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags)
+{
     Error         error;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
     ByteArray     datasetList = GetActiveOperationalDatasetTlvs(aDatasetFlags);
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        Error                    error;
-        ActiveOperationalDataset dataset;
+        Error error;
 
         SuccessOrExit(error = aError);
         VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
                      error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_ACTIVE_GET.rsp message"));
 
-        SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, *aResponse));
-        VerifyOrExit(dataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit,
-                     error = ERROR_BAD_FORMAT("Active Timestamp is not included in MGMT_ACTIVE_GET.rsp"));
-
-        aHandler(&dataset, error);
+        aHandler(&aResponse->GetPayload(), error);
 
     exit:
         if (error != ErrorCode::kNone)
@@ -1432,8 +1449,7 @@ ByteArray CommissionerImpl::GetPendingOperationalDatasetTlvs(uint16_t aDatasetFl
     return tlvTypes;
 }
 
-Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset,
-                                                       const coap::Response &    aResponse)
+Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload)
 {
     Error                    error;
     tlv::TlvSet              tlvSet;
@@ -1442,7 +1458,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
     // Clear all data fields
     dataset.mPresentFlags = 0;
 
-    SuccessOrExit(error = GetTlvSet(tlvSet, aResponse));
+    SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload));
 
     if (auto activeTimeStamp = tlvSet[tlv::Type::kActiveTimestamp])
     {
@@ -1510,8 +1526,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
         dataset.mPresentFlags |= ActiveOperationalDataset::kSecurityPolicyBit;
     }
 
-    dataset.mRawTlvs = aResponse.GetPayload();
-    aDataset         = dataset;
+    aDataset = dataset;
 
 exit:
     return error;
@@ -1527,7 +1542,7 @@ Error CommissionerImpl::DecodePendingOperationalDataset(PendingOperationalDatase
     // Clear all data fields
     dataset.mPresentFlags = 0;
 
-    SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, aResponse));
+    SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, aResponse.GetPayload()));
     SuccessOrExit(error = GetTlvSet(tlvSet, aResponse));
 
     if (auto delayTimer = tlvSet[tlv::Type::kDelayTimer])

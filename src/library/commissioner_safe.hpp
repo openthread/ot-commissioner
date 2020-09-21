@@ -118,6 +118,9 @@ public:
     void  GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetActiveDataset(ActiveOperationalDataset &aDataset, uint16_t aDatasetFlags) override;
 
+    void  GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags) override;
+    Error GetRawActiveDataset(ByteArray &aRawDataset, uint16_t aDatasetFlags) override;
+
     void  SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aDataset) override;
     Error SetActiveDataset(const ActiveOperationalDataset &aDataset) override;
 

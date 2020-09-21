@@ -219,14 +219,6 @@ struct ActiveOperationalDataset
     SecurityPolicy mSecurityPolicy;
 
     /**
-     * The raw bytes represent the original Active Operational Dataset in Thread
-     * Network Data.
-     *
-     * This fields should be read-only.
-     */
-    ByteArray mRawTlvs;
-
-    /**
      * Indicates which fields are included in the dataset.
      */
     uint16_t mPresentFlags;
