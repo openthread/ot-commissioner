@@ -641,7 +641,7 @@ public:
      * It always returns immediately without waiting for the completion.
      *
      * @param[in, out] aHandler       A handler of the response and errors; Guaranteed to be called.
-     * @param[in]      aDatasetFlags  Active Operational Dataset flags indicate which TLVs are wanted.
+     * @param[in]      aDatasetFlags  Active Operational Dataset flags indicating which TLVs are wanted.
      */
     virtual void GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags) = 0;
 
