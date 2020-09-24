@@ -2,38 +2,6 @@
 
 Use the OT Commissioner CLI to configure and manage OT Commissioner.
 
-## Build
-
-```shell
-ot-commissioner $ ./script/bootstrap.sh
-ot-commissioner $ mkdir build && cd build
-build $ cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
-build $ ninja -j16
-```
-
-## Configuration
-
-OT Commissioner requires a JSON configuration file. There are two configuration templates to choose from:
-
-- Commercial Commissioning Mode (CCM) — [src/app/etc/commissioner/ccm-config.json](../etc/commissioner/ccm-config.json)
-- Non-CCM — [src/app/etc/commissioner/non-ccm-config.json](../etc/commissioner/non-ccm-config.json)
-
-Make a copy of your desired configuration file and modify it as needed for your system.
-
-For the CCM configuration file, you need to change `DomainName` to the Thread domain you want to connect to. You also need to change `PrivateKeyFile`, `CertificateFile` and `TrustAnchorFile` to credentials you are going to use (default credentials are available in [src/app/etc/commissioner/credentials](../etc/commissioner/credentials) for testing).
-
-For the non-CCM configuration file, you need to set `PSKc`.
-
-## Start
-
-When started, the CLI enters an interactive mode and waits for user commands.
-
-```shell
-## Example of starting a non-CCM Commissioner.
-build $ ./src/app/cli/commissioner-cli ../src/app/etc/commissioner/non-ccm-config.json
->
-```
-
 ## Commands
 
 Type `help` to get a command list:
