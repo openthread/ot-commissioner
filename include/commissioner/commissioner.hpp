@@ -650,7 +650,7 @@ public:
      *
      * Get the uninterpreted Active Operational Dataset in MGMT_ACTIVE_GET.rsp.
      *
-     * This method request Active Operational Dataset of the Thread network
+     * This method requests Active Operational Dataset of the Thread network
      * by sending MGMT_ACTIVE_GET.req message.
      * It will not return until errors happened, timeouted or succeed.
      *
