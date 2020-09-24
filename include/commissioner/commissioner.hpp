@@ -632,6 +632,36 @@ public:
     virtual Error GetActiveDataset(ActiveOperationalDataset &aDataset, uint16_t aDatasetFlags) = 0;
 
     /**
+     * @brief Asynchronously get the raw Active Operational Dataset as a binary blob (in format of Thread TLV).
+     *
+     * Get the uninterpreted Active Operational Dataset in MGMT_ACTIVE_GET.rsp.
+     *
+     * This method requests Active Operational Dataset of the Thread network
+     * by sending MGMT_ACTIVE_GET.req message.
+     * It always returns immediately without waiting for the completion.
+     *
+     * @param[in, out] aHandler       A handler of the response and errors; Guaranteed to be called.
+     * @param[in]      aDatasetFlags  Active Operational Dataset flags indicating which TLVs are wanted.
+     */
+    virtual void GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags) = 0;
+
+    /**
+     * @brief Synchronously get the raw Active Operational Dataset as a binary blob (in format of Thread TLV).
+     *
+     * Get the uninterpreted Active Operational Dataset in MGMT_ACTIVE_GET.rsp.
+     *
+     * This method requests Active Operational Dataset of the Thread network
+     * by sending MGMT_ACTIVE_GET.req message.
+     * It will not return until errors happened, timeouted or succeed.
+     *
+     * @param[out] aDataset       A Active Operational Dataset returned by the leader.
+     * @param[in]  aDatasetFlags  Active Operational Dataset flags indicate which TLVs are wanted.
+     *
+     * @return Error::kNone, succeed; otherwise, failed;
+     */
+    virtual Error GetRawActiveDataset(ByteArray &aRawDataset, uint16_t aDatasetFlags) = 0;
+
+    /**
      * @brief Asynchronously set the Active Operational Dataset.
      *
      * This method set Active Operational Dataset of the Thread network
