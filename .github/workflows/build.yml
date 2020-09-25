@@ -166,13 +166,25 @@ jobs:
           ninja
 
   java-binding:
-    runs-on: macos-10.15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-10.15, ubuntu-18.04]
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
         run: |
           script/bootstrap.sh
-          brew install swig@4
+      - if: matrix.os == 'ubuntu-18.04'
+        name: Remove SWIG 3.0
+        run: |
+          which swig
+          swig -version
+          sudo rm -rf /usr/bin/swig
+          sudo rm -rf /usr/bin/swig3.0
+      - name: Install SWIG 4.0
+        run: |
+          script/install-swig-4.0.sh
       - name: Build
         run: |
           mkdir build && cd build
