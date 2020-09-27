@@ -113,6 +113,7 @@ namespace commissioner {
     %ignore Commissioner::SetCommissionerDataset(ErrorHandler aHandler, const CommissionerDataset &aDataset);
     %ignore Commissioner::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset);
     %ignore Commissioner::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDatasetFlags);
+    %ignore Commissioner::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags);
     %ignore Commissioner::GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags);
     %ignore Commissioner::SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aActiveDataset);
     %ignore Commissioner::GetPendingDataset(Handler<PendingOperationalDataset> aHandler, uint16_t aDatasetFlags);
