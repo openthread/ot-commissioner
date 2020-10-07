@@ -41,16 +41,13 @@ jobs:
         if: "github.ref != 'refs/heads/master'"
 
   pretty:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
         run: |
           sudo apt update
-          sudo apt remove -y clang-6.0 libclang-common-6.0-dev libclang1-6.0 libllvm6.0
-          sudo apt autoremove
-          sudo apt --no-install-recommends install -y clang-tools clang-format-6.0
-          clang-format-6.0 --version
+          sudo apt --no-install-recommends install -y clang-format-10
           python3 -m pip install yapf==0.29.0
       - name: Check
         run: |
