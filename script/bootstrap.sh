@@ -66,7 +66,7 @@ if [ "$(uname)" = "Linux" ]; then
                          tcl \
                          tk \
                          expect \
-                         clang-format-6.0 \
+                         clang-format-10 \
                          cmake \
                          ninja-build \
                          python-setuptools \
@@ -92,12 +92,12 @@ elif [ "$(uname)" = "Darwin" ]; then
     brew install coreutils \
                  readline \
                  ncurses \
-                 llvm@6 \
+                 llvm@10 \
                  cmake \
                  ninja \
                  lcov && true
 
-    sudo ln -s "$(brew --prefix llvm@6)/bin/clang-format" /usr/local/bin/clang-format-6.0
+    sudo ln -s "$(brew --prefix llvm@10)/bin/clang-format" /usr/local/bin/clang-format-10
 
     ## Install latest cmake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
