@@ -406,11 +406,9 @@ class OTCommissioner(ICommissioner):
 
     def getCommissioningLogs(self):
         processed_logs = []
-        thci_logs = self._command("grep \"\\[ thci \\]\" {}".format(
-            self.log_file))
-        for log in thci_logs:
-            encrypted_packet = PlatformDiagnosticPacket()
+        for log in self._getThciLogs():
             if "JOIN_FIN.req:" in log:
+                encrypted_packet = PlatformDiagnosticPacket()
                 hex_value = encrypted_packet.split("JOIN_FIN.req:")[-1].strip()
                 payload = list(bytearray.fromhex(hex_value))
                 encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.IN
@@ -418,7 +416,9 @@ class OTCommissioner(ICommissioner):
                 encrypted_packet.TLVsLength = len(payload)
                 encrypted_packet.TLVs = PlatformPackets.read(
                     encrypted_packet.Type, payload)
+                processed_logs.append(encrypted_packet)
             elif "JOIN_FIN.rsp:" in log:
+                encrypted_packet = PlatformDiagnosticPacket()
                 hex_value = encrypted_packet.split("JOIN_FIN.rsp:")[-1].strip()
                 payload = list(bytearray.fromhex(hex_value))
                 encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.OUT
@@ -426,11 +426,14 @@ class OTCommissioner(ICommissioner):
                 encrypted_packet.TLVsLength = len(payload)
                 encrypted_packet.TLVs = PlatformPackets.read(
                     encrypted_packet.Type, payload)
-            else:
-                raise commissioner.Error(
-                    "bad commissioner thci log: {}".format(log))
-            processed_logs.append(encrypted_packet)
+                processed_logs.append(encrypted_packet)
         return processed_logs
+
+    def getMlrLogs(self):
+        return [log for log in self._getThciLogs() if "MLR.rsp" in log]
+
+    def _getThciLogs(self):
+        return self._command("grep \"\\[ thci \\]\" {}".format(self.log_file))
 
     def _execute_and_check(self, command):
         # Escape quotes for bash
