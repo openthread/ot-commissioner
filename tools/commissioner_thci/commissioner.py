@@ -561,6 +561,15 @@ class ICommissioner(object):
         """
         pass
 
+    @abstractmethod
+    def getMlrLogs(self):
+        """Get MLR logs
+
+        Returns:
+           MLR logs
+        """
+        pass
+
     class Timestamp:
         """Timestamp class in operational dataset"""
 
