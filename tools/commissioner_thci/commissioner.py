@@ -522,7 +522,7 @@ class ICommissioner(object):
         pass
 
     @abstractmethod
-    def setCOM_TOK(self, signedCOM_TOK, verifyCert):
+    def setCOM_TOK(self, signedCOM_TOK):
         """Force set the Commissioner Token.
 
         This method set the Commissioner Token to the given signed token
@@ -533,8 +533,6 @@ class ICommissioner(object):
         Args:
             signedCOM_TOK: A byte array represents the COSE_SIGN1 signed
                 Commissioner Token.
-            verifyCert: A byte array represents the PEM/DER encoded
-                certificate used to verify the signature of the token.
 
         Raises:
             Error:

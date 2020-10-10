@@ -95,7 +95,9 @@ exit:
     return error;
 }
 
-Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
+Error TokenManager::ValidateToken(CborMap &                 aToken,
+                                  const ByteArray &         aSignedToken,
+                                  const mbedtls_pk_context &aPublicKey) const
 {
     Error              error;
     cose::Sign1Message coseSign;
@@ -106,9 +108,6 @@ Error TokenManager::VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, 
     size_t             domainNameLength;
     const char *       expire;
     size_t             expireLength;
-
-    LOG_INFO(LOG_REGION_TOKEN_MANAGER, "received token, length = {}, {}", aSignedToken.size(),
-             utils::Hex(aSignedToken));
 
     VerifyOrExit(!aSignedToken.empty(), error = ERROR_INVALID_ARGS("the signed COM_TOK is empty"));
     SuccessOrExit(error = cose::Sign1Message::Deserialize(coseSign, aSignedToken));
@@ -181,7 +180,7 @@ void TokenManager::SendTokenRequest(Commissioner::Handler<ByteArray> aHandler)
             contentFormat == coap::ContentFormat::kCoseSign1,
             error = ERROR_BAD_FORMAT("CoAP Content Format requires to be application/cose; cose-type=\"cose-sign1\""));
 
-        SuccessOrExit(error = SetToken(aResponse->GetPayload(), mDomainCAPublicKey));
+        SuccessOrExit(error = SetToken(aResponse->GetPayload()));
 
     exit:
         if (error != ErrorCode::kNone)
@@ -211,54 +210,76 @@ exit:
     }
 }
 
-Error TokenManager::SetToken(const ByteArray &aSignedToken, const ByteArray &aCert)
+Error TokenManager::SetToken(const ByteArray &aSignedToken, bool aAlwaysAccept)
 {
-    Error              error;
-    mbedtls_pk_context publicKey;
+    Error error;
 
-    mbedtls_pk_init(&publicKey);
+    (void)aAlwaysAccept;
+    error = ValidateToken(aSignedToken, mDomainCAPublicKey);
 
-    // TODO(wgtdkp): verify the certificate with our trust anchor?
-    SuccessOrExit(error = ParsePublicKey(publicKey, aCert));
-    SuccessOrExit(error = SetToken(aSignedToken, publicKey));
+#if OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE
+    if (aAlwaysAccept)
+    {
+        if (error != ErrorCode::kNone)
+        {
+            LOG_WARN(LOG_REGION_TOKEN_MANAGER, "validating token failed: {}", error.ToString());
+        }
+        SuccessOrExit(error = ERROR_NONE);
+    }
+    else
+#endif
+    {
+        SuccessOrExit(error);
+    }
 
+    mSignedToken    = aSignedToken;
+    mSequenceNumber = 0;
 exit:
-    mbedtls_pk_free(&publicKey);
     return error;
 }
 
-Error TokenManager::SetToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey)
+Error TokenManager::ValidateToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey) const
 {
-    Error          error;
-    ByteArray      oldSignedToken;
-    CborMap        oldToken;
-    CborMap        cnf;
-    CborMap        coseKey;
-    const uint8_t *kid       = nullptr;
-    size_t         kidLength = 0;
+    Error     error;
+    CborMap   token;
+    ByteArray keyId;
 
-    oldSignedToken = mSignedToken;
-    mSignedToken   = aSignedToken;
-    CborValue::Move(oldToken, mToken);
-
-    // Commissioner Token as a CBOR object references to raw data in the signed Token buffer.
-    // So we need to verify on 'mSignedToken' rather than 'aSignedToken'.
-    SuccessOrExit(error = VerifyToken(mToken, mSignedToken, aPublicKey));
-    SuccessOrExit(error = mToken.Get(cwt::kCnf, cnf));
-    SuccessOrExit(error = cnf.Get(cwt::kCoseKey, coseKey));
-    SuccessOrExit(error = coseKey.Get(cose::kKeyId, kid, kidLength));
-
-    // The mSequenceNumber is always associated with mToken & mSignedToken.
-    mSequenceNumber = 0;
-    mKeyId          = {kid, kid + kidLength};
+    SuccessOrExit(error = ValidateToken(token, aSignedToken, aPublicKey));
+    SuccessOrExit(error = GetKeyId(keyId, token));
 
 exit:
-    if (error != ErrorCode::kNone)
-    {
-        mSignedToken = oldSignedToken;
-        CborValue::Move(mToken, oldToken);
-    }
+    token.Free();
+    return error;
+}
 
+Error TokenManager::GetKeyId(ByteArray &aKeyId, const CborMap &aToken) const
+{
+    Error          error;
+    CborMap        cnf;
+    CborMap        coseKey;
+    const uint8_t *keyId = nullptr;
+    size_t         keyIdLength;
+
+    SuccessOrExit(error = aToken.Get(cwt::kCnf, cnf));
+    SuccessOrExit(error = cnf.Get(cwt::kCoseKey, coseKey));
+    SuccessOrExit(error = coseKey.Get(cose::kKeyId, keyId, keyIdLength));
+
+    aKeyId = {keyId, keyId + keyIdLength};
+
+exit:
+    return error;
+}
+
+Error TokenManager::GetKeyId(ByteArray &aKeyId) const
+{
+    Error   error;
+    CborMap token;
+
+    SuccessOrExit(error = ValidateToken(token, mSignedToken, mDomainCAPublicKey));
+    SuccessOrExit(error = GetKeyId(aKeyId, token));
+
+exit:
+    token.Free();
     return error;
 }
 
@@ -337,14 +358,14 @@ Error TokenManager::SignMessage(ByteArray &aSignature, const coap::Message &aMes
     Error              error;
     ByteArray          externalData;
     cose::Sign1Message sign1Msg;
-
-    VerifyOrExit(IsValid(), error = ERROR_INVALID_STATE("has no valid Commissioner Token"));
+    ByteArray          keyId;
 
     SuccessOrExit(error = PrepareSigningContent(externalData, aMessage));
 
     SuccessOrExit(error = sign1Msg.Init(cose::kInitFlagsNone));
     SuccessOrExit(error = sign1Msg.AddAttribute(cose::kHeaderAlgorithm, cose::kAlgEcdsaWithSha256, cose::kProtectOnly));
-    SuccessOrExit(error = sign1Msg.AddAttribute(cose::kHeaderKeyId, mKeyId, cose::kUnprotectOnly));
+    SuccessOrExit(error = GetKeyId(keyId));
+    SuccessOrExit(error = sign1Msg.AddAttribute(cose::kHeaderKeyId, keyId, cose::kUnprotectOnly));
 
     // TODO(wgtdkp): set cose::kHeaderIV to mSequenceNumber.
     // SuccessOrExit(error = sign1Msg.AddAttribute(cose::kHeaderIV, , cose::kProtectOnly));
@@ -410,26 +431,36 @@ exit:
     return error;
 }
 
-Error TokenManager::GetPublicKey(CborMap &aPublicKey) const
+Error TokenManager::GetPublicKeyInToken(ByteArray &aPublicKey) const
 {
+    static constexpr size_t kMaxSignedTokenLength = 1024;
+
     Error   error;
+    CborMap token;
     CborMap cnf;
+    CborMap publicKey;
+    size_t  publicKeyLength;
 
-    VerifyOrExit(mToken.IsValid(), error = ERROR_INVALID_STATE("has no valid Commissioner Token"));
+    SuccessOrExit(error = ValidateToken(token, mSignedToken, mDomainCAPublicKey));
+    SuccessOrExit(error = token.Get(cwt::kCnf, cnf));
+    SuccessOrExit(error = cnf.Get(cwt::kCoseKey, publicKey));
 
-    SuccessOrExit(error = mToken.Get(cwt::kCnf, cnf));
-    SuccessOrExit(error = cnf.Get(cwt::kCoseKey, aPublicKey));
+    aPublicKey.resize(kMaxSignedTokenLength);
+    SuccessOrDie(publicKey.Serialize(aPublicKey.data(), publicKeyLength, aPublicKey.size()));
+    aPublicKey.resize(publicKeyLength);
 
 exit:
+    token.Free();
     return error;
 }
 
-Error TokenManager::VerifySignature(const ByteArray &aSignature, const coap::Message &aSignedMessage)
+Error TokenManager::ValidateSignature(const ByteArray &aSignature, const coap::Message &aSignedMessage)
 {
     Error              error;
     ByteArray          externalData;
     cose::Sign1Message sign1Msg;
-    CborMap            publicKey;
+    ByteArray          rawPublicKeyInToken;
+    CborMap            publicKeyInToken;
 
     VerifyOrExit(!aSignature.empty(), error = ERROR_INVALID_ARGS("the signature is empty"));
     SuccessOrExit(error = cose::Sign1Message::Deserialize(sign1Msg, aSignature));
@@ -437,8 +468,10 @@ Error TokenManager::VerifySignature(const ByteArray &aSignature, const coap::Mes
     SuccessOrExit(error = PrepareSigningContent(externalData, aSignedMessage));
     SuccessOrExit(error = sign1Msg.SetExternalData(externalData));
     SuccessOrExit(error = sign1Msg.Validate(mPublicKey));
-    SuccessOrExit(error = GetPublicKey(publicKey));
-    SuccessOrExit(error = sign1Msg.Validate(publicKey));
+    SuccessOrExit(error = GetPublicKeyInToken(rawPublicKeyInToken));
+    SuccessOrExit(error =
+                      CborValue::Deserialize(publicKeyInToken, rawPublicKeyInToken.data(), rawPublicKeyInToken.size()));
+    SuccessOrExit(error = sign1Msg.Validate(publicKeyInToken));
 
 exit:
     sign1Msg.Free();

@@ -382,23 +382,14 @@ class OTCommissioner(ICommissioner):
             registrarPort,
         ))
 
-    def setCOM_TOK(self, signedCOM_TOK, verifyCert):
+    def setCOM_TOK(self, signedCOM_TOK):
         path_token = '/tmp/commissioner.token.{}'.format(uuid.uuid4())
         step = 40
         for i in range(0, len(signedCOM_TOK), step):
             data = self._bytes_to_hex(signedCOM_TOK[i:i + step])
             self._command('echo {} >> "{}"'.format(data, path_token))
 
-        path_cert = '/tmp/commissioner.token_cert.{}'.format(uuid.uuid4())
-        self._command('echo "{}" | base64 -d - > "{}"'.format(
-            base64.b64encode(verifyCert).decode(),
-            path_cert,
-        ))
-
-        self._execute_and_check('token set {} {}'.format(
-            path_token,
-            path_cert,
-        ))
+        self._execute_and_check('token set {}'.format(path_token))
 
     def getCOM_TOK(self):
         result = self._execute_and_check('token print')

@@ -1000,11 +1000,11 @@ Error CommissionerApp::RequestToken(const std::string &aAddr, uint16_t aPort)
     return mCommissioner->RequestToken(mSignedToken, aAddr, aPort);
 }
 
-Error CommissionerApp::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+Error CommissionerApp::SetToken(const ByteArray &aSignedToken)
 {
     Error error;
 
-    SuccessOrExit(error = mCommissioner->SetToken(aSignedToken, aSignerCert));
+    SuccessOrExit(error = mCommissioner->SetToken(aSignedToken));
 
     mSignedToken = aSignedToken;
 

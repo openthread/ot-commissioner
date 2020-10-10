@@ -113,9 +113,7 @@ TEST_CASE("signing-message", "[token]")
 
     ByteArray signedToken;
     REQUIRE(utils::Hex(signedToken, kSignedToken) == ErrorCode::kNone);
-    REQUIRE(!tokenManager.IsValid());
-    REQUIRE(tokenManager.SetToken(signedToken, config.mTrustAnchor) == ErrorCode::kNone);
-    REQUIRE(tokenManager.IsValid());
+    REQUIRE(tokenManager.SetToken(signedToken) == ErrorCode::kNone);
     REQUIRE(tokenManager.GetToken() == signedToken);
 
     coap::Message pet{coap::Type::kConfirmable, coap::Code::kPost};
@@ -124,7 +122,7 @@ TEST_CASE("signing-message", "[token]")
 
     ByteArray signature;
     REQUIRE(tokenManager.SignMessage(signature, pet) == ErrorCode::kNone);
-    REQUIRE(tokenManager.VerifySignature(signature, pet) == ErrorCode::kNone);
+    REQUIRE(tokenManager.ValidateSignature(signature, pet) == ErrorCode::kNone);
 }
 
 } // namespace commissioner

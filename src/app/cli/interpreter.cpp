@@ -73,7 +73,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"active", "active"},
     {"token", "token request <registrar-addr> <registrar-port>\n"
               "token print\n"
-              "token set <signed-token-hex-string-file> <signer-cert-pem-file>"},
+              "token set <signed-token-hex-string-file>"},
     {"network", "network save <network-data-file>\n"
                 "network sync"},
     {"sessionid", "sessionid"},
@@ -357,12 +357,11 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "set"))
     {
-        ByteArray signedToken, signerCert;
-        VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
+        ByteArray signedToken;
+        VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ReadHexStringFile(signedToken, aExpr[2]));
-        SuccessOrExit(value = ReadPemFile(signerCert, aExpr[3]));
 
-        SuccessOrExit(value = mCommissioner->SetToken(signedToken, signerCert));
+        SuccessOrExit(value = mCommissioner->SetToken(signedToken));
     }
     else
     {

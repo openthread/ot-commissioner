@@ -234,7 +234,7 @@ public:
     Error            Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork);
     const ByteArray &GetToken() const;
     Error            RequestToken(const std::string &aAddr, uint16_t aPort);
-    Error            SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert);
+    Error            SetToken(const ByteArray &aSignedToken);
 
     Error RegisterMulticastListener(const std::vector<std::string> &aMulticastAddrList, Seconds aTimeout);
     Error AnnounceBegin(uint32_t aChannelMask, uint8_t aCount, MilliSeconds aPeriod, const std::string &aDtsAddr);

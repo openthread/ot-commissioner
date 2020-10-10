@@ -870,12 +870,12 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
     }
 }
 
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken)
 {
     Error error;
 
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
-    error = mTokenManager.SetToken(aSignedToken, aSignerCert);
+    error = mTokenManager.SetToken(aSignedToken, /* aAlwaysAccept */ true);
 
 exit:
     return error;
@@ -932,10 +932,9 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
     aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken)
 {
     (void)aSignedToken;
-    (void)aSignerCert;
     return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
