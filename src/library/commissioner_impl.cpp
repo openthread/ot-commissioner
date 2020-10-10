@@ -318,6 +318,7 @@ void CommissionerImpl::Connect(ErrorHandler aHandler, const std::string &aAddr, 
 void CommissionerImpl::Disconnect()
 {
     mBrClient.Disconnect(ERROR_CANCELLED("the CoAPs client was disconnected"));
+    mState = State::kDisabled;
 }
 
 uint16_t CommissionerImpl::GetSessionId() const
@@ -1315,6 +1316,7 @@ exit:
     if (error != ErrorCode::kNone)
     {
         LOG_WARN(LOG_REGION_MESHCOP, "sending keep alive message failed: {}", error.ToString());
+        Disconnect();
     }
 }
 
