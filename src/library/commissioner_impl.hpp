@@ -225,7 +225,7 @@ private:
     void SendKeepAlive(Timer &aTimer, bool aKeepAlive = true);
 
 #if OT_COMM_CONFIG_CCM_ENABLE
-    Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP);
+    Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP, bool aAppendToken = true);
 #endif
 
     Duration GetKeepAliveInterval() const { return std::chrono::seconds(mConfig.mKeepAliveInterval); };

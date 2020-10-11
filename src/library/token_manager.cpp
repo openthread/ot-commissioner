@@ -364,7 +364,14 @@ Error TokenManager::SignMessage(ByteArray &aSignature, const coap::Message &aMes
 
     SuccessOrExit(error = sign1Msg.Init(cose::kInitFlagsNone));
     SuccessOrExit(error = sign1Msg.AddAttribute(cose::kHeaderAlgorithm, cose::kAlgEcdsaWithSha256, cose::kProtectOnly));
+#if OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE
+    // In case of getting Key ID failed, Use all-zero value by default.
+    keyId.resize(kMaxCoseKeyIdLength);
+    std::fill(keyId.begin(), keyId.end(), 0);
+    IgnoreError(GetKeyId(keyId));
+#else
     SuccessOrExit(error = GetKeyId(keyId));
+#endif
     SuccessOrExit(error = sign1Msg.AddAttribute(cose::kHeaderKeyId, keyId, cose::kUnprotectOnly));
 
     // TODO(wgtdkp): set cose::kHeaderIV to mSequenceNumber.
