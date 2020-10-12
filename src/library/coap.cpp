@@ -412,6 +412,8 @@ void Coap::CancelRequests()
         mRequestsCache.Front().mRequest->GetUriPath(uri).IgnoreError();
         FinalizeTransaction(mRequestsCache.Front(), nullptr, ERROR_CANCELLED("request to {} was cancelled", uri));
     }
+
+    mRequestsCache.StopTimer();
 }
 
 Error Coap::AddResource(const Resource &aResource)
@@ -686,6 +688,8 @@ void Coap::Retransmit(Timer &)
             FinalizeTransaction(requestHolder, nullptr, ERROR_TIMEOUT("request to {} timeout", uri));
         }
     }
+
+    mRequestsCache.TryStartTimer();
 }
 
 Error Coap::SendHeaderResponse(Code aCode, const Request &aRequest)
@@ -862,14 +866,7 @@ void Coap::RequestsCache::Eliminate(const RequestHolder &aRequestHolder)
     }
 }
 
-void Coap::RequestsCache::Clear()
-{
-    mRetransmissionTimer.Stop();
-
-    mContainer.clear();
-}
-
-void Coap::RequestsCache::TryRetartTimer()
+void Coap::RequestsCache::TryStartTimer()
 {
     if (!mRetransmissionTimer.IsRunning() && !IsEmpty())
     {

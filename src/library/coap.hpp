@@ -689,12 +689,11 @@ private:
             return *mContainer.begin();
         }
 
-        // Clear all requests and stop retransmission timer.
-        void Clear();
+        void StopTimer() { mRetransmissionTimer.Stop(); }
 
-        // Try restart the retransmit timer if it is not running and there is
-        // pending requests.
-        void TryRetartTimer();
+        // Try starting the retransmit timer if it is not running
+        // and there is pending requests.
+        void TryStartTimer();
 
     private:
         Timer                        mRetransmissionTimer;
