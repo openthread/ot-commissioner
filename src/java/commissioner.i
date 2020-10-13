@@ -44,12 +44,37 @@
 %}
 
 %include <std_string.i>
-%include <stdint.i>
 %include <std_list.i>
 %include <std_shared_ptr.i>
 %include <std_vector.i>
 %include <stl.i>
 %include <typemaps.i>
+
+// This is intentional.
+//
+// We know that Java has no unsigned integers and SWIG maps
+// Java short to C++ uint8_t (it is done in `stdint.i`). But
+// it is natural for Java to represent a byte sequence in byte[]
+// or AbstractList<byte> rather than a AbstractList<short>.
+//
+// %include <stdint.i>
+
+// This does the trick that we direct SWIG use the same typemap of
+// `signed char` for `uint8_t` in only context of `std::vector<uint8_t>`.
+%apply signed char { uint8_t };
+%apply const signed char & { const uint8_t & };
+%template(ByteArray) std::vector<uint8_t>;
+// Override the typemap of `uint8_t`.
+%apply unsigned char { uint8_t };
+%apply const unsigned char & { const uint8_t & };
+%apply unsigned char & OUTPUT { uint8_t &aStatus };
+
+%apply unsigned short { uint16_t };
+%apply const unsigned short & { const uint16_t & };
+%apply unsigned int { uint32_t };
+%apply const unsigned int & { const uint32_t & };
+%apply unsigned long long { uint64_t };
+%apply const unsigned long long & { const uint64_t & };
 
 // Remove the 'm' prefix of all members.
 %rename("%(regex:/^(m)(.*)/\\2/)s") "";
@@ -72,11 +97,8 @@
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
 
-%template(ByteArray) std::vector<uint8_t>;
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
 %template(StringVector) std::vector<std::string>;
-
-%apply uint8_t& OUTPUT { uint8_t& aStatus }
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
