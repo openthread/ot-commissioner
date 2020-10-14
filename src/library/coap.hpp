@@ -689,8 +689,6 @@ private:
             return *mContainer.begin();
         }
 
-        void StopTimer() { mRetransmissionTimer.Stop(); }
-
         // Try starting the retransmit timer if it is not running
         // and there is pending requests.
         void TryStartTimer();

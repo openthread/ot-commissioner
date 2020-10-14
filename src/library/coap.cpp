@@ -412,8 +412,6 @@ void Coap::CancelRequests()
         mRequestsCache.Front().mRequest->GetUriPath(uri).IgnoreError();
         FinalizeTransaction(mRequestsCache.Front(), nullptr, ERROR_CANCELLED("request to {} was cancelled", uri));
     }
-
-    mRequestsCache.StopTimer();
 }
 
 Error Coap::AddResource(const Resource &aResource)
@@ -863,6 +861,11 @@ void Coap::RequestsCache::Eliminate(const RequestHolder &aRequestHolder)
             mContainer.erase(holder);
             break;
         }
+    }
+
+    if (mContainer.empty())
+    {
+        mRetransmissionTimer.Stop();
     }
 }
 
