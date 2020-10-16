@@ -161,7 +161,7 @@ static constexpr uint8_t kRadioChannelPage2 = 2;
 /**
  * Type alias of raw byte array.
  */
-typedef std::vector<uint8_t>  ByteArray;
+typedef std::vector<uint8_t> ByteArray;
 
 } // namespace commissioner
 
