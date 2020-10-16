@@ -163,13 +163,15 @@ jobs:
           ninja
 
   java-binding:
-    runs-on: macos-10.15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-10.15, ubuntu-18.04]
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
         run: |
           script/bootstrap.sh
-          brew install swig@4
       - name: Build
         run: |
           mkdir build && cd build

@@ -69,15 +69,14 @@ if [ "$(uname)" = "Linux" ]; then
                          clang-format-10 \
                          cmake \
                          ninja-build \
-                         python-setuptools \
-                         python-pip \
+                         swig \
                          lcov
 
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
-        pip install -U pip
-        pip install -U scikit-build
-        pip install -U cmake
+        sudo apt-get install -y pytho3-setuptools python3-pip
+        pip3 install -U scikit-build
+        pip3 install -U cmake
     }
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
         echo "error: cmake version($(cmake --version)) < ${MIN_CMAKE_VERSION}."
@@ -95,6 +94,7 @@ elif [ "$(uname)" = "Darwin" ]; then
                  llvm@10 \
                  cmake \
                  ninja \
+                 swig \
                  lcov && true
 
     sudo ln -s "$(brew --prefix llvm@10)/bin/clang-format" /usr/local/bin/clang-format-10
