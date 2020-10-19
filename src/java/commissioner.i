@@ -44,7 +44,6 @@
 %}
 
 %include <std_string.i>
-%include <std_list.i>
 %include <std_shared_ptr.i>
 %include <std_vector.i>
 %include <stl.i>

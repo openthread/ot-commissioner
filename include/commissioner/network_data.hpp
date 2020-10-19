@@ -163,7 +163,9 @@ struct Timestamp
     uint64_t Encode() const;
 };
 
+#ifndef SWIG
 static_assert(sizeof(Timestamp) == sizeof(uint64_t), "wrong timestamp size");
+#endif
 
 /**
  * A Channel includes ChannelPage and ChannelNumber.
@@ -183,7 +185,7 @@ struct ChannelMaskEntry
     ByteArray mMasks;
 };
 
-using ChannelMask = std::vector<ChannelMaskEntry>;
+typedef std::vector<ChannelMaskEntry> ChannelMask;
 
 /**
  * A SecurityPolicy includes RotationTime and SecurityFlags.
