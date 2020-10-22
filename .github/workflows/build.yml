@@ -163,10 +163,7 @@ jobs:
           ninja
 
   java-binding:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-10.15, ubuntu-18.04]
+    runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap

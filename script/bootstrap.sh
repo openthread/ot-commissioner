@@ -94,7 +94,7 @@ elif [ "$(uname)" = "Darwin" ]; then
                  llvm@10 \
                  cmake \
                  ninja \
-                 swig \
+                 swig@4 \
                  lcov && true
 
     sudo ln -s "$(brew --prefix llvm@10)/bin/clang-format" /usr/local/bin/clang-format-10

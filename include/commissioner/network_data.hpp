@@ -185,7 +185,7 @@ struct ChannelMaskEntry
     ByteArray mMasks;
 };
 
-typedef std::vector<ChannelMaskEntry> ChannelMask;
+using ChannelMask = std::vector<ChannelMaskEntry>;
 
 /**
  * A SecurityPolicy includes RotationTime and SecurityFlags.
