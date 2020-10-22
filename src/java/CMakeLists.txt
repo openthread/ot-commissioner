@@ -29,7 +29,7 @@
 set(JAVA_PACKAGE_NAME io.openthread.commissioner)
 set(JAVA_OUTFILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/io/openthread/commissioner)
 
-find_package(SWIG 3.0 REQUIRED)
+find_package(SWIG 4.0 REQUIRED)
 find_package(Java REQUIRED)
 
 if (NOT OT_COMM_ANDROID)
