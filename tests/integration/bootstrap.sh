@@ -58,6 +58,7 @@ setup_openthread() {
 
 setup_commissioner() {
     set -e
+    sudo apt-get install expect -y
     pip install --user -r "${TEST_ROOT_DIR}"/../../tools/commissioner_thci/requirements.txt
 }
 
