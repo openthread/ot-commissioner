@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         android-abi: [x86, x86_64]
-        android-api: [24, 29]
+        android-api: [24]
         os: [macos-latest, ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
