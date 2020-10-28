@@ -49,9 +49,3 @@ jobs:
           ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
           cd openthread_commissioner
           ./gradlew build
-      - name: Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.android-api }}
-          arch: ${{ matrix.android-abi }}
-          script: "cd android/openthread_commissioner && ./gradlew connectedAndroidTest"
