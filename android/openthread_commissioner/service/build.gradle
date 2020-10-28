@@ -27,7 +27,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    //sourceSets {
+    //    test.jniLibs.srcDirs = ['src/test/jniLibs']
+    //}
 }
+
+
+
 
 dependencies {
     implementation 'org.jetbrains:annotations:15.0'
