@@ -34,7 +34,7 @@ on:
       - 'android-releases/**'
 
 jobs:
-  nightly-build:
+  release-build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
