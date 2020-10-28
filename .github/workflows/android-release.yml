@@ -60,4 +60,4 @@ jobs:
           prerelease: false
           title: "OT Commissioner App (${{ matrix.android-abi }})"
           files: |
-            .android/openthread_commissioner/app/build/outputs/apk/release/app-release-unsigned.apk
+            ./android/openthread_commissioner/app/build/outputs/apk/release/app-release-unsigned.apk
