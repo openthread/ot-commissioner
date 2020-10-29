@@ -49,6 +49,7 @@ jobs:
       - name: Check Release Version
         run: |
           echo "${GITHUB_BRANCH##*/}"
+          echo "$(cd android/openthread_commissioner && ./gradlew -q printVersionName)"
       - name: Bootstrap
         run: |
           script/bootstrap.sh
