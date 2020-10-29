@@ -31,13 +31,11 @@
 
 name: Android App Release
 
-on:
-  push:
-    branches:
-      - 'android-releases/**'
+on: [push, pull_request]
 
 jobs:
   release-build:
+    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
