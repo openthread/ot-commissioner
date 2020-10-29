@@ -43,7 +43,7 @@ jobs:
       matrix:
         android-abi: [armeabi-v7a, arm64-v8a]
         android-api: [24]
-        os: [macos-latest]
+        os: [ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
