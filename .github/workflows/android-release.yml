@@ -52,20 +52,16 @@ jobs:
       - name: Build
         run: |
           cd android
-          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
+          ANDROID_ABI=armeabi-v7a ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
+          ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
           cd openthread_commissioner
-          ./gradlew assembleRelease
-      - name: Archive APK for ${{ matrix.android-abi }}
-        uses: actions/upload-artifact@v2
+          ./gradlew assembleDebug
+      - name: Release
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          name: apk-${{ matrix.android-abi }}
-          path: ./android/openthread_commissioner/app/build/outputs/apk/release/app-release-unsigned.apk
-#      - name: Release
-#        uses: "marvinpinto/action-automatic-releases@latest"
-#        with:
-#          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#          automatic_release_tag: "0.0.1"
-#          prerelease: false
-#          title: "OT Commissioner App (${{ matrix.android-abi }})"
-#          files: |
-#            ./android/openthread_commissioner/app/build/outputs/apk/release/app-release-unsigned.apk
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "0.0.1"
+          prerelease: false
+          title: "OT Commissioner App
+          files: |
+            ./android/openthread_commissioner/app/build/outputs/apk/release/app-debug.apk
