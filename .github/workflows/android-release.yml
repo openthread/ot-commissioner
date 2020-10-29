@@ -58,6 +58,8 @@ jobs:
           cd openthread_commissioner
           ./gradlew assembleDebug
       - name: Release
+        # We create the release only when this PR is merged.
+        if: github.event.pull_request.merged == 'true'
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
