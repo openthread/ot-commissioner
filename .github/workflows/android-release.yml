@@ -62,6 +62,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "0.0.1"
           prerelease: false
-          title: "OT Commissioner App
+          title: "OT Commissioner App"
           files: |
             ./android/openthread_commissioner/app/build/outputs/apk/release/app-debug.apk
