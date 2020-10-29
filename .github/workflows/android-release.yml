@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check Release Version
         run: |
-          echo "${GITHUB_BRANCH##*/}"
+          echo "${GITHUB_REF##*/}"
           echo "$(cd android/openthread_commissioner && ./gradlew -q printVersionName)"
       - name: Bootstrap
         run: |
