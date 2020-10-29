@@ -64,4 +64,4 @@ jobs:
           prerelease: false
           title: "OT Commissioner App"
           files: |
-            ./android/openthread_commissioner/app/build/outputs/apk/release/app-debug.apk
+            ./android/openthread_commissioner/app/build/outputs/apk/debug/app-debug.apk
