@@ -43,8 +43,15 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check Release Version
         run: |
-          echo "${GITHUB_REF##*/}"
-          echo "$(cd android/openthread_commissioner && ./gradlew -q printVersionName)"
+          branch_version="${GITHUB_REF##*/}"
+          gradle_version="$(cd android/openthread_commissioner && ./gradlew -q printVersionName)"
+
+          if [ $branch_version != $gradle_version ]; then
+            echo "branch name should be android-releases/${gradle_version}!"
+            exit 1
+          fi
+
+          export release_version=$gradle_version
       - name: Bootstrap
         run: |
           script/bootstrap.sh
@@ -55,6 +62,8 @@ jobs:
           ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
           cd openthread_commissioner
           ./gradlew assembleDebug
+
+          cp app/build/outputs/apk/debug/app-debug.apk ot-commissioner-app-debug-${release_version}.apk
       - name: Release
         # We create the release only when this PR is merged.
         if: github.event.pull_request.merged == 'true'
@@ -65,4 +74,4 @@ jobs:
           prerelease: false
           title: "OT Commissioner App"
           files: |
-            ./android/openthread_commissioner/app/build/outputs/apk/debug/app-debug.apk
+            ./android/openthread_commissioner/ot-commissioner-app-debug-${release_version}.apk
