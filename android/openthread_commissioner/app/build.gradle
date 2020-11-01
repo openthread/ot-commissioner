@@ -11,6 +11,13 @@ def getGitHash = { ->
     return stdout.toString().trim()
 }
 
+// Print App version.
+task printVersionName {
+    doLast {
+        println android.defaultConfig.versionName
+    }
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.1"

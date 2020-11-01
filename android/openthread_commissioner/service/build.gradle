@@ -29,6 +29,11 @@ android {
     }
 }
 
+// This is for the local tests (src/test) to find the native libraries.
+tasks.withType(Test) {
+    systemProperty "java.library.path", "/usr/local/lib"
+}
+
 dependencies {
     implementation 'org.jetbrains:annotations:15.0'
     def room_version = "2.2.5"
