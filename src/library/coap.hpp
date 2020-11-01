@@ -690,8 +690,9 @@ private:
         }
 
         // Try starting the retransmit timer if it is not running
-        // and there is pending requests.
-        void TryStartTimer();
+        // and there is pending requests. Try stopping the retransmit
+        // timer if there is no more pending requests.
+        void UpdateTimer();
 
     private:
         Timer                        mRetransmissionTimer;

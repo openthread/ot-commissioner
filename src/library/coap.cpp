@@ -687,7 +687,7 @@ void Coap::Retransmit(Timer &)
         }
     }
 
-    mRequestsCache.TryStartTimer();
+    mRequestsCache.UpdateTimer();
 }
 
 Error Coap::SendHeaderResponse(Code aCode, const Request &aRequest)
@@ -863,15 +863,16 @@ void Coap::RequestsCache::Eliminate(const RequestHolder &aRequestHolder)
         }
     }
 
-    if (mContainer.empty())
+    UpdateTimer();
+}
+
+void Coap::RequestsCache::UpdateTimer()
+{
+    if (IsEmpty())
     {
         mRetransmissionTimer.Stop();
     }
-}
-
-void Coap::RequestsCache::TryStartTimer()
-{
-    if (!mRetransmissionTimer.IsRunning() && !IsEmpty())
+    else if (!mRetransmissionTimer.IsRunning())
     {
         mRetransmissionTimer.Start(Earliest());
     }
