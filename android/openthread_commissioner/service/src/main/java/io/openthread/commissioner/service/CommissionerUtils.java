@@ -52,7 +52,7 @@ public class CommissionerUtils {
     byte[] data = new byte[len / 2];
     for (int i = 0; i < len; i += 2) {
       int firstDecimal = Character.digit(hexString.charAt(i), 16);
-      int secondDecimal = Character.digit(hexString.charAt(i+1), 16);
+      int secondDecimal = Character.digit(hexString.charAt(i + 1), 16);
       if (firstDecimal == -1 || secondDecimal == -1) {
         return null;
       }

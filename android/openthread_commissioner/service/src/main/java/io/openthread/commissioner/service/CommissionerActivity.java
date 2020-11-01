@@ -30,18 +30,20 @@ package io.openthread.commissioner.service;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 
 public class CommissionerActivity extends AppCompatActivity implements FragmentCallback {
   private static final String TAG = CommissionerActivity.class.getSimpleName();
 
-  public static final String ACTION_COMMISSION_DEVICE = "io.openthread.commissioner.action.COMMISSION_DEVICE";
-  public static final String ACTION_FETCH_CREDENTIAL = "io.openthread.commissioner.action.FETCH_CREDENTIAL";
+  public static final String ACTION_COMMISSION_DEVICE =
+      "io.openthread.commissioner.action.COMMISSION_DEVICE";
+  public static final String ACTION_FETCH_CREDENTIAL =
+      "io.openthread.commissioner.action.FETCH_CREDENTIAL";
 
   public static final String KEY_JOINER_DISCERNER = "JOINER_DISCERNER";
   public static final String KEY_JOINER_DISCERNER_BIT_LENGTH = "JOINER_DISCERNER_BIT_LENGTH";
@@ -73,7 +75,7 @@ public class CommissionerActivity extends AppCompatActivity implements FragmentC
       //  2. Fetch network credential from given network when querying
       //     the database failed.
     } else {
-      assert(false);
+      assert (false);
     }
   }
 
@@ -112,7 +114,8 @@ public class CommissionerActivity extends AppCompatActivity implements FragmentC
   }
 
   @Override
-  public void onNetworkSelected(@NonNull ThreadNetworkInfoHolder networkInfoHolder, @NonNull byte[] pskc) {
+  public void onNetworkSelected(
+      @NonNull ThreadNetworkInfoHolder networkInfoHolder, @NonNull byte[] pskc) {
     // TODO(wgtdkp): goto commissioning fragment.
   }
 

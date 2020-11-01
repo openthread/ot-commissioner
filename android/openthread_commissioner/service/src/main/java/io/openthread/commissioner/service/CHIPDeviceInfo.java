@@ -34,20 +34,15 @@ import androidx.annotation.NonNull;
 
 public class CHIPDeviceInfo implements Parcelable {
 
-  @NonNull
-  private int version;
+  @NonNull private int version;
 
-  @NonNull
-  private int vendorId;
+  @NonNull private int vendorId;
 
-  @NonNull
-  private int productId;
+  @NonNull private int productId;
 
-  @NonNull
-  private int discriminator;
+  @NonNull private int discriminator;
 
-  @NonNull
-  private long setupPinCode;
+  @NonNull private long setupPinCode;
 
   protected CHIPDeviceInfo(Parcel in) {
     version = in.readInt();
@@ -57,17 +52,18 @@ public class CHIPDeviceInfo implements Parcelable {
     setupPinCode = in.readLong();
   }
 
-  public static final Creator<CHIPDeviceInfo> CREATOR = new Creator<CHIPDeviceInfo>() {
-    @Override
-    public CHIPDeviceInfo createFromParcel(Parcel in) {
-      return new CHIPDeviceInfo(in);
-    }
+  public static final Creator<CHIPDeviceInfo> CREATOR =
+      new Creator<CHIPDeviceInfo>() {
+        @Override
+        public CHIPDeviceInfo createFromParcel(Parcel in) {
+          return new CHIPDeviceInfo(in);
+        }
 
-    @Override
-    public CHIPDeviceInfo[] newArray(int size) {
-      return new CHIPDeviceInfo[size];
-    }
-  };
+        @Override
+        public CHIPDeviceInfo[] newArray(int size) {
+          return new CHIPDeviceInfo[size];
+        }
+      };
 
   public int getDiscriminator() {
     return discriminator;

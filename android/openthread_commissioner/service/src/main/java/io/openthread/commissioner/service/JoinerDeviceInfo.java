@@ -34,37 +34,40 @@ import androidx.annotation.NonNull;
 
 public class JoinerDeviceInfo implements Parcelable {
 
-  @NonNull
-  private byte[] eui64;
+  @NonNull private byte[] eui64;
 
-  @NonNull
-  private String pskd;
+  @NonNull private String pskd;
 
   public JoinerDeviceInfo(@NonNull byte[] eui64, @NonNull String pskd) {
     this.eui64 = eui64;
     this.pskd = pskd;
   }
 
-  public byte[] getEui64() { return eui64; }
+  public byte[] getEui64() {
+    return eui64;
+  }
 
-  public String getPskd() { return pskd; }
+  public String getPskd() {
+    return pskd;
+  }
 
   protected JoinerDeviceInfo(Parcel in) {
     eui64 = in.createByteArray();
     pskd = in.readString();
   }
 
-  public static final Creator<JoinerDeviceInfo> CREATOR = new Creator<JoinerDeviceInfo>() {
-    @Override
-    public JoinerDeviceInfo createFromParcel(Parcel in) {
-      return new JoinerDeviceInfo(in);
-    }
+  public static final Creator<JoinerDeviceInfo> CREATOR =
+      new Creator<JoinerDeviceInfo>() {
+        @Override
+        public JoinerDeviceInfo createFromParcel(Parcel in) {
+          return new JoinerDeviceInfo(in);
+        }
 
-    @Override
-    public JoinerDeviceInfo[] newArray(int size) {
-      return new JoinerDeviceInfo[size];
-    }
-  };
+        @Override
+        public JoinerDeviceInfo[] newArray(int size) {
+          return new JoinerDeviceInfo[size];
+        }
+      };
 
   @Override
   public int describeContents() {
