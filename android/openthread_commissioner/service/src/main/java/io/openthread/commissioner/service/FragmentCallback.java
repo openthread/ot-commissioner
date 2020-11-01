@@ -32,6 +32,9 @@ import androidx.annotation.Nullable;
 
 public interface FragmentCallback {
   void onJoinerInfoReceived(@Nullable JoinerDeviceInfo joinerDeviceInfo);
-  void onNetworkSelected(@Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc);
+
+  void onNetworkSelected(
+      @Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc);
+
   void onMeshcopResult(int result);
 }

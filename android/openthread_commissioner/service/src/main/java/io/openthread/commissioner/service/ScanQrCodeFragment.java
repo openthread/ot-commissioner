@@ -51,7 +51,6 @@ import com.google.android.gms.vision.barcode.Barcode;
 
 public class ScanQrCodeFragment extends Fragment implements Detector.Processor<Barcode> {
 
-
   private static final String TAG = ScanQrCodeFragment.class.getSimpleName();
 
   private static final String KEY_JOINER_EUI64 = "eui";
@@ -73,9 +72,7 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
 
   @Override
   public View onCreateView(
-      LayoutInflater inflater, ViewGroup container,
-      Bundle savedInstanceState
-  ) {
+      LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     // Inflate the layout for this fragment
     return inflater.inflate(R.layout.fragment_scan_qrcode, container, false);
   }
@@ -83,9 +80,11 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
   public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    view.findViewById(R.id.cancel_button).setOnClickListener(v -> {
-      joinerInfoCallback.onJoinerInfoReceived(null);
-    });
+    view.findViewById(R.id.cancel_button)
+        .setOnClickListener(
+            v -> {
+              joinerInfoCallback.onJoinerInfoReceived(null);
+            });
 
     cameraSourceView = view.findViewById(R.id.camera_view);
     if (hasCameraPermission()) {
@@ -96,14 +95,12 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
   }
 
   private void requestCameraPermission() {
-    final String[] permissions = new String[]{Manifest.permission.CAMERA};
+    final String[] permissions = new String[] {Manifest.permission.CAMERA};
 
     requestPermissions(permissions, RC_HANDLE_CAMERA_PERM);
   }
 
-  /**
-   * Restarts the camera.
-   */
+  /** Restarts the camera. */
   @RequiresPermission(Manifest.permission.CAMERA)
   @Override
   public void onResume() {
@@ -112,9 +109,7 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
     cameraSourceView.startCamera();
   }
 
-  /**
-   * Stops the camera.
-   */
+  /** Stops the camera. */
   @Override
   public void onPause() {
     super.onPause();
@@ -134,13 +129,13 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
   }
 
   private boolean hasCameraPermission() {
-    return ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    return ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
+        == PackageManager.PERMISSION_GRANTED;
   }
 
   @Override
-  public void onRequestPermissionsResult(int requestCode,
-      @NonNull String[] permissions,
-      @NonNull int[] grantResults) {
+  public void onRequestPermissionsResult(
+      int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     if (requestCode != RC_HANDLE_CAMERA_PERM) {
       Log.d(TAG, "Got unexpected permission result: " + requestCode);
       super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -153,26 +148,30 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
       return;
     }
 
-    Log.e(TAG, "Permission not granted: results len = " + grantResults.length +
-        " Result code = " + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
+    Log.e(
+        TAG,
+        "Permission not granted: results len = "
+            + grantResults.length
+            + " Result code = "
+            + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
 
-    DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        joinerInfoCallback.onJoinerInfoReceived(null);
-      }
-    };
+    DialogInterface.OnClickListener listener =
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int id) {
+            joinerInfoCallback.onJoinerInfoReceived(null);
+          }
+        };
 
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setTitle("Permission Denied")
+    builder
+        .setTitle("Permission Denied")
         .setMessage("No camera permission!")
         .setPositiveButton("OK", listener)
         .show();
   }
 
   @Override
-  public void release() {
-
-  }
+  public void release() {}
 
   @Override
   public void receiveDetections(Detections<Barcode> detections) {
@@ -184,13 +183,14 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
     Log.d(TAG, "barcode detected");
 
     Handler handler = new Handler(Looper.getMainLooper());
-    handler.post(new Runnable() {
-      @RequiresPermission(Manifest.permission.CAMERA)
-      @Override
-      public void run () {
-        handleBarcode(barcodes.valueAt(0));
-      }
-    });
+    handler.post(
+        new Runnable() {
+          @RequiresPermission(Manifest.permission.CAMERA)
+          @Override
+          public void run() {
+            handleBarcode(barcodes.valueAt(0));
+          }
+        });
   }
 
   @RequiresPermission(Manifest.permission.CAMERA)
@@ -226,7 +226,11 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
 
     if (eui64 == null || pskd == null) {
       // TODO(wgtdkp): Broken QR code, ask the user to input manually.
-      Log.e(TAG, String.format("broken QR code! expect %s and %s in URL parameters.", KEY_JOINER_EUI64, KEY_JOINER_PSKD));
+      Log.e(
+          TAG,
+          String.format(
+              "broken QR code! expect %s and %s in URL parameters.",
+              KEY_JOINER_EUI64, KEY_JOINER_PSKD));
       return null;
     } else {
       return new JoinerDeviceInfo(eui64, pskd);

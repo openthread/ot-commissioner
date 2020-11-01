@@ -31,10 +31,7 @@ package io.openthread.commissioner.service;
 import android.app.Application;
 import android.content.Context;
 
-/**
- * The Commissioner Service App for getting Application Context
- * from anywhere.
- */
+/** The Commissioner Service App for getting Application Context from anywhere. */
 public class CommissionerServiceApp extends Application {
   private static CommissionerServiceApp instance;
 
@@ -42,7 +39,7 @@ public class CommissionerServiceApp extends Application {
     return instance;
   }
 
-  public static Context getContext(){
+  public static Context getContext() {
     return instance.getApplicationContext();
   }
 

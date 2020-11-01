@@ -30,17 +30,16 @@ package io.openthread.commissioner.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import io.openthread.commissioner.app.BuildConfig;
 import io.openthread.commissioner.service.FragmentCallback;
 import io.openthread.commissioner.service.JoinerDeviceInfo;
 import io.openthread.commissioner.service.MeshcopFragment;
@@ -52,14 +51,11 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
 
   private static final String TAG = MainActivity.class.getSimpleName();
 
-  @Nullable
-  private ThreadNetworkInfoHolder selectedNetwork;
+  @Nullable private ThreadNetworkInfoHolder selectedNetwork;
 
-  @Nullable
-  private byte[] pskc;
+  @Nullable private byte[] pskc;
 
-  @Nullable
-  private JoinerDeviceInfo joinerDeviceInfo;
+  @Nullable private JoinerDeviceInfo joinerDeviceInfo;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -126,7 +122,8 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
   }
 
   @Override
-  public void onNetworkSelected(@Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc) {
+  public void onNetworkSelected(
+      @Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc) {
     if (networkInfoHolder == null || pskc == null) {
       Log.e(TAG, "failed to get selected network or PSKc!");
       finishCommissioning(Activity.RESULT_CANCELED);

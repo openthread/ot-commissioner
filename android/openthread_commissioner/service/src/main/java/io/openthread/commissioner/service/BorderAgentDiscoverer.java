@@ -111,7 +111,9 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
             BorderAgentInfo borderAgent = getBorderAgentInfo(serviceInfo);
             if (borderAgent != null) {
               Log.d(TAG, "successfully resolved service: " + serviceInfo.toString());
-              Log.d(TAG, "successfully resolved service: " + serviceInfo.getHost().getCanonicalHostName());
+              Log.d(
+                  TAG,
+                  "successfully resolved service: " + serviceInfo.getHost().getCanonicalHostName());
               borderAgentListener.onBorderAgentFound(borderAgent);
             }
             isResolvingService.set(false);

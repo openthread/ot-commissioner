@@ -54,6 +54,8 @@ public interface ThreadCommissionerService {
   // This method deletes Credential of a given Thread Network stored in the database on the phone.
   CompletableFuture<Void> deleteThreadNetworkCredential(@NonNull BorderAgentInfo borderAgentInfo);
 
-  CompletableFuture<Void> commissionJoinerDevice(@NonNull BorderAgentInfo borderAgentInfo,
-      @NonNull byte[] pskc, @NonNull JoinerDeviceInfo joinerDeviceInfo);
+  CompletableFuture<Void> commissionJoinerDevice(
+      @NonNull BorderAgentInfo borderAgentInfo,
+      @NonNull byte[] pskc,
+      @NonNull JoinerDeviceInfo joinerDeviceInfo);
 }

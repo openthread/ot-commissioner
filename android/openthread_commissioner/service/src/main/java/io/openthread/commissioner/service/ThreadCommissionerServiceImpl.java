@@ -47,10 +47,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-public class ThreadCommissionerServiceImpl extends CommissionerHandler implements ThreadCommissionerService {
+public class ThreadCommissionerServiceImpl extends CommissionerHandler
+    implements ThreadCommissionerService {
 
   public interface IntermediateStateCallback {
     void onPetitioned();
+
     void onJoinerRequest(@NonNull byte[] joinerId);
   }
 
@@ -58,28 +60,29 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
 
   private static final int SECONDS_WAIT_FOR_JOINER = 60;
 
-  @Nullable
-  private IntermediateStateCallback intermediateStateCallback;
+  @Nullable private IntermediateStateCallback intermediateStateCallback;
 
-  @NonNull
-  private BorderAgentDatabase borderAgentDatabase = BorderAgentDatabase.getDatabase();
+  @NonNull private BorderAgentDatabase borderAgentDatabase = BorderAgentDatabase.getDatabase();
 
-  @Nullable
-  private JoinerDeviceInfo curJoinerInfo;
+  @Nullable private JoinerDeviceInfo curJoinerInfo;
   private ConditionVariable curJoinerCommissioned = new ConditionVariable();
 
-  public ThreadCommissionerServiceImpl(@Nullable IntermediateStateCallback intermediateStateCallback) {
+  public ThreadCommissionerServiceImpl(
+      @Nullable IntermediateStateCallback intermediateStateCallback) {
     this.intermediateStateCallback = intermediateStateCallback;
   }
 
   @Override
-  public CompletableFuture<Void> commissionJoinerDevice(@NonNull BorderAgentInfo borderAgentInfo, @NonNull byte[] pskc,
+  public CompletableFuture<Void> commissionJoinerDevice(
+      @NonNull BorderAgentInfo borderAgentInfo,
+      @NonNull byte[] pskc,
       @NonNull JoinerDeviceInfo joinerDeviceInfo) {
     CompletableFuture<Void> future =
         CompletableFuture.runAsync(
             () -> {
               try {
-                doCommissionJoinerDevice(borderAgentInfo, pskc, joinerDeviceInfo, SECONDS_WAIT_FOR_JOINER);
+                doCommissionJoinerDevice(
+                    borderAgentInfo, pskc, joinerDeviceInfo, SECONDS_WAIT_FOR_JOINER);
               } catch (ThreadCommissionerException e) {
                 throw new CompletionException(e);
               }
@@ -91,18 +94,19 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
   public CompletableFuture<ThreadNetworkCredential> fetchThreadNetworkCredential(
       @NonNull BorderAgentInfo borderAgentInfo, @Nullable byte[] pskc) {
     return getThreadNetworkCredential(borderAgentInfo)
-        .thenApply(credential -> {
-          if (credential != null) {
-            return credential;
-          }
+        .thenApply(
+            credential -> {
+              if (credential != null) {
+                return credential;
+              }
 
-          try {
-            byte[] activeDataset = doFetchActiveDataset(borderAgentInfo, pskc);
-            return new ThreadNetworkCredential(activeDataset);
-          } catch (ThreadCommissionerException e) {
-            throw new CompletionException(e);
-          }
-        });
+              try {
+                byte[] activeDataset = doFetchActiveDataset(borderAgentInfo, pskc);
+                return new ThreadNetworkCredential(activeDataset);
+              } catch (ThreadCommissionerException e) {
+                throw new CompletionException(e);
+              }
+            });
   }
 
   @Override
@@ -111,7 +115,8 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
     return getBorderAgentRecord(borderAgentInfo)
         .thenApply(
             borderAgentRecord -> {
-              if (borderAgentRecord == null || borderAgentRecord.getActiveOperationalDataset() == null) {
+              if (borderAgentRecord == null
+                  || borderAgentRecord.getActiveOperationalDataset() == null) {
                 return null;
               }
               return new ThreadNetworkCredential(borderAgentRecord.getActiveOperationalDataset());
@@ -144,8 +149,11 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
     return borderAgentDatabase.insertBorderAgent(borderAgentRecord);
   }
 
-  private void doCommissionJoinerDevice(@NonNull BorderAgentInfo borderAgentInfo, @NonNull byte[] pskc,
-      @NonNull JoinerDeviceInfo joinerDeviceInfo, int secondsWaitForJoiner)
+  private void doCommissionJoinerDevice(
+      @NonNull BorderAgentInfo borderAgentInfo,
+      @NonNull byte[] pskc,
+      @NonNull JoinerDeviceInfo joinerDeviceInfo,
+      int secondsWaitForJoiner)
       throws ThreadCommissionerException {
     curJoinerInfo = joinerDeviceInfo;
 
@@ -165,9 +173,9 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
 
       // Petition to be the active commissioner in the Thread Network.
       String[] existingCommissionerId = new String[1];
-      throwIfFail(nativeCommissioner
-          .petition(existingCommissionerId, borderAgentInfo.host.getHostAddress(),
-              borderAgentInfo.port));
+      throwIfFail(
+          nativeCommissioner.petition(
+              existingCommissionerId, borderAgentInfo.host.getHostAddress(), borderAgentInfo.port));
 
       // Save PSKc for current Border Agent once we have successfully connected to it.
       addThreadNetworkCredential(borderAgentInfo, pskc, null).get();
@@ -182,7 +190,8 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
 
       CommissionerDataset commDataset = new CommissionerDataset();
       commDataset.setSteeringData(steeringData);
-      commDataset.setPresentFlags(commDataset.getPresentFlags() | CommissionerDataset.kSteeringDataBit);
+      commDataset.setPresentFlags(
+          commDataset.getPresentFlags() | CommissionerDataset.kSteeringDataBit);
       throwIfFail(nativeCommissioner.setCommissionerDataset(commDataset));
 
       for (int i = 0; i < secondsWaitForJoiner; ++i) {
@@ -201,7 +210,8 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
     }
   }
 
-  private byte[] doFetchActiveDataset(@NonNull BorderAgentInfo borderAgentInfo, @NonNull byte[] pskc)
+  private byte[] doFetchActiveDataset(
+      @NonNull BorderAgentInfo borderAgentInfo, @NonNull byte[] pskc)
       throws ThreadCommissionerException {
     Commissioner nativeCommissioner = Commissioner.create(this);
 
@@ -219,7 +229,11 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
 
       // Petition to be the active commissioner in the Thread Network.
       String[] existingCommissionerId = new String[1];
-      throwIfFail(nativeCommissioner.petition(existingCommissionerId, getBorderAgentAddress(borderAgentInfo), borderAgentInfo.port));
+      throwIfFail(
+          nativeCommissioner.petition(
+              existingCommissionerId,
+              getBorderAgentAddress(borderAgentInfo),
+              borderAgentInfo.port));
 
       addThreadNetworkCredential(borderAgentInfo, pskc, null).get();
 
@@ -231,7 +245,7 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
       ByteArray rawActiveDataset = new ByteArray();
       throwIfFail(nativeCommissioner.getRawActiveDataset(rawActiveDataset, 0xFFFF));
       return CommissionerUtils.getByteArray(rawActiveDataset);
-    }catch (InterruptedException e) {
+    } catch (InterruptedException e) {
       throw new ThreadCommissionerException(ErrorCode.kUnknown, e.getMessage());
     } catch (ExecutionException e) {
       throw new ThreadCommissionerException(ErrorCode.kUnknown, e.getMessage());
@@ -248,7 +262,11 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
 
   @Override
   public String onJoinerRequest(ByteArray joinerId) {
-    Log.d(TAG, String.format("A joiner (ID=%s) is requesting commissioning", CommissionerUtils.getHexString(joinerId)));
+    Log.d(
+        TAG,
+        String.format(
+            "A joiner (ID=%s) is requesting commissioning",
+            CommissionerUtils.getHexString(joinerId)));
 
     if (intermediateStateCallback != null) {
       intermediateStateCallback.onJoinerRequest(CommissionerUtils.getByteArray(joinerId));
@@ -274,7 +292,9 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
       ByteArray vendorStackVersion,
       String provisioningUrl,
       ByteArray vendorData) {
-    Log.d(TAG, String.format("A joiner (ID=%s) is finalizing", CommissionerUtils.getHexString(joinerId)));
+    Log.d(
+        TAG,
+        String.format("A joiner (ID=%s) is finalizing", CommissionerUtils.getHexString(joinerId)));
 
     if (matchJoinerId(getCurJoinerId(), joinerId)) {
       curJoinerCommissioned.open();
@@ -312,7 +332,9 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
   }
 
   private boolean matchJoinerId(ByteArray curJoinerId, ByteArray inputJoinerId) {
-    if (curJoinerId == null || inputJoinerId == null || curJoinerId.size() != inputJoinerId.size()) {
+    if (curJoinerId == null
+        || inputJoinerId == null
+        || curJoinerId.size() != inputJoinerId.size()) {
       return false;
     }
     for (int i = 0; i < curJoinerId.size(); ++i) {
@@ -328,7 +350,7 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler implement
 
     String ret = addr.getHostAddress();
     if (addr instanceof Inet6Address) {
-      Inet6Address ipv6Addr = (Inet6Address)addr;
+      Inet6Address ipv6Addr = (Inet6Address) addr;
       if (ipv6Addr.isLinkLocalAddress()) {
         // FIXME(wgtdkp): This is just a workaround. The Border Agent address returned
         //  by the NSDManager should already include scope ID (or interface name) for
