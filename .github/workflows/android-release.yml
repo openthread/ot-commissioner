@@ -35,9 +35,11 @@ on: [push, pull_request]
 
 jobs:
   release-build:
-    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-20.04
     steps:
+      - name: Print PR Title
+        run: |
+          echo ${{ github.event.pull_request.title }}
       - uses: actions/checkout@v2
       - name: Check Release Version
         run: |
