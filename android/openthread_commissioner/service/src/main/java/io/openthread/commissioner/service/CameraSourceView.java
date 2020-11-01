@@ -68,12 +68,13 @@ public class CameraSourceView extends ViewGroup {
     barcodeDetector = new BarcodeDetector.Builder(context).build();
     barcodeDetector.setProcessor(barcodeProcessor);
 
-    cameraSource = new CameraSource.Builder(context, barcodeDetector)
-        .setFacing(CameraSource.CAMERA_FACING_BACK)
-        .setRequestedPreviewSize(1600, 1024)
-        .setRequestedFps(30.0f)
-        .setAutoFocusEnabled(true)
-        .build();
+    cameraSource =
+        new CameraSource.Builder(context, barcodeDetector)
+            .setFacing(CameraSource.CAMERA_FACING_BACK)
+            .setRequestedPreviewSize(1600, 1024)
+            .setRequestedFps(30.0f)
+            .setAutoFocusEnabled(true)
+            .build();
   }
 
   /**

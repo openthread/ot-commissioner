@@ -43,7 +43,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import java.util.concurrent.CompletableFuture;
 
-public class MeshcopFragment extends Fragment implements ThreadCommissionerServiceImpl.IntermediateStateCallback {
+public class MeshcopFragment extends Fragment
+    implements ThreadCommissionerServiceImpl.IntermediateStateCallback {
 
   private static final String TAG = MeshcopFragment.class.getSimpleName();
 
@@ -54,24 +55,24 @@ public class MeshcopFragment extends Fragment implements ThreadCommissionerServi
   ImageView doneImage;
   ImageView errorImage;
 
-  @NonNull
-  private FragmentCallback meshcopCallback;
+  @NonNull private FragmentCallback meshcopCallback;
 
-  @NonNull
-  private ThreadNetworkInfoHolder networkInfoHolder;
+  @NonNull private ThreadNetworkInfoHolder networkInfoHolder;
 
-  @NonNull
-  private byte[] pskc;
+  @NonNull private byte[] pskc;
 
-  @NonNull
-  private JoinerDeviceInfo joinerDeviceInfo;
+  @NonNull private JoinerDeviceInfo joinerDeviceInfo;
 
-  private ThreadCommissionerServiceImpl commissionerService = new ThreadCommissionerServiceImpl(this);
+  private ThreadCommissionerServiceImpl commissionerService =
+      new ThreadCommissionerServiceImpl(this);
 
   private CompletableFuture<Void> commissionFuture;
 
-  public MeshcopFragment(@NonNull FragmentCallback meshcopCallback, @NonNull ThreadNetworkInfoHolder networkInfoHolder,
-      @NonNull byte[] pskc, @NonNull JoinerDeviceInfo joinerDeviceInfo) {
+  public MeshcopFragment(
+      @NonNull FragmentCallback meshcopCallback,
+      @NonNull ThreadNetworkInfoHolder networkInfoHolder,
+      @NonNull byte[] pskc,
+      @NonNull JoinerDeviceInfo joinerDeviceInfo) {
     this.meshcopCallback = meshcopCallback;
     this.networkInfoHolder = networkInfoHolder;
     this.pskc = pskc;
@@ -79,7 +80,8 @@ public class MeshcopFragment extends Fragment implements ThreadCommissionerServi
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(
+      LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     return inflater.inflate(R.layout.fragment_meshcop, container, false);
   }
 
@@ -124,18 +126,26 @@ public class MeshcopFragment extends Fragment implements ThreadCommissionerServi
 
     showInProgress("Petitioning...");
 
-    commissionFuture = commissionerService.commissionJoinerDevice(borderAgentInfo, pskc, joinerDeviceInfo)
-        .thenRun(() -> {
-          new Handler(Looper.getMainLooper()).post(() -> {
-            showCommissionDone(true, "Commission Succeed");
-          });
-        })
-        .exceptionally(ex -> {
-          new Handler(Looper.getMainLooper()).post(() -> {
-            showCommissionDone(false, ex.getMessage());
-          });
-          return null;
-        });
+    commissionFuture =
+        commissionerService
+            .commissionJoinerDevice(borderAgentInfo, pskc, joinerDeviceInfo)
+            .thenRun(
+                () -> {
+                  new Handler(Looper.getMainLooper())
+                      .post(
+                          () -> {
+                            showCommissionDone(true, "Commission Succeed");
+                          });
+                })
+            .exceptionally(
+                ex -> {
+                  new Handler(Looper.getMainLooper())
+                      .post(
+                          () -> {
+                            showCommissionDone(false, ex.getMessage());
+                          });
+                  return null;
+                });
   }
 
   private void stopMeshcop() {
@@ -178,15 +188,21 @@ public class MeshcopFragment extends Fragment implements ThreadCommissionerServi
 
   @Override
   public void onPetitioned() {
-    new Handler(Looper.getMainLooper()).post(() -> {
-      showInProgress("Petition Done!\nWating for Joiner Device...");
-    });
+    new Handler(Looper.getMainLooper())
+        .post(
+            () -> {
+              showInProgress("Petition Done!\nWating for Joiner Device...");
+            });
   }
 
   @Override
   public void onJoinerRequest(@NonNull byte[] joinerId) {
-    new Handler(Looper.getMainLooper()).post(() -> {
-      showInProgress(String.format("New Device (ID=%s) is joining!", CommissionerUtils.getHexString(joinerId)));
-    });
+    new Handler(Looper.getMainLooper())
+        .post(
+            () -> {
+              showInProgress(
+                  String.format(
+                      "New Device (ID=%s) is joining!", CommissionerUtils.getHexString(joinerId)));
+            });
   }
 }

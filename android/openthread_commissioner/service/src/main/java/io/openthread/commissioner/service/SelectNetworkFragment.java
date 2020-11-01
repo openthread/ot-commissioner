@@ -54,8 +54,7 @@ public class SelectNetworkFragment extends Fragment
 
   private FragmentCallback networkInfoCallback;
 
-  @Nullable
-  private JoinerDeviceInfo joinerDeviceInfo;
+  @Nullable private JoinerDeviceInfo joinerDeviceInfo;
 
   private NetworkAdapter networksAdapter;
 
@@ -67,7 +66,8 @@ public class SelectNetworkFragment extends Fragment
 
   public SelectNetworkFragment() {}
 
-  public SelectNetworkFragment(@NonNull FragmentCallback networkInfoCallback, @Nullable JoinerDeviceInfo joinerDeviceInfo) {
+  public SelectNetworkFragment(
+      @NonNull FragmentCallback networkInfoCallback, @Nullable JoinerDeviceInfo joinerDeviceInfo) {
     this.networkInfoCallback = networkInfoCallback;
     this.joinerDeviceInfo = joinerDeviceInfo;
   }

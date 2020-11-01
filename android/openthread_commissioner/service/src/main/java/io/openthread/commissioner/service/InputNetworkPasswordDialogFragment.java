@@ -45,6 +45,7 @@ public class InputNetworkPasswordDialogFragment extends DialogFragment
 
   public interface PasswordDialogListener {
     public void onPositiveClick(InputNetworkPasswordDialogFragment fragment, String password);
+
     public void onNegativeClick(InputNetworkPasswordDialogFragment fragment);
   }
 
