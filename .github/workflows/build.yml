@@ -47,7 +47,7 @@ jobs:
       - name: Bootstrap
         run: |
           sudo apt update
-          sudo apt --no-install-recommends install -y clang-format-10
+          sudo apt --no-install-recommends install -y clang-format-9
           python3 -m pip install yapf==0.29.0
       - name: Check
         run: |
