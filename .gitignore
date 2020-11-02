@@ -44,7 +44,7 @@ libtool
 Makefile.in
 
 # build
-.build-*
+.build*
 build
 cmake-build-*
 
