@@ -106,6 +106,10 @@ public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
     }
     TextView networkNameText = convertView.findViewById(R.id.network_name);
     networkNameText.setText(networks.get(position).getNetworkInfo().getNetworkName());
+
+    TextView borderAgentIpAddrText = convertView.findViewById(R.id.border_agent_ip_addr);
+    borderAgentIpAddrText.setText(
+        networks.get(position).getBorderAgents().get(0).host.getHostAddress());
     return convertView;
   }
 
