@@ -55,17 +55,8 @@ if [ "$(uname)" = "Linux" ]; then
     ## Install packages
     sudo apt-get update
     sudo apt-get install -y \
-                         wget \
-                         libssl-dev \
                          build-essential \
-                         software-properties-common \
-                         libreadline7 \
                          libreadline-dev \
-                         libncurses5-dev \
-                         libncursesw5-dev \
-                         tcl \
-                         tk \
-                         expect \
                          cmake \
                          ninja-build \
                          swig \
@@ -92,7 +83,6 @@ elif [ "$(uname)" = "Darwin" ]; then
     ## Install packages
     brew install coreutils \
                  readline \
-                 ncurses \
                  cmake \
                  ninja \
                  swig@4 \
