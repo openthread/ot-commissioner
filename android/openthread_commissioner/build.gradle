@@ -28,6 +28,6 @@ spotless {
         target rootProject.fileTree('.') {
             include '**/*.java'
         }
-        googleJavaFormat('1.8')
+        googleJavaFormat('1.7')
     }
 }
