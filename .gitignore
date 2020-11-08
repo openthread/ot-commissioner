@@ -41,7 +41,7 @@ config.log
 config.status
 configure
 libtool
-Makefile
+#Makefile
 Makefile.in
 
 # build
