@@ -821,17 +821,7 @@ void Coap::RequestsCache::Put(const RequestPtr aRequest, ResponseHandler aHandle
 void Coap::RequestsCache::Put(const RequestHolder &aRequestHolder)
 {
     mContainer.emplace(aRequestHolder);
-    if (mRetransmissionTimer.IsRunning())
-    {
-        if (Earliest() < mRetransmissionTimer.GetFireTime())
-        {
-            mRetransmissionTimer.Start(Earliest());
-        }
-    }
-    else
-    {
-        mRetransmissionTimer.Start(Earliest());
-    }
+    UpdateTimer();
 }
 
 Coap::RequestHolder Coap::RequestsCache::Eliminate()
@@ -840,15 +830,8 @@ Coap::RequestHolder Coap::RequestsCache::Eliminate()
     auto ret = *mContainer.begin();
 
     mContainer.erase(mContainer.begin());
+    UpdateTimer();
 
-    if (IsEmpty())
-    {
-        // No more requests pending, stop the timer.
-        mRetransmissionTimer.Stop();
-    }
-
-    // No need to worry that the earliest pending message was removed -
-    // the timer would just shoot earlier and then it'd be setup again.
     return ret;
 }
 
