@@ -872,7 +872,14 @@ void Coap::RequestsCache::UpdateTimer()
     {
         mRetransmissionTimer.Stop();
     }
-    else if (!mRetransmissionTimer.IsRunning())
+    else if (mRetransmissionTimer.IsRunning())
+    {
+        if (Earliest() < mRetransmissionTimer.GetFireTime())
+        {
+            mRetransmissionTimer.Start(Earliest());
+        }
+    }
+    else
     {
         mRetransmissionTimer.Start(Earliest());
     }
