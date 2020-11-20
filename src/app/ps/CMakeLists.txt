@@ -26,64 +26,56 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-app
-    commissioner_app.cpp
-    commissioner_app.hpp
-    border_agent.cpp
-    border_agent.hpp
-    file_logger.cpp
-    file_logger.hpp
-    file_util.cpp
-    file_util.hpp
-    json.cpp
-    json.hpp
-    logger_util.hpp
-    sys_logger.cpp
-    sys_logger.hpp
+add_library(persistent-storage OBJECT
+    persistent_storage.hpp
+    persistent_storage_json.hpp
+    persistent_storage_json.cpp
+    registry.hpp
+    registry.cpp
+    registry_entries.hpp
+    registry_entries.cpp
+    nlohmann_json.hpp
+    # TODO Remove all unnecessary files and definitions
+    utils.hpp
+    utils.cpp
+    # TODO [TBD] move following files into the /src/library project directory
+    file.hpp
+    file.cpp
+    semaphore.hpp
+    semaphore.cpp
+    semaphore_posix.hpp
 )
 
-target_link_libraries(commissioner-app
-    PUBLIC
-        commissioner
-        commissioner-common
+target_include_directories(persistent-storage PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+)
+
+# TODO Refine which directories to add
+target_include_directories(persistent-storage
     PRIVATE
-        fmt::fmt
-        mdns
-        nlohmann_json::nlohmann_json
-)
-
-target_include_directories(commissioner-app
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-)
-
-install(DIRECTORY etc/commissioner
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-        DESTINATION etc
+        ${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/src/app
 )
 
 if (BUILD_SHARED_LIBS)
-    install(TARGETS commissioner-app
+    install(TARGETS persistent-storage
             LIBRARY DESTINATION lib
             ARCHIVE DESTINATION lib
     )
 endif()
 
+# TODO provide unit tests - see CMakeLists.txt above
 if (OT_COMM_TEST)
-    add_library(commissioner-app-test OBJECT
-        commissioner_app.hpp
-        commissioner_app_test.cpp
-        json.hpp
-        json_test.cpp
+    add_library(commissioner-ps-test OBJECT
+      persistent_storage_json_test.cpp
+      persistent_storage_json.hpp
     )
 
-    target_include_directories(commissioner-app-test
+    target_include_directories(commissioner-ps-test
         PRIVATE
-            ${PROJECT_SOURCE_DIR}/include
-            ${PROJECT_SOURCE_DIR}/src
-            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+	    ${PROJECT_SOURCE_DIR}/include
+	    ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+	    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )
-endif()
-
-add_subdirectory(cli)
-add_subdirectory(ps)
+endif (OT_COMM_TEST)
