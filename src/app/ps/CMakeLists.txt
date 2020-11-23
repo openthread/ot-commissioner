@@ -46,16 +46,13 @@ add_library(persistent-storage OBJECT
     semaphore_posix.hpp
 )
 
-target_include_directories(persistent-storage PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include>
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
-)
-
-# TODO Refine which directories to add
 target_include_directories(persistent-storage
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/src/app
+  PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+  PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src/app
 )
 
 if (BUILD_SHARED_LIBS)
@@ -75,6 +72,7 @@ if (OT_COMM_TEST)
     target_include_directories(commissioner-ps-test
         PRIVATE
 	    ${PROJECT_SOURCE_DIR}/include
+	    ${PROJECT_SOURCE_DIR}/src/app
 	    ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
 	    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )

@@ -306,6 +306,10 @@ ps_status persistent_storage_json::lookup(border_router const *val, std::vector<
     if (val)
     {
         pred = [val](border_router const &el) {
+            // TODO fix implementation
+            bool ret = false;
+            (void)el;
+#if 0
             bool ret = val->id.id != EMPTY_ID || val->network.id != EMPTY_ID || !val->thread_version.empty() ||
                        !val->addr.empty() || val->port != 0 || val->state_bitmap != 0 || val->role != 0;
 
@@ -315,7 +319,7 @@ ps_status persistent_storage_json::lookup(border_router const *val, std::vector<
                   (val->addr.empty() || str_cmp_icase(val->addr, el.addr)) &&
                   (val->port == 0 || (val->port == el.port)) && (val->role == 0 || (val->role == el.role)) &&
                   (val->state_bitmap == 0 || (val->state_bitmap == el.state_bitmap));
-
+#endif
             return ret;
         };
     }
