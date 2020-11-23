@@ -5,7 +5,10 @@
 #include <fstream>
 #include <vector>
 
+#include <border_agent.hpp>
+
 using namespace ot::commissioner::persistent_storage;
+using namespace ot::commissioner;
 
 TEST_CASE("Create default if not exists", "[ps_json]")
 {
@@ -98,21 +101,20 @@ TEST_CASE("Add network", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Add br", "[ps_json]") {
+TEST_CASE("Add br", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     border_router_id new_id;
 
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.2", 11, 1, 0},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(border_router{EMPTY_ID, BorderAgent{"th1.x", 1, "1.1.1.2", 11, 1, 0}}, new_id) ==
+            ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.3", 12, 2, 0},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.3", 12, 2, 0}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.4", 13, 3, 0},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.4", 13, 3, 0}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);

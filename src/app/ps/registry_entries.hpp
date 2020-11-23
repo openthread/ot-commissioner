@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "border_agent.hpp"
+
 namespace ot::commissioner::persistent_storage {
 
 /**
@@ -180,7 +182,9 @@ struct network
  */
 struct border_router
 {
-    border_router_id id;             /**< unique id in registry */
+    border_router_id id;    /**< unique id in registry */
+    BorderAgent      agent; /**< application representation of the border agent */
+#if 0
     std::string      thread_version; /**< Thread version supported by firmware */
     network_id       network;        /**< network uniq id */
     std::string      addr;           /**< br address */
@@ -206,6 +210,17 @@ struct border_router
     }
     border_router()
         : border_router(EMPTY_ID, "", EMPTY_ID, "", 0, 0, 0)
+    {
+    }
+#endif
+    border_router()
+        : border_router(EMPTY_ID, {})
+    {
+    }
+
+    border_router(border_router_id const &bid, BorderAgent const &ba)
+        : id(bid)
+        , agent(ba)
     {
     }
 };

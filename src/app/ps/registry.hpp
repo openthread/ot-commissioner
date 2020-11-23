@@ -13,6 +13,8 @@
 #include <map>
 #include <vector>
 
+#include "border_agent.hpp"
+
 namespace ot::commissioner::persistent_storage {
 
 /**

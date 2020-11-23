@@ -90,21 +90,29 @@ void from_json(const json &j, network &p)
 
 void to_json(json &j, const border_router &p)
 {
-    j = json{
-        {JSON_ID, p.id},     {JSON_THREAD_VERSION, p.thread_version}, {JSON_NWK_REF, p.network}, {JSON_ADDR, p.addr},
+    j = json
+    {
+        {JSON_ID, p.id},
+// TODO re-implement
+#if 0
+     {JSON_THREAD_VERSION, p.thread_version}, {JSON_NWK_REF, p.network}, {JSON_ADDR, p.addr},
         {JSON_PORT, p.port}, {JSON_STATE_BITMAP, p.state_bitmap},     {JSON_ROLE, p.role},
+#endif
     };
 }
 
 void from_json(const json &j, border_router &p)
 {
     j.at(JSON_ID).get_to(p.id);
+// TODO re-implement
+#if 0
     j.at(JSON_THREAD_VERSION).get_to(p.thread_version);
     j.at(JSON_NWK_REF).get_to(p.network);
     j.at(JSON_ADDR).get_to(p.addr);
     j.at(JSON_PORT).get_to(p.port);
     j.at(JSON_STATE_BITMAP).get_to(p.state_bitmap);
     j.at(JSON_ROLE).get_to(p.role);
+#endif
 }
 
 } // namespace ot::commissioner::persistent_storage
