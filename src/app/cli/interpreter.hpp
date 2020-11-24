@@ -44,6 +44,8 @@ namespace ot {
 
 namespace commissioner {
 
+class Job;
+
 class Interpreter
 {
 public:
@@ -56,7 +58,7 @@ public:
 
     void CancelCommand();
 
-private:
+public:
     /**
      * The result value of an Expression processed by the Interpreter.
      * Specifically, it is an union of Error and std::string.
@@ -93,6 +95,7 @@ private:
     using Expression = std::vector<std::string>;
     using Evaluator  = std::function<Value(Interpreter *, const Expression &)>;
 
+private:
     Expression Read();
 
     Value Eval(const Expression &aExpr);
@@ -122,6 +125,24 @@ private:
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
+
+    Value ProcessStartJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessStopJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessActiveJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessTokenJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessNetworkJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessSessionIdJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessJoinerJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessCommDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessOpDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessBbrDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessReenrollJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessDomainResetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessMigrateJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessMlrJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessAnnounceJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessPanIdJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    // Value ProcessEnergyJob(CommissionerApp &aCommissioner, const Expression &aExpr);
 
     Error UpdateConfig(const ByteArray &aPSKc);
 

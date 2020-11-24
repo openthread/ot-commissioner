@@ -31,6 +31,10 @@ add_executable(commissioner-cli
     console.hpp
     interpreter.cpp
     interpreter.hpp
+    job.cpp
+    job.hpp
+    job_manager.cpp
+    job_manager.hpp
     main.cpp
 )
 
