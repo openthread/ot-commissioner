@@ -1,0 +1,45 @@
+#!/bin/bash
+
+BUILD_DIR=${BUILD_DIR:-./build}
+SRC_ROOT=$(cd "$(dirname $0)"/..; pwd)
+
+code_make()
+{
+    [ -d ./extlibs ] || git submodule update --init
+    echo "code_make(): $BUILD_DIR $@"
+    case "$1" in
+        all|clean)
+            TARGET="--target $1"
+            shift
+            ;;
+        *)
+            ;;
+    esac
+    
+    cmake --build $BUILD_DIR $TARGET $@
+}
+
+case "$1" in
+    -h|--help|help)
+        echo "Usage: $0 [help|clean*|all*|sdk|sx|sc|kx|kr]"
+        echo "  - clean          : the parameter to be passed to cmake as --target clean"
+        echo "  - all            : the parameter to be passed to cmake as --target all"
+        echo ""
+        echo "  Any other parameters will be directly passed to cmake."
+        echo "  Examples:"
+        echo ""
+        echo "  $0 clean"
+        echo "  $0 all --clean-first"
+        echo ""
+        ;;
+    clean)
+        code_make $@
+        ;;
+    all)
+        code_make $@
+        ;;
+    *)
+        code_make $@
+
+esac
+

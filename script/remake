@@ -1,0 +1,41 @@
+#!/bin/bash
+
+BUILD_DIR=${BUILD_DIR:-./build}
+
+build_type=${1:-"-d"}
+[ "$build_type" = "-d" ] || [ "$build_type" = "--debug"   ] && shift &&
+   BUILD_OPT=-DCMAKE_BUILD_TYPE=Debug && echo "Configure for debugging..."
+[ "$build_type" = "-r" ] || [ "$build_type" = "--release" ] && shift &&
+   BUILD_OPT=-DCMAKE_BUILD_TYPE=Release && echo "Configure for releasing..."
+echo $BUILD_OPT
+
+TARGET=$1
+TARGET=${TARGET:-all}
+
+# suppress cmake warning
+# currently it is -Wno-dev
+NO_WARN=${NO_WARN:--Wno-dev}
+
+remake_dir()
+{
+    echo remaking `pwd`
+    [ -d $BUILD_DIR ] || mkdir $BUILD_DIR
+    rm -fR ./$BUILD_DIR/*
+    cmake $NO_WARN -S . -B ./$BUILD_DIR $BUILD_OPT
+}
+
+print_help()
+{
+    echo "Usage: $0 [-d|--debug|-r|--release] [help]"
+    echo ""
+}
+
+case "$TARGET" in
+    help)
+        print_help
+        ;;
+    *)
+        remake_dir
+        ;;
+esac
+
