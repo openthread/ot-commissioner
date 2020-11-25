@@ -34,12 +34,13 @@
 #ifndef OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 #define OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 
-#include "app/cli/interpreter.hpp"
 #include "app/commissioner_app.hpp"
 
 namespace ot {
 
 namespace commissioner {
+
+class Interpreter;
 
 class JobManager
 {
@@ -47,11 +48,17 @@ public:
     JobManager()  = default;
     ~JobManager() = default;
 
-    void RunPool();
+    Error Init(const Config &aConf);
+    void  RunPool();
+    void  CancelCommand();
 
 private:
-    using CommissionerPool = std::map<uint64_t, CommissionerApp>;
-    CommissionerPool mPool;
+    using CommissionerPool  = std::map<uint64_t, CommissionerApp>;
+    using CommissonerAppPtr = std::shared_ptr<CommissionerApp>;
+
+    CommissionerPool  mPool;
+    Config            mConf;
+    CommissonerAppPtr mDefaultCommissioner = nullptr;
 };
 
 } // namespace commissioner
