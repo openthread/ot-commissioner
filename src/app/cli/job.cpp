@@ -37,13 +37,9 @@ namespace ot {
 
 namespace commissioner {
 
-Error Job::Run()
+void Job::Run()
 {
-    Error err;
-
-    (void) mCommissioner;
-
-    return err;
+    mValue = mEval(&mInterpreter, mCommissioner, mExpr);
 }
 
 } // namespace commissioner

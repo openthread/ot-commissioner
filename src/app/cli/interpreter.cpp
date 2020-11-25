@@ -41,6 +41,25 @@
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
+#define KEYWORD_NETWORK    "--nwk"
+#define KEYWORD_DOMAIN     "--dom"
+#define KEYWORD_EXPORT     "--export"
+#define KEYWORD_IMPORT     "--import"
+
+#define ALIAS_THIS         "this"
+#define ALIAS_ALL          "all"
+#define ALIAS_OTHERS       "others"
+
+#define SYNTAX_NO_PARAM        "keyword {} used with no parameter"
+#define SYNTAX_UNKNOWN_KEY     "unknown keyword {} encountered"
+#define SYNTAX_MULTI_DOMAIN    "multiple domain specification not allowed"
+#define SYNTAX_MULTI_EXPORT    "multiple files not allowed for --export"
+#define SYNTAX_MULTI_IMPORT    "multiple files not allowed for --import"
+#define SYNTAX_NWK_DOM_MUTUAL  "--nwk and --dom are mutually exclusive"
+#define SYNTAX_EXP_IMP_MUTUAL  "--export and --import are mutually exclusive"
+#define SYNTAX_NOT_SUPPORTED   "{} is not supported by the command"
+#define SYNTAX_GROUP_ALIAS     "{} must not combine with any other network alias"
+
 namespace ot {
 
 namespace commissioner {
@@ -123,6 +142,39 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"help", "help [<command>]"},
 };
 
+const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSupported = *new std::vector<Interpreter::StringArray>{
+    Interpreter::StringArray{"start"},
+    Interpreter::StringArray{"stop"},
+    Interpreter::StringArray{"active"},
+    Interpreter::StringArray{"sessionid"},
+    Interpreter::StringArray{"bbrdataset", "get"},
+    Interpreter::StringArray{"commdataset", "get"},
+    Interpreter::StringArray{"opdataset", "get", "active"},
+    Interpreter::StringArray{"opdataset", "get", "pending"},
+    Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+};
+
+const std::vector<Interpreter::StringArray> &Interpreter::mExportSupported = *new std::vector<Interpreter::StringArray>{
+    Interpreter::StringArray{"bbrdataset", "get"},
+    Interpreter::StringArray{"commdataset", "get"},
+    Interpreter::StringArray{"opdataset", "get", "active"},
+    Interpreter::StringArray{"opdataset", "get", "pending"},
+};
+
+const std::vector<Interpreter::StringArray> &Interpreter::mImportSupported = *new std::vector<Interpreter::StringArray>{
+    Interpreter::StringArray{"opdataset", "set", "active"},
+    Interpreter::StringArray{"opdataset", "set", "pending"},
+};
+
+const std::map<std::string, Interpreter::JobEvaluator> &Interpreter::mJobEvaluatorMap = *new std::map<std::string, Interpreter::JobEvaluator>{
+    {"start", &Interpreter::ProcessStartJob},
+    {"stop", &Interpreter::ProcessStopJob},
+    {"commdataset", &Interpreter::ProcessCommDatasetJob},
+    {"opdataset", &Interpreter::ProcessOpDatasetJob},
+    {"bbrdataset", &Interpreter::ProcessBbrDatasetJob},
+};
+
+
 template <typename T> static std::string ToHex(T aInteger)
 {
     return "0x" + utils::Hex(utils::Encode(aInteger));
@@ -178,6 +230,8 @@ Error Interpreter::Init(const std::string &aConfigFile)
         mConfig.mPSKc.assign(kMaxPSKcLength, 0xff);
         mConfig.mLogger = SysLogger::Create(LogLevel::kDebug);
     }
+    SuccessOrExit(error = mJobManager.Init(mConfig));
+    // TODO: get rid of the embedded Interpreter::mCommissioner
     SuccessOrExit(error = CommissionerApp::Create(mCommissioner, mConfig));
 
 exit:
@@ -223,6 +277,12 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 
     VerifyOrExit(!aExpr.empty(), value = ERROR_NONE);
 
+    if (IsMultiNetworkSyntax(aExpr))
+    {
+        return EvaluateMultiNetwork(aExpr);
+    }
+
+    // else
     evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
     if (evaluator == mEvaluatorMap.end())
     {
@@ -234,6 +294,184 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 
 exit:
     return value;
+}
+
+bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
+{
+    for (auto word : aExpr)
+    {
+        if (word == KEYWORD_NETWORK || word == KEYWORD_DOMAIN)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
+{
+    Expression  retExpr;
+    StringArray nwkAliases;
+    StringArray domAliases;
+    StringArray exportFiles;
+    StringArray importFiles;
+    Error       error;
+
+    error = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles,
+                                      importFiles);
+    SuccessOrExit(error);
+    // domain must be single or omitted
+    VerifyOrExit(domAliases.size() < 2, error = ERROR_INVALID_COMMAND(SYNTAX_MULTI_DOMAIN));
+    // network and domain must not be specified simultaneously
+    VerifyOrExit(nwkAliases.size() == 0 || domAliases.size() == 0,
+                 error = ERROR_INVALID_COMMAND(SYNTAX_NWK_DOM_MUTUAL));
+    // export file specification must be single or omitted
+    VerifyOrExit(exportFiles.size() < 2, error = ERROR_INVALID_COMMAND(SYNTAX_MULTI_EXPORT));
+    // import file specification must be single or omitted
+    VerifyOrExit(importFiles.size() < 2, error = ERROR_INVALID_COMMAND(SYNTAX_MULTI_IMPORT));
+    // export and import must not be specified simultaneously
+    VerifyOrExit((exportFiles.size() == 0 || importFiles.size() == 0),
+                 error = ERROR_INVALID_COMMAND(SYNTAX_EXP_IMP_MUTUAL));
+
+    // Verify if respective syntax supported by the current command
+    bool supported;
+
+    if (nwkAliases.size() > 0)
+    {
+        supported = IsSyntaxSupported(mMultiNetworkSupported, retExpr);
+        VerifyOrExit(supported, ERROR_INVALID_COMMAND(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
+    }
+    else if (domAliases.size() > 0)
+    {
+        supported = IsSyntaxSupported(mMultiNetworkSupported, retExpr);
+        VerifyOrExit(supported, ERROR_INVALID_COMMAND(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
+    }
+    else
+    {
+        assert(false); // must not hit this, ever
+    }
+
+    if (exportFiles.size() > 0)
+    {
+        supported = IsSyntaxSupported(mExportSupported, retExpr);
+        VerifyOrExit(supported, ERROR_INVALID_COMMAND(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
+    }
+    else if (importFiles.size() > 0)
+    {
+        supported = IsSyntaxSupported(mImportSupported, retExpr);
+        VerifyOrExit(supported, ERROR_INVALID_COMMAND(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+    }
+
+    // validate group alias usage; if used, it must be alone
+    for (auto alias : nwkAliases)
+    {
+        if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+        {
+            VerifyOrExit(nwkAliases.size() == 1, ERROR_INVALID_COMMAND(SYNTAX_GROUP_ALIAS, alias));
+        }
+    }
+
+    // resolve aliases to array of network ids
+
+
+    // create pool of jobs by network ids
+
+
+    // run pool
+
+
+    // post-process collected values
+exit:
+    return error;
+}
+
+bool Interpreter::IsSyntaxSupported(const std::vector<StringArray>& aArr,
+                                    const Expression & aExpr) const
+{
+    for (auto commandCase : aArr)
+    {
+        if (commandCase.size() != aExpr.size())
+            continue;
+
+        bool matching = false;
+
+        for (size_t idx = 0; idx < commandCase.size(); idx++)
+        {
+            matching = commandCase[idx] == aExpr[idx];
+            if (!matching)
+                break;
+        }
+        if (matching)
+            return true;
+    }
+    return false;
+}
+
+Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr,
+                                             Expression  &aRetExpr,
+                                             StringArray &aNwkAliases,
+                                             StringArray &aDomAliases,
+                                             StringArray &aExport,
+                                             StringArray &aImport)
+{
+    enum {COMMAND, NETWORK, DOMAIN, EXPORT, IMPORT};
+    StringArray *arrays[] = {
+        [COMMAND] = &aRetExpr,
+        [NETWORK] = &aNwkAliases,
+        [DOMAIN]  = &aDomAliases,
+        [EXPORT]  = &aExport,
+        [IMPORT]  = &aImport
+    };
+    Error error;
+
+    uint8_t     state = COMMAND;
+    bool        inKey = false;
+    std::string lastKey;
+
+    for (auto word : aExpr)
+    {
+        std::string prefix = word.substr(0, 2);
+
+        /*
+         * Note: the syntax allows multiple specification of the same key
+         *
+         * Example: the cases below are parsed equivalently
+         *  --nwk nid1 nid2 nid3 --export path
+         *  --nwk nid1 --nwk nid2 nid3 --export path
+         *  --nwk nid1 --export path --nwk nid2 --nwk nid3
+         */
+
+        if (prefix == "--")
+        {
+            VerifyOrExit(!inKey, error = ERROR_INVALID_COMMAND(SYNTAX_NO_PARAM, lastKey));
+            if (word == KEYWORD_NETWORK)
+                state = NETWORK;
+            else if (word == KEYWORD_DOMAIN)
+                state = DOMAIN;
+            else if (word == KEYWORD_EXPORT)
+                state = EXPORT;
+            else if (word == KEYWORD_IMPORT)
+                state = IMPORT;
+            else
+            {
+                error = ERROR_INVALID_COMMAND(SYNTAX_UNKNOWN_KEY, word);
+                goto exit;
+            }
+            lastKey = word;
+            inKey = true;
+        }
+        else
+        {
+            inKey = false;
+            arrays[state]->push_back(word);
+        }
+    }
+    if (inKey) // test if we exit for() with trailing keyword
+    {
+        error = ERROR_INVALID_COMMAND(SYNTAX_NO_PARAM, lastKey);
+    }
+exit:
+    return error;
 }
 
 void Interpreter::Print(const Value &aValue)
@@ -1063,6 +1301,57 @@ Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
 exit:
     return value;
 }
+
+Interpreter::Value Interpreter::ProcessStartJob(CommissionerApp &aCommissioner, const Expression &aExpr)
+{
+    Value value;
+
+    (void)aCommissioner;
+    (void)aExpr;
+
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessStopJob(CommissionerApp &aCommissioner, const Expression &aExpr)
+{
+    Value value;
+
+    (void)aCommissioner;
+    (void)aExpr;
+
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessCommDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr)
+{
+    Value value;
+
+    (void)aCommissioner;
+    (void)aExpr;
+
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr)
+{
+    Value value;
+
+    (void)aCommissioner;
+    (void)aExpr;
+
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessBbrDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr)
+{
+    Value value;
+
+    (void)aCommissioner;
+    (void)aExpr;
+
+    return value;
+}
+
 
 void Interpreter::BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError)
 {

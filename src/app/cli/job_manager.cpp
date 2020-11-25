@@ -37,7 +37,20 @@ namespace ot {
 
 namespace commissioner {
 
+Error JobManager::Init(const Config &aConf)
+{
+    // here we need to store a pointer to persistent storage object
+
+    mConf = aConf;
+    return CommissionerApp::Create(mDefaultCommissioner, aConf);
+}
+
 void JobManager::RunPool()
+{
+
+}
+
+void JobManager::CancelCommand()
 {
 
 }

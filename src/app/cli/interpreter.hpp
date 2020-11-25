@@ -39,6 +39,7 @@
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
 #include "app/commissioner_app.hpp"
+#include "app/cli/job_manager.hpp"
 
 namespace ot {
 
@@ -58,7 +59,9 @@ public:
 
     void CancelCommand();
 
-public:
+private:
+    friend class Job;
+    friend class JobManager;
     /**
      * The result value of an Expression processed by the Interpreter.
      * Specifically, it is an union of Error and std::string.
@@ -95,6 +98,8 @@ public:
     using Expression = std::vector<std::string>;
     using Evaluator  = std::function<Value(Interpreter *, const Expression &)>;
 
+    using JobEvaluator = std::function<Value(Interpreter *, CommissionerApp &, const Expression &)>;
+    using StringArray  = std::vector<std::string>;
 private:
     Expression Read();
 
@@ -103,6 +108,16 @@ private:
     void Print(const Value &aValue);
 
     Expression ParseExpression(const std::string &aLiteral);
+    bool  IsSyntaxSupported(const std::vector<StringArray>& aArr,
+                            const Expression & aExpr) const;
+    bool  IsMultiNetworkSyntax(const Expression &aExpr);
+    Value EvaluateMultiNetwork(const Expression &aExpr);
+    Error ReParseMultiNetworkSyntax(const Expression &aExpr,
+                                    Expression  &aRretExpr,
+                                    StringArray &aNwkAliases,
+                                    StringArray &aDomAliases,
+                                    StringArray &aExport,
+                                    StringArray &aImport);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
@@ -166,11 +181,16 @@ private:
     Config                           mConfig;
     std::shared_ptr<CommissionerApp> mCommissioner = nullptr;
     Console                          mConsole;
+    JobManager                       mJobManager;
 
     bool mShouldExit = false;
 
     static const std::map<std::string, std::string> &mUsageMap;
     static const std::map<std::string, Evaluator> &  mEvaluatorMap;
+    static const std::vector<StringArray> & mMultiNetworkSupported;
+    static const std::vector<StringArray> & mExportSupported;
+    static const std::vector<StringArray> & mImportSupported;
+    static const std::map<std::string, JobEvaluator> &  mJobEvaluatorMap;
 };
 
 std::string ToLower(const std::string &aStr);

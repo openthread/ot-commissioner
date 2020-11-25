@@ -44,22 +44,33 @@ namespace commissioner {
 class Job
 {
 public:
-    Job(CommissionerApp& aCommApp,
+    Job(Interpreter & aInterpreter,
+        CommissionerApp & aCommApp,
         Interpreter::Expression aExpr,
-        Interpreter::Evaluator  aEval):
-        mCommissioner(aCommApp), mExpr(aExpr), mEval(aEval)
+        Interpreter::JobEvaluator aEval):
+        mInterpreter(aInterpreter), mCommissioner(aCommApp), mExpr(aExpr), mEval(aEval)
         {
         }
     ~Job() = default;
 
-    Error Run();
+    void Run();
+
+    Interpreter::Value GetValue() const
+        {
+            return mValue;
+        }
+    std::string        GetJsonString() const
+        {
+            return mJson;
+        }
 
 private:
+    Interpreter & mInterpreter;
     CommissionerApp &  mCommissioner;
-    Interpreter::Expression  mExpr;
-    Interpreter::Evaluator   mEval;
-    Interpreter::Value       mValue;
-    std::string              mJson;
+    Interpreter::Expression   mExpr;
+    Interpreter::JobEvaluator mEval;
+    Interpreter::Value        mValue;
+    std::string               mJson;
 };
 
 } // namespace commissioner
