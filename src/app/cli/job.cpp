@@ -32,6 +32,7 @@
  */
 
 #include "app/cli/job.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
@@ -39,7 +40,14 @@ namespace commissioner {
 
 void Job::Run()
 {
-    mValue = mEval(&mInterpreter, mCommissioner, mExpr);
+    ASSERT(!mJobThread.joinable());
+    mJobThread = std::thread([this] { mValue = mEval(&mInterpreter, mCommissioner, mExpr); });
+}
+
+void Job::Wait()
+{
+    ASSERT(mJobThread.joinable());
+    mJobThread.join();
 }
 
 } // namespace commissioner

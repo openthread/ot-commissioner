@@ -152,9 +152,15 @@ enum class ErrorCode : int
     kCoapError = 17,
 
     /**
+     * Unsupported command syntax encountered or mutually exclusive
+     * parameters used.
+     */
+    kSyntaxViolation = 18,
+
+    /**
      * The error is out of the address space of OT Commissioner.
      */
-    kUnknown = 18,
+    kUnknown = 19,
 };
 
 /**
