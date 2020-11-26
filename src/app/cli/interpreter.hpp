@@ -38,12 +38,14 @@
 
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
-#include "app/commissioner_app.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/commissioner_app.hpp"
 
 namespace ot {
 
 namespace commissioner {
+
+using NidArray = std::vector<uint64_t>;
 
 class Job;
 
@@ -100,6 +102,7 @@ private:
 
     using JobEvaluator = std::function<Value(Interpreter *, CommissionerApp &, const Expression &)>;
     using StringArray  = std::vector<std::string>;
+
 private:
     Expression Read();
 
@@ -108,16 +111,15 @@ private:
     void Print(const Value &aValue);
 
     Expression ParseExpression(const std::string &aLiteral);
-    bool  IsSyntaxSupported(const std::vector<StringArray>& aArr,
-                            const Expression & aExpr) const;
-    bool  IsMultiNetworkSyntax(const Expression &aExpr);
-    Value EvaluateMultiNetwork(const Expression &aExpr);
-    Error ReParseMultiNetworkSyntax(const Expression &aExpr,
-                                    Expression  &aRretExpr,
-                                    StringArray &aNwkAliases,
-                                    StringArray &aDomAliases,
-                                    StringArray &aExport,
-                                    StringArray &aImport);
+    bool       IsSyntaxSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
+    bool       IsMultiNetworkSyntax(const Expression &aExpr);
+    Value      EvaluateMultiNetwork(const Expression &aExpr);
+    Error      ReParseMultiNetworkSyntax(const Expression &aExpr,
+                                         Expression &      aRretExpr,
+                                         StringArray &     aNwkAliases,
+                                         StringArray &     aDomAliases,
+                                         StringArray &     aExport,
+                                         StringArray &     aImport);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
@@ -185,12 +187,12 @@ private:
 
     bool mShouldExit = false;
 
-    static const std::map<std::string, std::string> &mUsageMap;
-    static const std::map<std::string, Evaluator> &  mEvaluatorMap;
-    static const std::vector<StringArray> & mMultiNetworkSupported;
-    static const std::vector<StringArray> & mExportSupported;
-    static const std::vector<StringArray> & mImportSupported;
-    static const std::map<std::string, JobEvaluator> &  mJobEvaluatorMap;
+    static const std::map<std::string, std::string> & mUsageMap;
+    static const std::map<std::string, Evaluator> &   mEvaluatorMap;
+    static const std::vector<StringArray> &           mMultiNetworkSupported;
+    static const std::vector<StringArray> &           mExportSupported;
+    static const std::vector<StringArray> &           mImportSupported;
+    static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;
 };
 
 std::string ToLower(const std::string &aStr);

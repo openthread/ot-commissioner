@@ -47,12 +47,10 @@ Error JobManager::Init(const Config &aConf)
 
 void JobManager::RunPool()
 {
-
 }
 
 void JobManager::CancelCommand()
 {
-
 }
 
 } // namespace commissioner

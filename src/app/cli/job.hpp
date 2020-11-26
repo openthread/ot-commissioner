@@ -34,6 +34,7 @@
 #ifndef OT_COMM_APP_CLI_JOB_HPP_
 #define OT_COMM_APP_CLI_JOB_HPP_
 
+#include <thread>
 #include "app/cli/interpreter.hpp"
 #include "app/commissioner_app.hpp"
 
@@ -44,33 +45,32 @@ namespace commissioner {
 class Job
 {
 public:
-    Job(Interpreter & aInterpreter,
-        CommissionerApp & aCommApp,
-        Interpreter::Expression aExpr,
-        Interpreter::JobEvaluator aEval):
-        mInterpreter(aInterpreter), mCommissioner(aCommApp), mExpr(aExpr), mEval(aEval)
-        {
-        }
+    Job(Interpreter &             aInterpreter,
+        CommissionerApp &         aCommApp,
+        Interpreter::Expression   aExpr,
+        Interpreter::JobEvaluator aEval)
+        : mInterpreter(aInterpreter)
+        , mCommissioner(aCommApp)
+        , mExpr(aExpr)
+        , mEval(aEval)
+    {
+    }
     ~Job() = default;
 
     void Run();
+    void Wait();
 
-    Interpreter::Value GetValue() const
-        {
-            return mValue;
-        }
-    std::string        GetJsonString() const
-        {
-            return mJson;
-        }
+    Interpreter::Value GetValue() const { return mValue; }
+    std::string        GetJsonString() const { return mJson; }
 
 private:
-    Interpreter & mInterpreter;
-    CommissionerApp &  mCommissioner;
+    Interpreter &             mInterpreter;
+    CommissionerApp &         mCommissioner;
     Interpreter::Expression   mExpr;
     Interpreter::JobEvaluator mEval;
     Interpreter::Value        mValue;
     std::string               mJson;
+    std::thread               mJobThread;
 };
 
 } // namespace commissioner
