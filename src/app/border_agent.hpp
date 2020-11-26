@@ -162,6 +162,64 @@ struct BorderAgent
     static constexpr uint16_t kBbrSeqNumberBit    = 1 << 13;
     static constexpr uint16_t kBbrPortBit         = 1 << 14;
     static constexpr uint16_t kDiscriminatorBit   = 1 << 15;
+
+    BorderAgent()
+        : mAddr()
+        , mPort(0)
+        , mDiscriminator()
+        , mThreadVersion("")
+        , mState{0, 0, 0, 0, 0}
+        , mNetworkName("")
+        , mExtendedPanId(0)
+        , mVendorName("")
+        , mModelName("")
+        , mActiveTimestamp{0, 0, 0}
+        , mPartitionId(0)
+        , mVendorData("")
+        , mVendorOui()
+        , mDomainName("")
+        , mBbrSeqNumber(0)
+        , mBbrPort(0)
+        , mPresentFlags(0)
+    {
+    }
+
+    BorderAgent(std::string const &aAddr,
+                uint16_t           aPort,
+                ByteArray const &  aDiscriminator,
+                std::string const &aThreadVersion,
+                BorderAgent::State aState,
+                std::string const &aNetworkName,
+                uint64_t           aExtendedPanId,
+                std::string const &aVendorName,
+                std::string const &aModelName,
+                Timestamp          aActiveTimestamp,
+                uint32_t           aPartitionId,
+                std::string const &aVendorData,
+                ByteArray const &  aVendorOui,
+                std::string const &aDomainName,
+                uint8_t            aBbrSeqNumber,
+                uint16_t           aBbrPort,
+                uint16_t           aPresentFlags)
+        : mAddr(aAddr)
+        , mPort(aPort)
+        , mDiscriminator(aDiscriminator)
+        , mThreadVersion(aThreadVersion)
+        , mState{aState}
+        , mNetworkName(aNetworkName)
+        , mExtendedPanId(aExtendedPanId)
+        , mVendorName(aVendorName)
+        , mModelName(aModelName)
+        , mActiveTimestamp{aActiveTimestamp}
+        , mPartitionId(aPartitionId)
+        , mVendorData(aVendorData)
+        , mVendorOui(aVendorOui)
+        , mDomainName(aDomainName)
+        , mBbrSeqNumber(aBbrSeqNumber)
+        , mBbrPort(aBbrPort)
+        , mPresentFlags(aPresentFlags)
+    {
+    }
 };
 
 /**
