@@ -40,7 +40,10 @@ namespace ot {
 
 namespace commissioner {
 
+using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
+
 class Interpreter;
+class Job;
 
 class JobManager
 {
@@ -48,17 +51,20 @@ public:
     JobManager()  = default;
     ~JobManager() = default;
 
-    Error Init(const Config &aConf);
-    void  RunPool();
-    void  CancelCommand();
+    Error               Init(const Config &aConf);
+    void                RunJobs();
+    void                CancelCommand();
+    void                Wait();
+    CommissionerAppPtr &GetSelectedCommissioner();
 
 private:
-    using CommissionerPool  = std::map<uint64_t, CommissionerApp>;
-    using CommissonerAppPtr = std::shared_ptr<CommissionerApp>;
+    using CommissionerPool = std::map<uint64_t, CommissionerApp>;
+    using JobPool          = std::vector<Job *>;
 
-    CommissionerPool  mPool;
-    Config            mConf;
-    CommissonerAppPtr mDefaultCommissioner = nullptr;
+    JobPool            mJobPool;
+    CommissionerPool   mCommissionerPool;
+    Config             mConf;
+    CommissionerAppPtr mDefaultCommissioner = nullptr;
 };
 
 } // namespace commissioner
