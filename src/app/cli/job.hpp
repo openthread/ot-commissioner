@@ -59,6 +59,7 @@ public:
 
     void Run();
     void Wait();
+    void Cancel();
 
     Interpreter::Value GetValue() const { return mValue; }
     std::string        GetJsonString() const { return mJson; }

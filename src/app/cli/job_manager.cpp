@@ -32,6 +32,8 @@
  */
 
 #include "app/cli/job_manager.hpp"
+#include "app/cli/job.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 
@@ -45,12 +47,40 @@ Error JobManager::Init(const Config &aConf)
     return CommissionerApp::Create(mDefaultCommissioner, aConf);
 }
 
-void JobManager::RunPool()
+void JobManager::RunJobs()
 {
+    for (auto job : mJobPool)
+    {
+        ASSERT(job != NULL);
+        job->Run();
+    }
 }
 
 void JobManager::CancelCommand()
 {
+    for (auto job : mJobPool)
+    {
+        ASSERT(job != NULL);
+        job->Cancel();
+    }
+    Wait();
+}
+
+void JobManager::Wait()
+{
+    for (auto job : mJobPool)
+    {
+        ASSERT(job != NULL);
+        job->Wait();
+    }
+}
+
+CommissionerAppPtr &JobManager::GetSelectedCommissioner()
+{
+    // get selected nid
+    // if not void, find CommissionerApp in pool
+    // else
+    return mDefaultCommissioner;
 }
 
 } // namespace commissioner

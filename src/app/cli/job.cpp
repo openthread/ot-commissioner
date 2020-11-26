@@ -50,6 +50,11 @@ void Job::Wait()
     mJobThread.join();
 }
 
+void Job::Cancel()
+{
+    mCommissioner.CancelRequests();
+}
+
 } // namespace commissioner
 
 } // namespace ot
