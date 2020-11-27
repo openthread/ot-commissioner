@@ -3,10 +3,21 @@
 BUILD_DIR=${BUILD_DIR:-./build}
 
 build_type=${1:-"-d"}
-[ "$build_type" = "-d" ] || [ "$build_type" = "--debug"   ] && shift &&
-   BUILD_OPT=-DCMAKE_BUILD_TYPE=Debug && echo "Configure for debugging..."
-[ "$build_type" = "-r" ] || [ "$build_type" = "--release" ] && shift &&
-   BUILD_OPT=-DCMAKE_BUILD_TYPE=Release && echo "Configure for releasing..."
+# echo "build_type = $build_type"
+if [ $build_type = "-d" ] || [ $build_type = "--debug" ];
+then
+    [ -n "$1" ] && shift
+    BUILD_OPT=-DCMAKE_BUILD_TYPE=Debug
+    echo "Configure for debugging..."
+fi
+
+if [ $build_type = "-r" ] || [ $build_type = "--release" ];
+then
+    shift
+    BUILD_OPT=-DCMAKE_BUILD_TYPE=Release
+    echo "Configure for releasing..."
+fi
+
 echo $BUILD_OPT
 
 TARGET=$1
@@ -20,8 +31,10 @@ remake_dir()
 {
     echo remaking `pwd`
     [ -d $BUILD_DIR ] || mkdir $BUILD_DIR
-    rm -fR ./$BUILD_DIR/*
-    cmake $NO_WARN -S . -B ./$BUILD_DIR $BUILD_OPT
+    rm -fR $BUILD_DIR/*
+    cd $BUILD_DIR
+    cmake $NO_WARN $BUILD_OPT ..
+    cd -
 }
 
 print_help()

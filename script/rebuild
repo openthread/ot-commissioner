@@ -21,7 +21,7 @@ code_make()
 
 case "$1" in
     -h|--help|help)
-        echo "Usage: $0 [help|clean*|all*|sdk|sx|sc|kx|kr]"
+        echo "Usage: $0 [help|clean|all]"
         echo "  - clean          : the parameter to be passed to cmake as --target clean"
         echo "  - all            : the parameter to be passed to cmake as --target all"
         echo ""
