@@ -100,7 +100,7 @@ private:
     using Expression = std::vector<std::string>;
     using Evaluator  = std::function<Value(Interpreter *, const Expression &)>;
 
-    using JobEvaluator = std::function<Value(Interpreter *, CommissionerApp &, const Expression &)>;
+    using JobEvaluator = std::function<Value(Interpreter *, CommissionerAppPtr &, const Expression &)>;
     using StringArray  = std::vector<std::string>;
 
 private:
@@ -143,16 +143,16 @@ private:
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
-    Value ProcessStartJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    Value ProcessStopJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     // Value ProcessActiveJob(CommissionerApp &aCommissioner, const Expression &aExpr);
     // Value ProcessTokenJob(CommissionerApp &aCommissioner, const Expression &aExpr);
     // Value ProcessNetworkJob(CommissionerApp &aCommissioner, const Expression &aExpr);
     // Value ProcessSessionIdJob(CommissionerApp &aCommissioner, const Expression &aExpr);
     // Value ProcessJoinerJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    Value ProcessCommDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    Value ProcessOpDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    Value ProcessBbrDatasetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     // Value ProcessReenrollJob(CommissionerApp &aCommissioner, const Expression &aExpr);
     // Value ProcessDomainResetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
     // Value ProcessMigrateJob(CommissionerApp &aCommissioner, const Expression &aExpr);

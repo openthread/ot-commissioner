@@ -55,10 +55,11 @@ public:
     void                RunJobs();
     void                CancelCommand();
     void                Wait();
+    void                StopCommissionerPool();
     CommissionerAppPtr &GetSelectedCommissioner();
 
 private:
-    using CommissionerPool = std::map<uint64_t, CommissionerApp>;
+    using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
     using JobPool          = std::vector<Job *>;
 
     JobPool            mJobPool;

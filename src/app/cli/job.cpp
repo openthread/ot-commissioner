@@ -52,7 +52,7 @@ void Job::Wait()
 
 void Job::Cancel()
 {
-    mCommissioner.CancelRequests();
+    mCommissioner->CancelRequests();
 }
 
 } // namespace commissioner
