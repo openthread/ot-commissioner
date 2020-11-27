@@ -75,6 +75,21 @@ void JobManager::Wait()
     }
 }
 
+void JobManager::StopCommissionerPool()
+{
+    // going blatant straightforward
+    // TODO: actually need to do that in threads
+    for (auto commissionerEntry : mCommissionerPool)
+    {
+        CommissionerAppPtr commissioner = commissionerEntry.second;
+
+        if (commissioner->IsActive())
+            commissioner->Stop();
+    }
+    if (mDefaultCommissioner->IsActive())
+        mDefaultCommissioner->Stop();
+}
+
 CommissionerAppPtr &JobManager::GetSelectedCommissioner()
 {
     // get selected nid

@@ -46,7 +46,7 @@ class Job
 {
 public:
     Job(Interpreter &             aInterpreter,
-        CommissionerApp &         aCommApp,
+        CommissionerAppPtr &      aCommApp,
         Interpreter::Expression   aExpr,
         Interpreter::JobEvaluator aEval)
         : mInterpreter(aInterpreter)
@@ -66,7 +66,7 @@ public:
 
 private:
     Interpreter &             mInterpreter;
-    CommissionerApp &         mCommissioner;
+    CommissionerAppPtr &      mCommissioner;
     Interpreter::Expression   mExpr;
     Interpreter::JobEvaluator mEval;
     Interpreter::Value        mValue;
