@@ -306,20 +306,41 @@ ps_status persistent_storage_json::lookup(border_router const *val, std::vector<
     if (val)
     {
         pred = [val](border_router const &el) {
-            // TODO fix implementation
-            bool ret = false;
-            (void)el;
-#if 0
-            bool ret = val->id.id != EMPTY_ID || val->network.id != EMPTY_ID || !val->thread_version.empty() ||
-                       !val->addr.empty() || val->port != 0 || val->state_bitmap != 0 || val->role != 0;
+            bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->dom_id.id != EMPTY_ID ||
+                       val->mPresentFlags != 0;
 
-            ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
-                  (val->network.id == EMPTY_ID || (el.network.id == val->network.id)) &&
-                  (val->thread_version.empty() || (val->thread_version == el.thread_version)) &&
-                  (val->addr.empty() || str_cmp_icase(val->addr, el.addr)) &&
-                  (val->port == 0 || (val->port == el.port)) && (val->role == 0 || (val->role == el.role)) &&
-                  (val->state_bitmap == 0 || (val->state_bitmap == el.state_bitmap));
-#endif
+            ret =
+                ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
+                (val->nwk_id.id == EMPTY_ID || (el.nwk_id.id == val->nwk_id.id)) &&
+                (val->dom_id.id == EMPTY_ID || (el.dom_id.id == val->dom_id.id)) &&
+                ((val->mPresentFlags & BorderAgent::kAddrBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kAddrBit) != 0 && str_cmp_icase(el.mAddr, val->mAddr))) &&
+                ((val->mPresentFlags & BorderAgent::kPortBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kPortBit) != 0 && el.mPort == val->mPort)) &&
+                ((val->mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
+                  val->mThreadVersion == el.mThreadVersion)) &&
+                ((val->mPresentFlags & BorderAgent::kStateBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kStateBit) != 0 && el.mState == val->mState)) &&
+                ((val->mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
+                  str_cmp_icase(el.mVendorName, val->mVendorName))) &&
+                ((val->mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
+                  str_cmp_icase(el.mModelName, val->mModelName))) &&
+                ((val->mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
+                  el.mActiveTimestamp.Encode() == val->mActiveTimestamp.Encode())) &&
+                ((val->mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 && el.mPartitionId == val->mPartitionId)) &&
+                ((val->mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kVendorDataBit) != 0 && el.mVendorData == val->mVendorData)) &&
+                ((val->mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 && el.mVendorOui == val->mVendorOui)) &&
+                ((val->mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 && el.mBbrSeqNumber == val->mBbrSeqNumber)) &&
+                ((val->mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
+                 ((el.mPresentFlags & BorderAgent::kBbrPortBit) != 0 && el.mBbrPort == val->mBbrPort));
             return ret;
         };
     }

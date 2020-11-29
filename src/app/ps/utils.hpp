@@ -7,12 +7,12 @@
 #ifndef _CLI_UTILS_HPP_
 #define _CLI_UTILS_HPP_
 
-#include <sstream>
-#include <iomanip>
-#include <string>
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
+#include <iomanip>
+#include <sstream>
+#include <string>
 #include <type_traits>
 
 #include <commissioner/network_data.hpp>
@@ -56,105 +56,104 @@ template <typename T> std::string int_to_hex(T const &val)
     return stream.str();
 }
 
-    template<>
-    std::string int_to_hex(std::uint8_t const& val);
+template <> std::string int_to_hex(std::uint8_t const &val);
+
+/**
+ * Converts array of bytes to HEX string
+ *
+ * @param[in] arr array to convert
+ * @param[in] len length of the array
+ * @return HEX string without leading 0x
+ */
+std::string arr_to_hex(std::uint8_t const *arr, size_t len);
+
+/**
+ * Converts HEX string to array of bytes
+ *
+ * @param[in] hxstr hex string
+ * @param[out] arr array to be filled
+ * @param[in] len array len
+ * @return true if array len sufficient
+ */
+bool hex_to_arr(std::string const &hxstr, std::uint8_t *arr, size_t len);
+
+/**
+ * Case insensitive string comparison
+ *
+ * @param[in] str1 string to compare
+ * @param[in] str2 string to compare
+ * @return true if strings are equal
+ */
+bool str_cmp_icase(std::string const &str1, std::string const &str2);
+
+/**
+ * General purpose std::string serializer
+ *
+ * @param[in] val value to be serialized
+ * @return std::strings repr of val
+ */
+struct str_serializer
+{
+    /**
+     * If type cannot be directly converted to std::string
+     * std::stringstream is used
+     */
+    template <typename T>
+    typename std::enable_if<!std::is_assignable<T, std::string>::value, std::string>::type serialize(T const &val)
+    {
+        std::stringstream strm;
+        strm << val;
+        return strm.str();
+    }
 
     /**
-     * Converts array of bytes to HEX string
-     *
-     * @param[in] arr array to convert
-     * @param[in] len length of the array
-     * @return HEX string without leading 0x
+     * If type can be directly converted to std::string
+     * simple conversion is used
      */
-    std::string arr_to_hex(std::uint8_t const * arr, size_t len);
+    template <typename T>
+    typename std::enable_if<std::is_assignable<T, std::string>::value, std::string>::type serialize(T const &val)
+    {
+        return val;
+    }
+};
 
-    /**
-     * Converts HEX string to array of bytes
-     *
-     * @param[in] hxstr hex string
-     * @param[out] arr array to be filled
-     * @param[in] len array len
-     * @return true if array len sufficient
-     */
-    bool hex_to_arr(std::string const & hxstr, std::uint8_t * arr, size_t len);
+/**
+ * Compares two tg_od_timestamp_t
+ *
+ * @params[in] a first ts
+ * @params[in] b second ts
+ * @return 1 a > b; 0 a == b; -1 a < b
+ */
+int odts_cmp(Timestamp const &a, Timestamp const &b);
 
-    /**
-     * Case insensitive string comparison
-     *
-     * @param[in] str1 string to compare
-     * @param[in] str2 string to compare
-     * @return true if strings are equal
-     */
-    bool str_cmp_icase(std::string const& str1, std::string const& str2);
+/**
+ * Adds 15 random bits to frac
+ *
+ * @params[in] ts timestamp to inc
+ */
+void odts_inc_rnd(Timestamp &ts);
 
-    /**
-     * General purpose std::string serializer
-     *
-     * @param[in] val value to be serialized
-     * @return std::strings repr of val
-     */
-    struct str_serializer {
+/**
+ * Converts sec to msec
+ *
+ * @params[in] sec input in sec
+ * @return sec * 1000
+ */
+std::uint32_t sec_to_msec(std::uint32_t sec);
 
-        /**
-         * If type cannot be directly converted to std::string
-         * std::stringstream is used
-         */
-        template<typename T>
-        typename std::enable_if<!std::is_assignable<T, std::string>::value, std::string>::type
-        serialize(T const & val) {
-            std::stringstream strm;
-            strm << val;
-            return strm.str();
-        }
-
-        /**
-         * If type can be directly converted to std::string
-         * simple conversion is used
-         */
-        template<typename T>
-        typename std::enable_if<std::is_assignable<T, std::string>::value, std::string>::type
-        serialize(T const & val) {
-            return val;
-        }
-    };
-
-    /**
-     * Compares two tg_od_timestamp_t
-     *
-     * @params[in] a first ts
-     * @params[in] b second ts
-     * @return 1 a > b; 0 a == b; -1 a < b
-     */
-    int odts_cmp(Timestamp const & a, Timestamp const & b);
-
-    /**
-     * Adds 15 random bits to frac
-     *
-     * @params[in] ts timestamp to inc
-     */
-    void odts_inc_rnd(Timestamp & ts);
-
-    /**
-     * Converts sec to msec
-     *
-     * @params[in] sec input in sec
-     * @return sec * 1000
-     */
-    std::uint32_t sec_to_msec(std::uint32_t sec);
-
-    /**
-     * Describes tg_ret_t status
-     *
-     * @params[in] sec input in sec
-     * @return sec * 1000
-     */
-    std::string ret_describe(std::uint32_t ret_code);
-    } // namespace commissioner
+/**
+ * Describes tg_ret_t status
+ *
+ * @params[in] sec input in sec
+ * @return sec * 1000
+ */
+std::string ret_describe(std::uint32_t ret_code);
+} // namespace commissioner
 } // namespace ot
 
 /**
  * Extends logger to handle Timestamp
  */
-std::ostream& operator<<(std::ostream& os, ot::commissioner::Timestamp const & ts);
+std::ostream &operator<<(std::ostream &os, ot::commissioner::Timestamp const &ts);
 
 #endif // _CLI_UTILS_HPP_
