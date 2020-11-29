@@ -180,72 +180,59 @@ struct network
 /**
  * Border router entity
  */
-struct border_router
+struct border_router : public BorderAgent
 {
-    border_router_id id;    /**< unique id in registry */
-    BorderAgent      agent; /**< application representation of the border agent */
-#if 0
-    std::string      thread_version; /**< Thread version supported by firmware */
-    network_id       network;        /**< network uniq id */
-    std::string      addr;           /**< br address */
-    std::uint16_t    port;           /**< br port */
-    unsigned int     state_bitmap;   /**< br state bitmap */
-    unsigned int     role;           /**< primary or secondary */
+    border_router_id id;     /**< unique id in registry */
+    network_id       nwk_id; /**< network data reference */
+    domain_id        dom_id; /**< domain data reference */
 
-    border_router(border_router_id const &bid,
-                  std::string const &     bthread_version,
-                  network_id const &      bnetwork,
-                  std::string const &     baddr,
-                  std::uint16_t const     bport,
-                  unsigned int const      bstate_bitmap,
-                  unsigned int const      brole)
-        : id(bid)
-        , thread_version(bthread_version)
-        , network(bnetwork)
-        , addr(baddr)
-        , port(bport)
-        , state_bitmap(bstate_bitmap)
-        , role(brole)
-    {
-    }
     border_router()
-        : border_router(EMPTY_ID, "", EMPTY_ID, "", 0, 0, 0)
-    {
-    }
-#endif
-    border_router()
-        : border_router(EMPTY_ID, {})
+        : border_router(EMPTY_ID, EMPTY_ID, EMPTY_ID, {})
     {
     }
 
-    border_router(border_router_id const &bid, BorderAgent const &ba)
-        : id(bid)
-        , agent(ba)
+    border_router(border_router_id const &bid, network_id const &nid, domain_id const &did, BorderAgent const &ba)
+        : BorderAgent{ba}
+        , id{bid}
+        , nwk_id{nid}
+        , dom_id{did}
     {
     }
+    /**
+     * Minimum polymorphic requirements.
+     */
+    virtual ~border_router() {}
 };
 
 /**
  * API to support conversion to/from JSON
  */
-const std::string JSON_ID             = "id";
-const std::string JSON_ADDR           = "addr";
-const std::string JSON_PORT           = "port";
-const std::string JSON_DOMAINS        = "domains";
-const std::string JSON_NAME           = "name";
-const std::string JSON_NETWORKS       = "networks";
-const std::string JSON_DOMAIN_NAME    = "domain_name";
-const std::string JSON_NETWORK_NAME   = "network_name";
-const std::string JSON_PAN            = "pan";
-const std::string JSON_XPAN           = "xpan";
-const std::string JSON_CHANNEL        = "channel";
-const std::string JSON_MLP            = "mlp";
-const std::string JSON_CCM            = "ccm";
-const std::string JSON_THREAD_VERSION = "thread_version";
-const std::string JSON_NETWORK        = "network";
-const std::string JSON_NWK_REF        = "nwk_ref";
-const std::string JSON_STATE_BITMAP   = "state_bitmap";
-const std::string JSON_ROLE           = "role";
+const std::string JSON_ID               = "id";
+const std::string JSON_ADDR             = "addr";
+const std::string JSON_PORT             = "port";
+const std::string JSON_DOMAINS          = "domains";
+const std::string JSON_NAME             = "name";
+const std::string JSON_NETWORKS         = "networks";
+const std::string JSON_DOMAIN_NAME      = "domain_name";
+const std::string JSON_NETWORK_NAME     = "network_name";
+const std::string JSON_PAN              = "pan";
+const std::string JSON_XPAN             = "xpan";
+const std::string JSON_CHANNEL          = "channel";
+const std::string JSON_MLP              = "mlp";
+const std::string JSON_CCM              = "ccm";
+const std::string JSON_THREAD_VERSION   = "thread_version";
+const std::string JSON_NETWORK          = "network";
+const std::string JSON_NWK_REF          = "nwk_ref";
+const std::string JSON_STATE_BITMAP     = "state_bitmap";
+const std::string JSON_VENDOR_NAME      = "vendor_name";
+const std::string JSON_MODEL_NAME       = "model_name";
+const std::string JSON_ACTIVE_TIMESTAMP = "active_timestamp";
+const std::string JSON_PARTITION_ID     = "partition_id";
+const std::string JSON_VENDOR_DATA      = "vendor_data";
+const std::string JSON_VENDOR_OUI       = "vendor_oui";
+const std::string JSON_BBR_SEQ_NUMBER   = "bbr_seq_number";
+const std::string JSON_BBR_PORT         = "bbr_port";
+const std::string JSON_DOM_REF          = "dom_ref";
 
 void to_json(nlohmann::json &j, const registrar_id &opt);
 void from_json(const nlohmann::json &j, registrar_id &opt);

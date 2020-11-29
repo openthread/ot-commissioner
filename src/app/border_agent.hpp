@@ -84,6 +84,38 @@ struct BorderAgent
         uint32_t mAvailability : 2;
         uint32_t mBbrIsActive : 1;
         uint32_t mBbrIsPrimary : 1;
+
+        uint32_t kConnectionModeMask = 7 << 6;
+        uint32_t kThreadIfStatus     = 3 << 4;
+        uint32_t kAvailability       = 3 << 2;
+        uint32_t kBbrIsActive        = 1 << 1;
+        uint32_t kBbrIsPrimary       = 1;
+        State(uint32_t aConnectionMode,
+              uint32_t aThreadIfStatus,
+              uint32_t aAvailability,
+              uint32_t aBbrIsActive,
+              uint32_t aBbrIsPrimary)
+            : mConnectionMode(aConnectionMode)
+            , mThreadIfStatus(aThreadIfStatus)
+            , mAvailability(aAvailability)
+            , mBbrIsActive(aBbrIsActive)
+            , mBbrIsPrimary(aBbrIsPrimary)
+        {
+        }
+        State(uint32_t aState)
+            : State((aState & kConnectionModeMask),
+                    (aState & kThreadIfStatus),
+                    (aState & kAvailability),
+                    (aState & kBbrIsActive),
+                    (aState & kBbrIsPrimary))
+        {
+        }
+        operator uint32_t() const
+        {
+            return ((mConnectionMode << 6) & kConnectionModeMask) | ((mThreadIfStatus << 4) & kThreadIfStatus) |
+                   ((mAvailability << 2) & kAvailability) | ((mBbrIsActive << 1) & kBbrIsActive) |
+                   (mBbrIsPrimary & kBbrIsPrimary);
+        }
     } mState;
 
     /**
@@ -164,23 +196,9 @@ struct BorderAgent
     static constexpr uint16_t kDiscriminatorBit   = 1 << 15;
 
     BorderAgent()
-        : mAddr()
-        , mPort(0)
-        , mDiscriminator()
-        , mThreadVersion("")
-        , mState{0, 0, 0, 0, 0}
-        , mNetworkName("")
-        , mExtendedPanId(0)
-        , mVendorName("")
-        , mModelName("")
-        , mActiveTimestamp{0, 0, 0}
-        , mPartitionId(0)
-        , mVendorData("")
-        , mVendorOui()
-        , mDomainName("")
-        , mBbrSeqNumber(0)
-        , mBbrPort(0)
-        , mPresentFlags(0)
+        : BorderAgent{
+              "", 0, ByteArray{}, "", State{0, 0, 0, 0, 0}, "", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{},
+              "", 0, 0,           0}
     {
     }
 
@@ -220,6 +238,10 @@ struct BorderAgent
         , mPresentFlags(aPresentFlags)
     {
     }
+    /**
+     * Virtual destructor for polymorph storage comunications
+     */
+    virtual ~BorderAgent() {}
 };
 
 /**
