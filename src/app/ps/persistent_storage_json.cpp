@@ -306,13 +306,11 @@ ps_status persistent_storage_json::lookup(border_router const *val, std::vector<
     if (val)
     {
         pred = [val](border_router const &el) {
-            bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->dom_id.id != EMPTY_ID ||
-                       val->mPresentFlags != 0;
+            bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->mPresentFlags != 0;
 
             ret =
                 ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
                 (val->nwk_id.id == EMPTY_ID || (el.nwk_id.id == val->nwk_id.id)) &&
-                (val->dom_id.id == EMPTY_ID || (el.dom_id.id == val->dom_id.id)) &&
                 ((val->mPresentFlags & BorderAgent::kAddrBit) == 0 ||
                  ((el.mPresentFlags & BorderAgent::kAddrBit) != 0 && str_cmp_icase(el.mAddr, val->mAddr))) &&
                 ((val->mPresentFlags & BorderAgent::kPortBit) == 0 ||

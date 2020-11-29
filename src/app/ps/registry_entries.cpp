@@ -95,7 +95,6 @@ void to_json(json &j, const border_router &p)
     j               = json{};
     j[JSON_ID]      = p.id;
     j[JSON_NWK_REF] = p.nwk_id;
-    j[JSON_DOM_REF] = p.dom_id;
     if (p.mPresentFlags & BorderAgent::kAddrBit)
     {
         j[JSON_ADDR] = p.mAddr;
@@ -210,10 +209,6 @@ void from_json(const json &j, border_router &p)
         j.at(JSON_VENDOR_OUI).get_to(value);
         ::ot::commissioner::utils::Hex(p.mVendorOui, value);
         p.mPresentFlags |= BorderAgent::kVendorOuiBit;
-    }
-    if (j.contains(JSON_DOM_REF))
-    {
-        j.at(JSON_DOM_REF).get_to(p.dom_id);
     }
     if (j.contains(JSON_BBR_SEQ_NUMBER))
     {
