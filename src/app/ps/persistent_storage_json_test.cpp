@@ -18,7 +18,8 @@ TEST_CASE("Create default if not exists", "[ps_json]")
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Read empty file", "[ps_json]") {
+TEST_CASE("Read empty file", "[ps_json]")
+{
     std::ofstream test_tmp("./test.tmp");
     test_tmp.close();
 
@@ -28,74 +29,66 @@ TEST_CASE("Read empty file", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Read non empty - default struct", "[ps_json]") {
+TEST_CASE("Read non empty - default struct", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Add registrar", "[ps_json]") {
+TEST_CASE("Add registrar", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     registrar_id new_id;
 
-    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Add domain", "[ps_json]") {
+TEST_CASE("Add domain", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     domain_id new_id;
 
-    REQUIRE(psj.add(domain{EMPTY_ID, "dom1", {"nwk1"}}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(domain{EMPTY_ID, "dom1", {"nwk1"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(domain{EMPTY_ID, "dom2", {"nwk2"}}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(domain{EMPTY_ID, "dom2", {"nwk2"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(domain{EMPTY_ID, "dom3", {"nwk3"}}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(domain{EMPTY_ID, "dom3", {"nwk3"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Add network", "[ps_json]") {
+TEST_CASE("Add network", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     network_id new_id;
 
-    REQUIRE(psj.add(network{
-                EMPTY_ID, "nwk1", "dom1", "FFFFFFFFFFFFFFF1",
-                11, "FFF1", "2000:aaa1::0/8", 1}, new_id) ==
-        ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, "nwk1", "dom1", "FFFFFFFFFFFFFFF1", 11, "FFF1", "2000:aaa1::0/8", 1}, new_id) ==
+            ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(network{
-                EMPTY_ID, "nwk2", "dom2", "FFFFFFFFFFFFFFF2",
-                11, "FFF2", "2000:aaa2::0/8", 1}, new_id) ==
-        ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, "nwk2", "dom2", "FFFFFFFFFFFFFFF2", 11, "FFF2", "2000:aaa2::0/8", 1}, new_id) ==
+            ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(network{
-                EMPTY_ID, "nwk3", "dom3", "FFFFFFFFFFFFFFF3",
-                11, "FFF3", "2000:aaa3::0/8", 1}, new_id) ==
-        ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, "nwk3", "dom3", "FFFFFFFFFFFFFFF3", 11, "FFF3", "2000:aaa3::0/8", 1}, new_id) ==
+            ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
@@ -113,28 +106,29 @@ TEST_CASE("Add br", "[ps_json]")
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0}},
+                                              0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0}},
+                                              0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0}},
+                                              0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Del registrar", "[ps_json]") {
+TEST_CASE("Del registrar", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -147,7 +141,8 @@ TEST_CASE("Del registrar", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Del domain", "[ps_json]") {
+TEST_CASE("Del domain", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -160,7 +155,8 @@ TEST_CASE("Del domain", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Del network", "[ps_json]") {
+TEST_CASE("Del network", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -173,7 +169,8 @@ TEST_CASE("Del network", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Del br", "[ps_json]") {
+TEST_CASE("Del br", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -186,7 +183,8 @@ TEST_CASE("Del br", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Get registrar from empty", "[ps_json]") {
+TEST_CASE("Get registrar from empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -198,7 +196,8 @@ TEST_CASE("Get registrar from empty", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Get domain from empty", "[ps_json]") {
+TEST_CASE("Get domain from empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -210,7 +209,8 @@ TEST_CASE("Get domain from empty", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Get network from empty", "[ps_json]") {
+TEST_CASE("Get network from empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -222,7 +222,8 @@ TEST_CASE("Get network from empty", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Get br from empty", "[ps_json]") {
+TEST_CASE("Get br from empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -234,21 +235,19 @@ TEST_CASE("Get br from empty", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Get registrar, not empty", "[ps_json]") {
+TEST_CASE("Get registrar, not empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     registrar_id new_id;
 
-    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 3);
-    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 4);
-    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 5);
 
     registrar ret_val;
@@ -263,21 +262,19 @@ TEST_CASE("Get registrar, not empty", "[ps_json]") {
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Get domain, not empty", "[ps_json]") {
+TEST_CASE("Get domain, not empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     domain_id new_id;
 
-    REQUIRE(psj.add(domain{EMPTY_ID, "dom1", {"nwk1"}},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(domain{EMPTY_ID, "dom1", {"nwk1"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 3);
-    REQUIRE(psj.add(domain{EMPTY_ID, "dom2", {"nwk2"}},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(domain{EMPTY_ID, "dom2", {"nwk2"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 4);
-    REQUIRE(psj.add(domain{EMPTY_ID, "dom3", {"nwk3"}},
-                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(domain{EMPTY_ID, "dom3", {"nwk3"}}, new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 5);
 
     domain ret_val;
@@ -333,7 +330,7 @@ TEST_CASE("Get br, not empty", "[ps_json]")
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0}},
+                                              0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 3);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
@@ -347,7 +344,7 @@ TEST_CASE("Get br, not empty", "[ps_json]")
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0}},
+                                              0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 5);
 
@@ -386,7 +383,8 @@ TEST_CASE("Upd registrar", "[ps_json]")
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Upd domain", "[ps_json]") {
+TEST_CASE("Upd domain", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -438,9 +436,11 @@ TEST_CASE("Upd br", "[ps_json]")
 
     // TODO Possibly add network ID ro domain ID.
     border_router new_val{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+
                           BorderAgent{"5.5.5.5", 18, ByteArray{}, "th1.x", BorderAgent::State{0, 0, 2, 0, 0},
                                       "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
-                                      Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0, 0}};
+                                      Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0,
+                                      0xFFFF}};
 
     REQUIRE(psj.update(new_val) == ps_status::PS_NOT_FOUND);
     new_val.id = 4;
@@ -448,13 +448,10 @@ TEST_CASE("Upd br", "[ps_json]")
 
     border_router ret_val;
 
-    // TODO analyze values
-#if 0
     REQUIRE(psj.get(border_router_id(4), ret_val) == ps_status::PS_SUCCESS);
     REQUIRE(ret_val.id.id == 4);
-    REQUIRE(ret_val.port == 18);
-    REQUIRE(ret_val.addr == "5.5.5.5");
-#endif
+    REQUIRE(ret_val.mPort == 18);
+    REQUIRE(ret_val.mAddr == "5.5.5.5");
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
@@ -532,7 +529,8 @@ TEST_CASE("Lookup registrar", "[ps_json]")
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-TEST_CASE("Lookup network", "[ps_json]") {
+TEST_CASE("Lookup network", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -546,7 +544,7 @@ TEST_CASE("Lookup network", "[ps_json]") {
 
     network net;
     net.name = "nwk1";
-    net.ccm = true;
+    net.ccm  = true;
     REQUIRE(psj.lookup(&net, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
 

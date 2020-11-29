@@ -1,5 +1,7 @@
 #include "registry_entries.hpp"
 
+#include "common/utils.hpp"
+
 using nlohmann::json;
 
 namespace ot::commissioner::persistent_storage {
@@ -90,7 +92,6 @@ void from_json(const json &j, network &p)
 
 void to_json(json &j, const border_router &p)
 {
-    //    j               = json{{JSON_ID, p.id}, {JSON_NWK_REF, p.nwk_id}, {JSON_DOM_REF, p.dom_id}};
     j               = json{};
     j[JSON_ID]      = p.id;
     j[JSON_NWK_REF] = p.nwk_id;
@@ -134,7 +135,7 @@ void to_json(json &j, const border_router &p)
     }
     if (p.mPresentFlags & BorderAgent::kVendorOuiBit)
     {
-        j[JSON_VENDOR_OUI] = p.mVendorOui;
+        j[JSON_VENDOR_OUI] = ::ot::commissioner::utils::Hex(p.mVendorOui);
     }
     if (p.mPresentFlags & BorderAgent::kBbrSeqNumberBit)
     {
@@ -205,7 +206,9 @@ void from_json(const json &j, border_router &p)
     }
     if (j.contains(JSON_VENDOR_OUI))
     {
-        j.at(JSON_VENDOR_OUI).get_to(p.mVendorOui);
+        std::string value;
+        j.at(JSON_VENDOR_OUI).get_to(value);
+        ::ot::commissioner::utils::Hex(p.mVendorOui, value);
         p.mPresentFlags |= BorderAgent::kVendorOuiBit;
     }
     if (j.contains(JSON_DOM_REF))

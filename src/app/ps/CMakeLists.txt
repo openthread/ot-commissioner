@@ -53,6 +53,7 @@ target_include_directories(persistent-storage
   PRIVATE
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/app
+    ${PROJECT_SOURCE_DIR}/src
 )
 
 if (BUILD_SHARED_LIBS)
@@ -62,7 +63,6 @@ if (BUILD_SHARED_LIBS)
     )
 endif()
 
-# TODO provide unit tests - see CMakeLists.txt above
 if (OT_COMM_TEST)
     add_library(commissioner-ps-test OBJECT
       persistent_storage_json_test.cpp
