@@ -122,8 +122,9 @@ struct registrar
  */
 struct domain
 {
-    domain_id                id;       /**< unique id in registry */
-    std::string              name;     /**< domain name */
+    domain_id   id;   /**< unique id in registry */
+    std::string name; /**< domain name */
+    // TODO Refine: do we need it here?
     std::vector<std::string> networks; /**< networks that belong to domain*/
 
     domain(domain_id const &did, std::string const &dname, std::vector<std::string> const &dnetworks)
@@ -143,8 +144,9 @@ struct domain
  */
 struct network
 {
-    network_id   id;          /**< unique id in registry */
-    std::string  name;        /**< network name */
+    network_id  id;           /**< unique id in registry */
+    std::string name;         /**< network name */
+                              // TODO reference domain by id instead of name
     std::string  domain_name; /**< domain name if network belongs to */
     std::string  xpan;        /**< Extended PAN_ID */
     unsigned int channel;     /**< network channel */

@@ -155,195 +155,254 @@ ps_status persistent_storage_json::add(network const &val, network_id &ret_id)
 
 ps_status persistent_storage_json::add(border_router const &val, border_router_id &ret_id)
 {
-    return add_one<border_router, border_router_id>(val, ret_id, JSON_BR_SEQ, JSON_BR);
-}
+    ps_status status = PS_ERROR;
 
-ps_status persistent_storage_json::del(registrar_id const &id)
-{
-    return del_id<registrar, registrar_id>(id, JSON_RGR);
-}
+    domain dom;
+    // TODO I copy the data here. Possibly pass by value? Or even allow changing the argument here, but not in the
+    // add_one()?
+    border_router ins_val = val;
 
-ps_status persistent_storage_json::del(domain_id const &id)
-{
-    return del_id<domain, domain_id>(id, JSON_DOM);
-}
-
-ps_status persistent_storage_json::del(network_id const &id)
-{
-    return del_id<network, network_id>(id, JSON_NWK);
-}
-
-ps_status persistent_storage_json::del(border_router_id const &id)
-{
-    return del_id<border_router, border_router_id>(id, JSON_BR);
-}
-
-ps_status persistent_storage_json::get(registrar_id const &id, registrar &ret_val)
-{
-    return get_id<registrar, registrar_id>(id, ret_val, JSON_RGR);
-}
-
-ps_status persistent_storage_json::get(domain_id const &id, domain &ret_val)
-{
-    return get_id<domain, domain_id>(id, ret_val, JSON_DOM);
-}
-
-ps_status persistent_storage_json::get(network_id const &id, network &ret_val)
-{
-    return get_id<network, network_id>(id, ret_val, JSON_NWK);
-}
-
-ps_status persistent_storage_json::get(border_router_id const &id, border_router &ret_val)
-{
-    return get_id<border_router, border_router_id>(id, ret_val, JSON_BR);
-}
-
-ps_status persistent_storage_json::update(registrar const &val)
-{
-    return upd_id<registrar>(val, JSON_RGR);
-}
-
-ps_status persistent_storage_json::update(domain const &val)
-{
-    return upd_id<domain>(val, JSON_DOM);
-}
-
-ps_status persistent_storage_json::update(network const &val)
-{
-    return upd_id<network>(val, JSON_NWK);
-}
-
-ps_status persistent_storage_json::update(border_router const &val)
-{
-    return upd_id<border_router>(val, JSON_BR);
-}
-
-ps_status persistent_storage_json::lookup(registrar const *val, std::vector<registrar> &ret)
-{
-    std::function<bool(registrar const &)> pred = [](registrar const &) { return true; };
-
-    if (val)
+    // Check the domain exists for the domain name
+    if ((ins_val.mPresentFlags & BorderAgent::kDomainNameBit) != 0)
     {
-        pred = [val](registrar const &el) {
-            bool ret = val->id.id != EMPTY_ID || !val->addr.empty() || val->port != 0 || !val->domains.empty();
+        std::vector<domain> domains;
 
-            ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
-                  (val->addr.empty() || str_cmp_icase(val->addr, el.addr)) &&
-                  (val->port == 0 || (val->port == el.port));
-
-            if (ret && !val->domains.empty())
+        dom    = domain{EMPTY_ID, ins_val.mDomainName, std::vector<std::string>{}};
+        status = lookup(&dom, domains);
+        if (status == PS_ERROR || domains.size() > 1)
+        {
+            return PS_ERROR;
+        }
+        else if (status == PS_NOT_FOUND)
+        {
+            domain_id dom_id{EMPTY_ID};
+            status = add(dom, dom_id);
+            if (status != PS_SUCCESS)
             {
-                std::vector<std::string> el_tmp(el.domains);
-                std::vector<std::string> val_tmp(val->domains);
-                std::sort(std::begin(el_tmp), std::end(el_tmp));
-                std::sort(std::begin(val_tmp), std::end(val_tmp));
-                ret = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
+                return status;
             }
-            return ret;
-        };
+            dom.id = dom_id;
+        }
+        else
+        {
+            dom = domains[0];
+        }
     }
 
-    return lookup_pred<registrar>(pred, ret, JSON_RGR);
-}
-
-ps_status persistent_storage_json::lookup(domain const *val, std::vector<domain> &ret)
-{
-    std::function<bool(domain const &)> pred = [](domain const &) { return true; };
-
-    if (val)
+    network nwk;
+    // Check network exists for the network name and xpan
+    if (ins_val.nwk_id.id == EMPTY_ID && ((ins_val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0 ||
+                                          (ins_val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0))
     {
-        pred = [val](domain const &el) {
-            bool ret = val->id.id != EMPTY_ID || !val->name.empty() || !val->networks.empty();
-
-            ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
-                  (val->name.empty() || (val->name == el.name));
-
-            if (ret && !val->networks.empty())
+        // If xpan present lookup with it only
+        // TODO discuss: is different name an error? Not yet.
+        if ((ins_val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
+        {
+            std::ostringstream tmp;
+            // Assumption: no leading zeroes for the xpan
+            tmp << std::hex << ins_val.mExtendedPanId;
+            nwk.xpan = tmp.str();
+        }
+        else
+        {
+            nwk.name = ins_val.mNetworkName;
+        }
+        std::vector<network> nwks;
+        status = lookup(&nwk, nwks);
+        if (status == PS_ERROR || nwks.size() > 1)
+        {
+            // TODO remove domain if empty?
+            return status;
+        }
+        else if (status == PS_NOT_FOUND)
+        {
+            network_id nwk_id{EMPTY_ID};
+            status = add(nwk, nwk_id);
+            if (status != PS_SUCCESS)
             {
-                std::vector<std::string> el_tmp(el.networks);
-                std::vector<std::string> val_tmp(val->networks);
-                std::sort(std::begin(el_tmp), std::end(el_tmp));
-                std::sort(std::begin(val_tmp), std::end(val_tmp));
-                ret = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
+                return status;
             }
-            return ret;
-        };
+            nwk.id = nwk_id;
+        }
+        else
+        {
+            nwk = nwks[0];
+        }
+        ins_val.nwk_id = nwk.id;
     }
-
-    return lookup_pred<domain>(pred, ret, JSON_DOM);
+    return add_one<border_router, border_router_id>(ins_val, ret_id, JSON_BR_SEQ, JSON_BR);
 }
 
-ps_status persistent_storage_json::lookup(network const *val, std::vector<network> &ret)
-{
-    std::function<bool(network const &)> pred = [](network const &) { return true; };
-
-    if (val)
+    ps_status persistent_storage_json::del(registrar_id const &id)
     {
-        pred = [val](network const &el) {
-            bool ret = val->id.id != EMPTY_ID || !val->name.empty() || !val->domain_name.empty() ||
-                       !val->xpan.empty() || !val->pan.empty() || !val->mlp.empty() || val->channel != 0 ||
-                       val->ccm >= 0;
-
-            ret = ret && (val->ccm < 0 || val->ccm == el.ccm) && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
-                  (val->name.empty() || (val->name == el.name)) &&
-                  (val->domain_name.empty() || (val->domain_name == el.domain_name)) &&
-                  (val->xpan.empty() || str_cmp_icase(val->xpan, el.xpan)) &&
-                  (val->pan.empty() || str_cmp_icase(val->pan, el.pan)) &&
-                  (val->mlp.empty() || str_cmp_icase(val->mlp, el.mlp)) &&
-                  (val->channel == 0 || (val->channel == el.channel));
-
-            return ret;
-        };
+        return del_id<registrar, registrar_id>(id, JSON_RGR);
     }
 
-    return lookup_pred<network>(pred, ret, JSON_NWK);
-}
+    ps_status persistent_storage_json::del(domain_id const &id) { return del_id<domain, domain_id>(id, JSON_DOM); }
 
-ps_status persistent_storage_json::lookup(border_router const *val, std::vector<border_router> &ret)
-{
-    std::function<bool(border_router const &)> pred = [](border_router const &) { return true; };
+    ps_status persistent_storage_json::del(network_id const &id) { return del_id<network, network_id>(id, JSON_NWK); }
 
-    if (val)
+    ps_status persistent_storage_json::del(border_router_id const &id)
     {
-        pred = [val](border_router const &el) {
-            bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->mPresentFlags != 0;
-
-            ret =
-                ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
-                (val->nwk_id.id == EMPTY_ID || (el.nwk_id.id == val->nwk_id.id)) &&
-                ((val->mPresentFlags & BorderAgent::kAddrBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kAddrBit) != 0 && str_cmp_icase(el.mAddr, val->mAddr))) &&
-                ((val->mPresentFlags & BorderAgent::kPortBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kPortBit) != 0 && el.mPort == val->mPort)) &&
-                ((val->mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
-                  val->mThreadVersion == el.mThreadVersion)) &&
-                ((val->mPresentFlags & BorderAgent::kStateBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kStateBit) != 0 && el.mState == val->mState)) &&
-                ((val->mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
-                  str_cmp_icase(el.mVendorName, val->mVendorName))) &&
-                ((val->mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
-                  str_cmp_icase(el.mModelName, val->mModelName))) &&
-                ((val->mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
-                  el.mActiveTimestamp.Encode() == val->mActiveTimestamp.Encode())) &&
-                ((val->mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 && el.mPartitionId == val->mPartitionId)) &&
-                ((val->mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kVendorDataBit) != 0 && el.mVendorData == val->mVendorData)) &&
-                ((val->mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 && el.mVendorOui == val->mVendorOui)) &&
-                ((val->mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 && el.mBbrSeqNumber == val->mBbrSeqNumber)) &&
-                ((val->mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
-                 ((el.mPresentFlags & BorderAgent::kBbrPortBit) != 0 && el.mBbrPort == val->mBbrPort));
-            return ret;
-        };
+        return del_id<border_router, border_router_id>(id, JSON_BR);
     }
 
-    return lookup_pred<border_router>(pred, ret, JSON_BR);
-}
+    ps_status persistent_storage_json::get(registrar_id const &id, registrar &ret_val)
+    {
+        return get_id<registrar, registrar_id>(id, ret_val, JSON_RGR);
+    }
+
+    ps_status persistent_storage_json::get(domain_id const &id, domain &ret_val)
+    {
+        return get_id<domain, domain_id>(id, ret_val, JSON_DOM);
+    }
+
+    ps_status persistent_storage_json::get(network_id const &id, network &ret_val)
+    {
+        return get_id<network, network_id>(id, ret_val, JSON_NWK);
+    }
+
+    ps_status persistent_storage_json::get(border_router_id const &id, border_router &ret_val)
+    {
+        return get_id<border_router, border_router_id>(id, ret_val, JSON_BR);
+    }
+
+    ps_status persistent_storage_json::update(registrar const &val) { return upd_id<registrar>(val, JSON_RGR); }
+
+    ps_status persistent_storage_json::update(domain const &val) { return upd_id<domain>(val, JSON_DOM); }
+
+    ps_status persistent_storage_json::update(network const &val) { return upd_id<network>(val, JSON_NWK); }
+
+    ps_status persistent_storage_json::update(border_router const &val) { return upd_id<border_router>(val, JSON_BR); }
+
+    ps_status persistent_storage_json::lookup(registrar const *val, std::vector<registrar> &ret)
+    {
+        std::function<bool(registrar const &)> pred = [](registrar const &) { return true; };
+
+        if (val)
+        {
+            pred = [val](registrar const &el) {
+                bool ret = val->id.id != EMPTY_ID || !val->addr.empty() || val->port != 0 || !val->domains.empty();
+
+                ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
+                      (val->addr.empty() || str_cmp_icase(val->addr, el.addr)) &&
+                      (val->port == 0 || (val->port == el.port));
+
+                if (ret && !val->domains.empty())
+                {
+                    std::vector<std::string> el_tmp(el.domains);
+                    std::vector<std::string> val_tmp(val->domains);
+                    std::sort(std::begin(el_tmp), std::end(el_tmp));
+                    std::sort(std::begin(val_tmp), std::end(val_tmp));
+                    ret = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
+                }
+                return ret;
+            };
+        }
+
+        return lookup_pred<registrar>(pred, ret, JSON_RGR);
+    }
+
+    ps_status persistent_storage_json::lookup(domain const *val, std::vector<domain> &ret)
+    {
+        std::function<bool(domain const &)> pred = [](domain const &) { return true; };
+
+        if (val)
+        {
+            pred = [val](domain const &el) {
+                bool ret = val->id.id != EMPTY_ID || !val->name.empty() || !val->networks.empty();
+
+                ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
+                      (val->name.empty() || (val->name == el.name));
+
+                if (ret && !val->networks.empty())
+                {
+                    std::vector<std::string> el_tmp(el.networks);
+                    std::vector<std::string> val_tmp(val->networks);
+                    std::sort(std::begin(el_tmp), std::end(el_tmp));
+                    std::sort(std::begin(val_tmp), std::end(val_tmp));
+                    ret = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
+                }
+                return ret;
+            };
+        }
+
+        return lookup_pred<domain>(pred, ret, JSON_DOM);
+    }
+
+    ps_status persistent_storage_json::lookup(network const *val, std::vector<network> &ret)
+    {
+        std::function<bool(network const &)> pred = [](network const &) { return true; };
+
+        if (val)
+        {
+            pred = [val](network const &el) {
+                bool ret = val->id.id != EMPTY_ID || !val->name.empty() || !val->domain_name.empty() ||
+                           !val->xpan.empty() || !val->pan.empty() || !val->mlp.empty() || val->channel != 0 ||
+                           val->ccm >= 0;
+
+                ret = ret && (val->ccm < 0 || val->ccm == el.ccm) &&
+                      (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
+                      (val->name.empty() || (val->name == el.name)) &&
+                      (val->domain_name.empty() || (val->domain_name == el.domain_name)) &&
+                      (val->xpan.empty() || str_cmp_icase(val->xpan, el.xpan)) &&
+                      (val->pan.empty() || str_cmp_icase(val->pan, el.pan)) &&
+                      (val->mlp.empty() || str_cmp_icase(val->mlp, el.mlp)) &&
+                      (val->channel == 0 || (val->channel == el.channel));
+
+                return ret;
+            };
+        }
+
+        return lookup_pred<network>(pred, ret, JSON_NWK);
+    }
+
+    ps_status persistent_storage_json::lookup(border_router const *val, std::vector<border_router> &ret)
+    {
+        std::function<bool(border_router const &)> pred = [](border_router const &) { return true; };
+
+        if (val)
+        {
+            pred = [val](border_router const &el) {
+                bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->mPresentFlags != 0;
+
+                ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
+                      (val->nwk_id.id == EMPTY_ID || (el.nwk_id.id == val->nwk_id.id)) &&
+                      ((val->mPresentFlags & BorderAgent::kAddrBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kAddrBit) != 0 && str_cmp_icase(el.mAddr, val->mAddr))) &&
+                      ((val->mPresentFlags & BorderAgent::kPortBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kPortBit) != 0 && el.mPort == val->mPort)) &&
+                      ((val->mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
+                        val->mThreadVersion == el.mThreadVersion)) &&
+                      ((val->mPresentFlags & BorderAgent::kStateBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kStateBit) != 0 && el.mState == val->mState)) &&
+                      ((val->mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
+                        str_cmp_icase(el.mVendorName, val->mVendorName))) &&
+                      ((val->mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
+                        str_cmp_icase(el.mModelName, val->mModelName))) &&
+                      ((val->mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
+                        el.mActiveTimestamp.Encode() == val->mActiveTimestamp.Encode())) &&
+                      ((val->mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 &&
+                        el.mPartitionId == val->mPartitionId)) &&
+                      ((val->mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kVendorDataBit) != 0 && el.mVendorData == val->mVendorData)) &&
+                      ((val->mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 && el.mVendorOui == val->mVendorOui)) &&
+                      ((val->mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 &&
+                        el.mBbrSeqNumber == val->mBbrSeqNumber)) &&
+                      ((val->mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
+                       ((el.mPresentFlags & BorderAgent::kBbrPortBit) != 0 && el.mBbrPort == val->mBbrPort));
+                return ret;
+            };
+        }
+
+        return lookup_pred<border_router>(pred, ret, JSON_BR);
+    }
 
 } // namespace ot::commissioner::persistent_storage
