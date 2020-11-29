@@ -102,21 +102,21 @@ TEST_CASE("Add br", "[ps_json]")
 
     border_router_id new_id;
 
-    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
                                               0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
                                               0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
@@ -326,21 +326,21 @@ TEST_CASE("Get br, not empty", "[ps_json]")
 
     border_router_id new_id;
 
-    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
                                               0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 3);
-    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
                                               0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 4);
-    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
@@ -435,8 +435,7 @@ TEST_CASE("Upd br", "[ps_json]")
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     // TODO Possibly add network ID ro domain ID.
-    border_router new_val{EMPTY_ID, EMPTY_ID, EMPTY_ID,
-
+    border_router new_val{EMPTY_ID, EMPTY_ID,
                           BorderAgent{"5.5.5.5", 18, ByteArray{}, "th1.x", BorderAgent::State{0, 0, 2, 0, 0},
                                       "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                       Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0,

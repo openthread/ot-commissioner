@@ -184,18 +184,16 @@ struct border_router : public BorderAgent
 {
     border_router_id id;     /**< unique id in registry */
     network_id       nwk_id; /**< network data reference */
-    domain_id        dom_id; /**< domain data reference */
 
     border_router()
-        : border_router(EMPTY_ID, EMPTY_ID, EMPTY_ID, {})
+        : border_router(EMPTY_ID, EMPTY_ID, {})
     {
     }
 
-    border_router(border_router_id const &bid, network_id const &nid, domain_id const &did, BorderAgent const &ba)
+    border_router(border_router_id const &bid, network_id const &nid, BorderAgent const &ba)
         : BorderAgent{ba}
         , id{bid}
         , nwk_id{nid}
-        , dom_id{did}
     {
     }
     /**
