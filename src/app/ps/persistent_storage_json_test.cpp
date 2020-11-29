@@ -109,20 +109,27 @@ TEST_CASE("Add br", "[ps_json]")
 
     border_router_id new_id;
 
-    REQUIRE(psj.add(border_router{EMPTY_ID,
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
                                               0, 0}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-// TODO re-enable after making previous compile
-#if 0
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.3", 12, 2, 0}, new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+                                  BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                              "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
+                                              Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
+                                              0, 0}},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.4", 13, 3, 0}, new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+                                  BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                              "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
+                                              Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
+                                              0, 0}},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
-#endif
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
@@ -314,22 +321,33 @@ TEST_CASE("Get network, not empty", "[ps_json]")
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-// TODO update UT after all implemented
-#if 0
-TEST_CASE("Get br, not empty", "[ps_json]") {
+TEST_CASE("Get br, not empty", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
     border_router_id new_id;
 
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.2", 11, 1, 0},
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+                                  BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                              "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
+                                              Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
+                                              0, 0}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 3);
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.3", 12, 2, 0},
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+                                  BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                              "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
+                                              Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
+                                              0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 4);
-    REQUIRE(psj.add(border_router{EMPTY_ID, "th1.x", 1, "1.1.1.4", 13, 3, 0},
+    REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+                                  BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                              "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
+                                              Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
+                                              0, 0}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 5);
 
@@ -338,15 +356,15 @@ TEST_CASE("Get br, not empty", "[ps_json]") {
     REQUIRE(psj.get(border_router_id(0), ret_val) == ps_status::PS_NOT_FOUND);
     REQUIRE(psj.get(border_router_id(4), ret_val) == ps_status::PS_SUCCESS);
     REQUIRE(ret_val.id.id == 4);
-    REQUIRE(ret_val.port == 12);
-    REQUIRE(ret_val.addr == "1.1.1.3");
+    REQUIRE(ret_val.mPort == 12);
+    REQUIRE(ret_val.mAddr == "1.1.1.3");
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
-#endif
 
 // UPD
-TEST_CASE("Upd registrar", "[ps_json]") {
+TEST_CASE("Upd registrar", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -412,14 +430,17 @@ TEST_CASE("Upd network", "[ps_json]")
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
 
-// TODO
-#if 0
-TEST_CASE("Upd br", "[ps_json]") {
+TEST_CASE("Upd br", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
-    border_router new_val{EMPTY_ID, "th1.y", 1, "5.5.5.5", 18, 8, 1};
+    // TODO Possibly add network ID ro domain ID.
+    border_router new_val{EMPTY_ID, EMPTY_ID, EMPTY_ID,
+                          BorderAgent{"5.5.5.5", 18, ByteArray{}, "th1.x", BorderAgent::State{0, 0, 2, 0, 0},
+                                      "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
+                                      Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0, 0}};
 
     REQUIRE(psj.update(new_val) == ps_status::PS_NOT_FOUND);
     new_val.id = 4;
@@ -427,16 +448,19 @@ TEST_CASE("Upd br", "[ps_json]") {
 
     border_router ret_val;
 
+    // TODO analyze values
+#if 0
     REQUIRE(psj.get(border_router_id(4), ret_val) == ps_status::PS_SUCCESS);
     REQUIRE(ret_val.id.id == 4);
     REQUIRE(ret_val.port == 18);
     REQUIRE(ret_val.addr == "5.5.5.5");
+#endif
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
-#endif
 
-TEST_CASE("Lookup registrar", "[ps_json]") {
+TEST_CASE("Lookup registrar", "[ps_json]")
+{
     persistent_storage_json psj("./test.tmp");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
@@ -465,14 +489,14 @@ TEST_CASE("Lookup registrar", "[ps_json]") {
     ret_lookup.clear();
 
     search_req.id.id = 3;
-    search_req.addr = "0.0.0.2";
+    search_req.addr  = "0.0.0.2";
     REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_NOT_FOUND);
     REQUIRE(ret_lookup.size() == 0);
 
     ret_lookup.clear();
 
     search_req.id.id = 3;
-    search_req.addr = "0.0.0.1";
+    search_req.addr  = "0.0.0.1";
     REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
     REQUIRE(ret_lookup[0].id.id == 3);
@@ -480,17 +504,17 @@ TEST_CASE("Lookup registrar", "[ps_json]") {
     ret_lookup.clear();
 
     search_req.id.id = 3;
-    search_req.addr = "0.0.0.1";
-    search_req.port = 1;
+    search_req.addr  = "0.0.0.1";
+    search_req.port  = 1;
     REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
     REQUIRE(ret_lookup[0].id.id == 3);
 
     ret_lookup.clear();
 
-    search_req.id.id = 3;
-    search_req.addr = "0.0.0.1";
-    search_req.port = 1;
+    search_req.id.id   = 3;
+    search_req.addr    = "0.0.0.1";
+    search_req.port    = 1;
     search_req.domains = {"dom1"};
     REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
@@ -498,7 +522,7 @@ TEST_CASE("Lookup registrar", "[ps_json]") {
 
     ret_lookup.clear();
 
-    search_req = {};
+    search_req      = {};
     search_req.port = 1;
     REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 2);
