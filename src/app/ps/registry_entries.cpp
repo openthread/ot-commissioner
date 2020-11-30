@@ -95,82 +95,82 @@ void to_json(json &j, const border_router &p)
     j               = json{};
     j[JSON_ID]      = p.id;
     j[JSON_NWK_REF] = p.nwk_id;
-    if (p.mPresentFlags & BorderAgent::kAddrBit)
+    if (p.agent.mPresentFlags & BorderAgent::kAddrBit)
     {
-        j[JSON_ADDR] = p.mAddr;
+        j[JSON_ADDR] = p.agent.mAddr;
     }
-    if (p.mPresentFlags & BorderAgent::kPortBit)
+    if (p.agent.mPresentFlags & BorderAgent::kPortBit)
     {
-        j[JSON_PORT] = p.mPort;
+        j[JSON_PORT] = p.agent.mPort;
     }
-    if (p.mPresentFlags & BorderAgent::kThreadVersionBit)
+    if (p.agent.mPresentFlags & BorderAgent::kThreadVersionBit)
     {
-        j[JSON_THREAD_VERSION] = p.mThreadVersion;
+        j[JSON_THREAD_VERSION] = p.agent.mThreadVersion;
     }
-    if (p.mPresentFlags & BorderAgent::kStateBit)
+    if (p.agent.mPresentFlags & BorderAgent::kStateBit)
     {
-        uint32_t value       = p.mState;
+        uint32_t value       = p.agent.mState;
         j[JSON_STATE_BITMAP] = value;
     }
-    if (p.mPresentFlags & BorderAgent::kVendorNameBit)
+    if (p.agent.mPresentFlags & BorderAgent::kVendorNameBit)
     {
-        j[JSON_VENDOR_NAME] = p.mVendorName;
+        j[JSON_VENDOR_NAME] = p.agent.mVendorName;
     }
-    if (p.mPresentFlags & BorderAgent::kModelNameBit)
+    if (p.agent.mPresentFlags & BorderAgent::kModelNameBit)
     {
-        j[JSON_MODEL_NAME] = p.mModelName;
+        j[JSON_MODEL_NAME] = p.agent.mModelName;
     }
-    if (p.mPresentFlags & BorderAgent::kActiveTimestampBit)
+    if (p.agent.mPresentFlags & BorderAgent::kActiveTimestampBit)
     {
-        j[JSON_ACTIVE_TIMESTAMP] = p.mActiveTimestamp.Encode();
+        j[JSON_ACTIVE_TIMESTAMP] = p.agent.mActiveTimestamp.Encode();
     }
-    if (p.mPresentFlags & BorderAgent::kPartitionIdBit)
+    if (p.agent.mPresentFlags & BorderAgent::kPartitionIdBit)
     {
-        j[JSON_PARTITION_ID] = p.mPartitionId;
+        j[JSON_PARTITION_ID] = p.agent.mPartitionId;
     }
-    if (p.mPresentFlags & BorderAgent::kVendorDataBit)
+    if (p.agent.mPresentFlags & BorderAgent::kVendorDataBit)
     {
-        j[JSON_VENDOR_DATA] = p.mVendorData;
+        j[JSON_VENDOR_DATA] = p.agent.mVendorData;
     }
-    if (p.mPresentFlags & BorderAgent::kVendorOuiBit)
+    if (p.agent.mPresentFlags & BorderAgent::kVendorOuiBit)
     {
-        j[JSON_VENDOR_OUI] = ::ot::commissioner::utils::Hex(p.mVendorOui);
+        j[JSON_VENDOR_OUI] = ::ot::commissioner::utils::Hex(p.agent.mVendorOui);
     }
-    if (p.mPresentFlags & BorderAgent::kBbrSeqNumberBit)
+    if (p.agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit)
     {
-        j[JSON_BBR_SEQ_NUMBER] = p.mBbrSeqNumber;
+        j[JSON_BBR_SEQ_NUMBER] = p.agent.mBbrSeqNumber;
     }
-    if (p.mPresentFlags & BorderAgent::kBbrPortBit)
+    if (p.agent.mPresentFlags & BorderAgent::kBbrPortBit)
     {
-        j[JSON_BBR_PORT] = p.mBbrPort;
+        j[JSON_BBR_PORT] = p.agent.mBbrPort;
     }
 }
 
 void from_json(const json &j, border_router &p)
 {
     j.at(JSON_ID).get_to(p.id);
-    p.mPresentFlags = 0;
+    p.agent.mPresentFlags = 0;
     if (j.contains(JSON_ADDR))
     {
-        j.at(JSON_ADDR).get_to(p.mAddr);
-        p.mPresentFlags |= BorderAgent::kAddrBit;
+        j.at(JSON_ADDR).get_to(p.agent.mAddr);
+        p.agent.mPresentFlags |= BorderAgent::kAddrBit;
     }
     if (j.contains(JSON_PORT))
     {
-        j.at(JSON_PORT).get_to(p.mPort);
-        p.mPresentFlags |= BorderAgent::kPortBit;
+        j.at(JSON_PORT).get_to(p.agent.mPort);
+        p.agent.mPresentFlags |= BorderAgent::kPortBit;
     }
     if (j.contains(JSON_THREAD_VERSION))
     {
-        j.at(JSON_THREAD_VERSION).get_to(p.mThreadVersion);
-        p.mPresentFlags |= BorderAgent::kThreadVersionBit;
+        j.at(JSON_THREAD_VERSION).get_to(p.agent.mThreadVersion);
+        p.agent.mPresentFlags |= BorderAgent::kThreadVersionBit;
     }
     if (j.contains(JSON_STATE_BITMAP))
     {
         uint32_t value;
         j.at(JSON_STATE_BITMAP).get_to(value);
-        p.mState = value;
-        p.mPresentFlags |= BorderAgent::kStateBit;
+        p.agent.mState = value;
+        p.agent.mPresentFlags |= BorderAgent::kStateBit;
     }
     if (j.contains(JSON_NWK_REF))
     {
@@ -178,47 +178,47 @@ void from_json(const json &j, border_router &p)
     }
     if (j.contains(JSON_VENDOR_NAME))
     {
-        j.at(JSON_VENDOR_NAME).get_to(p.mVendorName);
-        p.mPresentFlags |= BorderAgent::kVendorNameBit;
+        j.at(JSON_VENDOR_NAME).get_to(p.agent.mVendorName);
+        p.agent.mPresentFlags |= BorderAgent::kVendorNameBit;
     }
     if (j.contains(JSON_MODEL_NAME))
     {
-        j.at(JSON_MODEL_NAME).get_to(p.mModelName);
-        p.mPresentFlags |= BorderAgent::kModelNameBit;
+        j.at(JSON_MODEL_NAME).get_to(p.agent.mModelName);
+        p.agent.mPresentFlags |= BorderAgent::kModelNameBit;
     }
     if (j.contains(JSON_ACTIVE_TIMESTAMP))
     {
         uint64_t value;
         j.at(JSON_ACTIVE_TIMESTAMP).get_to(value);
-        p.mActiveTimestamp.Decode(value);
-        p.mPresentFlags |= BorderAgent::kActiveTimestampBit;
+        p.agent.mActiveTimestamp.Decode(value);
+        p.agent.mPresentFlags |= BorderAgent::kActiveTimestampBit;
     }
     if (j.contains(JSON_PARTITION_ID))
     {
-        j.at(JSON_PARTITION_ID).get_to(p.mPartitionId);
-        p.mPresentFlags |= BorderAgent::kPartitionIdBit;
+        j.at(JSON_PARTITION_ID).get_to(p.agent.mPartitionId);
+        p.agent.mPresentFlags |= BorderAgent::kPartitionIdBit;
     }
     if (j.contains(JSON_VENDOR_DATA))
     {
-        j.at(JSON_VENDOR_DATA).get_to(p.mVendorData);
-        p.mPresentFlags |= BorderAgent::kVendorDataBit;
+        j.at(JSON_VENDOR_DATA).get_to(p.agent.mVendorData);
+        p.agent.mPresentFlags |= BorderAgent::kVendorDataBit;
     }
     if (j.contains(JSON_VENDOR_OUI))
     {
         std::string value;
         j.at(JSON_VENDOR_OUI).get_to(value);
-        ::ot::commissioner::utils::Hex(p.mVendorOui, value);
-        p.mPresentFlags |= BorderAgent::kVendorOuiBit;
+        ::ot::commissioner::utils::Hex(p.agent.mVendorOui, value);
+        p.agent.mPresentFlags |= BorderAgent::kVendorOuiBit;
     }
     if (j.contains(JSON_BBR_SEQ_NUMBER))
     {
-        j.at(JSON_BBR_SEQ_NUMBER).get_to(p.mBbrSeqNumber);
-        p.mPresentFlags |= BorderAgent::kBbrSeqNumberBit;
+        j.at(JSON_BBR_SEQ_NUMBER).get_to(p.agent.mBbrSeqNumber);
+        p.agent.mPresentFlags |= BorderAgent::kBbrSeqNumberBit;
     }
     if (j.contains(JSON_BBR_PORT))
     {
-        j.at(JSON_BBR_PORT).get_to(p.mBbrPort);
-        p.mPresentFlags |= BorderAgent::kBbrPortBit;
+        j.at(JSON_BBR_PORT).get_to(p.agent.mBbrPort);
+        p.agent.mPresentFlags |= BorderAgent::kBbrPortBit;
     }
 }
 
