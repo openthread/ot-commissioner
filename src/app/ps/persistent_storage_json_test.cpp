@@ -353,8 +353,8 @@ TEST_CASE("Get br, not empty", "[ps_json]")
     REQUIRE(psj.get(border_router_id(0), ret_val) == ps_status::PS_NOT_FOUND);
     REQUIRE(psj.get(border_router_id(4), ret_val) == ps_status::PS_SUCCESS);
     REQUIRE(ret_val.id.id == 4);
-    REQUIRE(ret_val.mPort == 12);
-    REQUIRE(ret_val.mAddr == "1.1.1.3");
+    REQUIRE(ret_val.agent.mPort == 12);
+    REQUIRE(ret_val.agent.mAddr == "1.1.1.3");
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
@@ -449,8 +449,8 @@ TEST_CASE("Upd br", "[ps_json]")
 
     REQUIRE(psj.get(border_router_id(4), ret_val) == ps_status::PS_SUCCESS);
     REQUIRE(ret_val.id.id == 4);
-    REQUIRE(ret_val.mPort == 18);
-    REQUIRE(ret_val.mAddr == "5.5.5.5");
+    REQUIRE(ret_val.agent.mPort == 18);
+    REQUIRE(ret_val.agent.mAddr == "5.5.5.5");
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }

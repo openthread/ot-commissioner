@@ -182,10 +182,11 @@ struct network
 /**
  * Border router entity
  */
-struct border_router : public BorderAgent
+struct border_router
 {
     border_router_id id;     /**< unique id in registry */
     network_id       nwk_id; /**< network data reference */
+    BorderAgent      agent;  /**< border agent descriptive data */
 
     border_router()
         : border_router(EMPTY_ID, EMPTY_ID, {})
@@ -193,9 +194,9 @@ struct border_router : public BorderAgent
     }
 
     border_router(border_router_id const &bid, network_id const &nid, BorderAgent const &ba)
-        : BorderAgent{ba}
-        , id{bid}
+        : id{bid}
         , nwk_id{nid}
+        , agent{ba}
     {
     }
     /**

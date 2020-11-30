@@ -155,9 +155,13 @@ ps_status persistent_storage_json::add(network const &val, network_id &ret_id)
 
 ps_status persistent_storage_json::add(border_router const &val, border_router_id &ret_id)
 {
+// TODO migrate code part into the add(BorderAgent) wrapper method
+#if 0
     ps_status status = PS_ERROR;
-
     domain dom;
+	/* border agent -downwards, border_router upward
+	   agent E network E domain
+	 */
     // TODO I copy the data here. Possibly pass by value? Or even allow changing the argument here, but not in the
     // add_one()?
     border_router ins_val = val;
@@ -230,7 +234,8 @@ ps_status persistent_storage_json::add(border_router const &val, border_router_i
         }
         ins_val.nwk_id = nwk.id;
     }
-    return add_one<border_router, border_router_id>(ins_val, ret_id, JSON_BR_SEQ, JSON_BR);
+#endif
+    return add_one<border_router, border_router_id>(val, ret_id, JSON_BR_SEQ, JSON_BR);
 }
 
     ps_status persistent_storage_json::del(registrar_id const &id)
@@ -364,40 +369,45 @@ ps_status persistent_storage_json::add(border_router const &val, border_router_i
         if (val)
         {
             pred = [val](border_router const &el) {
-                bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->mPresentFlags != 0;
+                bool ret = val->id.id != EMPTY_ID || val->nwk_id.id != EMPTY_ID || val->agent.mPresentFlags != 0;
 
                 ret = ret && (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
                       (val->nwk_id.id == EMPTY_ID || (el.nwk_id.id == val->nwk_id.id)) &&
-                      ((val->mPresentFlags & BorderAgent::kAddrBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kAddrBit) != 0 && str_cmp_icase(el.mAddr, val->mAddr))) &&
-                      ((val->mPresentFlags & BorderAgent::kPortBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kPortBit) != 0 && el.mPort == val->mPort)) &&
-                      ((val->mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
-                        val->mThreadVersion == el.mThreadVersion)) &&
-                      ((val->mPresentFlags & BorderAgent::kStateBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kStateBit) != 0 && el.mState == val->mState)) &&
-                      ((val->mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
-                        str_cmp_icase(el.mVendorName, val->mVendorName))) &&
-                      ((val->mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
-                        str_cmp_icase(el.mModelName, val->mModelName))) &&
-                      ((val->mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
-                        el.mActiveTimestamp.Encode() == val->mActiveTimestamp.Encode())) &&
-                      ((val->mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 &&
-                        el.mPartitionId == val->mPartitionId)) &&
-                      ((val->mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kVendorDataBit) != 0 && el.mVendorData == val->mVendorData)) &&
-                      ((val->mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 && el.mVendorOui == val->mVendorOui)) &&
-                      ((val->mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 &&
-                        el.mBbrSeqNumber == val->mBbrSeqNumber)) &&
-                      ((val->mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
-                       ((el.mPresentFlags & BorderAgent::kBbrPortBit) != 0 && el.mBbrPort == val->mBbrPort));
+                      ((val->agent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kAddrBit) != 0 &&
+                        str_cmp_icase(el.agent.mAddr, val->agent.mAddr))) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kPortBit) != 0 && el.agent.mPort == val->agent.mPort)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
+                        val->agent.mThreadVersion == el.agent.mThreadVersion)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kStateBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kStateBit) != 0 &&
+                        el.agent.mState == val->agent.mState)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
+                        str_cmp_icase(el.agent.mVendorName, val->agent.mVendorName))) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
+                        str_cmp_icase(el.agent.mModelName, val->agent.mModelName))) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
+                        el.agent.mActiveTimestamp.Encode() == val->agent.mActiveTimestamp.Encode())) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 &&
+                        el.agent.mPartitionId == val->agent.mPartitionId)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kVendorDataBit) != 0 &&
+                        el.agent.mVendorData == val->agent.mVendorData)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 &&
+                        el.agent.mVendorOui == val->agent.mVendorOui)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 &&
+                        el.agent.mBbrSeqNumber == val->agent.mBbrSeqNumber)) &&
+                      ((val->agent.mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
+                       ((el.agent.mPresentFlags & BorderAgent::kBbrPortBit) != 0 &&
+                        el.agent.mBbrPort == val->agent.mBbrPort));
                 return ret;
             };
         }
