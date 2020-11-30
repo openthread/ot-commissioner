@@ -150,13 +150,6 @@ public class SelectNetworkFragment extends Fragment
     view.findViewById(R.id.add_device_button).setOnClickListener(this);
   }
 
-  /*
-  private void gotoCommissioning(@NonNull ThreadNetworkCredential credential) {
-    CommissionerActivity commissionerActivity = (CommissionerActivity) getActivity();
-    commissionerActivity.showFragment(new CommissioningFragment(credential));
-  }
-  */
-
   // Click listeners for network password dialog.
 
   @Override
@@ -238,25 +231,6 @@ public class SelectNetworkFragment extends Fragment
   @Override
   public void onConfirmClick(
       FetchCredentialDialogFragment fragment, ThreadNetworkCredential credential) {
-    /*
-    if (credential != null) {
-      ThreadCommissionerServiceImpl commissionerService =
-          new ThreadCommissionerServiceImpl(getContext());
-      try {
-        commissionerService
-            .addThreadNetworkCredential(
-                selectedNetwork.getBorderAgents().get(0), userInputPskc, credential)
-            .get();
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-
-      gotoCommissioning(credential);
-    } else {
-      Log.w(TAG, "failed to fetch credentials");
-    }
-    */
+    // TODO:
   }
 }

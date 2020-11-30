@@ -57,11 +57,6 @@ if [ "$(uname)" = "Linux" ]; then
     sudo apt-get install -y \
                          build-essential \
                          libreadline-dev \
-                         libncurses5-dev \
-                         libncursesw5-dev \
-                         tcl \
-                         tk \
-                         expect \
                          cmake \
                          ninja-build \
                          swig \
@@ -88,7 +83,6 @@ elif [ "$(uname)" = "Darwin" ]; then
     ## Install packages
     brew install coreutils \
                  readline \
-                 ncurses \
                  cmake \
                  ninja \
                  swig@4 \

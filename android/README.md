@@ -1,6 +1,6 @@
 # OpenThread Commissioner Android App
 
-The OpenThread (OT) Commissioner sample app commissions a new Thread 1.1 Device into existing Thread Network.
+The OpenThread (OT) Commissioner sample App commissions a new Thread 1.1 Device into existing Thread Network.
 
 ## Build
 

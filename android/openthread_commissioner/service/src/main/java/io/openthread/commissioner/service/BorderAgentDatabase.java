@@ -49,18 +49,14 @@ abstract class BorderAgentDatabase extends RoomDatabase {
 
   static final ExecutorService executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
-  public static BorderAgentDatabase getDatabase() {
+  public synchronized static BorderAgentDatabase getDatabase() {
     if (INSTANCE == null) {
-      synchronized (BorderAgentDatabase.class) {
-        if (INSTANCE == null) {
-          INSTANCE =
-              Room.databaseBuilder(
-                      CommissionerServiceApp.getContext(),
-                      BorderAgentDatabase.class,
-                      "network_credential_database")
-                  .build();
-        }
-      }
+      INSTANCE =
+          Room.databaseBuilder(
+                  CommissionerServiceApp.getContext(),
+                  BorderAgentDatabase.class,
+                  "network_credential_database")
+              .build();
     }
     return INSTANCE;
   }
