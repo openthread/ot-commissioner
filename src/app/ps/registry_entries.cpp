@@ -73,16 +73,15 @@ void from_json(const json &j, domain &p)
 
 void to_json(json &j, const network &p)
 {
-    j = json{{JSON_ID, p.id},   {JSON_NAME, p.name}, {JSON_DOMAIN_NAME, p.domain_name},
-             {JSON_PAN, p.pan}, {JSON_XPAN, p.xpan}, {JSON_CHANNEL, p.channel},
-             {JSON_MLP, p.mlp}, {JSON_CCM, p.ccm}};
+    j = json{{JSON_ID, p.id},     {JSON_DOM_REF, p.dom_id},  {JSON_NAME, p.name}, {JSON_PAN, p.pan},
+             {JSON_XPAN, p.xpan}, {JSON_CHANNEL, p.channel}, {JSON_MLP, p.mlp},   {JSON_CCM, p.ccm}};
 }
 
 void from_json(const json &j, network &p)
 {
     j.at(JSON_ID).get_to(p.id);
+    j.at(JSON_DOM_REF).get_to(p.dom_id);
     j.at(JSON_NAME).get_to(p.name);
-    j.at(JSON_DOMAIN_NAME).get_to(p.domain_name);
     j.at(JSON_PAN).get_to(p.pan);
     j.at(JSON_XPAN).get_to(p.xpan);
     j.at(JSON_CHANNEL).get_to(p.channel);

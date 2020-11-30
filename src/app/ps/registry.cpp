@@ -2,6 +2,7 @@
 #include "persistent_storage_json.hpp"
 
 #include <cassert>
+#include <sstream>
 
 namespace ot::commissioner::persistent_storage {
 
@@ -159,6 +160,105 @@ registry_status registry::add(border_router const &val, border_router_id &ret_id
     assert(storage != nullptr);
 
     return map_status(storage->add(val, ret_id));
+}
+
+registry_status registry::add(BorderAgent const &val)
+{
+    domain          dom{};
+    bool            domain_created = false;
+    registry_status status;
+
+    if ((val.mPresentFlags & BorderAgent::kDomainNameBit) != 0)
+    {
+        dom.name = val.mDomainName;
+        std::vector<domain> domains;
+        // TODO refine why lookup() functions are with the pointer?
+        status = lookup(&dom, domains);
+        if (status == REG_ERROR || domains.size() > 1)
+        {
+            return REG_ERROR;
+        }
+        else if (status == REG_NOT_FOUND)
+        {
+            domain_id dom_id{EMPTY_ID};
+            status = add(dom, dom_id);
+            if (status != REG_SUCCESS)
+            {
+                return status;
+            }
+            dom.id         = dom_id;
+            domain_created = true;
+        }
+        else
+        {
+            dom = domains[0];
+        }
+    }
+
+    network nwk{};
+    bool    network_created = false;
+    if ((val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0 ||
+        (val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
+    {
+        // If xpan present lookup with it only
+        // TODO discuss: is different name an error? Not yet.
+        if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
+        {
+            std::ostringstream tmp;
+            // Assumption: no leading zeroes for the xpan
+            tmp << std::hex << val.mExtendedPanId;
+            nwk.xpan = tmp.str();
+        }
+        else
+        {
+            nwk.name = val.mNetworkName;
+        }
+        std::vector<network> nwks;
+        // TODO replace lookup with lookup_any()?
+        status = lookup(&nwk, nwks);
+        if (status == REG_ERROR || nwks.size() > 1)
+        {
+            if (domain_created)
+            {
+                del(dom.id);
+            }
+            return status;
+        }
+        else if (status == REG_NOT_FOUND)
+        {
+            network_id nwk_id{EMPTY_ID};
+            // It is possible we found the network by xpan
+            if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0 &&
+                (val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0)
+            {
+                nwk.name = val.mNetworkName;
+            }
+            nwk.dom_id = dom.id;
+            status     = add(nwk, nwk_id);
+            if (status != REG_SUCCESS)
+            {
+                if (domain_created)
+                {
+                    del(dom.id);
+                }
+                return status;
+            }
+            nwk.id          = nwk_id;
+            network_created = true;
+        }
+        else
+        {
+            nwk = nwks[0];
+        }
+    }
+
+    border_router br{EMPTY_ID, nwk.id, val};
+    status = add(br, br.id);
+    if (status != REG_SUCCESS && network_created)
+    {
+        del(br.nwk_id);
+    }
+    return status;
 }
 
 registry_status registry::del(registrar_id const &id)

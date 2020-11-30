@@ -155,86 +155,6 @@ ps_status persistent_storage_json::add(network const &val, network_id &ret_id)
 
 ps_status persistent_storage_json::add(border_router const &val, border_router_id &ret_id)
 {
-// TODO migrate code part into the add(BorderAgent) wrapper method
-#if 0
-    ps_status status = PS_ERROR;
-    domain dom;
-	/* border agent -downwards, border_router upward
-	   agent E network E domain
-	 */
-    // TODO I copy the data here. Possibly pass by value? Or even allow changing the argument here, but not in the
-    // add_one()?
-    border_router ins_val = val;
-
-    // Check the domain exists for the domain name
-    if ((ins_val.mPresentFlags & BorderAgent::kDomainNameBit) != 0)
-    {
-        std::vector<domain> domains;
-
-        dom    = domain{EMPTY_ID, ins_val.mDomainName, std::vector<std::string>{}};
-        status = lookup(&dom, domains);
-        if (status == PS_ERROR || domains.size() > 1)
-        {
-            return PS_ERROR;
-        }
-        else if (status == PS_NOT_FOUND)
-        {
-            domain_id dom_id{EMPTY_ID};
-            status = add(dom, dom_id);
-            if (status != PS_SUCCESS)
-            {
-                return status;
-            }
-            dom.id = dom_id;
-        }
-        else
-        {
-            dom = domains[0];
-        }
-    }
-
-    network nwk;
-    // Check network exists for the network name and xpan
-    if (ins_val.nwk_id.id == EMPTY_ID && ((ins_val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0 ||
-                                          (ins_val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0))
-    {
-        // If xpan present lookup with it only
-        // TODO discuss: is different name an error? Not yet.
-        if ((ins_val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
-        {
-            std::ostringstream tmp;
-            // Assumption: no leading zeroes for the xpan
-            tmp << std::hex << ins_val.mExtendedPanId;
-            nwk.xpan = tmp.str();
-        }
-        else
-        {
-            nwk.name = ins_val.mNetworkName;
-        }
-        std::vector<network> nwks;
-        status = lookup(&nwk, nwks);
-        if (status == PS_ERROR || nwks.size() > 1)
-        {
-            // TODO remove domain if empty?
-            return status;
-        }
-        else if (status == PS_NOT_FOUND)
-        {
-            network_id nwk_id{EMPTY_ID};
-            status = add(nwk, nwk_id);
-            if (status != PS_SUCCESS)
-            {
-                return status;
-            }
-            nwk.id = nwk_id;
-        }
-        else
-        {
-            nwk = nwks[0];
-        }
-        ins_val.nwk_id = nwk.id;
-    }
-#endif
     return add_one<border_router, border_router_id>(val, ret_id, JSON_BR_SEQ, JSON_BR);
 }
 
@@ -342,14 +262,14 @@ ps_status persistent_storage_json::add(border_router const &val, border_router_i
         if (val)
         {
             pred = [val](network const &el) {
-                bool ret = val->id.id != EMPTY_ID || !val->name.empty() || !val->domain_name.empty() ||
+                bool ret = val->id.id != EMPTY_ID || val->dom_id.id != EMPTY_ID || !val->name.empty() ||
                            !val->xpan.empty() || !val->pan.empty() || !val->mlp.empty() || val->channel != 0 ||
                            val->ccm >= 0;
 
                 ret = ret && (val->ccm < 0 || val->ccm == el.ccm) &&
                       (val->id.id == EMPTY_ID || (el.id.id == val->id.id)) &&
+                      (val->dom_id.id == EMPTY_ID || (el.dom_id.id == val->dom_id.id)) &&
                       (val->name.empty() || (val->name == el.name)) &&
-                      (val->domain_name.empty() || (val->domain_name == el.domain_name)) &&
                       (val->xpan.empty() || str_cmp_icase(val->xpan, el.xpan)) &&
                       (val->pan.empty() || str_cmp_icase(val->pan, el.pan)) &&
                       (val->mlp.empty() || str_cmp_icase(val->mlp, el.mlp)) &&

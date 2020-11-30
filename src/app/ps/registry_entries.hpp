@@ -144,28 +144,28 @@ struct domain
  */
 struct network
 {
-    network_id  id;           /**< unique id in registry */
-    std::string name;         /**< network name */
-                              // TODO reference domain by id instead of name
-    std::string  domain_name; /**< domain name if network belongs to */
-    std::string  xpan;        /**< Extended PAN_ID */
-    unsigned int channel;     /**< network channel */
-    std::string  pan;         /**< PAN_ID */
-    std::string  mlp;         /**< Mesh-local prefix */
-    int          ccm;         /**< Commercial commissioning mode;<0 not set,
-                               * 0 false, >0 true */
+    network_id  id;       /**< unique id in registry */
+    domain_id   dom_id;   /**< reference to the domain the network belongs to */
+    std::string name;     /**< network name */
+                          // TODO reference domain by id instead of name
+    std::string  xpan;    /**< Extended PAN_ID */
+    unsigned int channel; /**< network channel */
+    std::string  pan;     /**< PAN_ID */
+    std::string  mlp;     /**< Mesh-local prefix */
+    int          ccm;     /**< Commercial commissioning mode;<0 not set,
+                           * 0 false, >0 true */
 
     network(network_id const & nid,
+            domain_id const &  did,
             std::string const &nname,
-            std::string const &ndomain_name,
             std::string const &nxpan,
             unsigned int const nchannel,
             std::string const &npan,
             std::string const &nmlp,
             int const          nccm)
         : id(nid)
+        , dom_id(did)
         , name(nname)
-        , domain_name(ndomain_name)
         , xpan(nxpan)
         , channel(nchannel)
         , pan(npan)
@@ -174,7 +174,7 @@ struct network
     {
     }
     network()
-        : network(EMPTY_ID, "", "", "", 0, "", "", -1)
+        : network(EMPTY_ID, EMPTY_ID, "", "", 0, "", "", -1)
     {
     }
 };
