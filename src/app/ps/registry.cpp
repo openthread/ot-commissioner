@@ -253,11 +253,30 @@ registry_status registry::add(BorderAgent const &val)
     }
 
     border_router br{EMPTY_ID, nwk.id, val};
-    status = add(br, br.id);
+
+    // Lookup border_router by address and port to decide to add() or update()
+    // Assuming address and port are set (it should be so).
+    border_router lookup_br{};
+    lookup_br.agent.mAddr         = val.mAddr;
+    lookup_br.agent.mPort         = val.mPort;
+    lookup_br.agent.mPresentFlags = BorderAgent::kAddrBit | BorderAgent::kPortBit;
+    std::vector<border_router> routers;
+    status = lookup(&lookup_br, routers);
+    if (status == REG_SUCCESS && routers.size() == 1)
+    {
+        br.id.id = routers[0].id.id;
+        status   = update(br);
+    }
+    else if (status == REG_NOT_FOUND)
+    {
+        status = add(br, br.id);
+    }
+
     if (status != REG_SUCCESS && network_created)
     {
         del(br.nwk_id);
     }
+
     return status;
 }
 
