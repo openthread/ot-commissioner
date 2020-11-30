@@ -79,6 +79,18 @@ public:
     registry_status add(domain const &val, domain_id &ret_id);
     registry_status add(network const &val, network_id &ret_id);
     registry_status add(border_router const &val, border_router_id &ret_id);
+    /**
+     *  Adds necessary values to the registry.
+     *
+     * Will create @ref border_router entity for the argument and put it into
+     * registry. Will @ref lookup() @ref network
+     * and @ref domain entities and even create and add the if necessary.
+     *
+     * @param[in] val value to be added
+     * @return @ref registry_status
+     * @see registry_entries.hpp
+     */
+    registry_status add(BorderAgent const &val);
 
     /**
      * Deletes value by unique id
