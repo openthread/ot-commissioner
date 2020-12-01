@@ -38,16 +38,16 @@
 
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
-#include "app/cli/job_manager.hpp"
 #include "app/commissioner_app.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-using NidArray = std::vector<uint64_t>;
+using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
+using NidArray           = std::vector<uint64_t>;
 
-class Job;
+class JobManager;
 
 class Interpreter
 {
@@ -180,10 +180,10 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    Config                           mConfig;
-    std::shared_ptr<CommissionerApp> mCommissioner = nullptr;
-    Console                          mConsole;
-    JobManager                       mJobManager;
+    Config                      mConfig;
+    CommissionerAppPtr          mCommissioner = nullptr;
+    Console                     mConsole;
+    std::shared_ptr<JobManager> mJobManager = nullptr;
 
     bool mShouldExit = false;
 
