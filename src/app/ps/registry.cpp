@@ -249,10 +249,28 @@ registry_status registry::add(BorderAgent const &val)
         else
         {
             nwk = nwks[0];
+            if (nwk.dom_id.id != dom.id.id)
+            {
+                nwk.dom_id.id = dom.id.id;
+                status        = update(nwk);
+                if (status != REG_SUCCESS)
+                {
+                    if (domain_created)
+                    {
+                        del(dom.id);
+                    }
+                    return status;
+                }
+            }
         }
     }
 
     border_router br{EMPTY_ID, nwk.id, val};
+    if (br.nwk_id.id == EMPTY_ID)
+    {
+        // TODO remove nwk and/or dom if necessary
+        return REG_ERROR;
+    }
 
     // Lookup border_router by address and port to decide to add() or update()
     // Assuming address and port are set (it should be so).

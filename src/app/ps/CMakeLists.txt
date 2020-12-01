@@ -66,7 +66,7 @@ endif()
 if (OT_COMM_TEST)
     add_library(commissioner-ps-test OBJECT
       persistent_storage_json_test.cpp
-      persistent_storage_json.hpp
+	  registry_test.cpp
     )
 
     target_include_directories(commissioner-ps-test
