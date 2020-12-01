@@ -197,104 +197,112 @@ registry_status registry::add(BorderAgent const &val)
 
     network nwk{};
     bool    network_created = false;
-    if ((val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0 ||
-        (val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
+
+    try
     {
-        // If xpan present lookup with it only
-        // TODO discuss: is different name an error? Not yet.
-        if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
+        if ((val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0 ||
+            (val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
         {
-            std::ostringstream tmp;
-            // Assumption: no leading zeroes for the xpan
-            tmp << std::hex << val.mExtendedPanId;
-            nwk.xpan = tmp.str();
-        }
-        else
-        {
-            nwk.name = val.mNetworkName;
-        }
-        std::vector<network> nwks;
-        // TODO replace lookup with lookup_any()?
-        status = lookup(&nwk, nwks);
-        if (status == REG_ERROR || nwks.size() > 1)
-        {
-            if (domain_created)
+            // If xpan present lookup with it only
+            // TODO discuss: is different name an error? Not yet.
+            if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
             {
-                del(dom.id);
+                std::ostringstream tmp;
+                // Assumption: no leading zeroes for the xpan
+                tmp << std::hex << val.mExtendedPanId;
+                nwk.xpan = tmp.str();
             }
-            return status;
-        }
-        else if (status == REG_NOT_FOUND)
-        {
-            network_id nwk_id{EMPTY_ID};
-            // It is possible we found the network by xpan
-            if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0 &&
-                (val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0)
+            else
             {
                 nwk.name = val.mNetworkName;
             }
-            nwk.dom_id = dom.id;
-            status     = add(nwk, nwk_id);
-            if (status != REG_SUCCESS)
+
+            std::vector<network> nwks;
+            // TODO replace lookup with lookup_any()?
+            status = lookup(&nwk, nwks);
+            if (status == REG_ERROR || nwks.size() > 1)
             {
-                if (domain_created)
-                {
-                    del(dom.id);
-                }
-                return status;
+                throw status;
             }
-            nwk.id          = nwk_id;
-            network_created = true;
-        }
-        else
-        {
-            nwk = nwks[0];
-            if (nwk.dom_id.id != dom.id.id)
+            else if (status == REG_NOT_FOUND)
             {
-                nwk.dom_id.id = dom.id.id;
-                status        = update(nwk);
+                network_id nwk_id{EMPTY_ID};
+                // It is possible we found the network by xpan
+                if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0 &&
+                    (val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0)
+                {
+                    nwk.name = val.mNetworkName;
+                }
+                nwk.dom_id = dom.id;
+                status     = add(nwk, nwk_id);
                 if (status != REG_SUCCESS)
                 {
-                    if (domain_created)
+                    throw status;
+                }
+                nwk.id          = nwk_id;
+                network_created = true;
+            }
+            else
+            {
+                nwk = nwks[0];
+                if (nwk.dom_id.id != dom.id.id)
+                {
+                    nwk.dom_id.id = dom.id.id;
+                    status        = update(nwk);
+                    if (status != REG_SUCCESS)
                     {
-                        del(dom.id);
+                        throw status;
                     }
-                    return status;
                 }
             }
         }
-    }
 
-    border_router br{EMPTY_ID, nwk.id, val};
-    if (br.nwk_id.id == EMPTY_ID)
-    {
-        // TODO remove nwk and/or dom if necessary
-        return REG_ERROR;
-    }
+        border_router br{EMPTY_ID, nwk.id, val};
+        try
+        {
+            if (br.nwk_id.id == EMPTY_ID)
+            {
+                throw REG_ERROR;
+            }
 
-    // Lookup border_router by address and port to decide to add() or update()
-    // Assuming address and port are set (it should be so).
-    border_router lookup_br{};
-    lookup_br.agent.mAddr         = val.mAddr;
-    lookup_br.agent.mPort         = val.mPort;
-    lookup_br.agent.mPresentFlags = BorderAgent::kAddrBit | BorderAgent::kPortBit;
-    std::vector<border_router> routers;
-    status = lookup(&lookup_br, routers);
-    if (status == REG_SUCCESS && routers.size() == 1)
-    {
-        br.id.id = routers[0].id.id;
-        status   = update(br);
-    }
-    else if (status == REG_NOT_FOUND)
-    {
-        status = add(br, br.id);
-    }
+            // Lookup border_router by address and port to decide to add() or update()
+            // Assuming address and port are set (it should be so).
+            border_router lookup_br{};
+            lookup_br.agent.mAddr         = val.mAddr;
+            lookup_br.agent.mPort         = val.mPort;
+            lookup_br.agent.mPresentFlags = BorderAgent::kAddrBit | BorderAgent::kPortBit;
+            std::vector<border_router> routers;
+            status = lookup(&lookup_br, routers);
+            if (status == REG_SUCCESS && routers.size() == 1)
+            {
+                br.id.id = routers[0].id.id;
+                status   = update(br);
+            }
+            else if (status == REG_NOT_FOUND)
+            {
+                status = add(br, br.id);
+            }
 
-    if (status != REG_SUCCESS && network_created)
+            if (status != REG_SUCCESS)
+            {
+                throw status;
+            }
+        } catch (registry_status thrown_status)
+        {
+            if (network_created)
+            {
+                del(nwk.id);
+            }
+            throw;
+        }
+    } catch (registry_status thrown_status)
     {
-        del(br.nwk_id);
+        if (domain_created)
+        {
+            del(dom.id);
+        }
+        status = thrown_status;
     }
-
     return status;
 }
 
