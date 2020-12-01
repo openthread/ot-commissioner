@@ -35,6 +35,7 @@
 
 #include <string.h>
 
+#include "app/cli/job_manager.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
 #include "common/error_macros.hpp"
@@ -229,9 +230,10 @@ Error Interpreter::Init(const std::string &aConfigFile)
     std::string configJson;
     Config      config;
 
+    mJobManager = std::shared_ptr<JobManager>(new JobManager());
     SuccessOrExit(error = ReadFile(configJson, aConfigFile));
     SuccessOrExit(error = ConfigFromJson(config, configJson));
-    SuccessOrExit(error = mJobManager.Init(config));
+    SuccessOrExit(error = mJobManager->Init(config, *this));
 #if 0 // TODO: get rid of the embedded Interpreter::mCommissioner
     SuccessOrExit(error = CommissionerApp::Create(mCommissioner, config));
 #endif
@@ -267,7 +269,7 @@ void Interpreter::CancelCommand()
         mCommissioner->Stop();
     }
 #endif
-    mJobManager.CancelCommand();
+    mJobManager->CancelCommand();
 }
 
 Interpreter::Expression Interpreter::Read()
@@ -321,10 +323,10 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
     StringArray exportFiles;
     StringArray importFiles;
     NidArray    nids;
+    bool        groupAlias = false;
     Error       error;
 
-    error = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles);
-    SuccessOrExit(error);
+    SuccessOrExit(error = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles));
     // domain must be single or omitted
     VerifyOrExit(domAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
     // network and domain must not be specified simultaneously
@@ -343,12 +345,12 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
     if (nwkAliases.size() > 0)
     {
         supported = IsSyntaxSupported(mMultiNetworkSupported, retExpr);
-        VerifyOrExit(supported, ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
+        VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
     }
     else if (domAliases.size() > 0)
     {
         supported = IsSyntaxSupported(mMultiNetworkSupported, retExpr);
-        VerifyOrExit(supported, ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
+        VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
     }
     else
     {
@@ -358,12 +360,12 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
     if (exportFiles.size() > 0)
     {
         supported = IsSyntaxSupported(mExportSupported, retExpr);
-        VerifyOrExit(supported, ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
+        VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
     }
     else if (importFiles.size() > 0)
     {
         supported = IsSyntaxSupported(mImportSupported, retExpr);
-        VerifyOrExit(supported, ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+        VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
     }
 
     // validate group alias usage; if used, it must be alone
@@ -371,7 +373,8 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
     {
         if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
         {
-            VerifyOrExit(nwkAliases.size() == 1, ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
+            groupAlias = true;
+            VerifyOrExit(nwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
         }
     }
 
@@ -388,12 +391,9 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
         ASSERT(false); // something went wrong
     }
 
-    VerifyOrExit(nids.size() > 0, ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
-
-    // create pool of jobs by network ids
-
-    // run pool
-
+    VerifyOrExit(nids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
+    SuccessOrExit(error = mJobManager->PrepareJobs(retExpr, nids, groupAlias));
+    mJobManager->RunJobs();
     // post-process collected values
 exit:
     return error;
@@ -596,7 +596,7 @@ Interpreter::Value Interpreter::ProcessActive(const Expression &)
 
 Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -633,7 +633,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -687,7 +687,7 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
-        CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+        CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
 
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
 
@@ -723,7 +723,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
     JoinerType         type;
 
@@ -803,7 +803,7 @@ Interpreter::Value Interpreter::ProcessCommDataset(const Expression &aExpr)
 {
     // temporary stub
     // TODO: implement jobs
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
 
     return ProcessCommDatasetJob(commissioner, aExpr);
 }
@@ -840,7 +840,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
 {
     // temporary stub
     // TODO: implement jobs
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
 
     return ProcessOpDatasetJob(commissioner, aExpr);
 }
@@ -1056,7 +1056,7 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
 {
     // temporary stub
     // TODO: implement jobs
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
 
     return ProcessBbrDatasetJob(commissioner, aExpr);
 }
@@ -1144,7 +1144,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessReenroll(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -1156,7 +1156,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessDomainReset(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -1168,7 +1168,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessMigrate(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -1180,7 +1180,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessMlr(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     uint32_t timeout;
@@ -1196,7 +1196,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessAnnounce(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     uint32_t channelMask;
@@ -1216,7 +1216,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessPanId(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -1250,7 +1250,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
 {
-    CommissionerAppPtr commissioner = mJobManager.GetSelectedCommissioner();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
     Value              value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -1295,7 +1295,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
 {
-    mJobManager.StopCommissionerPool();
+    mJobManager->StopCommissionerPool();
 
     mShouldExit = true;
 

@@ -32,19 +32,163 @@
  */
 
 #include "app/cli/job_manager.hpp"
+#include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-Error JobManager::Init(const Config &aConf)
+Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
 {
     // here we need to store a pointer to persistent storage object
 
-    mConf = aConf;
+    mConf        = aConf;
+    mInterpreter = InterpreterPtr(&aInterpreter);
     return CommissionerApp::Create(mDefaultCommissioner, aConf);
+}
+
+Error JobManager::CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr)
+{
+    Interpreter::JobEvaluator eval;
+    auto                      mapItem = Interpreter::mJobEvaluatorMap.find(aExpr[0]);
+
+    if (mapItem != Interpreter::mJobEvaluatorMap.end())
+    {
+        return ERROR_INVALID_SYNTAX("{} not eligible for job", aExpr[0]);
+    }
+    eval     = mapItem->second;
+    Job *job = new Job(*mInterpreter, aCommissioner, aExpr, eval);
+    mJobPool.push_back(job);
+
+    return ERROR_NONE;
+}
+
+Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
+{
+    if (aExpr[0] == "start")
+        return PrepareStartJobs(aExpr, aNids, aGroupAlias);
+    else if (aExpr[0] == "stop")
+        return PrepareStopJobs(aExpr, aNids, aGroupAlias);
+
+    Error error = ERROR_NONE;
+    // regular command
+    for (auto nid : aNids)
+    {
+        auto entry = mCommissionerPool.find(nid);
+        if (entry == mCommissionerPool.end())
+        {
+            if (!aGroupAlias)
+            {
+                // report 'not started' for nid
+            }
+            // ignore nid
+            continue;
+        }
+
+        // nid found
+        bool active = entry->second->IsActive();
+        if (!active)
+        {
+            if (!aGroupAlias)
+            {
+                // report 'not started' for nid
+            }
+            // ignore nid
+            continue;
+        }
+
+        SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
+    }
+exit:
+    return error;
+}
+
+Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
+{
+    Config conf  = mConf;
+    Error  error = ERROR_NONE;
+
+    ASSERT(aExpr[0] == "start");
+
+    for (auto nid : aNids)
+    {
+        auto entry = mCommissionerPool.find(nid);
+        if (entry == mCommissionerPool.end())
+        {
+            CommissionerAppPtr commissioner;
+
+            SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
+            SuccessOrExit(error = CommissionerApp::Create(commissioner, conf));
+            mCommissionerPool[nid] = commissioner;
+        }
+
+        bool active = entry->second->IsActive();
+        if (active)
+        {
+            if (!aGroupAlias)
+            {
+                // report 'already started' for nid
+            }
+            // ignore nid
+            continue;
+        }
+
+        SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
+        SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
+    }
+exit:
+    return error;
+}
+
+Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
+{
+    Error error = ERROR_NONE;
+
+    ASSERT(aExpr[0] == "stop");
+
+    for (auto nid : aNids)
+    {
+        auto entry = mCommissionerPool.find(nid);
+        if (entry == mCommissionerPool.end())
+        {
+            if (!aGroupAlias)
+            {
+                // report failure for nid
+            }
+            // ignore nid
+            continue;
+        }
+
+        // nid found
+        bool active = entry->second->IsActive();
+        if (!active)
+        {
+            if (!aGroupAlias)
+            {
+                // report 'already stopped' for nid
+            }
+            // ignore nid
+            continue;
+        }
+
+        SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
+    }
+exit:
+    return error;
+}
+
+Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
+{
+    // prepare DTLS conf - resolve Security Materials paths
+    // update conf with actual paths
+
+    (void)aNid;
+    (void)aConfig;
+
+    return ERROR_NONE;
 }
 
 void JobManager::RunJobs()

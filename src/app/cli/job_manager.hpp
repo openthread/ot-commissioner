@@ -34,6 +34,7 @@
 #ifndef OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 #define OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 
+#include "app/cli/interpreter.hpp"
 #include "app/commissioner_app.hpp"
 
 namespace ot {
@@ -41,6 +42,7 @@ namespace ot {
 namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
+using InterpreterPtr     = std::shared_ptr<Interpreter>;
 
 class Interpreter;
 class Job;
@@ -51,7 +53,8 @@ public:
     JobManager()  = default;
     ~JobManager() = default;
 
-    Error               Init(const Config &aConf);
+    Error               Init(const Config &aConf, Interpreter &aInterpreter);
+    Error               PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
     void                RunJobs();
     void                CancelCommand();
     void                Wait();
@@ -62,9 +65,15 @@ private:
     using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
     using JobPool          = std::vector<Job *>;
 
+    Error PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
+    Error PrepareStopJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
+    Error PrepareDtlsConfig(const uint64_t aNid, Config &aConfig);
+    Error CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr);
+
     JobPool            mJobPool;
     CommissionerPool   mCommissionerPool;
     Config             mConf;
+    InterpreterPtr     mInterpreter         = nullptr;
     CommissionerAppPtr mDefaultCommissioner = nullptr;
 };
 
