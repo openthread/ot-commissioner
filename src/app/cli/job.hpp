@@ -60,6 +60,7 @@ public:
     void Run();
     void Wait();
     void Cancel();
+    bool IsStopped() { return !mJobThread.joinable(); }
 
     Interpreter::Value GetValue() const { return mValue; }
     std::string        GetJsonString() const { return mJson; }

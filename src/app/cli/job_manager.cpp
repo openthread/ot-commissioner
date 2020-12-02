@@ -45,7 +45,7 @@ Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
 {
     // here we need to store a pointer to persistent storage object
 
-    mConf        = aConf;
+    mDefaultConf = aConf;
     mInterpreter = InterpreterPtr(&aInterpreter);
     return CommissionerApp::Create(mDefaultCommissioner, aConf);
 }
@@ -58,11 +58,27 @@ Error JobManager::UpdateDefaultConfig(const ByteArray &aPSKc)
     VerifyOrExit(!mDefaultCommissioner->IsActive(),
                  error = ERROR_INVALID_STATE("cannot set PSKc when the commissioner is active"));
 
-    mConf.mPSKc = aPSKc;
-    CommissionerApp::Create(mDefaultCommissioner, mConf).IgnoreError();
+    mDefaultConf.mPSKc = aPSKc;
+    CommissionerApp::Create(mDefaultCommissioner, mDefaultConf).IgnoreError();
 
 exit:
     return error;
+}
+
+void JobManager::CleanupJobs()
+{
+    for (auto job : mJobPool)
+    {
+        ASSERT(job == NULL || job->IsStopped());
+        delete job;
+    }
+    mJobPool.clear();
+    mImportFile.clear();
+}
+
+void JobManager::SetImportFile(const std::string &importFile)
+{
+    mImportFile = importFile;
 }
 
 Error JobManager::CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr)
@@ -115,7 +131,20 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             continue;
         }
 
-        SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
+        Interpreter::Expression jobExpr = aExpr;
+
+        if (!mImportFile.empty())
+        {
+            Error importError = AppendImport(nid, jobExpr);
+            if (importError != ERROR_NONE)
+            {
+                // report 'not found import entry' for nid
+                // and ignore the network
+                continue;
+            }
+        }
+
+        SuccessOrExit(error = CreateNewJob(entry->second, jobExpr));
     }
 exit:
     return error;
@@ -123,7 +152,7 @@ exit:
 
 Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
 {
-    Config conf  = mConf;
+    Config conf  = mDefaultConf;
     Error  error = ERROR_NONE;
 
     ASSERT(aExpr[0] == "start");
@@ -218,6 +247,28 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     return ERROR_NONE;
 }
 
+Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr)
+{
+    Error error;
+    (void)aNid;
+    (void)aExpr;
+    // TODO:
+    // load JSON, else return 'bad format' error
+    // find value by nid, else return 'not found' error
+    // - value must be a JSON object, else return 'bad format' error
+    // - the object must be of valid JSON syntax per command
+    //   - commdataset
+    //   - bbrdataset
+    //   - opdataset
+    //   else return 'bad format' error
+    // serialize JSON object to string and append the one to aExp
+
+    // if aNid is 0 : single command supposed (need more analysis)
+    // - if plain dataset object and correct one, append as is
+    // - else try to load by currently selected nid
+    return error;
+}
+
 void JobManager::RunJobs()
 {
     for (auto job : mJobPool)
@@ -263,8 +314,22 @@ void JobManager::StopCommissionerPool()
 
 CommissionerAppPtr &JobManager::GetSelectedCommissioner()
 {
-    // get selected nid
-    // if not void, find CommissionerApp in pool
+    uint64_t nid = 0;
+
+    // TODO: get selected nid from PS
+
+    if (nid != 0)
+    {
+        auto entry = mCommissionerPool.find(nid);
+        if (entry != mCommissionerPool.end())
+        {
+            return entry->second;
+        }
+        else
+        {
+            // TODO: report 'not started' nid
+        }
+    }
     // else
     return mDefaultCommissioner;
 }
