@@ -145,23 +145,11 @@ private:
 
     Value ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
-    // Value ProcessActiveJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessTokenJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessNetworkJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessSessionIdJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessJoinerJob(CommissionerApp &aCommissioner, const Expression &aExpr);
+    Value ProcessActiveJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessSessionIdJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
-    // Value ProcessReenrollJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessDomainResetJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessMigrateJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessMlrJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessAnnounceJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessPanIdJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-    // Value ProcessEnergyJob(CommissionerApp &aCommissioner, const Expression &aExpr);
-
-    Error UpdateConfig(const ByteArray &aPSKc);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 
@@ -181,7 +169,6 @@ private:
 
 private:
     Config                      mConfig;
-    CommissionerAppPtr          mCommissioner = nullptr;
     Console                     mConsole;
     std::shared_ptr<JobManager> mJobManager = nullptr;
 

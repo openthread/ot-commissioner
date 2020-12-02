@@ -60,6 +60,11 @@ public:
     void                Wait();
     void                StopCommissionerPool();
     CommissionerAppPtr &GetSelectedCommissioner();
+    /**
+     * Apply new PSKc bytes and re-create @ref
+     * JobManager::mDefaultCommissioner instance
+     */
+    Error UpdateDefaultConfig(const ByteArray &aPSKc);
 
 private:
     using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;

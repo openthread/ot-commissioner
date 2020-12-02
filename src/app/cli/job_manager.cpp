@@ -50,6 +50,21 @@ Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
     return CommissionerApp::Create(mDefaultCommissioner, aConf);
 }
 
+Error JobManager::UpdateDefaultConfig(const ByteArray &aPSKc)
+{
+    Error error;
+
+    VerifyOrExit(aPSKc.size() <= kMaxPSKcLength, error = ERROR_INVALID_ARGS("invalid PSKc length"));
+    VerifyOrExit(!mDefaultCommissioner->IsActive(),
+                 error = ERROR_INVALID_STATE("cannot set PSKc when the commissioner is active"));
+
+    mConf.mPSKc = aPSKc;
+    CommissionerApp::Create(mDefaultCommissioner, mConf).IgnoreError();
+
+exit:
+    return error;
+}
+
 Error JobManager::CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr)
 {
     Interpreter::JobEvaluator eval;
