@@ -181,6 +181,8 @@ const std::map<std::string, Interpreter::JobEvaluator> &Interpreter::mJobEvaluat
     *new std::map<std::string, Interpreter::JobEvaluator>{
         {"start", &Interpreter::ProcessStartJob},
         {"stop", &Interpreter::ProcessStopJob},
+        {"active", &Interpreter::ProcessActiveJob},
+        {"sessionid", &Interpreter::ProcessSessionIdJob},
         {"commdataset", &Interpreter::ProcessCommDatasetJob},
         {"opdataset", &Interpreter::ProcessOpDatasetJob},
         {"bbrdataset", &Interpreter::ProcessBbrDatasetJob},
@@ -234,9 +236,6 @@ Error Interpreter::Init(const std::string &aConfigFile)
     SuccessOrExit(error = ReadFile(configJson, aConfigFile));
     SuccessOrExit(error = ConfigFromJson(config, configJson));
     SuccessOrExit(error = mJobManager->Init(config, *this));
-#if 0 // TODO: get rid of the embedded Interpreter::mCommissioner
-    SuccessOrExit(error = CommissionerApp::Create(mCommissioner, config));
-#endif
 
 exit:
     return error;
@@ -246,7 +245,7 @@ void Interpreter::Run()
 {
     Expression expr;
 
-    VerifyOrExit(mCommissioner != nullptr);
+    VerifyOrExit(mJobManager != nullptr);
 
     while (!mShouldExit)
     {
@@ -289,7 +288,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         return EvaluateMultiNetwork(aExpr);
     }
 
-    // else
+    // else handle single command using selected network
     evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
     if (evaluator == mEvaluatorMap.end())
     {
@@ -410,7 +409,7 @@ bool Interpreter::IsSyntaxSupported(const std::vector<StringArray> &aArr, const 
 
         for (size_t idx = 0; idx < commandCase.size(); idx++)
         {
-            matching = commandCase[idx] == aExpr[idx];
+            matching = CaseInsensitiveEqual(commandCase[idx], aExpr[idx]);
             if (!matching)
                 break;
         }
@@ -481,6 +480,10 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr,
         else
         {
             inKey = false;
+            if (state == ST_COMMAND)
+            {
+                word = ToLower(word);
+            }
             arrays[state]->push_back(word);
         }
     }
@@ -566,13 +569,19 @@ Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral
 
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
+    return ProcessStartJob(commissioner, aExpr);
+}
+
+Interpreter::Value Interpreter::ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
     Error       error;
     uint16_t    port;
     std::string existingCommissionerId;
 
     VerifyOrExit(aExpr.size() >= 3, error = ERROR_INVALID_ARGS("too few arguments"));
     SuccessOrExit(error = ParseInteger(port, aExpr[2]));
-    SuccessOrExit(error = mCommissioner->Start(existingCommissionerId, aExpr[1], port));
+    SuccessOrExit(error = aCommissioner->Start(existingCommissionerId, aExpr[1], port));
 
 exit:
     if (!existingCommissionerId.empty())
@@ -583,15 +592,27 @@ exit:
     return error;
 }
 
-Interpreter::Value Interpreter::ProcessStop(const Expression &)
+Interpreter::Value Interpreter::ProcessStop(const Expression &aExpr)
 {
-    mCommissioner->Stop();
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
+    return ProcessStopJob(commissioner, aExpr);
+}
+
+Interpreter::Value Interpreter::ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &)
+{
+    aCommissioner->Stop();
     return ERROR_NONE;
 }
 
-Interpreter::Value Interpreter::ProcessActive(const Expression &)
+Interpreter::Value Interpreter::ProcessActive(const Expression &aExpr)
 {
-    return std::string{mCommissioner->IsActive() ? "true" : "false"};
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
+    return ProcessActiveJob(commissioner, aExpr);
+}
+
+Interpreter::Value Interpreter::ProcessActiveJob(CommissionerAppPtr &aCommissioner, const Expression &)
+{
+    return std::string{aCommissioner->IsActive() ? "true" : "false"};
 }
 
 Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
@@ -656,12 +677,18 @@ exit:
     return value;
 }
 
-Interpreter::Value Interpreter::ProcessSessionId(const Expression &)
+Interpreter::Value Interpreter::ProcessSessionId(const Expression &aExpr)
+{
+    CommissionerAppPtr commissioner = mJobManager->GetSelectedCommissioner();
+    return ProcessSessionIdJob(commissioner, aExpr);
+}
+
+Interpreter::Value Interpreter::ProcessSessionIdJob(CommissionerAppPtr &aCommissioner, const Expression &)
 {
     Value    value;
     uint16_t sessionId;
 
-    SuccessOrExit(value = mCommissioner->GetSessionId(sessionId));
+    SuccessOrExit(value = aCommissioner->GetSessionId(sessionId));
     value = std::to_string(sessionId);
 
 exit:
@@ -1324,26 +1351,6 @@ Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
     }
 
 exit:
-    return value;
-}
-
-Interpreter::Value Interpreter::ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
-{
-    Value value;
-
-    (void)aCommissioner;
-    (void)aExpr;
-
-    return value;
-}
-
-Interpreter::Value Interpreter::ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
-{
-    Value value;
-
-    (void)aCommissioner;
-    (void)aExpr;
-
     return value;
 }
 
