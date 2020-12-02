@@ -58,8 +58,18 @@ public:
     void                RunJobs();
     void                CancelCommand();
     void                Wait();
+    void                CleanupJobs();
+    void                SetImportFile(const std::string &importFile);
     void                StopCommissionerPool();
     CommissionerAppPtr &GetSelectedCommissioner();
+    bool                IsClean() { return mJobPool.size() == 0 && mImportFile.size() == 0; }
+    /**
+     * Appends to aExpr an imported argument loaded from mImportFile.
+     *
+     * It is expected mImportFile contains a JSON object where the
+     * imported part is a value of a map entry under aNid key.
+     */
+    Error AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr);
 
 private:
     using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
@@ -72,7 +82,8 @@ private:
 
     JobPool            mJobPool;
     CommissionerPool   mCommissionerPool;
-    Config             mConf;
+    Config             mDefaultConf;
+    std::string        mImportFile;
     InterpreterPtr     mInterpreter         = nullptr;
     CommissionerAppPtr mDefaultCommissioner = nullptr;
 };

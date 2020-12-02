@@ -306,6 +306,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     {
         supported = IsSyntaxSupported(mImportSupported, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+        mJobManager->SetImportFile(importFiles.front());
     }
 
     if (IsMultiNetworkSyntax(aExpr))
@@ -321,9 +322,15 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
             ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
                                                   aExpr.front()));
         }
-        value = evaluator->second(this, aExpr);
+        if (importFiles.size() > 0)
+        {
+            SuccessOrExit(value = mJobManager->AppendImport(0, retExpr));
+        }
+        value = evaluator->second(this, retExpr);
     }
+    mJobManager->CleanupJobs();
 exit:
+    ASSERT(mJobManager->IsClean());
     return value;
 }
 
