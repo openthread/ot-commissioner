@@ -281,26 +281,51 @@ Interpreter::Expression Interpreter::Read()
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 {
-    Value                                            value;
-    std::map<std::string, Evaluator>::const_iterator evaluator;
+    Expression  retExpr;
+    StringArray nwkAliases;
+    StringArray domAliases;
+    StringArray exportFiles;
+    StringArray importFiles;
+    bool        supported;
+    Value       value;
 
     VerifyOrExit(!aExpr.empty(), value = ERROR_NONE);
 
+    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles));
+    // export file specification must be single or omitted
+    VerifyOrExit(exportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
+    // import file specification must be single or omitted
+    VerifyOrExit(importFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
+    // export and import must not be specified simultaneously
+    VerifyOrExit((exportFiles.size() == 0 || importFiles.size() == 0),
+                 value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
+
+    if (exportFiles.size() > 0)
+    {
+        supported = IsSyntaxSupported(mExportSupported, retExpr);
+        VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
+    }
+    else if (importFiles.size() > 0)
+    {
+        supported = IsSyntaxSupported(mImportSupported, retExpr);
+        VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+    }
+
     if (IsMultiNetworkSyntax(aExpr))
     {
-        return EvaluateMultiNetwork(aExpr);
+        value = EvaluateMultiNetwork(retExpr, nwkAliases, domAliases);
     }
-
-    // else handle single command using selected network
-    evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
-    if (evaluator == mEvaluatorMap.end())
+    else
     {
-        ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
-                                              aExpr.front()));
+        // handle single command using selected network
+        auto evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
+        if (evaluator == mEvaluatorMap.end())
+        {
+            ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
+                                                  aExpr.front()));
+        }
+        value = evaluator->second(this, aExpr);
     }
-
-    value = evaluator->second(this, aExpr);
-
 exit:
     return value;
 }
@@ -317,76 +342,54 @@ bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
     return false;
 }
 
-Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
+Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
+                                                     const StringArray &aNwkAliases,
+                                                     const StringArray &aDomAliases)
 {
-    Expression  retExpr;
-    StringArray nwkAliases;
-    StringArray domAliases;
-    StringArray exportFiles;
-    StringArray importFiles;
-    NidArray    nids;
-    bool        groupAlias = false;
-    Error       error;
+    NidArray nids;
+    bool     groupAlias = false;
+    Error    error;
+    bool     supported;
 
-    SuccessOrExit(error = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles));
     // domain must be single or omitted
-    VerifyOrExit(domAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
+    VerifyOrExit(aDomAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
     // network and domain must not be specified simultaneously
-    VerifyOrExit(nwkAliases.size() == 0 || domAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
-    // export file specification must be single or omitted
-    VerifyOrExit(exportFiles.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
-    // import file specification must be single or omitted
-    VerifyOrExit(importFiles.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
-    // export and import must not be specified simultaneously
-    VerifyOrExit((exportFiles.size() == 0 || importFiles.size() == 0),
-                 error = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
-
+    VerifyOrExit(aNwkAliases.size() == 0 || aDomAliases.size() == 0,
+                 error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
     // Verify if respective syntax supported by the current command
-    bool supported;
 
-    if (nwkAliases.size() > 0)
+    if (aNwkAliases.size() > 0)
     {
-        supported = IsSyntaxSupported(mMultiNetworkSupported, retExpr);
+        supported = IsSyntaxSupported(mMultiNetworkSupported, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
     }
-    else if (domAliases.size() > 0)
+    else if (aDomAliases.size() > 0)
     {
-        supported = IsSyntaxSupported(mMultiNetworkSupported, retExpr);
+        supported = IsSyntaxSupported(mMultiNetworkSupported, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
     }
     else
     {
-        assert(false); // must not hit this, ever
-    }
-
-    if (exportFiles.size() > 0)
-    {
-        supported = IsSyntaxSupported(mExportSupported, retExpr);
-        VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
-    }
-    else if (importFiles.size() > 0)
-    {
-        supported = IsSyntaxSupported(mImportSupported, retExpr);
-        VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+        ASSERT(false); // must not hit this, ever
     }
 
     // validate group alias usage; if used, it must be alone
-    for (auto alias : nwkAliases)
+    for (auto alias : aNwkAliases)
     {
         if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
         {
             groupAlias = true;
-            VerifyOrExit(nwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
+            VerifyOrExit(aNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
         }
     }
 
-    if (nwkAliases.size() > 0)
+    if (aNwkAliases.size() > 0)
     {
-        // resolve aliases to array of network ids
+        // TODO: resolve aliases to array of network ids
     }
-    else if (domAliases.size() == 1)
+    else if (aDomAliases.size() == 1)
     {
-        // resolve alias to array of network ids
+        // TODO: resolve alias to array of network ids
     }
     else
     {
@@ -394,9 +397,9 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression &aExpr)
     }
 
     VerifyOrExit(nids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
-    SuccessOrExit(error = mJobManager->PrepareJobs(retExpr, nids, groupAlias));
+    SuccessOrExit(error = mJobManager->PrepareJobs(aExpr, nids, groupAlias));
     mJobManager->RunJobs();
-    // post-process collected values
+    // TODO: post-process collected values
 exit:
     return error;
 }

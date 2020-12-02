@@ -113,13 +113,13 @@ private:
     Expression ParseExpression(const std::string &aLiteral);
     bool       IsSyntaxSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
-    Value      EvaluateMultiNetwork(const Expression &aExpr);
-    Error      ReParseMultiNetworkSyntax(const Expression &aExpr,
-                                         Expression &      aRretExpr,
-                                         StringArray &     aNwkAliases,
-                                         StringArray &     aDomAliases,
-                                         StringArray &     aExport,
-                                         StringArray &     aImport);
+    Value EvaluateMultiNetwork(const Expression &aExpr, const StringArray &nwkAliases, const StringArray &domAliases);
+    Error ReParseMultiNetworkSyntax(const Expression &aExpr,
+                                    Expression &      aRretExpr,
+                                    StringArray &     aNwkAliases,
+                                    StringArray &     aDomAliases,
+                                    StringArray &     aExport,
+                                    StringArray &     aImport);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);

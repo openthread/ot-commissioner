@@ -127,6 +127,12 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
     Error  error = ERROR_NONE;
 
     ASSERT(aExpr[0] == "start");
+    /*
+     * Coming here is a result of using multi-network syntax.
+     * Therefore, no extra arguments to be used, otherwise it
+     * is multi-network syntax violation.
+     */
+    ASSERT(aExpr.size() == 1);
 
     for (auto nid : aNids)
     {
@@ -152,6 +158,12 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
         }
 
         SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
+
+        // resolve nid to border_router
+
+        // augment aExpr with br_addr and br_port that are expected by Job handler
+
+        ASSERT(aExpr.size() == 3); // 'start br_addr br_port'
         SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
     }
 exit:
