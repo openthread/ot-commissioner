@@ -51,7 +51,10 @@ public:
         kWhite,
         kRed,
         kGreen,
+        kYellow,
         kBlue,
+        kMagenta,
+        kCyan,
     };
 
     Console()  = default;

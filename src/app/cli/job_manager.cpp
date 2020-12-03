@@ -98,7 +98,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
         {
             if (!aGroupAlias)
             {
-                InfoMsg(nid, "not started");
+                WarningMsg(nid, "not started");
             }
             // ignore nid
             continue;
@@ -110,7 +110,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
         {
             if (!aGroupAlias)
             {
-                InfoMsg(nid, "not started");
+                WarningMsg(nid, "not started");
             }
             // ignore nid
             continue;
@@ -196,7 +196,7 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
         {
             if (!aGroupAlias)
             {
-                InfoMsg(nid, "not known to be started");
+                WarningMsg(nid, "not known to be started");
             }
             // ignore nid
             continue;
