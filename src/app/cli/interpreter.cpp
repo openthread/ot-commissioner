@@ -296,19 +296,21 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     VerifyOrExit(exportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
     // import file specification must be single or omitted
     VerifyOrExit(importFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
-    // export and import must not be specified simultaneously
-    VerifyOrExit((exportFiles.size() == 0 || importFiles.size() == 0),
-                 value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
 
     if (exportFiles.size() > 0)
     {
         supported = IsSyntaxSupported(mExportSupported, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
+        // export and import must not be specified simultaneously
+        VerifyOrExit(importFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
     }
     else if (importFiles.size() > 0)
     {
         supported = IsSyntaxSupported(mImportSupported, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+        // export and import must not be specified simultaneously
+        VerifyOrExit(exportFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
+        // let job manager take care of import data
         mJobManager->SetImportFile(importFiles.front());
     }
 
@@ -358,49 +360,40 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
     Error    error;
     bool     supported;
 
-    // domain must be single or omitted
-    VerifyOrExit(aDomAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
-    // network and domain must not be specified simultaneously
-    VerifyOrExit(aNwkAliases.size() == 0 || aDomAliases.size() == 0,
-                 error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
-    // Verify if respective syntax supported by the current command
-
     if (aNwkAliases.size() > 0)
     {
+        // verify if respective syntax supported by the current command
         supported = IsSyntaxSupported(mMultiNetworkSupported, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
+        // network and domain must not be specified simultaneously
+        VerifyOrExit(aDomAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
+        // validate group alias usage; if used, it must be alone
+        for (auto alias : aNwkAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            {
+                groupAlias = true;
+                VerifyOrExit(aNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
+            }
+        }
+        // TODO: resolve aliases to array of network ids
     }
     else if (aDomAliases.size() > 0)
     {
+        // verify if respective syntax supported by the current command
         supported = IsSyntaxSupported(mMultiNetworkSupported, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
-    }
-    else
-    {
-        ASSERT(false); // must not hit this, ever
-    }
-
-    // validate group alias usage; if used, it must be alone
-    for (auto alias : aNwkAliases)
-    {
-        if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
-        {
-            groupAlias = true;
-            VerifyOrExit(aNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
-        }
-    }
-
-    if (aNwkAliases.size() > 0)
-    {
-        // TODO: resolve aliases to array of network ids
-    }
-    else if (aDomAliases.size() == 1)
-    {
+        // network and domain must not be specified simultaneously
+        VerifyOrExit(aNwkAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
+        // domain must be single
+        VerifyOrExit(aDomAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
         // TODO: resolve alias to array of network ids
     }
     else
     {
-        ASSERT(false); // something went wrong
+        // as we came here to evaluate multi-network command, either
+        // network or domain list must have entries
+        ASSERT(false); // must not hit this, ever
     }
 
     VerifyOrExit(nids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
