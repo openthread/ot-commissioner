@@ -33,11 +33,14 @@
 
 #include "app/cli/interpreter.hpp"
 
+#include <algorithm>
 #include <string.h>
 
 #include "app/cli/job_manager.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
+#include "app/ps/registry.hpp"
+#include "app/ps/utils.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -63,6 +66,10 @@
 
 #define RUNTIME_EMPTY_NIDS "specified alias(es) resolved to empty list of networks"
 #define RUNTIME_AMBIGUOUS "network alias {} is ambiguous"
+
+#define NOT_FOUND_STR "Failed to find registry entity of type: "
+#define DOMAIN_STR "domain"
+#define NETWORK_STR "network"
 
 namespace ot {
 
@@ -99,7 +106,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "token print\n"
               "token set <signed-token-hex-string-file>"},
     {"network", "network save <network-data-file>\n"
-                "network sync"},
+                "network sync\n"
+                "network list [--nwk <network-alias-list> | --dom <domain-name>]"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator"},
@@ -154,6 +162,18 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
 };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSupported =
+    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"start"},
+                                               Interpreter::StringArray{"stop"},
+                                               Interpreter::StringArray{"active"},
+                                               Interpreter::StringArray{"sessionid"},
+                                               Interpreter::StringArray{"bbrdataset", "get"},
+                                               Interpreter::StringArray{"commdataset", "get"},
+                                               Interpreter::StringArray{"opdataset", "get", "active"},
+                                               Interpreter::StringArray{"opdataset", "get", "pending"},
+                                               Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+                                               Interpreter::StringArray{"network"}};
+
+const std::vector<Interpreter::StringArray> &Interpreter::mMultiThreadSupported =
     *new std::vector<Interpreter::StringArray>{
         Interpreter::StringArray{"start"},
         Interpreter::StringArray{"stop"},
@@ -312,7 +332,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         mJobManager->SetImportFile(importFiles.front());
     }
 
-    if (IsMultiNetworkSyntax(aExpr))
+    if (IsMultiNetworkSyntax(aExpr) && IsMultiThreadProcessing(aExpr))
     {
         value = EvaluateMultiNetwork(retExpr, nwkAliases, domAliases);
     }
@@ -347,6 +367,11 @@ bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
         }
     }
     return false;
+}
+
+bool Interpreter::IsMultiThreadProcessing(const Expression &aExpr)
+{
+    return IsSyntaxSupported(mMultiThreadSupported, aExpr);
 }
 
 Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
@@ -736,6 +761,10 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     {
         SuccessOrExit(value = commissioner->SyncNetworkData());
     }
+    else if (CaseInsensitiveEqual(aExpr[1], "list"))
+    {
+        SuccessOrExit(value = ProcessNetworkList(aExpr));
+    }
     else
     {
         ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
@@ -763,6 +792,92 @@ Interpreter::Value Interpreter::ProcessSessionIdJob(CommissionerAppPtr &aCommiss
 
     SuccessOrExit(value = aCommissioner->GetSessionId(sessionId));
     value = std::to_string(sessionId);
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
+{
+    using namespace ot::commissioner::persistent_storage;
+
+    Interpreter::Value   value;
+    Expression           retExpr;
+    StringArray          nwkAliases;
+    StringArray          domAliases;
+    StringArray          exportFiles; // Formal for the only call
+    StringArray          importFiles; // Formal for the only call
+    network              nwk{};
+    std::vector<network> networks;
+    ::nlohmann::json     json;
+
+    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles));
+    // export file specification must be single or omitted
+    VerifyOrExit(exportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
+    // import file specification must be single or omitted
+    VerifyOrExit(importFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
+    // network and domain must not be specified simultaneously
+    VerifyOrExit(nwkAliases.size() == 0 || domAliases.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
+
+    if (domAliases.size() > 0)
+    {
+        std::vector<domain> domains;
+        domain              dom{EMPTY_ID, domAliases[0], {}};
+        VerifyOrExit(gRegistry.lookup(dom, domains) == REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
+        // TODO [MP] Should possibly use some other error code. Introduce ERROR_TOO_MANY()?
+        VerifyOrExit(domains.size() < 2, value = ERROR_BAD_FORMAT("Too many entries of type 'domain'"));
+        nwk.dom_id.id = dom.id.id;
+    }
+
+    if (nwkAliases.size() == 0)
+    {
+        VerifyOrExit(gRegistry.lookup(nwk, networks) == REG_SUCCESS,
+                     value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+    }
+    else
+    {
+        // Quickly check group aliases
+        for (auto alias : nwkAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+                VerifyOrExit(nwkAliases.size() == 1, value = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
+        }
+
+        // Lookup by network aliases list and put results into networks vector
+        for (auto alias : nwkAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            {
+                VerifyOrExit(gRegistry.lookup(network{}, networks) == registry_status::REG_SUCCESS,
+                             value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+                if (alias == ALIAS_OTHERS)
+                {
+                    // TODO [MP] Remove current network from networks
+                }
+            }
+            else if (alias == ALIAS_THIS)
+            {
+                // TODO [MP] Get selected nwk xpan (no selected is an error)
+                // TODO [MP] Lookup nwk by xpan
+                // TODO [MP] Put nwk into networks
+            }
+            else
+            {
+                network pred{};
+                pred.name = pred.xpan = pred.pan = alias;
+                VerifyOrExit(gRegistry.lookup_any(network{}, networks) == registry_status::REG_SUCCESS,
+                             value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+            }
+        }
+
+        // Make results unique
+        std::sort(networks.begin(), networks.end(), [](network const &a, network const &b) { return a.name < b.name; });
+        std::unique(networks.begin(), networks.end(),
+                    [](network const &a, network const &b) { return str_cmp_icase(a.name, b.name); });
+    }
+
+    json  = networks;
+    value = json.dump(/* indent */ 4);
 
 exit:
     return value;

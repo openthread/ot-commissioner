@@ -112,7 +112,7 @@ public:
      * Looks for a matching values in store
      *
      * Only non-empty val's fields are compared and combined with AND.
-     * Provide nullptr to get all the values.
+     * Provide empty to get all the values.
      * Resulting vector is not cleared. Results are appended to the end.
      *
      * @param[in] val value's fields to compare with.
@@ -121,10 +121,28 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    virtual ps_status lookup(registrar const *val, std::vector<registrar> &ret)         = 0;
-    virtual ps_status lookup(domain const *val, std::vector<domain> &ret)               = 0;
-    virtual ps_status lookup(network const *val, std::vector<network> &ret)             = 0;
-    virtual ps_status lookup(border_router const *val, std::vector<border_router> &ret) = 0;
+    virtual ps_status lookup(registrar const &val, std::vector<registrar> &ret)         = 0;
+    virtual ps_status lookup(domain const &val, std::vector<domain> &ret)               = 0;
+    virtual ps_status lookup(network const &val, std::vector<network> &ret)             = 0;
+    virtual ps_status lookup(border_router const &val, std::vector<border_router> &ret) = 0;
+
+    /**
+     * Looks for a matching values in store
+     *
+     * Only non-empty val's fields are compared and combined with OR.
+     * Provide empty entity to get all the values.
+     * Resulting vector is not cleared. Results are appended to the end.
+     *
+     * @param[in] val value's fields to compare with.
+     * @param[out] ret values matched val condition.
+     * @return ps_status
+     * @see ps_status
+     * @see registry_entries.hpp
+     */
+    virtual ps_status lookup_any(registrar const &val, std::vector<registrar> &ret)         = 0;
+    virtual ps_status lookup_any(domain const &val, std::vector<domain> &ret)               = 0;
+    virtual ps_status lookup_any(network const &val, std::vector<network> &ret)             = 0;
+    virtual ps_status lookup_any(border_router const &val, std::vector<border_router> &ret) = 0;
 };
 
 } // namespace persistent_storage

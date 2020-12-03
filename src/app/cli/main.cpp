@@ -38,6 +38,8 @@
 #include "app/cli/interpreter.hpp"
 #include "common/utils.hpp"
 
+#include "app/ps/registry.hpp"
+
 #ifndef OT_COMM_VERSION
 #error "OT_COMM_VERSION not defined"
 #endif
@@ -79,6 +81,9 @@ static void PrintVersion()
 
 static Interpreter gInterpreter;
 static sigset_t    gSignalSet;
+
+// TODO wire up registry through the command line parameters
+::ot::commissioner::persistent_storage::registry gRegistry("./registry.json");
 
 static void HandleSignalInterrupt()
 {

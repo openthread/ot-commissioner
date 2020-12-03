@@ -9,7 +9,7 @@
 
 #include <unistd.h>
 
-#include <border_agent.hpp>
+#include "app/border_agent.hpp"
 
 using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner;
@@ -543,22 +543,14 @@ TEST_CASE("Lookup registrar", "[ps_json]")
     // Test actions
     std::vector<registrar> ret_lookup;
 
-    REQUIRE(psj.lookup(nullptr, ret_lookup) == ps_status::PS_SUCCESS);
-    REQUIRE(ret_lookup.size() == 3);
-    REQUIRE(ret_lookup[0].id.id == 0);
-    REQUIRE(ret_lookup[1].id.id == 1);
-    REQUIRE(ret_lookup[2].id.id == 2);
-
-    ret_lookup.clear();
-
     registrar search_req{EMPTY_ID, "", 0, {}};
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_NOT_FOUND);
-    REQUIRE(ret_lookup.size() == 0);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(ret_lookup.size() == 3);
 
     ret_lookup.clear();
 
     search_req.id.id = 0;
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
     REQUIRE(ret_lookup[0].id.id == 0);
 
@@ -566,14 +558,14 @@ TEST_CASE("Lookup registrar", "[ps_json]")
 
     search_req.id.id = 0;
     search_req.addr  = "0.0.0.2";
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_NOT_FOUND);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_NOT_FOUND);
     REQUIRE(ret_lookup.size() == 0);
 
     ret_lookup.clear();
 
     search_req.id.id = 0;
     search_req.addr  = "0.0.0.1";
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
     REQUIRE(ret_lookup[0].id.id == 0);
 
@@ -582,7 +574,7 @@ TEST_CASE("Lookup registrar", "[ps_json]")
     search_req.id.id = 0;
     search_req.addr  = "0.0.0.1";
     search_req.port  = 1;
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
     REQUIRE(ret_lookup[0].id.id == 0);
 
@@ -592,7 +584,7 @@ TEST_CASE("Lookup registrar", "[ps_json]")
     search_req.addr    = "0.0.0.1";
     search_req.port    = 1;
     search_req.domains = {"dom1"};
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
     REQUIRE(ret_lookup[0].id.id == 0);
 
@@ -600,7 +592,7 @@ TEST_CASE("Lookup registrar", "[ps_json]")
 
     search_req      = {};
     search_req.port = 1;
-    REQUIRE(psj.lookup(&search_req, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(search_req, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 2);
     REQUIRE(ret_lookup[0].id.id == 0);
     REQUIRE(ret_lookup[1].id.id == 1);
@@ -632,7 +624,7 @@ TEST_CASE("Lookup network", "[ps_json]")
     // The test
     std::vector<network> ret_lookup;
 
-    REQUIRE(psj.lookup(nullptr, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(network{}, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 3);
 
     ret_lookup.clear();
@@ -640,7 +632,7 @@ TEST_CASE("Lookup network", "[ps_json]")
     network net;
     net.name = "nwk1";
     net.ccm  = true;
-    REQUIRE(psj.lookup(&net, ret_lookup) == ps_status::PS_SUCCESS);
+    REQUIRE(psj.lookup(net, ret_lookup) == ps_status::PS_SUCCESS);
     REQUIRE(ret_lookup.size() == 1);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);

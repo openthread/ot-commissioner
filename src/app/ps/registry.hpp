@@ -13,7 +13,7 @@
 #include <map>
 #include <vector>
 
-#include "border_agent.hpp"
+#include "app/border_agent.hpp"
 
 namespace ot {
 
@@ -146,7 +146,7 @@ public:
      * Looks for a matching values in registry
      *
      * Only non-empty val's fields are compared and combined with AND.
-     * Provide nullptr to get all the values.
+     * Provide empty entity to get all the values.
      * Resulting vector is not cleared. Results are appended to the end.
      *
      * @param[in] val value's fields to compare with.
@@ -155,10 +155,28 @@ public:
      * @see registry_status
      * @see registry_entries.hpp
      */
-    registry_status lookup(registrar const *val, std::vector<registrar> &ret);
-    registry_status lookup(domain const *val, std::vector<domain> &ret);
-    registry_status lookup(network const *val, std::vector<network> &ret);
-    registry_status lookup(border_router const *val, std::vector<border_router> &ret);
+    registry_status lookup(registrar const &val, std::vector<registrar> &ret);
+    registry_status lookup(domain const &val, std::vector<domain> &ret);
+    registry_status lookup(network const &val, std::vector<network> &ret);
+    registry_status lookup(border_router const &val, std::vector<border_router> &ret);
+
+    /**
+     * Looks for a matching values in registry
+     *
+     * Only non-empty val's fields are compared and combined with OR.
+     * Provide empty entity to get all the values.
+     * Resulting vector is not cleared. Results are appended to the end.
+     *
+     * @param[in] val value's fields to compare with.
+     * @param[out] ret values matched val condition.
+     * @return registry_status
+     * @see registry_status
+     * @see registry_entries.hpp
+     */
+    registry_status lookup_any(registrar const &val, std::vector<registrar> &ret);
+    registry_status lookup_any(domain const &val, std::vector<domain> &ret);
+    registry_status lookup_any(network const &val, std::vector<network> &ret);
+    registry_status lookup_any(border_router const &val, std::vector<border_router> &ret);
 
 private:
     bool                manage_storage = false;   /**< flag that storage was create outside*/
@@ -171,4 +189,5 @@ private:
 
 } // namespace ot
 
+extern ot::commissioner::persistent_storage::registry gRegistry;
 #endif // _REGISTRY_HPP_
