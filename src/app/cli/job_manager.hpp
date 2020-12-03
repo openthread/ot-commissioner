@@ -85,6 +85,15 @@ private:
     Error PrepareDtlsConfig(const uint64_t aNid, Config &aConfig);
     Error CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr);
 
+    void ErrorMsg(uint64_t aNid, std::string aMessage)
+    {
+        mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
+    }
+    void InfoMsg(uint64_t aNid, std::string aMessage)
+    {
+        mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
+    }
+
     JobPool            mJobPool;
     CommissionerPool   mCommissionerPool;
     Config             mDefaultConf;

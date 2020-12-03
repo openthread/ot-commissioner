@@ -522,6 +522,15 @@ void Interpreter::Print(const Value &aValue)
     mConsole.Write(output, color);
 }
 
+void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
+{
+    std::string nidHex = utils::Hex(utils::Encode(aNid));
+
+    mConsole.Write(nidHex.append(": "));
+    mConsole.Write(aMessage, aColor);
+    mConsole.Write("\n");
+}
+
 std::string Interpreter::Value::ToString() const
 {
     return HasNoError() ? mData : mError.ToString();
