@@ -98,7 +98,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
         {
             if (!aGroupAlias)
             {
-                // report 'not started' for nid
+                InfoMsg(nid, "not started");
             }
             // ignore nid
             continue;
@@ -110,7 +110,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
         {
             if (!aGroupAlias)
             {
-                // report 'not started' for nid
+                InfoMsg(nid, "not started");
             }
             // ignore nid
             continue;
@@ -123,8 +123,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             Error importError = AppendImport(nid, jobExpr);
             if (importError != ERROR_NONE)
             {
-                // report 'not found import entry' for nid
-                // and ignore the network
+                ErrorMsg(nid, "import entry not found");
                 continue;
             }
         }
@@ -165,7 +164,7 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
         {
             if (!aGroupAlias)
             {
-                // report 'already started' for nid
+                InfoMsg(nid, "already started");
             }
             // ignore nid
             continue;
@@ -197,7 +196,7 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
         {
             if (!aGroupAlias)
             {
-                // report failure for nid
+                InfoMsg(nid, "not known to be started");
             }
             // ignore nid
             continue;
@@ -209,7 +208,7 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
         {
             if (!aGroupAlias)
             {
-                // report 'already stopped' for nid
+                InfoMsg(nid, "already stopped");
             }
             // ignore nid
             continue;

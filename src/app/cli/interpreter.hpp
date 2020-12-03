@@ -110,6 +110,7 @@ private:
 
     void Print(const Value &aValue);
 
+    void       PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor);
     Expression ParseExpression(const std::string &aLiteral);
     bool       IsSyntaxSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
