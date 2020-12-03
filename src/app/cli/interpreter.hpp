@@ -114,6 +114,7 @@ private:
     Expression ParseExpression(const std::string &aLiteral);
     bool       IsSyntaxSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
+    bool       IsMultiThreadProcessing(const Expression &aExpr);
     Value EvaluateMultiNetwork(const Expression &aExpr, const StringArray &nwkAliases, const StringArray &domAliases);
     Error ReParseMultiNetworkSyntax(const Expression &aExpr,
                                     Expression &      aRretExpr,
@@ -128,6 +129,7 @@ private:
     Value ProcessActive(const Expression &aExpr);
     Value ProcessToken(const Expression &aExpr);
     Value ProcessNetwork(const Expression &aExpr);
+    Value ProcessNetworkList(const Expression &aExpr);
     Value ProcessSessionId(const Expression &aExpr);
     Value ProcessBorderAgent(const Expression &aExpr);
     Value ProcessJoiner(const Expression &aExpr);
@@ -178,6 +180,7 @@ private:
     static const std::map<std::string, std::string> & mUsageMap;
     static const std::map<std::string, Evaluator> &   mEvaluatorMap;
     static const std::vector<StringArray> &           mMultiNetworkSupported;
+    static const std::vector<StringArray> &           mMultiThreadSupported;
     static const std::vector<StringArray> &           mExportSupported;
     static const std::vector<StringArray> &           mImportSupported;
     static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;

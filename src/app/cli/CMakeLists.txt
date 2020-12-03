@@ -43,11 +43,14 @@ add_executable(commissioner-cli
 target_include_directories(commissioner-cli
     PRIVATE
         ${PROJECT_SOURCE_DIR}/src
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
 )
 
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app
+		persistent-storage
+        ncurses
         pthread
         readline
 )

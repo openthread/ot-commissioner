@@ -26,7 +26,7 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(persistent-storage OBJECT
+add_library(persistent-storage
     persistent_storage.hpp
     persistent_storage_json.hpp
     persistent_storage_json.cpp
@@ -52,7 +52,6 @@ target_include_directories(persistent-storage
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
   PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/src/app
     ${PROJECT_SOURCE_DIR}/src
 )
 
@@ -72,7 +71,7 @@ if (OT_COMM_TEST)
     target_include_directories(commissioner-ps-test
         PRIVATE
 	    ${PROJECT_SOURCE_DIR}/include
-	    ${PROJECT_SOURCE_DIR}/src/app
+	    ${PROJECT_SOURCE_DIR}/src
 	    ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
 	    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )

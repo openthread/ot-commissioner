@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "border_agent.hpp"
+#include "app/border_agent.hpp"
 
 namespace ot {
 

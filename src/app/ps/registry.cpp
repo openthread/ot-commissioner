@@ -82,32 +82,60 @@ registry_status registry::close()
     return success_status(storage->close());
 }
 
-registry_status registry::lookup(registrar const *val, std::vector<registrar> &ret)
+registry_status registry::lookup(registrar const &val, std::vector<registrar> &ret)
 {
     assert(storage != nullptr);
 
     return map_status(storage->lookup(val, ret));
 }
 
-registry_status registry::lookup(domain const *val, std::vector<domain> &ret)
+registry_status registry::lookup(domain const &val, std::vector<domain> &ret)
 {
     assert(storage != nullptr);
 
     return map_status(storage->lookup(val, ret));
 }
 
-registry_status registry::lookup(network const *val, std::vector<network> &ret)
+registry_status registry::lookup(network const &val, std::vector<network> &ret)
 {
     assert(storage != nullptr);
 
     return map_status(storage->lookup(val, ret));
 }
 
-registry_status registry::lookup(border_router const *val, std::vector<border_router> &ret)
+registry_status registry::lookup(border_router const &val, std::vector<border_router> &ret)
 {
     assert(storage != nullptr);
 
     return map_status(storage->lookup(val, ret));
+}
+
+registry_status registry::lookup_any(registrar const &val, std::vector<registrar> &ret)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->lookup_any(val, ret));
+}
+
+registry_status registry::lookup_any(domain const &val, std::vector<domain> &ret)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->lookup_any(val, ret));
+}
+
+registry_status registry::lookup_any(network const &val, std::vector<network> &ret)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->lookup_any(val, ret));
+}
+
+registry_status registry::lookup_any(border_router const &val, std::vector<border_router> &ret)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->lookup_any(val, ret));
 }
 
 registry_status registry::get(registrar_id const &id, registrar &ret_val)
@@ -177,7 +205,7 @@ registry_status registry::add(BorderAgent const &val)
         dom.name = val.mDomainName;
         std::vector<domain> domains;
         // TODO refine why lookup() functions are with the pointer?
-        status = lookup(&dom, domains);
+        status = lookup(dom, domains);
         if (status == REG_ERROR || domains.size() > 1)
         {
             return REG_ERROR;
@@ -223,7 +251,7 @@ registry_status registry::add(BorderAgent const &val)
 
             std::vector<network> nwks;
             // TODO replace lookup with lookup_any()?
-            status = lookup(&nwk, nwks);
+            status = lookup(nwk, nwks);
             if (status == REG_ERROR || nwks.size() > 1)
             {
                 throw status;
@@ -276,7 +304,7 @@ registry_status registry::add(BorderAgent const &val)
             lookup_br.agent.mPort         = val.mPort;
             lookup_br.agent.mPresentFlags = BorderAgent::kAddrBit | BorderAgent::kPortBit;
             std::vector<border_router> routers;
-            status = lookup(&lookup_br, routers);
+            status = lookup(lookup_br, routers);
             if (status == REG_SUCCESS && routers.size() == 1)
             {
                 br.id.id = routers[0].id.id;

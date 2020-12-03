@@ -38,6 +38,8 @@
 #include "app/cli/interpreter.hpp"
 #include "common/utils.hpp"
 
+#include "app/ps/registry.hpp"
+
 using namespace ot::commissioner;
 
 /**
@@ -75,6 +77,9 @@ static void PrintVersion()
 
 static Interpreter gInterpreter;
 static sigset_t    gSignalSet;
+
+// TODO wire up registry through the command line parameters
+::ot::commissioner::persistent_storage::registry gRegistry("./registry.json");
 
 static void HandleSignalInterrupt()
 {
