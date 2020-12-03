@@ -311,9 +311,10 @@ void JobManager::StopCommissionerPool()
         mDefaultCommissioner->Stop();
 }
 
-CommissionerAppPtr &JobManager::GetSelectedCommissioner()
+Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
 {
-    uint64_t nid = 0;
+    Error    error = ERROR_NONE;
+    uint64_t nid   = 0;
 
     // TODO: get selected nid from PS
 
@@ -322,15 +323,25 @@ CommissionerAppPtr &JobManager::GetSelectedCommissioner()
         auto entry = mCommissionerPool.find(nid);
         if (entry != mCommissionerPool.end())
         {
-            return entry->second;
+            aCommissioner = entry->second;
         }
         else
         {
-            // TODO: report 'not started' nid
+            Config             conf         = mDefaultConf;
+            CommissionerAppPtr commissioner = nullptr;
+
+            SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
+            SuccessOrExit(error = CommissionerApp::Create(commissioner, conf));
+            mCommissionerPool[nid] = commissioner;
+            aCommissioner          = mCommissionerPool[nid];
         }
     }
-    // else
-    return mDefaultCommissioner;
+    else
+    {
+        aCommissioner = mDefaultCommissioner;
+    }
+exit:
+    return error;
 }
 
 } // namespace commissioner

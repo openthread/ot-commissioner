@@ -53,16 +53,26 @@ public:
     JobManager()  = default;
     ~JobManager() = default;
 
-    Error               Init(const Config &aConf, Interpreter &aInterpreter);
-    Error               PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
-    void                RunJobs();
-    void                CancelCommand();
-    void                Wait();
-    void                CleanupJobs();
-    void                SetImportFile(const std::string &importFile);
-    void                StopCommissionerPool();
-    CommissionerAppPtr &GetSelectedCommissioner();
-    bool                IsClean() { return mJobPool.size() == 0 && mImportFile.size() == 0; }
+    Error Init(const Config &aConf, Interpreter &aInterpreter);
+    Error PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
+    void  RunJobs();
+    void  CancelCommand();
+    void  Wait();
+    void  CleanupJobs();
+    void  SetImportFile(const std::string &importFile);
+    void  StopCommissionerPool();
+    /**
+     * Returns a commissioner instance for the currently selected
+     * network.
+     *
+     * - if instance not found, it is created and added to the pool
+     * - if no network selected, default commissioner is returned
+     */
+    Error GetSelectedCommissioner(CommissionerAppPtr &aCommissioner);
+    /**
+     * Asserts if the execution context is blank and ready for the next run.
+     */
+    bool IsClean() { return mJobPool.size() == 0 && mImportFile.size() == 0; }
     /**
      * Apply new PSKc bytes and re-create @ref
      * JobManager::mDefaultCommissioner instance
