@@ -89,6 +89,10 @@ private:
     {
         mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
     }
+    void WarningMsg(uint64_t aNid, std::string aMessage)
+    {
+        mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
+    }
     void InfoMsg(uint64_t aNid, std::string aMessage)
     {
         mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
