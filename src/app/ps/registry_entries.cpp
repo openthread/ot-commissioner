@@ -4,7 +4,11 @@
 
 using nlohmann::json;
 
-namespace ot::commissioner::persistent_storage {
+namespace ot {
+
+namespace commissioner {
+
+namespace persistent_storage {
 
 void to_json(json &j, const registrar_id &opt)
 {
@@ -204,9 +208,11 @@ void from_json(const json &j, border_router &p)
     }
     if (j.contains(JSON_VENDOR_OUI))
     {
+        Error       error;
         std::string value;
         j.at(JSON_VENDOR_OUI).get_to(value);
-        ::ot::commissioner::utils::Hex(p.agent.mVendorOui, value);
+        error = ot::commissioner::utils::Hex(p.agent.mVendorOui, value);
+        ASSERT(error.GetCode() == ErrorCode::kNone);
         p.agent.mPresentFlags |= BorderAgent::kVendorOuiBit;
     }
     if (j.contains(JSON_BBR_SEQ_NUMBER))
@@ -221,4 +227,8 @@ void from_json(const json &j, border_router &p)
     }
 }
 
-} // namespace ot::commissioner::persistent_storage
+} // namespace persistent_storage
+
+} // namespace commissioner
+
+} // namespace ot

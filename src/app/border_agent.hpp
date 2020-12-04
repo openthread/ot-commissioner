@@ -85,11 +85,12 @@ struct BorderAgent
         uint32_t mBbrIsActive : 1;
         uint32_t mBbrIsPrimary : 1;
 
-        uint32_t kConnectionModeMask = 7 << 6;
-        uint32_t kThreadIfStatus     = 3 << 4;
-        uint32_t kAvailability       = 3 << 2;
-        uint32_t kBbrIsActive        = 1 << 1;
-        uint32_t kBbrIsPrimary       = 1;
+        static constexpr uint32_t kConnectionModeMask = 7 << 6;
+        static constexpr uint32_t kThreadIfStatus     = 3 << 4;
+        static constexpr uint32_t kAvailability       = 3 << 2;
+        static constexpr uint32_t kBbrIsActive        = 1 << 1;
+        static constexpr uint32_t kBbrIsPrimary       = 1;
+
         State(uint32_t aConnectionMode,
               uint32_t aThreadIfStatus,
               uint32_t aAvailability,

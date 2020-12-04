@@ -16,9 +16,9 @@
 #include <type_traits>
 
 #include <commissioner/network_data.hpp>
-//#include "tg_commissioning.h"
 
 namespace ot {
+
 namespace commissioner {
 
 /**
@@ -27,19 +27,19 @@ namespace commissioner {
  */
 enum registry_error_t
 {
-    TG_RET_SUCCESS,               /**< operation succeeded */
-    TG_RET_FAILURE,               /**< generic failure */
-    TG_RET_ERROR_BAD_PARAMETER,   /**< unacceptable parameter value */
-    TG_RET_ERROR_INCOMPLETE_DATA, /**< insufficient data for call */
-    TG_RET_ERROR_COAP,            /**< libcoap error */
-    TG_RET_ERROR_NETWORK,         /**< Network stack error */
-    TG_RET_ERROR_SM_NOT_FOUND,    /**< Security Materials not found */
-    TG_RET_ERROR_NO_MEM,          /**< memory allocation error */
-    TG_RET_ERROR_ALREADY_EXISTS,  /**< instance already exists */
-    TG_RET_ERROR_NOT_FOUND,       /**< instance not found */
-    TG_RET_ERROR_ALREADY_ACTIVE,  /**< Already has ACTIVE status */
-    TG_RET_ERROR_TIMEOUT,         /**< Timeout expired */
-    TG_RET_ERROR_NOT_SUPPORTED,   /**< Feature not supported or implemented */
+    RE_SUCCESS,               /**< operation succeeded */
+    RE_FAILURE,               /**< generic failure */
+    RE_ERROR_BAD_PARAMETER,   /**< unacceptable parameter value */
+    RE_ERROR_INCOMPLETE_DATA, /**< insufficient data for call */
+    RE_ERROR_COAP,            /**< libcoap error */
+    RE_ERROR_NETWORK,         /**< Network stack error */
+    RE_ERROR_SM_NOT_FOUND,    /**< Security Materials not found */
+    RE_ERROR_NO_MEM,          /**< memory allocation error */
+    RE_ERROR_ALREADY_EXISTS,  /**< instance already exists */
+    RE_ERROR_NOT_FOUND,       /**< instance not found */
+    RE_ERROR_ALREADY_ACTIVE,  /**< Already has ACTIVE status */
+    RE_ERROR_TIMEOUT,         /**< Timeout expired */
+    RE_ERROR_NOT_SUPPORTED,   /**< Feature not supported or implemented */
 };
 
 /**
@@ -148,7 +148,9 @@ std::uint32_t sec_to_msec(std::uint32_t sec);
  * @return sec * 1000
  */
 std::string ret_describe(std::uint32_t ret_code);
+
 } // namespace commissioner
+
 } // namespace ot
 
 /**

@@ -3,7 +3,10 @@
 #include <errno.h>
 #include <fcntl.h>
 
-namespace tg_os {
+namespace ot {
+
+namespace os {
+
 namespace sem {
 
 #if defined(_WIN32) || defined(WIN32)
@@ -90,4 +93,7 @@ sem_status semaphore_wait(semaphore &sem)
 #endif
 
 } // namespace sem
-} // namespace tg_os
+
+} // namespace os
+
+} // namespace ot

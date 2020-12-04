@@ -12,7 +12,10 @@
 #include <semaphore.h>
 #include <sys/stat.h>
 
-namespace tg_os {
+namespace ot {
+
+namespace os {
+
 namespace sem {
 
 /**
@@ -22,8 +25,12 @@ struct semaphore
 {
     sem_t *platform; /**< posix semaphore type */
 };
+
 } // namespace sem
-} // namespace tg_os
+
+} // namespace os
+
+} // namespace ot
 
 #endif
 
