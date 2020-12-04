@@ -12,7 +12,11 @@
 #include <string>
 #include <vector>
 
-namespace ot::commissioner::persistent_storage {
+namespace ot {
+
+namespace commissioner {
+
+namespace persistent_storage {
 
 /**
  * Persistent storage opraton status
@@ -123,6 +127,10 @@ public:
     virtual ps_status lookup(border_router const *val, std::vector<border_router> &ret) = 0;
 };
 
-} // namespace ot::commissioner::persistent_storage
+} // namespace persistent_storage
+
+} // namespace commissioner
+
+} // namespace ot
 
 #endif // _PERSISTENT_STORAGE_HPP_

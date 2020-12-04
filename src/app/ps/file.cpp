@@ -15,7 +15,10 @@
 
 #include <errno.h>
 
-namespace tg_os {
+namespace ot {
+
+namespace os {
+
 namespace file {
 
 file_status file_read(std::string const &name, std::string &data)
@@ -104,4 +107,7 @@ file_status file_write(std::string const &name, std::string const &data)
 }
 
 } // namespace file
-} // namespace tg_os
+
+} // namespace os
+
+} // namespace ot

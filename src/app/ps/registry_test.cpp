@@ -33,6 +33,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
     {
         BorderAgent ba{"1.1.1.1",
                        1,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "net1",
@@ -62,6 +63,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
     {
         BorderAgent ba{"1.1.1.2",
                        2,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "net2",
@@ -95,6 +97,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "",
@@ -127,6 +130,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "net1",
@@ -156,6 +160,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "net3",
@@ -182,6 +187,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "net3",
@@ -211,6 +217,7 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
+                       ByteArray{},
                        "",
                        BorderAgent::State{0},
                        "net3",

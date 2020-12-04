@@ -15,7 +15,11 @@
 #include <algorithm>
 #include <functional>
 
-namespace ot::commissioner::persistent_storage {
+namespace ot {
+
+namespace commissioner {
+
+namespace persistent_storage {
 
 /**
  * Implements persistent_storage interface based on single json file
@@ -132,9 +136,9 @@ public:
     ps_status lookup(border_router const *val, std::vector<border_router> &ret);
 
 private:
-    std::string           file_name;    /**< name of the file */
-    nlohmann::json        cache;        /**< internal chache */
-    tg_os::sem::semaphore storage_lock; /**< lock to sync file access */
+    std::string            file_name;    /**< name of the file */
+    nlohmann::json         cache;        /**< internal chache */
+    ot::os::sem::semaphore storage_lock; /**< lock to sync file access */
 
     /**
      * Reads data from file to cache
@@ -245,6 +249,10 @@ private:
     }
 };
 
-} // namespace ot::commissioner::persistent_storage
+} // namespace persistent_storage
+
+} // namespace commissioner
+
+} // namespace ot
 
 #endif // _PERSISTENT_STORAGE_JSON_HPP_

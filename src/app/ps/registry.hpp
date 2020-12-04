@@ -15,18 +15,25 @@
 
 #include "border_agent.hpp"
 
-namespace ot::commissioner::persistent_storage {
+namespace ot {
+
+namespace commissioner {
+
+namespace persistent_storage {
 
 /**
  * Registry operation status
  */
 enum registry_status
 {
-    REG_SUCCESS,      /**< operation succeeded */
-    REG_NOT_FOUND,    /**< requested data not found */
-    REG_DATA_INVALID, /**< param combination invalid or new data conflicts
-                       *   with registry content */
-    REG_ERROR         /**< operation failed */
+    REG_SUCCESS,   /**< operation succeeded */
+    REG_NOT_FOUND, /**< requested data not found */
+    /**
+     * param combination invalid or new data conflicts with registry
+     * content
+     */
+    REG_DATA_INVALID,
+    REG_ERROR /**< operation failed */
 };
 
 /**
@@ -158,6 +165,10 @@ private:
     persistent_storage *storage        = nullptr; /**< persistent storage */
 };
 
-} // namespace ot::commissioner::persistent_storage
+} // namespace persistent_storage
+
+} // namespace commissioner
+
+} // namespace ot
 
 #endif // _REGISTRY_HPP_

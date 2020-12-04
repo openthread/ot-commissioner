@@ -15,7 +15,10 @@
 #include "semaphore_posix.hpp"
 #endif
 
-namespace tg_os {
+namespace ot {
+
+namespace os {
+
 namespace sem {
 
 /**
@@ -71,7 +74,11 @@ sem_status semaphore_post(semaphore &sem);
  * @see sem_status
  */
 sem_status semaphore_wait(semaphore &sem);
+
 } // namespace sem
-} // namespace tg_os
+
+} // namespace os
+
+} // namespace ot
 
 #endif // _OS_SEMAPHORE_HPP_

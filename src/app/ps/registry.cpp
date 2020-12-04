@@ -4,7 +4,11 @@
 #include <cassert>
 #include <sstream>
 
-namespace ot::commissioner::persistent_storage {
+namespace ot {
+
+namespace commissioner {
+
+namespace persistent_storage {
 
 namespace {
 registry_status success_status(ps_status ps_st)
@@ -362,4 +366,8 @@ registry_status registry::update(border_router const &val)
     return map_status(storage->update(val));
 }
 
-} // namespace ot::commissioner::persistent_storage
+} // namespace persistent_storage
+
+} // namespace commissioner
+
+} // namespace ot

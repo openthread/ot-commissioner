@@ -3,6 +3,7 @@
 #include <cstring>
 
 namespace ot {
+
 namespace commissioner {
 
 namespace {
@@ -134,40 +135,40 @@ std::string ret_describe(registry_error_t ret_code)
 
     switch (ret_code)
     {
-    case TG_RET_SUCCESS:
+    case RE_SUCCESS:
         ret_dscr = "Operation succeeded";
         break;
-    case TG_RET_FAILURE:
+    case RE_FAILURE:
         ret_dscr = "Generic failure";
         break;
-    case TG_RET_ERROR_BAD_PARAMETER:
+    case RE_ERROR_BAD_PARAMETER:
         ret_dscr = "Unacceptable parameter value";
         break;
-    case TG_RET_ERROR_INCOMPLETE_DATA:
+    case RE_ERROR_INCOMPLETE_DATA:
         ret_dscr = "Insufficient data for call";
         break;
-    case TG_RET_ERROR_COAP:
+    case RE_ERROR_COAP:
         ret_dscr = "Libcoap error";
         break;
-    case TG_RET_ERROR_NETWORK:
+    case RE_ERROR_NETWORK:
         ret_dscr = "Network stack error";
         break;
-    case TG_RET_ERROR_SM_NOT_FOUND:
+    case RE_ERROR_SM_NOT_FOUND:
         ret_dscr = "Security Materials not found";
         break;
-    case TG_RET_ERROR_NO_MEM:
+    case RE_ERROR_NO_MEM:
         ret_dscr = "Memory allocation error";
         break;
-    case TG_RET_ERROR_ALREADY_EXISTS:
+    case RE_ERROR_ALREADY_EXISTS:
         ret_dscr = "Instance already exists";
         break;
-    case TG_RET_ERROR_NOT_FOUND:
+    case RE_ERROR_NOT_FOUND:
         ret_dscr = "Instance not found";
         break;
-    case TG_RET_ERROR_ALREADY_ACTIVE:
+    case RE_ERROR_ALREADY_ACTIVE:
         ret_dscr = "Already has ACTIVE status";
         break;
-    case TG_RET_ERROR_NOT_SUPPORTED:
+    case RE_ERROR_NOT_SUPPORTED:
         ret_dscr = "Feature not supported or not implemented";
         break;
 
@@ -179,6 +180,7 @@ std::string ret_describe(registry_error_t ret_code)
 }
 
 } // namespace commissioner
+
 } // namespace ot
 
 std::ostream &operator<<(std::ostream &os, ot::commissioner::Timestamp const &ts)

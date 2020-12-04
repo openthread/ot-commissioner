@@ -14,7 +14,11 @@
 
 #include "border_agent.hpp"
 
-namespace ot::commissioner::persistent_storage {
+namespace ot {
+
+namespace commissioner {
+
+namespace persistent_storage {
 
 /**
  * Empty id constant
@@ -259,6 +263,10 @@ void from_json(const nlohmann::json &j, network &p);
 void to_json(nlohmann::json &j, const border_router &p);
 void from_json(const nlohmann::json &j, border_router &p);
 
-} // namespace ot::commissioner::persistent_storage
+} // namespace persistent_storage
+
+} // namespace commissioner
+
+} // namespace ot
 
 #endif // _REGISTRY_ENTRIES_HPP_
