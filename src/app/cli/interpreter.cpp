@@ -48,6 +48,7 @@
 #define KEYWORD_IMPORT "--import"
 
 #define ALIAS_THIS "this"
+#define ALIAS_NONE "none"
 #define ALIAS_ALL "all"
 #define ALIAS_OTHERS "others"
 
@@ -614,7 +615,45 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
 
-    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    switch (aExpr.size())
+    {
+    case 1:
+    {
+        // starting currently selected network
+
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        // TODO:
+        // get br by current network id
+        // prepare dtls conf by network id ??
+        // aExpr: append br_addr and br_port
+        break;
+    }
+    case 2:
+    {
+        // starting newtork by br raw id (experimental, for dev tests only)
+
+        // get br by raw id
+        // (re)select network to the one the br belongs to
+
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        // TODO:
+        // prepare dtls conf by network id ??
+        // aExpr: append br_addr and br_port
+        break;
+    }
+    case 3:
+    {
+        // starting network with explicit br_addr and br_port
+
+        // TODO: unselect current network
+
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        break;
+    }
+    default:
+        ExitNow(value = ERROR_INVALID_COMMAND("not a valid command syntax"));
+    }
+
     value = ProcessStartJob(commissioner, aExpr);
 exit:
     return value;
