@@ -188,7 +188,7 @@ struct network
     network(network_id const & nid,
             domain_id const &  did,
             std::string const &nname,
-            std::string const &nxpan,
+            ext_pan const &    nxpan,
             unsigned int const nchannel,
             std::string const &npan,
             std::string const &nmlp,
@@ -204,7 +204,7 @@ struct network
     {
     }
     network()
-        : network(EMPTY_ID, EMPTY_ID, "", "", 0, "", "", -1)
+        : network(EMPTY_ID, EMPTY_ID, "", ext_pan{}, 0, "", "", -1)
     {
     }
 };

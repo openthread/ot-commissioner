@@ -88,14 +88,14 @@ TEST_CASE("Add network", "[ps_json]")
 
     network_id new_id;
 
-    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk1", "FFFFFFFFFFFFFFF1", 11, "FFF1", "2000:aaa1::0/8", 1}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk1", ext_pan{"FFFFFFFFFFFFFFF1"}, 11, "FFF1", "2000:aaa1::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk2", "FFFFFFFFFFFFFFF2", 11, "FFF2", "2000:aaa2::0/8", 1}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk2", ext_pan{"FFFFFFFFFFFFFFF2"}, 11, "FFF2", "2000:aaa2::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk3", "FFFFFFFFFFFFFFF3", 11, "FFF3", "2000:aaa3::0/8", 1}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk3", ext_pan{"FFFFFFFFFFFFFFF3"}, 11, "FFF3", "2000:aaa3::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
@@ -610,14 +610,14 @@ TEST_CASE("Lookup network", "[ps_json]")
 
     // Populate storage with initial data
     network_id new_id;
-    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk1", "FFFFFFFFFFFFFFF1", 11, "FFF1", "2000:aaa1::0/8", 1}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk1", ext_pan{"FFFFFFFFFFFFFFF1"}, 11, "FFF1", "2000:aaa1::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk2", "FFFFFFFFFFFFFFF2", 11, "FFF2", "2000:aaa2::0/8", 1}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk2", ext_pan{"FFFFFFFFFFFFFFF2"}, 11, "FFF2", "2000:aaa2::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk3", "FFFFFFFFFFFFFFF3", 11, "FFF3", "2000:aaa3::0/8", 1}, new_id) ==
-            ps_status::PS_SUCCESS);
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk3", ext_pan{"FFFFFFFFFFFFFFF3"}, 11, "FFF3", "2000:aaa3::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
     // The test
