@@ -243,7 +243,6 @@ const std::string JSON_ADDR             = "addr";
 const std::string JSON_PORT             = "port";
 const std::string JSON_DOMAINS          = "domains";
 const std::string JSON_NAME             = "name";
-const std::string JSON_NETWORKS         = "networks";
 const std::string JSON_DOMAIN_NAME      = "domain_name";
 const std::string JSON_NETWORK_NAME     = "network_name";
 const std::string JSON_PAN              = "pan";
@@ -264,6 +263,8 @@ const std::string JSON_VENDOR_OUI       = "vendor_oui";
 const std::string JSON_BBR_SEQ_NUMBER   = "bbr_seq_number";
 const std::string JSON_BBR_PORT         = "bbr_port";
 const std::string JSON_DOM_REF          = "dom_ref";
+const std::string JSON_SERVICE_NAME     = "service_name";
+const std::string JSON_UPDATE_TIMESTAMP = "update_timestamp";
 
 void to_json(nlohmann::json &j, const registrar_id &opt);
 void from_json(const nlohmann::json &j, registrar_id &opt);

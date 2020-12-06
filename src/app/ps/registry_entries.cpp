@@ -154,6 +154,14 @@ void to_json(json &j, const border_router &p)
     {
         j[JSON_BBR_PORT] = p.agent.mBbrPort;
     }
+    if (p.agent.mPresentFlags & BorderAgent::kServiceNameBit)
+    {
+        j[JSON_SERVICE_NAME] = p.agent.mServiceName;
+    }
+    if (p.agent.mPresentFlags & BorderAgent::kUpdateTimestamp)
+    {
+        j[JSON_UPDATE_TIMESTAMP] = (std::string)p.agent.mUpdateTimestamp;
+    }
 }
 
 void from_json(const json &j, border_router &p)
@@ -231,6 +239,22 @@ void from_json(const json &j, border_router &p)
     {
         j.at(JSON_BBR_PORT).get_to(p.agent.mBbrPort);
         p.agent.mPresentFlags |= BorderAgent::kBbrPortBit;
+    }
+    if (j.contains(JSON_SERVICE_NAME))
+    {
+        j.at(JSON_SERVICE_NAME).get_to(p.agent.mServiceName);
+        p.agent.mPresentFlags |= BorderAgent::kServiceNameBit;
+    }
+    if (j.contains(JSON_UPDATE_TIMESTAMP))
+    {
+        std::string tmp;
+        j.at(JSON_UPDATE_TIMESTAMP).get_to(tmp);
+        UnixTime ts{tmp};
+        if (ts.mTime != 0)
+        {
+            p.agent.mUpdateTimestamp.mTime = ts.mTime;
+            p.agent.mPresentFlags |= BorderAgent::kUpdateTimestamp;
+        }
     }
 }
 

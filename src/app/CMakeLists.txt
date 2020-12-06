@@ -26,6 +26,8 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+add_definitions(-D_XOPEN_SOURCE)
+
 add_library(commissioner-app
     commissioner_app.cpp
     commissioner_app.hpp

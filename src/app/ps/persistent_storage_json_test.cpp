@@ -113,21 +113,21 @@ TEST_CASE("Add br", "[ps_json]")
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
@@ -348,21 +348,21 @@ TEST_CASE("Get br, not empty", "[ps_json]")
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
@@ -486,26 +486,27 @@ TEST_CASE("Upd br", "[ps_json]")
                                   BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
     REQUIRE(psj.add(border_router{EMPTY_ID, EMPTY_ID,
                                   BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
                                               "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
                                               Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0,
-                                              0, 0xFFFF}},
+                                              0, "", 0, 0xFFFF}},
                     new_id) == ps_status::PS_SUCCESS);
 
     // Test actions
     border_router new_val{EMPTY_ID, EMPTY_ID,
+
                           BorderAgent{"5.5.5.5", 18, ByteArray{}, "th1.x", BorderAgent::State{0, 0, 2, 0, 0},
                                       "network_id", 0x1011223344556677ll, "vendor_name", "model_name",
-                                      Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0,
+                                      Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0, "", 0,
                                       0xFFFF}};
 
     REQUIRE(psj.update(new_val) == ps_status::PS_NOT_FOUND);
