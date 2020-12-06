@@ -860,7 +860,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     if (domAliases.size() > 0)
     {
         std::vector<domain> domains;
-        domain              dom{EMPTY_ID, domAliases[0], {}};
+        domain              dom{EMPTY_ID, domAliases[0]};
         VerifyOrExit(gRegistry.lookup(dom, domains) == REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
         VerifyOrExit(domains.size() < 2, value = ERROR_BAD_FORMAT("Too many entries of type 'domain'"));
         nwk.dom_id.id = dom.id.id;

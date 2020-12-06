@@ -130,17 +130,14 @@ struct domain
 {
     domain_id   id;   /**< unique id in registry */
     std::string name; /**< domain name */
-    // TODO Refine: do we need it here?
-    std::vector<std::string> networks; /**< networks that belong to domain*/
 
-    domain(domain_id const &did, std::string const &dname, std::vector<std::string> const &dnetworks)
+    domain(domain_id const &did, std::string const &dname)
         : id(did)
         , name(dname)
-        , networks(dnetworks)
     {
     }
     domain()
-        : domain(EMPTY_ID, "", {})
+        : domain(EMPTY_ID, "")
     {
     }
 };

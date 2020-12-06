@@ -252,15 +252,6 @@ ps_status persistent_storage_json::lookup(domain const &val, std::vector<domain>
 
     pred = [val](domain const &el) {
         bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) && (val.name.empty() || (val.name == el.name));
-
-        if (ret && !val.networks.empty())
-        {
-            std::vector<std::string> el_tmp(el.networks);
-            std::vector<std::string> val_tmp(val.networks);
-            std::sort(std::begin(el_tmp), std::end(el_tmp));
-            std::sort(std::begin(val_tmp), std::end(val_tmp));
-            ret = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
-        }
         return ret;
     };
 
@@ -360,15 +351,6 @@ ps_status persistent_storage_json::lookup_any(domain const &val, std::vector<dom
 
     pred = [val](domain const &el) {
         bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) || (val.name.empty() || (val.name == el.name));
-
-        if (!val.networks.empty())
-        {
-            std::vector<std::string> el_tmp(el.networks);
-            std::vector<std::string> val_tmp(val.networks);
-            std::sort(std::begin(el_tmp), std::end(el_tmp));
-            std::sort(std::begin(val_tmp), std::end(val_tmp));
-            ret = ret || std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
-        }
         return ret;
     };
 

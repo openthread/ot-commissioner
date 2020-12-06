@@ -65,14 +65,13 @@ void from_json(const json &j, registrar &p)
 
 void to_json(json &j, const domain &p)
 {
-    j = json{{JSON_ID, p.id}, {JSON_NAME, p.name}, {JSON_NETWORKS, p.networks}};
+    j = json{{JSON_ID, p.id}, {JSON_NAME, p.name}};
 }
 
 void from_json(const json &j, domain &p)
 {
     j.at(JSON_ID).get_to(p.id);
     j.at(JSON_NAME).get_to(p.name);
-    j.at(JSON_NETWORKS).get_to(p.networks);
 }
 
 void to_json(json &j, const network &p)
