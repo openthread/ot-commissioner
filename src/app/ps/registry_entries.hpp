@@ -9,6 +9,8 @@
 
 #include "nlohmann_json.hpp"
 
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -144,15 +146,42 @@ struct domain
 };
 
 /**
+ * Extended PAN Id wrapper
+ */
+struct ext_pan
+{
+    uint64_t value;
+    ext_pan(uint64_t val)
+        : value(val)
+    {
+    }
+    ext_pan()
+        : ext_pan(0)
+    {
+    }
+    ext_pan(const std::string &xpan_str)
+    {
+        std::istringstream input(xpan_str);
+        input >> std::hex >> value;
+    }
+    bool operator==(const ext_pan &other) const { return value == other.value; }
+         operator std::string() const
+    {
+        std::ostringstream stream;
+        stream << std::setfill('0') << std::setw(sizeof(value) * 2) << std::hex << value;
+        return stream.str();
+    }
+};
+
+/**
  * Network entity
  */
 struct network
 {
-    network_id  id;       /**< unique id in registry */
-    domain_id   dom_id;   /**< reference to the domain the network belongs to */
-    std::string name;     /**< network name */
-                          // TODO reference domain by id instead of name
-    std::string  xpan;    /**< Extended PAN_ID */
+    network_id   id;      /**< unique id in registry */
+    domain_id    dom_id;  /**< reference to the domain the network belongs to */
+    std::string  name;    /**< network name */
+    ext_pan      xpan;    /**< Extended PAN_ID */
     unsigned int channel; /**< network channel */
     std::string  pan;     /**< PAN_ID */
     std::string  mlp;     /**< Mesh-local prefix */

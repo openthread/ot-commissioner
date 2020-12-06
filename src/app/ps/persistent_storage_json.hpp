@@ -153,6 +153,17 @@ public:
     ps_status lookup_any(network const &val, std::vector<network> &ret);
     ps_status lookup_any(border_router const &val, std::vector<border_router> &ret);
 
+    /**
+     * Set current network.
+     */
+    ps_status current_network_set(const network_id &nwk_id);
+    /**
+     * Get current network
+     *
+     * @param nwk_id[out] current network identifier
+     */
+    ps_status current_network_get(network_id &nwk_id);
+
 private:
     std::string            file_name;    /**< name of the file */
     nlohmann::json         cache;        /**< internal chache */

@@ -16,9 +16,7 @@
 #include "app/border_agent.hpp"
 
 namespace ot {
-
 namespace commissioner {
-
 namespace persistent_storage {
 
 /**
@@ -41,6 +39,8 @@ enum registry_status
  */
 class registry
 {
+    using ext_pan = ::ot::commissioner::persistent_storage::ext_pan;
+
 public:
     /**
      * Registry constructor with provided persistent_storage
@@ -178,16 +178,40 @@ public:
     registry_status lookup_any(network const &val, std::vector<network> &ret);
     registry_status lookup_any(border_router const &val, std::vector<border_router> &ret);
 
+    /**
+     * Set current network.
+     */
+    registry_status current_network_set(const network_id &nwk_id);
+    /**
+     * Forget current network
+     */
+    registry_status current_network_forget();
+    /**
+     * Get current network
+     *
+     * @param [out] ret current network data
+     */
+    registry_status current_network_get(network &ret);
+    /**
+     * Get current network extended PAN ID
+     *
+     * @param [out] ret current network extended PAN ID
+     */
+    registry_status current_network_get(ext_pan &ret);
+    /**
+     * Get network entries by xpan value
+     */
+    registry_status get_networks_by_xpan(ext_pan xpan, std::vector<network> &ret);
+
 private:
     bool                manage_storage = false;   /**< flag that storage was create outside*/
     persistent_storage *storage        = nullptr; /**< persistent storage */
 };
 
 } // namespace persistent_storage
-
 } // namespace commissioner
-
 } // namespace ot
 
 extern ot::commissioner::persistent_storage::registry gRegistry;
+
 #endif // _REGISTRY_HPP_
