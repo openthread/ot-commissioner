@@ -35,6 +35,7 @@
 #ifndef OT_COMM_BORDER_AGENT_HPP_
 #define OT_COMM_BORDER_AGENT_HPP_
 
+#include <ctime>
 #include <functional>
 #include <list>
 #include <string>
@@ -45,6 +46,45 @@
 namespace ot {
 
 namespace commissioner {
+
+/**
+ * Unix time
+ *
+ * @note C++ supports std::chrono parsing starting from C++20, so using low-lelel C API.
+ */
+struct UnixTime
+{
+    std::time_t mTime;
+    UnixTime(std::time_t aTime)
+        : mTime(aTime)
+    {
+    }
+    UnixTime()
+        : UnixTime(0)
+    {
+    }
+    // Requires date format "%Y%m%dT%H%M%S"
+    UnixTime(const std::string &aTimeStr)
+        : UnixTime()
+    {
+        std::tm lTm;
+        char *  result = strptime(aTimeStr.c_str(), "%Y%m%dT%H%M%S", &lTm);
+        if (result != nullptr && *result == '\000')
+        {
+            mTime = std::mktime(&lTm);
+        }
+    }
+    bool operator==(const UnixTime &other) const { return mTime == other.mTime; }
+         operator std::string() const
+    {
+        std::tm lTm;
+        gmtime_r(&mTime, &lTm);
+
+        char lTimeStr[16];
+        std::strftime(lTimeStr, sizeof(lTimeStr), "%Y%m%dT%H%M%S", &lTm);
+        return lTimeStr;
+    }
+};
 
 /**
  * The definition of Border Agent discovered by Commissioner.
@@ -177,29 +217,42 @@ struct BorderAgent
      */
     uint16_t mBbrPort;
 
-    uint16_t mPresentFlags = 0;
+    /**
+     * mDNS service name
+     */
+    std::string mServiceName;
 
-    static constexpr uint16_t kAddrBit            = 1 << 0;
-    static constexpr uint16_t kPortBit            = 1 << 1;
-    static constexpr uint16_t kThreadVersionBit   = 1 << 2;
-    static constexpr uint16_t kStateBit           = 1 << 3;
-    static constexpr uint16_t kNetworkNameBit     = 1 << 4;
-    static constexpr uint16_t kExtendedPanIdBit   = 1 << 5;
-    static constexpr uint16_t kVendorNameBit      = 1 << 6;
-    static constexpr uint16_t kModelNameBit       = 1 << 7;
-    static constexpr uint16_t kActiveTimestampBit = 1 << 8;
-    static constexpr uint16_t kPartitionIdBit     = 1 << 9;
-    static constexpr uint16_t kVendorDataBit      = 1 << 10;
-    static constexpr uint16_t kVendorOuiBit       = 1 << 11;
-    static constexpr uint16_t kDomainNameBit      = 1 << 12;
-    static constexpr uint16_t kBbrSeqNumberBit    = 1 << 13;
-    static constexpr uint16_t kBbrPortBit         = 1 << 14;
-    static constexpr uint16_t kDiscriminatorBit   = 1 << 15;
+    /**
+     * Information update time stamp
+     */
+    UnixTime mUpdateTimestamp;
+
+    uint32_t mPresentFlags = 0;
+
+    static constexpr uint32_t kAddrBit            = 1 << 0;
+    static constexpr uint32_t kPortBit            = 1 << 1;
+    static constexpr uint32_t kThreadVersionBit   = 1 << 2;
+    static constexpr uint32_t kStateBit           = 1 << 3;
+    static constexpr uint32_t kNetworkNameBit     = 1 << 4;
+    static constexpr uint32_t kExtendedPanIdBit   = 1 << 5;
+    static constexpr uint32_t kVendorNameBit      = 1 << 6;
+    static constexpr uint32_t kModelNameBit       = 1 << 7;
+    static constexpr uint32_t kActiveTimestampBit = 1 << 8;
+    static constexpr uint32_t kPartitionIdBit     = 1 << 9;
+    static constexpr uint32_t kVendorDataBit      = 1 << 10;
+    static constexpr uint32_t kVendorOuiBit       = 1 << 11;
+    static constexpr uint32_t kDomainNameBit      = 1 << 12;
+    static constexpr uint32_t kBbrSeqNumberBit    = 1 << 13;
+    static constexpr uint32_t kBbrPortBit         = 1 << 14;
+    static constexpr uint32_t kDiscriminatorBit   = 1 << 15;
+    static constexpr uint32_t kServiceNameBit     = 1 << 16;
+    static constexpr uint32_t kUpdateTimestamp    = 1 << 17;
 
     BorderAgent()
-        : BorderAgent{
-              "", 0, ByteArray{}, "", State{0, 0, 0, 0, 0}, "", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{},
-              "", 0, 0,           0}
+        : BorderAgent{"", 0,  ByteArray{}, "", State{0, 0, 0, 0, 0},
+                      "", 0,  "",          "", Timestamp{0, 0, 0},
+                      0,  "", ByteArray{}, "", 0,
+                      0,  "", 0,           0}
     {
     }
 
@@ -219,7 +272,9 @@ struct BorderAgent
                 std::string const &aDomainName,
                 uint8_t            aBbrSeqNumber,
                 uint16_t           aBbrPort,
-                uint16_t           aPresentFlags)
+                std::string const &aServiceName,
+                UnixTime           aUpdateTimestamp,
+                uint32_t           aPresentFlags)
         : mAddr(aAddr)
         , mPort(aPort)
         , mDiscriminator(aDiscriminator)
@@ -236,6 +291,8 @@ struct BorderAgent
         , mDomainName(aDomainName)
         , mBbrSeqNumber(aBbrSeqNumber)
         , mBbrPort(aBbrPort)
+        , mServiceName(aServiceName)
+        , mUpdateTimestamp(aUpdateTimestamp)
         , mPresentFlags(aPresentFlags)
     {
     }

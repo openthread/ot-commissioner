@@ -162,8 +162,9 @@ static int HandleRecord(const struct sockaddr *from,
                                                  : ((entry == MDNS_ENTRYTYPE_AUTHORITY) ? "authority" : "additional");
     if (type == MDNS_RECORDTYPE_PTR)
     {
-        mdns_string_t nameStr = mdns_record_parse_ptr(data, size, offset, length, nameBuffer, sizeof(nameBuffer));
-        (void)nameStr;
+        mdns_string_t nameStr     = mdns_record_parse_ptr(data, size, offset, length, nameBuffer, sizeof(nameBuffer));
+        borderAgent.mServiceName  = std::string(nameStr.str, nameStr.length);
+        borderAgent.mPresentFlags = BorderAgent::kServiceNameBit;
         // TODO(wgtdkp): add debug logging.
     }
     else if (type == MDNS_RECORDTYPE_SRV)
@@ -361,6 +362,12 @@ static int HandleRecord(const struct sockaddr *from,
         // TODO(wgtdkp): add debug logging.
     }
 
+    if (borderAgent.mPresentFlags != 0)
+    {
+        // Actualize Timestamp
+        borderAgent.mUpdateTimestamp.mTime = time(0);
+        borderAgent.mPresentFlags |= BorderAgent::kUpdateTimestamp;
+    }
 exit:
     return 0;
 }
