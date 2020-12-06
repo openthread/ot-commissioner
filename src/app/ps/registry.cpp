@@ -5,9 +5,7 @@
 #include <sstream>
 
 namespace ot {
-
 namespace commissioner {
-
 namespace persistent_storage {
 
 namespace {
@@ -204,7 +202,6 @@ registry_status registry::add(BorderAgent const &val)
     {
         dom.name = val.mDomainName;
         std::vector<domain> domains;
-        // TODO refine why lookup() functions are with the pointer?
         status = lookup(dom, domains);
         if (status == REG_ERROR || domains.size() > 1)
         {
@@ -236,13 +233,11 @@ registry_status registry::add(BorderAgent const &val)
             (val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
         {
             // If xpan present lookup with it only
-            // TODO discuss: is different name an error? Not yet.
+            // Discussed: is different name an error?
+            // Decided: update network name in the network entity
             if ((val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
             {
-                std::ostringstream tmp;
-                // Assumption: no leading zeroes for the xpan
-                tmp << std::hex << val.mExtendedPanId;
-                nwk.xpan = tmp.str();
+                nwk.xpan = val.mExtendedPanId;
             }
             else
             {
@@ -250,7 +245,6 @@ registry_status registry::add(BorderAgent const &val)
             }
 
             std::vector<network> nwks;
-            // TODO replace lookup with lookup_any()?
             status = lookup(nwk, nwks);
             if (status == REG_ERROR || nwks.size() > 1)
             {
@@ -277,9 +271,10 @@ registry_status registry::add(BorderAgent const &val)
             else
             {
                 nwk = nwks[0];
-                if (nwk.dom_id.id != dom.id.id)
+                if (nwk.dom_id.id != dom.id.id || nwk.name != val.mNetworkName)
                 {
                     nwk.dom_id.id = dom.id.id;
+                    nwk.name      = val.mNetworkName;
                     status        = update(nwk);
                     if (status != REG_SUCCESS)
                     {
@@ -394,8 +389,60 @@ registry_status registry::update(border_router const &val)
     return map_status(storage->update(val));
 }
 
+registry_status registry::current_network_set(const network_id &nwk_id)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->current_network_set(nwk_id));
+}
+
+registry_status registry::current_network_forget()
+{
+    return current_network_set(network_id{});
+}
+
+registry_status registry::current_network_get(network &ret)
+{
+    assert(storage != nullptr);
+    network_id nwk_id;
+    if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
+    {
+        return REG_ERROR;
+    }
+
+    return map_status(storage->get(nwk_id, ret));
+}
+
+registry_status registry::current_network_get(ext_pan &ret)
+{
+    assert(storage != nullptr);
+    network_id nwk_id;
+    if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
+    {
+        return REG_ERROR;
+    }
+
+    network         nwk;
+    registry_status status = map_status(storage->get(nwk_id, nwk));
+    if (status != REG_SUCCESS)
+    {
+        return status;
+    }
+    ret = nwk.xpan;
+    return REG_SUCCESS;
+}
+
+registry_status registry::get_networks_by_xpan(ext_pan xpan, std::vector<network> &ret)
+{
+    network nwk{};
+
+    assert(storage != nullptr);
+
+    nwk.xpan = xpan;
+
+    return map_status(storage->lookup(nwk, ret));
+}
+
 } // namespace persistent_storage
-
 } // namespace commissioner
-
 } // namespace ot

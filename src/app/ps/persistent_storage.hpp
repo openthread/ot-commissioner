@@ -13,9 +13,7 @@
 #include <vector>
 
 namespace ot {
-
 namespace commissioner {
-
 namespace persistent_storage {
 
 /**
@@ -143,12 +141,21 @@ public:
     virtual ps_status lookup_any(domain const &val, std::vector<domain> &ret)               = 0;
     virtual ps_status lookup_any(network const &val, std::vector<network> &ret)             = 0;
     virtual ps_status lookup_any(border_router const &val, std::vector<border_router> &ret) = 0;
+
+    /**
+     * Set current network.
+     */
+    virtual ps_status current_network_set(const network_id &nwk_id) = 0;
+    /**
+     * Get current network
+     *
+     * @param nwk_id[out] current network identifier
+     */
+    virtual ps_status current_network_get(network_id &nwk_id) = 0;
 };
 
 } // namespace persistent_storage
-
 } // namespace commissioner
-
 } // namespace ot
 
 #endif // _PERSISTENT_STORAGE_HPP_

@@ -3,9 +3,7 @@
 #include "utils.hpp"
 
 namespace ot {
-
 namespace commissioner {
-
 namespace persistent_storage {
 
 const std::string JSON_RGR     = "rgr";
@@ -19,6 +17,8 @@ const std::string JSON_NWK_SEQ = "nwk_seq";
 
 const std::string JSON_BR     = "br";
 const std::string JSON_BR_SEQ = "br_seq";
+
+const std::string JSON_CURR_NWK = "curr_nwk";
 
 using nlohmann::json;
 
@@ -40,11 +40,13 @@ persistent_storage_json::~persistent_storage_json()
 json persistent_storage_json::json_default()
 {
     return json{
-        {JSON_RGR_SEQ, registrar_id(0)},      {JSON_DOM_SEQ, domain_id(0)},
-        {JSON_NWK_SEQ, network_id(0)},        {JSON_BR_SEQ, border_router_id(0)},
+        {JSON_RGR_SEQ, registrar_id(0)},       {JSON_DOM_SEQ, domain_id(0)},
+        {JSON_NWK_SEQ, network_id(0)},         {JSON_BR_SEQ, border_router_id(0)},
 
-        {JSON_RGR, std::vector<registrar>{}}, {JSON_DOM, std::vector<domain>{}},
-        {JSON_NWK, std::vector<network>{}},   {JSON_BR, std::vector<border_router>{}},
+        {JSON_RGR, std::vector<registrar>{}},  {JSON_DOM, std::vector<domain>{}},
+        {JSON_NWK, std::vector<network>{}},    {JSON_BR, std::vector<border_router>{}},
+
+        {JSON_CURR_NWK, network_id{EMPTY_ID}},
     };
 }
 
@@ -270,12 +272,12 @@ ps_status persistent_storage_json::lookup(network const &val, std::vector<networ
     std::function<bool(network const &)> pred = [](network const &) { return true; };
 
     pred = [val](network const &el) {
-        bool ret =
-            (val.ccm < 0 || val.ccm == el.ccm) && (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
-            (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) &&
-            (val.name.empty() || (val.name == el.name)) && (val.xpan.empty() || str_cmp_icase(val.xpan, el.xpan)) &&
-            (val.pan.empty() || str_cmp_icase(val.pan, el.pan)) &&
-            (val.mlp.empty() || str_cmp_icase(val.mlp, el.mlp)) && (val.channel == 0 || (val.channel == el.channel));
+        bool ret = (val.ccm < 0 || val.ccm == el.ccm) && (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
+                   (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) &&
+                   (val.name.empty() || (val.name == el.name)) && (val.xpan == 0 || val.xpan == el.xpan) &&
+                   (val.pan.empty() || str_cmp_icase(val.pan, el.pan)) &&
+                   (val.mlp.empty() || str_cmp_icase(val.mlp, el.mlp)) &&
+                   (val.channel == 0 || (val.channel == el.channel));
 
         return ret;
     };
@@ -378,12 +380,12 @@ ps_status persistent_storage_json::lookup_any(network const &val, std::vector<ne
     std::function<bool(network const &)> pred = [](network const &) { return true; };
 
     pred = [val](network const &el) {
-        bool ret =
-            (val.ccm < 0 || val.ccm == el.ccm) || (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
-            (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) ||
-            (val.name.empty() || (val.name == el.name)) || (val.xpan.empty() || str_cmp_icase(val.xpan, el.xpan)) ||
-            (val.pan.empty() || str_cmp_icase(val.pan, el.pan)) ||
-            (val.mlp.empty() || str_cmp_icase(val.mlp, el.mlp)) || (val.channel == 0 || (val.channel == el.channel));
+        bool ret = (val.ccm < 0 || val.ccm == el.ccm) || (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
+                   (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) ||
+                   (val.name.empty() || (val.name == el.name)) || (val.xpan == 0 || val.xpan == el.xpan) ||
+                   (val.pan.empty() || str_cmp_icase(val.pan, el.pan)) ||
+                   (val.mlp.empty() || str_cmp_icase(val.mlp, el.mlp)) ||
+                   (val.channel == 0 || (val.channel == el.channel));
 
         return ret;
     };
@@ -436,6 +438,30 @@ ps_status persistent_storage_json::lookup_any(border_router const &val, std::vec
     };
 
     return lookup_pred<border_router>(pred, ret, JSON_BR);
+}
+
+ps_status persistent_storage_json::current_network_set(const network_id &nwk_id)
+{
+    if (cache_from_file() != PS_SUCCESS)
+    {
+        return PS_ERROR;
+    }
+
+    cache[JSON_CURR_NWK] = nwk_id;
+
+    return cache_to_file();
+}
+
+ps_status persistent_storage_json::current_network_get(network_id &nwk_id)
+{
+    if (!cache.contains(JSON_CURR_NWK))
+    {
+        return PS_ERROR;
+    }
+
+    nwk_id = cache[JSON_CURR_NWK];
+
+    return PS_SUCCESS;
 }
 
 } // namespace persistent_storage

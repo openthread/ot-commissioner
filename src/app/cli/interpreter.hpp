@@ -130,6 +130,8 @@ private:
     Value ProcessToken(const Expression &aExpr);
     Value ProcessNetwork(const Expression &aExpr);
     Value ProcessNetworkList(const Expression &aExpr);
+    Value ProcessNetworkSelect(const Expression &aExpr);
+    Value ProcessNetworkIdentity(const Expression &aExpr);
     Value ProcessSessionId(const Expression &aExpr);
     Value ProcessBorderAgent(const Expression &aExpr);
     Value ProcessJoiner(const Expression &aExpr);
