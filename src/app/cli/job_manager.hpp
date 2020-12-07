@@ -77,7 +77,11 @@ public:
      * Apply new PSKc bytes and re-create @ref
      * JobManager::mDefaultCommissioner instance
      */
-    Error UpdateDefaultConfig(const ByteArray &aPSKc);
+    Error UpdateDefaultConfigPSKc(const ByteArray &aPSKc);
+    /**
+     * Reads PSKc to string for the sake of `config get pskc' command
+     */
+    std::string GetDefaultConfigPSKc() const;
     /**
      * Appends to aExpr an imported argument loaded from mImportFile.
      *

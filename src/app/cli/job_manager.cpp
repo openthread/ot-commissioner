@@ -55,7 +55,7 @@ exit:
     return error;
 }
 
-Error JobManager::UpdateDefaultConfig(const ByteArray &aPSKc)
+Error JobManager::UpdateDefaultConfigPSKc(const ByteArray &aPSKc)
 {
     Error error;
 
@@ -68,6 +68,11 @@ Error JobManager::UpdateDefaultConfig(const ByteArray &aPSKc)
 
 exit:
     return error;
+}
+
+std::string JobManager::GetDefaultConfigPSKc() const
+{
+    return utils::Hex(mDefaultConf.mPSKc);
 }
 
 void JobManager::CleanupJobs()

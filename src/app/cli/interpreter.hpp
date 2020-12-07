@@ -39,6 +39,7 @@
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
 #include "app/commissioner_app.hpp"
+#include "app/ps/registry.hpp"
 
 namespace ot {
 
@@ -55,7 +56,7 @@ public:
     Interpreter()  = default;
     ~Interpreter() = default;
 
-    Error Init(const std::string &aConfigFile);
+    Error Init(const std::string &aConfigFile, const std::string &aRegistry);
 
     void Run();
 
@@ -173,9 +174,9 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    Config                      mConfig;
     Console                     mConsole;
     std::shared_ptr<JobManager> mJobManager = nullptr;
+    std::shared_ptr<::ot::commissioner::persistent_storage::registry> mRegistry   = nullptr;
 
     bool mShouldExit = false;
 
@@ -187,8 +188,6 @@ private:
     static const std::vector<StringArray> &           mImportSupported;
     static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;
 };
-
-std::string ToLower(const std::string &aStr);
 
 } // namespace commissioner
 

@@ -350,19 +350,19 @@ ps_status persistent_storage_json::lookup_any(registrar const &val, std::vector<
     return lookup_pred<registrar>(pred, ret, JSON_RGR);
 }
 
-ps_status persistent_storage_json::lookup(domain const &val, std::vector<domain> &ret)
+ps_status persistent_storage_json::lookup_any(domain const &val, std::vector<domain> &ret)
 {
     std::function<bool(domain const &)> pred = [](domain const &) { return true; };
 
     pred = [val](domain const &el) {
-        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) && (val.name.empty() || (val.name == el.name));
+        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) || (val.name.empty() || (val.name == el.name));
         return ret;
     };
 
     return lookup_pred<domain>(pred, ret, JSON_DOM);
 }
 
-ps_status persistent_storage_json::lookup(network const &val, std::vector<network> &ret)
+ps_status persistent_storage_json::lookup_any(network const &val, std::vector<network> &ret)
 {
     std::function<bool(network const &)> pred = [](network const &) { return true; };
 
@@ -449,18 +449,6 @@ ps_status persistent_storage_json::current_network_get(network_id &nwk_id)
     cache[JSON_CURR_NWK] = nwk_id;
 
     return cache_to_file();
-}
-
-ps_status persistent_storage_json::current_network_get(network_id &nwk_id)
-{
-    if (!cache.contains(JSON_CURR_NWK))
-    {
-        return PS_ERROR;
-    }
-
-    nwk_id = cache[JSON_CURR_NWK];
-
-    return PS_SUCCESS;
 }
 
 } // namespace persistent_storage
