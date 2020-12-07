@@ -1,10 +1,13 @@
+
 #include "persistent_storage_json.hpp"
 #include "file.hpp"
-#include "utils.hpp"
+#include "common/utils.hpp"
 
 namespace ot {
 namespace commissioner {
 namespace persistent_storage {
+
+using namespace ::ot::commissioner::utils;
 
 const std::string JSON_RGR     = "rgr";
 const std::string JSON_RGR_SEQ = "rgr_seq";
@@ -230,7 +233,8 @@ ps_status persistent_storage_json::lookup(registrar const &val, std::vector<regi
 
     pred = [val](registrar const &el) {
         bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
-                   (val.addr.empty() || str_cmp_icase(val.addr, el.addr)) && (val.port == 0 || (val.port == el.port));
+                   (val.addr.empty() || CaseInsensitiveEqual(val.addr, el.addr)) &&
+                   (val.port == 0 || (val.port == el.port));
 
         if (ret && !val.domains.empty())
         {
@@ -266,8 +270,8 @@ ps_status persistent_storage_json::lookup(network const &val, std::vector<networ
         bool ret = (val.ccm < 0 || val.ccm == el.ccm) && (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
                    (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) &&
                    (val.name.empty() || (val.name == el.name)) && (val.xpan == 0 || val.xpan == el.xpan) &&
-                   (val.pan.empty() || str_cmp_icase(val.pan, el.pan)) &&
-                   (val.mlp.empty() || str_cmp_icase(val.mlp, el.mlp)) &&
+                   (val.pan.empty() || CaseInsensitiveEqual(val.pan, el.pan)) &&
+                   (val.mlp.empty() || CaseInsensitiveEqual(val.mlp, el.mlp)) &&
                    (val.channel == 0 || (val.channel == el.channel));
 
         return ret;
@@ -286,7 +290,7 @@ ps_status persistent_storage_json::lookup(border_router const &val, std::vector<
             (val.nwk_id.id == EMPTY_ID || (el.nwk_id.id == val.nwk_id.id)) &&
             ((val.agent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kAddrBit) != 0 &&
-              str_cmp_icase(el.agent.mAddr, val.agent.mAddr))) &&
+              CaseInsensitiveEqual(el.agent.mAddr, val.agent.mAddr))) &&
             ((val.agent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kPortBit) != 0 && el.agent.mPort == val.agent.mPort)) &&
             ((val.agent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
@@ -296,10 +300,10 @@ ps_status persistent_storage_json::lookup(border_router const &val, std::vector<
              ((el.agent.mPresentFlags & BorderAgent::kStateBit) != 0 && el.agent.mState == val.agent.mState)) &&
             ((val.agent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
-              str_cmp_icase(el.agent.mVendorName, val.agent.mVendorName))) &&
+              CaseInsensitiveEqual(el.agent.mVendorName, val.agent.mVendorName))) &&
             ((val.agent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
-              str_cmp_icase(el.agent.mModelName, val.agent.mModelName))) &&
+              CaseInsensitiveEqual(el.agent.mModelName, val.agent.mModelName))) &&
             ((val.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
               el.agent.mActiveTimestamp.Encode() == val.agent.mActiveTimestamp.Encode())) &&
@@ -329,7 +333,8 @@ ps_status persistent_storage_json::lookup_any(registrar const &val, std::vector<
 
     pred = [val](registrar const &el) {
         bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
-                   (val.addr.empty() || str_cmp_icase(val.addr, el.addr)) || (val.port == 0 || (val.port == el.port));
+                   (val.addr.empty() || CaseInsensitiveEqual(val.addr, el.addr)) ||
+                   (val.port == 0 || (val.port == el.port));
 
         if (!val.domains.empty())
         {
@@ -345,19 +350,19 @@ ps_status persistent_storage_json::lookup_any(registrar const &val, std::vector<
     return lookup_pred<registrar>(pred, ret, JSON_RGR);
 }
 
-ps_status persistent_storage_json::lookup_any(domain const &val, std::vector<domain> &ret)
+ps_status persistent_storage_json::lookup(domain const &val, std::vector<domain> &ret)
 {
     std::function<bool(domain const &)> pred = [](domain const &) { return true; };
 
     pred = [val](domain const &el) {
-        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) || (val.name.empty() || (val.name == el.name));
+        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) && (val.name.empty() || (val.name == el.name));
         return ret;
     };
 
     return lookup_pred<domain>(pred, ret, JSON_DOM);
 }
 
-ps_status persistent_storage_json::lookup_any(network const &val, std::vector<network> &ret)
+ps_status persistent_storage_json::lookup(network const &val, std::vector<network> &ret)
 {
     std::function<bool(network const &)> pred = [](network const &) { return true; };
 
@@ -365,8 +370,8 @@ ps_status persistent_storage_json::lookup_any(network const &val, std::vector<ne
         bool ret = (val.ccm < 0 || val.ccm == el.ccm) || (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
                    (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) ||
                    (val.name.empty() || (val.name == el.name)) || (val.xpan == 0 || val.xpan == el.xpan) ||
-                   (val.pan.empty() || str_cmp_icase(val.pan, el.pan)) ||
-                   (val.mlp.empty() || str_cmp_icase(val.mlp, el.mlp)) ||
+                   (val.pan.empty() || CaseInsensitiveEqual(val.pan, el.pan)) ||
+                   (val.mlp.empty() || CaseInsensitiveEqual(val.mlp, el.mlp)) ||
                    (val.channel == 0 || (val.channel == el.channel));
 
         return ret;
@@ -385,7 +390,7 @@ ps_status persistent_storage_json::lookup_any(border_router const &val, std::vec
             (val.nwk_id.id == EMPTY_ID || (el.nwk_id.id == val.nwk_id.id)) ||
             ((val.agent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kAddrBit) != 0 ||
-              str_cmp_icase(el.agent.mAddr, val.agent.mAddr))) ||
+              CaseInsensitiveEqual(el.agent.mAddr, val.agent.mAddr))) ||
             ((val.agent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kPortBit) != 0 || el.agent.mPort == val.agent.mPort)) ||
             ((val.agent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
@@ -395,10 +400,10 @@ ps_status persistent_storage_json::lookup_any(border_router const &val, std::vec
              ((el.agent.mPresentFlags & BorderAgent::kStateBit) != 0 || el.agent.mState == val.agent.mState)) ||
             ((val.agent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 ||
-              str_cmp_icase(el.agent.mVendorName, val.agent.mVendorName))) ||
+              CaseInsensitiveEqual(el.agent.mVendorName, val.agent.mVendorName))) ||
             ((val.agent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kModelNameBit) != 0 ||
-              str_cmp_icase(el.agent.mModelName, val.agent.mModelName))) ||
+              CaseInsensitiveEqual(el.agent.mModelName, val.agent.mModelName))) ||
             ((val.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
              ((el.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 ||
               el.agent.mActiveTimestamp.Encode() == val.agent.mActiveTimestamp.Encode())) ||
@@ -425,6 +430,18 @@ ps_status persistent_storage_json::lookup_any(border_router const &val, std::vec
 ps_status persistent_storage_json::current_network_set(const network_id &nwk_id)
 {
     if (cache_from_file() != PS_SUCCESS)
+    {
+        return PS_ERROR;
+    }
+
+    cache[JSON_CURR_NWK] = nwk_id;
+
+    return cache_to_file();
+}
+
+ps_status persistent_storage_json::current_network_get(network_id &nwk_id)
+{
+    if (!cache.contains(JSON_CURR_NWK))
     {
         return PS_ERROR;
     }

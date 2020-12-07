@@ -41,7 +41,6 @@
 #include "app/json.hpp"
 #include "app/sys_logger.hpp"
 #include "app/ps/registry.hpp"
-#include "app/ps/utils.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -923,7 +922,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
         // Make results unique
         std::sort(networks.begin(), networks.end(), [](network const &a, network const &b) { return a.name < b.name; });
         std::unique(networks.begin(), networks.end(),
-                    [](network const &a, network const &b) { return str_cmp_icase(a.name, b.name); });
+                    [](network const &a, network const &b) { return CaseInsensitiveEqual(a.name, b.name); });
     }
 
     json  = networks;

@@ -35,9 +35,6 @@ add_library(persistent-storage
     registry_entries.hpp
     registry_entries.cpp
     nlohmann_json.hpp
-    # TODO Remove all unnecessary files and definitions
-    utils.hpp
-    utils.cpp
     # TODO [TBD] move following files into the /src/library project directory
     file.hpp
     file.cpp
