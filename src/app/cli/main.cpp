@@ -98,8 +98,11 @@ static void HandleSignalInterrupt()
 
 int main(int argc, const char *argv[])
 {
-    Error  error;
-    Config config;
+    using namespace ::ot::commissioner::utils;
+
+    Error       error;
+    Config      config;
+    std::string registryFileName;
 
     if (argc < 2 || ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
     {
@@ -112,6 +115,11 @@ int main(int argc, const char *argv[])
         ExitNow();
     }
 
+    if (argc == 4 && ToLower(argv[2]) == "-r")
+    {
+        registryFileName = argv[3];
+    }
+
     // Block signals in this thread and subsequently spawned threads.
     sigemptyset(&gSignalSet);
     sigaddset(&gSignalSet, SIGINT);
@@ -121,7 +129,7 @@ int main(int argc, const char *argv[])
 
     Console::Write(kLogo, Console::Color::kBlue);
 
-    SuccessOrExit(error = gInterpreter.Init(argv[1]));
+    SuccessOrExit(error = gInterpreter.Init(argv[1], registryFileName));
 
     gInterpreter.Run();
 

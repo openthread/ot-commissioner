@@ -246,7 +246,7 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
     return ToLower(aLhs) == ToLower(aRhs);
 }
 
-Error Interpreter::Init(const std::string &aConfigFile)
+Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegistryFile)
 {
     Error error;
 
@@ -257,6 +257,9 @@ Error Interpreter::Init(const std::string &aConfigFile)
     SuccessOrExit(error = ReadFile(configJson, aConfigFile));
     SuccessOrExit(error = ConfigFromJson(config, configJson));
     SuccessOrExit(error = mJobManager->Init(config, *this));
+    mRegistry.reset(new ::ot::commissioner::persistent_storage::registry(aRegistryFile));
+    VerifyOrExit(mRegistry != nullptr,
+                 error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
 
 exit:
     return error;
@@ -830,14 +833,14 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     {
         std::vector<domain> domains;
         domain              dom{EMPTY_ID, domAliases[0]};
-        VerifyOrExit(gRegistry.lookup(dom, domains) == REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
+        VerifyOrExit(mRegistry->lookup(dom, domains) == REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
         VerifyOrExit(domains.size() < 2, value = ERROR_BAD_FORMAT("Too many entries of type 'domain'"));
         nwk.dom_id.id = dom.id.id;
     }
 
     if (nwkAliases.size() == 0)
     {
-        VerifyOrExit(gRegistry.lookup(nwk, networks) == REG_SUCCESS,
+        VerifyOrExit(mRegistry->lookup(nwk, networks) == REG_SUCCESS,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
     }
     else
@@ -854,14 +857,14 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
         {
             if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
             {
-                VerifyOrExit(gRegistry.lookup(network{}, networks) == registry_status::REG_SUCCESS,
+                VerifyOrExit(mRegistry->lookup(network{}, networks) == registry_status::REG_SUCCESS,
                              value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
             }
             else if (alias == ALIAS_THIS)
             {
                 // Get selected nwk xpan (no selected is an error)
                 network nwk_this;
-                VerifyOrExit(gRegistry.current_network_get(nwk_this) == registry_status::REG_SUCCESS,
+                VerifyOrExit(mRegistry->current_network_get(nwk_this) == registry_status::REG_SUCCESS,
                              value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
                 // Put nwk into networks
                 networks.push_back(nwk_this);
@@ -870,7 +873,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
             {
                 network pred{};
                 pred.name = pred.xpan = pred.pan = alias;
-                VerifyOrExit(gRegistry.lookup_any(network{}, networks) == registry_status::REG_SUCCESS,
+                VerifyOrExit(mRegistry->lookup_any(network{}, networks) == registry_status::REG_SUCCESS,
                              value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
             }
         }
@@ -879,7 +882,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
         {
             // Remove current network from networks
             network nwk_this;
-            VerifyOrExit(gRegistry.current_network_get(nwk_this) == registry_status::REG_SUCCESS,
+            VerifyOrExit(mRegistry->current_network_get(nwk_this) == registry_status::REG_SUCCESS,
                          value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
             auto nwk_iter = find_if(networks.begin(), networks.end(),
                                     [&nwk_this](const network &el) { return nwk_this.id.id == el.id.id; });
@@ -914,17 +917,17 @@ Interpreter::Value Interpreter::ProcessNetworkSelect(const Expression &aExpr)
 
     if (CaseInsensitiveEqual(aExpr[2], "none"))
     {
-        registry_status status = gRegistry.current_network_forget();
+        registry_status status = mRegistry->current_network_forget();
         VerifyOrExit(status == registry_status::REG_SUCCESS, value = ERROR_IO_ERROR("network select failed"));
     }
     else
     {
         // We use xpan only to set
         std::vector<network> networks;
-        registry_status      status = gRegistry.get_networks_by_xpan(aExpr[2], networks);
+        registry_status      status = mRegistry->get_networks_by_xpan(aExpr[2], networks);
         VerifyOrExit(status == registry_status::REG_SUCCESS, value = ERROR_IO_ERROR("network lookup failed"));
         VerifyOrExit(networks.size() == 1, ERROR_REJECTED("too many results from network lookup"));
-        status = gRegistry.current_network_set(networks[0].id);
+        status = mRegistry->current_network_set(networks[0].id);
         VerifyOrExit(status == registry_status::REG_SUCCESS, value = ERROR_IO_ERROR("network set failed"));
         value = fmt::format(std::string("selected network ") + (std::string)networks[0].xpan + " as current");
     }
@@ -944,7 +947,7 @@ Interpreter::Value Interpreter::ProcessNetworkIdentity(const Expression &aExpr)
     VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
     VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
 
-    VerifyOrExit(gRegistry.current_network_get(xpan) == registry_status::REG_SUCCESS,
+    VerifyOrExit(mRegistry->current_network_get(xpan) == registry_status::REG_SUCCESS,
                  value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
 
     json  = xpan;
