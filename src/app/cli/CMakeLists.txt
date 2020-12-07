@@ -35,6 +35,8 @@ add_executable(commissioner-cli
     job.hpp
     job_manager.cpp
     job_manager.hpp
+    security_materials.cpp
+    security_materials.hpp
     main.cpp
 )
 

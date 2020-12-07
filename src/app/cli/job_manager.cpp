@@ -34,6 +34,7 @@
 #include "app/cli/job_manager.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
+#include "app/cli/security_materials.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -43,11 +44,15 @@ namespace commissioner {
 
 Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
 {
+    Error error;
     // here we need to store a pointer to persistent storage object
 
     mDefaultConf = aConf;
     mInterpreter = InterpreterPtr(&aInterpreter);
-    return CommissionerApp::Create(mDefaultCommissioner, aConf);
+    SuccessOrExit(error = sm::Init(aConf));
+    SuccessOrExit(error = CommissionerApp::Create(mDefaultCommissioner, aConf));
+exit:
+    return error;
 }
 
 Error JobManager::UpdateDefaultConfig(const ByteArray &aPSKc)
@@ -237,13 +242,76 @@ exit:
 
 Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
 {
-    // prepare DTLS conf - resolve Security Materials paths
-    // update conf with actual paths
+    Error                 error;
+    std::string           domainId;
+    std::string           networkId;
+    std::string           networkName;
+    bool                  isCCM = false;
+    sm::SecurityMaterials dtlsConf;
 
-    (void)aNid;
-    (void)aConfig;
+    // get domain id by aNid
 
-    return ERROR_NONE;
+    if (!domainId.empty())
+    {
+        error = sm::GetDomainSM(domainId, dtlsConf);
+        if (ERROR_NONE != error)
+        {
+            WarningMsg(aNid, error.GetMessage());
+            error = ERROR_NONE;
+        }
+    }
+    if (!dtlsConf.IsEmpty())
+    {
+        goto update;
+    }
+    // get network id by aNid
+    // get ccm
+    if (!networkId.empty())
+    {
+        error = sm::GetNetworkSM(networkId, isCCM, dtlsConf);
+        if (ERROR_NONE != error)
+        {
+            WarningMsg(aNid, error.GetMessage());
+            error = ERROR_NONE;
+        }
+    }
+    if (!dtlsConf.IsEmpty())
+    {
+        goto update;
+    }
+    // get network name by aNid
+    // reuse ccm
+    if (!networkName.empty())
+    {
+        error = sm::GetNetworkSM(networkName, isCCM, dtlsConf);
+        if (ERROR_NONE != error)
+        {
+            WarningMsg(aNid, error.GetMessage());
+            error = ERROR_NONE;
+        }
+    }
+update:
+    if (dtlsConf.mCertificate.size() > 0)
+    {
+        aConfig.mCertificate = dtlsConf.mCertificate;
+    }
+    if (dtlsConf.mPrivateKey.size() > 0)
+    {
+        aConfig.mPrivateKey = dtlsConf.mPrivateKey;
+    }
+    if (dtlsConf.mTrustAnchor.size() > 0)
+    {
+        aConfig.mTrustAnchor = dtlsConf.mTrustAnchor;
+    }
+    if (dtlsConf.mPSKc.size() > 0)
+    {
+        aConfig.mPSKc = dtlsConf.mPSKc;
+    }
+    if (dtlsConf.IsEmpty())
+    {
+        InfoMsg(aNid, "no updates to DTLS configuration, default configuration will be used");
+    }
+    return error;
 }
 
 Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr)

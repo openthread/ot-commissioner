@@ -241,6 +241,11 @@ static void from_json(const Json &aJson, Config &aConfig)
     {
         SuccessOrThrow(ReadPemFile(aConfig.mTrustAnchor, aJson["TrustAnchorFile"]));
     }
+
+    if (aJson.contains("ThreadSMRoot"))
+    {
+        aConfig.mThreadSMRoot = aJson["ThreadSMRoot"];
+    }
 }
 
 static void to_json(Json &aJson, const CommissionerDataset &aDataset)
