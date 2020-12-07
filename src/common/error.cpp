@@ -80,6 +80,8 @@ static std::string ErrorCodeToString(ErrorCode code)
         return "REJECTED";
     case ErrorCode::kCoapError:
         return "COAP_ERROR";
+    case ErrorCode::kSyntaxViolation:
+        return "SYNTAX_VIOLATION";
     case ErrorCode::kUnknown:
         return "UNKNOWN";
 
