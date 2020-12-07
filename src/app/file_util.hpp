@@ -105,6 +105,8 @@ Error ReadPemFile(ByteArray &aData, const std::string &aFilename);
  */
 Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename);
 
+Error PathExists(std::string path);
+
 } // namespace commissioner
 
 } // namespace ot

@@ -124,6 +124,9 @@ struct Config
 
     // Mandatory for CCM Thread network.
     ByteArray mTrustAnchor; ///< The trust anchor of 'mCertificate'.
+
+    // Thread Security Materials Root path
+    std::string mThreadSMRoot;
 };
 
 /**

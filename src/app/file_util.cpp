@@ -37,6 +37,7 @@
 #include <algorithm>
 
 #include <string.h>
+#include <unistd.h>
 
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -138,6 +139,24 @@ Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
 
 exit:
     return error;
+}
+
+Error PathExists(std::string path)
+{
+    int err = access(path.c_str(), F_OK);
+    if (err != 0)
+    {
+        switch (errno)
+        {
+        case ENOENT:
+            return ERROR_NOT_FOUND("{} path does not exist", path);
+        case ENOTDIR:
+            return ERROR_NOT_FOUND("{} path is not a directory", path);
+        default:
+            return ERROR_NOT_FOUND("path error, errno = {}", errno);
+        }
+    }
+    return ERROR_NONE;
 }
 
 } // namespace commissioner
