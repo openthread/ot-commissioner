@@ -50,6 +50,9 @@ endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Override GoogleTest defaults to omit GoogltTest installation
+option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
+
 add_subdirectory(src)
 add_subdirectory(tools)
 add_subdirectory(third_party EXCLUDE_FROM_ALL)
