@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.openthread.commissioner.service">
+
+  <uses-permission android:name="android.permission.CAMERA" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+  <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <application android:name="io.openthread.commissioner.service.CommissionerServiceApp">
+    <activity android:name="io.openthread.commissioner.service.CommissionerActivity">
+      <intent-filter>
+        <action android:name="io.openthread.commissioner.action.COMMISSION_DEVICE"/>
+        <action android:name="io.openthread.commissioner.action.FETCH_CREDENTIAL"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+    </activity>
+  </application>
+
+</manifest>

@@ -58,13 +58,13 @@ setup_openthread() {
 
 setup_commissioner() {
     set -e
-    sudo apt-get install expect -y
+    sudo apt-get install -y --no-install-recommends expect
     pip install --user -r "${TEST_ROOT_DIR}"/../../tools/commissioner_thci/requirements.txt
 }
 
 setup_border_agent_mdns_service() {
     sudo apt-get update
-    sudo apt-get install dbus avahi-daemon -y
+    sudo apt-get install -y --no-install-recommends dbus avahi-daemon
 
     ## Install the Border Agent service configure file to
     ## the default directory read by avahi-daemon.
