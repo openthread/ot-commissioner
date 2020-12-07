@@ -180,6 +180,10 @@ std::string Hex(const ByteArray &aBytes);
 
 Error Hex(ByteArray &aBuf, const std::string &aHexStr);
 
+std::string ToLower(const std::string &aStr);
+
+bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs);
+
 } // namespace utils
 
 } // namespace commissioner
