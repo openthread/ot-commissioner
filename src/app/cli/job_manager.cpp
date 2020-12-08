@@ -45,7 +45,6 @@ namespace commissioner {
 Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
 {
     Error error;
-    // here we need to store a pointer to persistent storage object
 
     mDefaultConf = aConf;
     mInterpreter = InterpreterPtr(&aInterpreter);
@@ -94,8 +93,8 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
     else if (aExpr[0] == "stop")
         return PrepareStopJobs(aExpr, aNids, aGroupAlias);
 
-    Error error = ERROR_NONE;
-    // regular command
+    Error error;
+
     for (auto nid : aNids)
     {
         auto entry = mCommissionerPool.find(nid);
@@ -105,11 +104,9 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             {
                 WarningMsg(nid, "not started");
             }
-            // ignore nid
             continue;
         }
 
-        // nid found
         bool active = entry->second->IsActive();
         if (!active)
         {
@@ -117,7 +114,6 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             {
                 WarningMsg(nid, "not started");
             }
-            // ignore nid
             continue;
         }
 
@@ -171,15 +167,14 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
             {
                 InfoMsg(nid, "already started");
             }
-            // ignore nid
             continue;
         }
 
         SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
 
-        // resolve nid to border_router
+        // TODO: resolve nid to border_router
 
-        // augment aExpr with br_addr and br_port that are expected by Job handler
+        // TODO: augment aExpr with br_addr and br_port that are expected by Job handler
 
         ASSERT(aExpr.size() == 3); // 'start br_addr br_port'
         SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
@@ -203,11 +198,9 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
             {
                 WarningMsg(nid, "not known to be started");
             }
-            // ignore nid
             continue;
         }
 
-        // nid found
         bool active = entry->second->IsActive();
         if (!active)
         {
@@ -215,7 +208,6 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
             {
                 InfoMsg(nid, "already stopped");
             }
-            // ignore nid
             continue;
         }
 
@@ -234,10 +226,10 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     bool                  isCCM = false;
     sm::SecurityMaterials dtlsConfig;
 
-    // get domain id by aNid
-    // get network id by aNid
-    // get network name by aNid
-    // get ccm
+    // TODO: get domain id by aNid
+    // TODO: get network id by aNid
+    // TODO: get network name by aNid
+    // TODO: get ccm
 
     if (!domainId.empty())
     {
@@ -252,7 +244,6 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
         }
         else
         {
-            // try with xpan
             error = sm::GetDefaultDomainSM(networkId, isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
@@ -261,7 +252,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
             }
             if (dtlsConfig.IsEmpty())
             {
-                // try with name
+                // retry with name
                 error = sm::GetDefaultDomainSM(networkName, isCCM, dtlsConfig);
                 if (ERROR_NONE != error)
                 {
@@ -275,7 +266,6 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     {
         goto update;
     }
-    // try with xpan
     if (!networkId.empty())
     {
         error = sm::GetNetworkSM(networkId, isCCM, dtlsConfig);
@@ -289,7 +279,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     {
         goto update;
     }
-    // try with name
+    // retry with name
     if (!networkName.empty())
     {
         error = sm::GetNetworkSM(networkName, isCCM, dtlsConfig);
