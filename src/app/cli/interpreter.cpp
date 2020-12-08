@@ -155,7 +155,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"help", "help [<command>]"},
 };
 
-const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSupported =
+const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
     *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"start"},
                                                Interpreter::StringArray{"stop"},
                                                Interpreter::StringArray{"active"},
@@ -167,7 +167,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSupported
                                                Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
                                                Interpreter::StringArray{"network", "list"}};
 
-const std::vector<Interpreter::StringArray> &Interpreter::mMultiThreadSupported =
+const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
     *new std::vector<Interpreter::StringArray>{
         Interpreter::StringArray{"start"},
         Interpreter::StringArray{"stop"},
@@ -180,14 +180,14 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiThreadSupported 
         Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
     };
 
-const std::vector<Interpreter::StringArray> &Interpreter::mExportSupported = *new std::vector<Interpreter::StringArray>{
+const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new std::vector<Interpreter::StringArray>{
     Interpreter::StringArray{"bbrdataset", "get"},
     Interpreter::StringArray{"commdataset", "get"},
     Interpreter::StringArray{"opdataset", "get", "active"},
     Interpreter::StringArray{"opdataset", "get", "pending"},
 };
 
-const std::vector<Interpreter::StringArray> &Interpreter::mImportSupported = *new std::vector<Interpreter::StringArray>{
+const std::vector<Interpreter::StringArray> &Interpreter::mImportSyntax = *new std::vector<Interpreter::StringArray>{
     Interpreter::StringArray{"opdataset", "set", "active"},
     Interpreter::StringArray{"opdataset", "set", "pending"},
 };
@@ -261,7 +261,7 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
     }
     mJobManager = std::shared_ptr<JobManager>(new JobManager());
     SuccessOrExit(error = mJobManager->Init(config, *this));
-    mRegistry.reset(new ::ot::commissioner::persistent_storage::registry(aRegistryFile));
+    mRegistry.reset(new Registry(aRegistryFile));
     VerifyOrExit(mRegistry != nullptr,
                  error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
 
@@ -324,14 +324,14 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 
     if (exportFiles.size() > 0)
     {
-        supported = IsSyntaxSupported(mExportSupported, retExpr);
+        supported = IsFeatureSupported(mExportSyntax, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
         // export and import must not be specified simultaneously
         VerifyOrExit(importFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
     }
     else if (importFiles.size() > 0)
     {
-        supported = IsSyntaxSupported(mImportSupported, retExpr);
+        supported = IsFeatureSupported(mImportSyntax, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
         // export and import must not be specified simultaneously
         VerifyOrExit(exportFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
@@ -339,8 +339,9 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         mJobManager->SetImportFile(importFiles.front());
     }
 
-    if (IsMultiNetworkSyntax(aExpr) && IsMultiThreadProcessing(aExpr))
+    if (IsMultiNetworkSyntax(aExpr) && IsMultiJob(aExpr))
     {
+        value = EvaluateMultiNetwork(retExpr, nwkAliases, domAliases);
     }
     else
     {
@@ -375,9 +376,9 @@ bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
     return false;
 }
 
-bool Interpreter::IsMultiThreadProcessing(const Expression &aExpr)
+bool Interpreter::IsMultiJob(const Expression &aExpr)
 {
-    return IsSyntaxSupported(mMultiThreadSupported, aExpr);
+    return IsFeatureSupported(mMultiJobExecution, aExpr);
 }
 
 Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
@@ -392,7 +393,7 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
     if (aNwkAliases.size() > 0)
     {
         // verify if respective syntax supported by the current command
-        supported = IsSyntaxSupported(mMultiNetworkSupported, aExpr);
+        supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
         // network and domain must not be specified simultaneously
         VerifyOrExit(aDomAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
@@ -410,7 +411,7 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
     else if (aDomAliases.size() > 0)
     {
         // verify if respective syntax supported by the current command
-        supported = IsSyntaxSupported(mMultiNetworkSupported, aExpr);
+        supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
         // network and domain must not be specified simultaneously
         VerifyOrExit(aNwkAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
@@ -433,7 +434,7 @@ exit:
     return error;
 }
 
-bool Interpreter::IsSyntaxSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const
+bool Interpreter::IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const
 {
     for (auto commandCase : aArr)
     {
@@ -640,8 +641,10 @@ exit:
 
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
-    Value              value;
-    CommissionerAppPtr commissioner = nullptr;
+    Value                             value;
+    CommissionerAppPtr                commissioner = nullptr;
+    Expression                        expr         = aExpr;
+    persistent_storage::border_router br;
 
     switch (aExpr.size())
     {
@@ -650,31 +653,32 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         // starting currently selected network
 
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
-        // TODO:
-        // get br by current network id
-        // prepare dtls conf by network id ??
-        // aExpr: append br_addr and br_port
+        // TODO: get br by current network id
+        expr.push_back(br.agent.mAddr);
+        expr.push_back(ToString(br.agent.mPort));
         break;
     }
     case 2:
     {
         // starting newtork by br raw id (experimental, for dev tests only)
+        persistent_storage::border_router_id rawid;
 
-        // get br by raw id
-        // (re)select network to the one the br belongs to
+        SuccessOrExit(value = ParseInteger(rawid.id, expr[1]));
+        expr.pop_back();
+
+        // TODO: get br by raw id
+        // TODO: (re)select network to the one the br belongs to
 
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
-        // TODO:
-        // prepare dtls conf by network id ??
-        // aExpr: append br_addr and br_port
+        expr.push_back(br.agent.mAddr);
+        expr.push_back(ToString(br.agent.mPort));
         break;
     }
     case 3:
     {
         // starting network with explicit br_addr and br_port
-
-        // TODO: unselect current network
-
+        VerifyOrExit(mRegistry->current_network_forget() == persistent_storage::registry_status::REG_SUCCESS,
+                     value = ERROR_IO_ERROR("failed to drop network selection"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         break;
     }
@@ -682,7 +686,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         ExitNow(value = ERROR_INVALID_COMMAND("not a valid command syntax"));
     }
 
-    value = ProcessStartJob(commissioner, aExpr);
+    value = ProcessStartJob(commissioner, expr);
 exit:
     return value;
 }

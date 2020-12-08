@@ -98,24 +98,21 @@ private:
         std::string mData;
     };
 
-    using Expression = std::vector<std::string>;
-    using Evaluator  = std::function<Value(Interpreter *, const Expression &)>;
-
+    using Expression   = std::vector<std::string>;
+    using Evaluator    = std::function<Value(Interpreter *, const Expression &)>;
     using JobEvaluator = std::function<Value(Interpreter *, CommissionerAppPtr &, const Expression &)>;
     using StringArray  = std::vector<std::string>;
+    using Registry     = ot::commissioner::persistent_storage::registry;
 
 private:
     Expression Read();
-
-    Value Eval(const Expression &aExpr);
-
-    void Print(const Value &aValue);
-
+    Value      Eval(const Expression &aExpr);
+    void       Print(const Value &aValue);
     void       PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor);
     Expression ParseExpression(const std::string &aLiteral);
-    bool       IsSyntaxSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
+    bool       IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
-    bool       IsMultiThreadProcessing(const Expression &aExpr);
+    bool       IsMultiJob(const Expression &aExpr);
     Value EvaluateMultiNetwork(const Expression &aExpr, const StringArray &nwkAliases, const StringArray &domAliases);
     Error ReParseMultiNetworkSyntax(const Expression &aExpr,
                                     Expression &      aRretExpr,
@@ -174,18 +171,18 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    Console                                                           mConsole;
-    std::shared_ptr<JobManager>                                       mJobManager = nullptr;
-    std::shared_ptr<::ot::commissioner::persistent_storage::registry> mRegistry   = nullptr;
+    Console                     mConsole;
+    std::shared_ptr<JobManager> mJobManager = nullptr;
+    std::shared_ptr<Registry>   mRegistry   = nullptr;
 
     bool mShouldExit = false;
 
     static const std::map<std::string, std::string> & mUsageMap;
     static const std::map<std::string, Evaluator> &   mEvaluatorMap;
-    static const std::vector<StringArray> &           mMultiNetworkSupported;
-    static const std::vector<StringArray> &           mMultiThreadSupported;
-    static const std::vector<StringArray> &           mExportSupported;
-    static const std::vector<StringArray> &           mImportSupported;
+    static const std::vector<StringArray> &           mMultiNetworkSyntax;
+    static const std::vector<StringArray> &           mMultiJobExecution;
+    static const std::vector<StringArray> &           mExportSyntax;
+    static const std::vector<StringArray> &           mImportSyntax;
     static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;
 };
 
