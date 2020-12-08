@@ -25,8 +25,8 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
-# This file runs Android App release build and publish
-# releases automatically.
+# This file runs Android App release build and uploads Android APK artifact for
+# creating releases.
 #
 
 name: Android App Release
@@ -56,11 +56,10 @@ jobs:
           fi
 
           echo "::set-output name=release_version::${gradle_version}"
-          echo "::set-output name=pr_merged::${{ github.event.pull_request.merged }}"
       - name: Bootstrap
         run: |
           script/bootstrap.sh
-      - name: Build
+      - name: Build APK
         run: |
           cd android
           ANDROID_ABI=armeabi-v7a ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
@@ -70,16 +69,8 @@ jobs:
 
           cp app/build/outputs/apk/debug/app-debug.apk \
              ot-commissioner-app-debug-${{ steps.check_release_version.outputs.release_version }}.apk
-      - name: Create New Release
-        # We create the release only when this PR is merged.
-        # For some reason, github.event.pull_request.merged
-        # doesn't work at here.
-        if: ${{ steps.check_release_version.outputs.pr_merged == 'true' }}
-        uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Upload APK for release
+        uses: actions/upload-artifact@v2
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ steps.check_release_version.outputs.release_version }}"
-          prerelease: false
-          title: "OT Commissioner App ${{ steps.check_release_version.outputs.release_version }}"
-          files: |
-            ./android/openthread_commissioner/ot-commissioner-app-debug-*.apk
+          name: ot-commissioner-app-debug-v${{ steps.check_release_version.outputs.release_version }}
+          path: ./android/openthread_commissioner/ot-commissioner-app-debug-*.apk
