@@ -39,7 +39,9 @@ enum registry_status
  */
 class registry
 {
-    using ext_pan = ::ot::commissioner::persistent_storage::ext_pan;
+    using ext_pan      = ::ot::commissioner::persistent_storage::ext_pan;
+    using NetworkArray = std::vector<network>;
+    using StringArray  = std::vector<std::string>;
 
 public:
     /**
@@ -74,19 +76,6 @@ public:
     registry_status close();
 
     /**
-     * Adds value to registry
-     *
-     * @param[in] val value to be added
-     * @param[out] ret_id unique id of the inserted value
-     * @return registry_status
-     * @see registry_status
-     * @see registry_entries.hpp
-     */
-    registry_status add(registrar const &val, registrar_id &ret_id);
-    registry_status add(domain const &val, domain_id &ret_id);
-    registry_status add(network const &val, network_id &ret_id);
-    registry_status add(border_router const &val, border_router_id &ret_id);
-    /**
      *  Adds necessary values to the registry.
      *
      * Will create @ref border_router entity for the argument and put it into
@@ -100,108 +89,101 @@ public:
     registry_status add(BorderAgent const &val);
 
     /**
-     * Deletes value by unique id
+     * Get networks of the domain
      *
-     * @param[in] id value's id to be deleted
-     * @return registry_status
-     * @see registry_status
-     * @see registry_entries.hpp
+     * @param[in] dom_name domain name
+     * @param[out] ret vector of networks belonging to the domain
+     * @note Network records will be appended to the end of the output network vector
      */
-    registry_status del(registrar_id const &id);
-    registry_status del(domain_id const &id);
-    registry_status del(network_id const &id);
-    registry_status del(border_router_id const &id);
+    registry_status get_networks_in_domain(const std::string &dom_name, NetworkArray &ret);
 
     /**
-     * Gets value by unique id
-     *
-     * @param[in] id value's unique id
-     * @param[out] ret_val value from registry
-     * @return registry_status
-     * @see registry_status
-     * @see registry_entries.hpp
+     * Get list of all networks
+     * @param[out] ret vector of all networks
      */
-    registry_status get(registrar_id const &id, registrar &ret_val);
-    registry_status get(domain_id const &id, domain &ret_val);
-    registry_status get(network_id const &id, network &ret_val);
-    registry_status get(border_router_id const &id, border_router &ret_val);
+    registry_status get_all_networks(NetworkArray &ret);
 
     /**
-     * Updates value in registry
+     * Get list of networks by alias
      *
-     * Updated value is identified by val's id.
-     * If value was found it is replaced with val. Old value is lost.
-     *
-     * @param[in] val new value
-     * @return registry_status
-     * @see registry_status
-     * @see registry_entries.hpp
+     * @param[in] alieses list of network aliases
+     * @param[out] ret list of networks
      */
-    registry_status update(registrar const &val);
-    registry_status update(domain const &val);
-    registry_status update(network const &val);
-    registry_status update(border_router const &val);
-
-    /**
-     * Looks for a matching values in registry
-     *
-     * Only non-empty val's fields are compared and combined with AND.
-     * Provide empty entity to get all the values.
-     * Resulting vector is not cleared. Results are appended to the end.
-     *
-     * @param[in] val value's fields to compare with.
-     * @param[out] ret values matched val condition.
-     * @return registry_status
-     * @see registry_status
-     * @see registry_entries.hpp
-     */
-    registry_status lookup(registrar const &val, std::vector<registrar> &ret);
-    registry_status lookup(domain const &val, std::vector<domain> &ret);
-    registry_status lookup(network const &val, std::vector<network> &ret);
-    registry_status lookup(border_router const &val, std::vector<border_router> &ret);
-
-    /**
-     * Looks for a matching values in registry
-     *
-     * Only non-empty val's fields are compared and combined with OR.
-     * Provide empty entity to get all the values.
-     * Resulting vector is not cleared. Results are appended to the end.
-     *
-     * @param[in] val value's fields to compare with.
-     * @param[out] ret values matched val condition.
-     * @return registry_status
-     * @see registry_status
-     * @see registry_entries.hpp
-     */
-    registry_status lookup_any(registrar const &val, std::vector<registrar> &ret);
-    registry_status lookup_any(domain const &val, std::vector<domain> &ret);
-    registry_status lookup_any(network const &val, std::vector<network> &ret);
-    registry_status lookup_any(border_router const &val, std::vector<border_router> &ret);
+    registry_status get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret);
 
     /**
      * Set current network.
      */
-    registry_status current_network_set(const network_id &nwk_id);
+    registry_status set_current_network(const ext_pan xpan);
+
     /**
      * Forget current network
      */
-    registry_status current_network_forget();
+    registry_status forget_current_network();
     /**
      * Get current network
      *
      * @param [out] ret current network data
      */
-    registry_status current_network_get(network &ret);
+    registry_status get_current_network(network &ret);
+
+protected:
     /**
-     * Get current network extended PAN ID
+     * Get network with specified extended PAN id
      *
-     * @param [out] ret current network extended PAN ID
+     * @param[in] xpan extended PAN id to lookup
+     * @param[out] ret resulting network record
+     * @return
+     * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
+     * @li @ref REG_NOT_FOUND if no network was found
+     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_ERROR on other errors
      */
-    registry_status current_network_get(ext_pan &ret);
+    registry_status get_network_by_ext_pan(ext_pan xpan, network &ret);
+
     /**
-     * Get network entries by xpan value
+     * Get network with specified name
+     *
+     * @param[in] name network name
+     * @param[out] ret resulting network record
+     * @return
+     * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
+     * @li @ref REG_NOT_FOUND if no network was found
+     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_ERROR on other errors
      */
-    registry_status get_networks_by_xpan(ext_pan xpan, std::vector<network> &ret);
+    registry_status get_network_by_name(const std::string &name, network &ret);
+
+    /**
+     * Get network with specified PAN id
+     *
+     * @param[in] pan PAN id to lookup
+     * @param[out] ret resulting network record
+     * @return
+     * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
+     * @li @ref REG_NOT_FOUND if no network was found
+     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_ERROR on other errors
+     */
+    registry_status get_network_by_pan(const std::string &pan, network &ret);
+
+    /**
+     * Lookup the network
+     *
+     * @param[in] pred network instance with reference values set
+     * @param[out] ret resulting network record
+     * @return
+     * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
+     * @li @ref REG_NOT_FOUND if no network was found
+     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_ERROR on other errors
+     */
+    registry_status lookup_one(const network &pred, network &ret);
+
+    /**
+     * Set current network.
+     */
+    registry_status set_current_network(const network_id &nwk_id);
 
 private:
     bool                manage_storage = false;   /**< flag that storage was create outside*/

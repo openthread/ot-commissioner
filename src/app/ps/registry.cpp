@@ -1,5 +1,6 @@
 #include "registry.hpp"
 #include "persistent_storage_json.hpp"
+#include "common/utils.hpp"
 
 #include <cassert>
 #include <sstream>
@@ -34,6 +35,10 @@ registry_status map_status(ps_status ps_st)
     }
     return REG_ERROR;
 }
+
+const std::string           ALIAS_THIS{"this"};
+const std::string           ALIAS_ALL{"all"};
+const std::string           ALIAS_OTHERS{"others"};
 
 } // namespace
 
@@ -80,118 +85,6 @@ registry_status registry::close()
     return success_status(storage->close());
 }
 
-registry_status registry::lookup(registrar const &val, std::vector<registrar> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup(val, ret));
-}
-
-registry_status registry::lookup(domain const &val, std::vector<domain> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup(val, ret));
-}
-
-registry_status registry::lookup(network const &val, std::vector<network> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup(val, ret));
-}
-
-registry_status registry::lookup(border_router const &val, std::vector<border_router> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup(val, ret));
-}
-
-registry_status registry::lookup_any(registrar const &val, std::vector<registrar> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup_any(val, ret));
-}
-
-registry_status registry::lookup_any(domain const &val, std::vector<domain> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup_any(val, ret));
-}
-
-registry_status registry::lookup_any(network const &val, std::vector<network> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup_any(val, ret));
-}
-
-registry_status registry::lookup_any(border_router const &val, std::vector<border_router> &ret)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->lookup_any(val, ret));
-}
-
-registry_status registry::get(registrar_id const &id, registrar &ret_val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->get(id, ret_val));
-}
-
-registry_status registry::get(domain_id const &id, domain &ret_val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->get(id, ret_val));
-}
-
-registry_status registry::get(network_id const &id, network &ret_val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->get(id, ret_val));
-}
-
-registry_status registry::get(border_router_id const &id, border_router &ret_val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->get(id, ret_val));
-}
-
-registry_status registry::add(registrar const &val, registrar_id &ret_id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->add(val, ret_id));
-}
-
-registry_status registry::add(domain const &val, domain_id &ret_id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->add(val, ret_id));
-}
-
-registry_status registry::add(network const &val, network_id &ret_id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->add(val, ret_id));
-}
-
-registry_status registry::add(border_router const &val, border_router_id &ret_id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->add(val, ret_id));
-}
-
 registry_status registry::add(BorderAgent const &val)
 {
     domain          dom{};
@@ -202,7 +95,7 @@ registry_status registry::add(BorderAgent const &val)
     {
         dom.name = val.mDomainName;
         std::vector<domain> domains;
-        status = lookup(dom, domains);
+        status = map_status(storage->lookup(dom, domains));
         if (status == REG_ERROR || domains.size() > 1)
         {
             return REG_ERROR;
@@ -210,7 +103,7 @@ registry_status registry::add(BorderAgent const &val)
         else if (status == REG_NOT_FOUND)
         {
             domain_id dom_id{EMPTY_ID};
-            status = add(dom, dom_id);
+            status = map_status(storage->add(dom, dom_id));
             if (status != REG_SUCCESS)
             {
                 return status;
@@ -245,7 +138,7 @@ registry_status registry::add(BorderAgent const &val)
             }
 
             std::vector<network> nwks;
-            status = lookup(nwk, nwks);
+            status = map_status(storage->lookup(nwk, nwks));
             if (status == REG_ERROR || nwks.size() > 1)
             {
                 throw status;
@@ -260,7 +153,7 @@ registry_status registry::add(BorderAgent const &val)
                     nwk.name = val.mNetworkName;
                 }
                 nwk.dom_id = dom.id;
-                status     = add(nwk, nwk_id);
+                status     = map_status(storage->add(nwk, nwk_id));
                 if (status != REG_SUCCESS)
                 {
                     throw status;
@@ -275,7 +168,7 @@ registry_status registry::add(BorderAgent const &val)
                 {
                     nwk.dom_id.id = dom.id.id;
                     nwk.name      = val.mNetworkName;
-                    status        = update(nwk);
+                    status        = map_status(storage->update(nwk));
                     if (status != REG_SUCCESS)
                     {
                         throw status;
@@ -292,6 +185,7 @@ registry_status registry::add(BorderAgent const &val)
                 throw REG_ERROR;
             }
 
+            // TODO [MP] Fix: BorderAgent key is xpan + addr
             // Lookup border_router by address and port to decide to add() or update()
             // Assuming address and port are set (it should be so).
             border_router lookup_br{};
@@ -299,15 +193,15 @@ registry_status registry::add(BorderAgent const &val)
             lookup_br.agent.mPort         = val.mPort;
             lookup_br.agent.mPresentFlags = BorderAgent::kAddrBit | BorderAgent::kPortBit;
             std::vector<border_router> routers;
-            status = lookup(lookup_br, routers);
+            status = map_status(storage->lookup(lookup_br, routers));
             if (status == REG_SUCCESS && routers.size() == 1)
             {
                 br.id.id = routers[0].id.id;
-                status   = update(br);
+                status   = map_status(storage->update(br));
             }
             else if (status == REG_NOT_FOUND)
             {
-                status = add(br, br.id);
+                status = map_status(storage->add(br, br.id));
             }
 
             if (status != REG_SUCCESS)
@@ -318,7 +212,7 @@ registry_status registry::add(BorderAgent const &val)
         {
             if (network_created)
             {
-                del(nwk.id);
+                map_status(storage->del(nwk.id));
             }
             throw;
         }
@@ -326,122 +220,165 @@ registry_status registry::add(BorderAgent const &val)
     {
         if (domain_created)
         {
-            del(dom.id);
+            map_status(storage->del(dom.id));
         }
         status = thrown_status;
     }
     return status;
 }
 
-registry_status registry::del(registrar_id const &id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->del(id));
-}
-
-registry_status registry::del(domain_id const &id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->del(id));
-}
-
-registry_status registry::del(network_id const &id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->del(id));
-}
-
-registry_status registry::del(border_router_id const &id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->del(id));
-}
-
-registry_status registry::update(registrar const &val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->update(val));
-}
-
-registry_status registry::update(domain const &val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->update(val));
-}
-
-registry_status registry::update(network const &val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->update(val));
-}
-
-registry_status registry::update(border_router const &val)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->update(val));
-}
-
-registry_status registry::current_network_set(const network_id &nwk_id)
-{
-    assert(storage != nullptr);
-
-    return map_status(storage->current_network_set(nwk_id));
-}
-
-registry_status registry::current_network_forget()
-{
-    return current_network_set(network_id{});
-}
-
-registry_status registry::current_network_get(network &ret)
-{
-    assert(storage != nullptr);
-    network_id nwk_id;
-    if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
+    registry_status registry::get_networks_in_domain(const std::string &dom_name, NetworkArray &ret)
     {
-        return REG_ERROR;
-    }
+        registry_status     status;
+        std::vector<domain> domains;
+        domain              dom{EMPTY_ID, dom_name};
+        network             nwk{};
 
-    return map_status(storage->get(nwk_id, ret));
-}
+        VerifyOrExit((status = map_status(storage->lookup(dom, domains))) == REG_SUCCESS);
+        VerifyOrExit(domains.size() < 2, status = REG_ERROR);
 
-registry_status registry::current_network_get(ext_pan &ret)
-{
-    assert(storage != nullptr);
-    network_id nwk_id;
-    if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
-    {
-        return REG_ERROR;
-    }
+        nwk.dom_id = domains[0].id;
+        status     = map_status(storage->lookup(nwk, ret));
 
-    network         nwk;
-    registry_status status = map_status(storage->get(nwk_id, nwk));
-    if (status != REG_SUCCESS)
-    {
+    exit:
         return status;
     }
-    ret = nwk.xpan;
-    return REG_SUCCESS;
-}
 
-registry_status registry::get_networks_by_xpan(ext_pan xpan, std::vector<network> &ret)
-{
-    network nwk{};
+    registry_status registry::get_all_networks(NetworkArray & ret)
+    {
+        registry_status status;
 
-    assert(storage != nullptr);
+        status = map_status(storage->lookup(network{}, ret));
 
-    nwk.xpan = xpan;
+        return status;
+    }
 
-    return map_status(storage->lookup(nwk, ret));
-}
+    registry_status registry::get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret)
+    {
+        registry_status status;
+
+        NetworkArray networks;
+        for (auto alias : aliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            {
+                VerifyOrExit((status = get_all_networks(networks)) == REG_SUCCESS);
+                if (alias == ALIAS_OTHERS)
+                {
+                    network nwk_this;
+                    VerifyOrExit((status = get_current_network(nwk_this)));
+                    auto nwk_iter = find_if(networks.begin(), networks.end(),
+                                            [&nwk_this](const network &el) { return nwk_this.id.id == el.id.id; });
+                    if (nwk_iter != networks.end())
+                    {
+                        networks.erase(nwk_iter);
+                    }
+                }
+            }
+            else if (alias == ALIAS_THIS)
+            {
+                // Get selected nwk xpan (no selected is an error)
+                network nwk_this;
+                VerifyOrExit((status = get_current_network(nwk_this)) == registry_status::REG_SUCCESS);
+
+                // Put nwk into networks
+                networks.push_back(nwk_this);
+            }
+            else
+            {
+                network nwk;
+                status = get_network_by_ext_pan(alias, nwk);
+                if (status != REG_SUCCESS)
+                {
+                    status = get_network_by_name(alias, nwk);
+                    if (status != REG_SUCCESS)
+                    {
+                        VerifyOrExit((status = get_network_by_pan(alias, nwk)) == REG_SUCCESS);
+                    }
+                }
+                networks.push_back(nwk);
+            }
+
+            // Make results unique
+            std::sort(networks.begin(), networks.end(),
+                      [](network const &a, network const &b) { return a.name < b.name; });
+            std::unique(networks.begin(), networks.end(), [](network const &a, network const &b) {
+                return ::ot::commissioner::utils::CaseInsensitiveEqual(a.name, b.name);
+            });
+        }
+
+        ret.insert(ret.end(), networks.begin(), networks.end());
+
+    exit:
+        return status;
+    }
+
+    registry_status registry::forget_current_network()
+    {
+        return set_current_network(network_id{});
+    }
+
+    registry_status registry::set_current_network(const ext_pan xpan)
+    {
+        network         nwk;
+        registry_status status;
+
+        VerifyOrExit((status = get_network_by_ext_pan(xpan, nwk)) == REG_SUCCESS);
+        status = set_current_network(nwk.id);
+    exit:
+        return status;
+    }
+
+    registry_status registry::set_current_network(const network_id &nwk_id)
+    {
+        assert(storage != nullptr);
+
+        return map_status(storage->current_network_set(nwk_id));
+    }
+
+    registry_status registry::get_current_network(network & ret)
+    {
+        assert(storage != nullptr);
+        network_id nwk_id;
+        if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
+        {
+            return REG_ERROR;
+        }
+
+        return map_status(storage->get(nwk_id, ret));
+    }
+
+    registry_status registry::lookup_one(const network &pred, network &ret)
+    {
+        registry_status status;
+        NetworkArray    networks;
+        VerifyOrExit((status = map_status(storage->lookup(pred, networks))) == REG_SUCCESS);
+        VerifyOrExit(networks.size() == 1, status = REG_DATA_INVALID);
+        ret = networks[0];
+    exit:
+        return status;
+    }
+
+    registry_status registry::get_network_by_ext_pan(ext_pan xpan, network & ret)
+    {
+        network nwk{};
+        nwk.xpan = xpan;
+        return lookup_one(nwk, ret);
+    }
+
+    registry_status registry::get_network_by_name(const std::string &name, network &ret)
+    {
+        network nwk{};
+        nwk.name = name;
+        return lookup_one(nwk, ret);
+    }
+
+    registry_status registry::get_network_by_pan(const std::string &pan, network &ret)
+    {
+        network nwk{};
+        nwk.pan = pan;
+        return lookup_one(nwk, ret);
+    }
 
 } // namespace persistent_storage
 } // namespace commissioner
