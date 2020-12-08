@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   The file defines security materials storage implementation.
+ *   The file implements security materials storage.
  */
 
 #include "app/cli/security_materials.hpp"
@@ -44,6 +44,11 @@ namespace commissioner {
 namespace sm {
 
 using SMPair = std::pair<std::string, ByteArray *>;
+
+static Error GetNetworkSM_impl(const std::string  aNwkFolder, // a folder to start from
+                               const std::string  aAlias,     // network id or network name
+                               bool               aCCM,
+                               SecurityMaterials &aSM);
 
 static class SMRoot
 {
@@ -83,6 +88,7 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
 
     VerifyOrExit(!smRoot.Get().empty(),
                  error = ERROR_INVALID_ARGS("ThreadSMRoot is not known. Unable to access Security Materials."));
+
     domPath = smRoot.Get().append("/dom/").append(aDid).append("/");
     SuccessOrExit(error = PathExists(domPath));
     for (auto element : smElements)
@@ -104,16 +110,29 @@ exit:
     return error;
 }
 
-Error GetNetworkSM(const std::string aNid, bool ccm, SecurityMaterials &aSM)
+Error GetDefaultDomainSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
+{
+    return GetNetworkSM_impl("/dom/DefaultDomain/", aAlias, aCCM, aSM);
+}
+
+Error GetNetworkSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
+{
+    return GetNetworkSM_impl("/nwk/", aAlias, aCCM, aSM);
+}
+
+static Error GetNetworkSM_impl(const std::string  aNwkFolder,
+                               const std::string  aAlias,
+                               bool               aCCM,
+                               SecurityMaterials &aSM)
 {
     Error       error;
     std::string nwkPath;
 
     VerifyOrExit(!smRoot.Get().empty(),
                  error = ERROR_INVALID_ARGS("ThreadSMRoot is not known. Unable to access Security Materials."));
-    nwkPath = smRoot.Get().append("/nwk/").append(aNid).append("/");
+    nwkPath = smRoot.Get().append(aNwkFolder).append(aAlias).append("/");
     SuccessOrExit(error = PathExists(nwkPath));
-    if (ccm)
+    if (aCCM)
     {
         std::vector<SMPair> smElements{
             {"cert.pem", &aSM.mCertificate}, {"priv.pem", &aSM.mPrivateKey}, {"ca.pem", &aSM.mTrustAnchor}};
