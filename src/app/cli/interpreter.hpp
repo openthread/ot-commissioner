@@ -174,8 +174,8 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    Console                     mConsole;
-    std::shared_ptr<JobManager> mJobManager = nullptr;
+    Console                                                           mConsole;
+    std::shared_ptr<JobManager>                                       mJobManager = nullptr;
     std::shared_ptr<::ot::commissioner::persistent_storage::registry> mRegistry   = nullptr;
 
     bool mShouldExit = false;

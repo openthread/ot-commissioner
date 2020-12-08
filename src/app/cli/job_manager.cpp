@@ -252,43 +252,67 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     std::string           networkId;
     std::string           networkName;
     bool                  isCCM = false;
-    sm::SecurityMaterials dtlsConf;
+    sm::SecurityMaterials dtlsConfig;
 
     // get domain id by aNid
+    // get network id by aNid
+    // get network name by aNid
+    // get ccm
 
     if (!domainId.empty())
     {
-        error = sm::GetDomainSM(domainId, dtlsConf);
-        if (ERROR_NONE != error)
+        if (domainId != "DefaultDomain")
         {
-            WarningMsg(aNid, error.GetMessage());
-            error = ERROR_NONE;
+            error = sm::GetDomainSM(domainId, dtlsConfig);
+            if (ERROR_NONE != error)
+            {
+                WarningMsg(aNid, error.GetMessage());
+                error = ERROR_NONE;
+            }
+        }
+        else
+        {
+            // try with xpan
+            error = sm::GetDefaultDomainSM(networkId, isCCM, dtlsConfig);
+            if (ERROR_NONE != error)
+            {
+                WarningMsg(aNid, error.GetMessage());
+                error = ERROR_NONE;
+            }
+            if (dtlsConfig.IsEmpty())
+            {
+                // try with name
+                error = sm::GetDefaultDomainSM(networkName, isCCM, dtlsConfig);
+                if (ERROR_NONE != error)
+                {
+                    WarningMsg(aNid, error.GetMessage());
+                    error = ERROR_NONE;
+                }
+            }
         }
     }
-    if (!dtlsConf.IsEmpty())
+    if (!dtlsConfig.IsEmpty())
     {
         goto update;
     }
-    // get network id by aNid
-    // get ccm
+    // try with xpan
     if (!networkId.empty())
     {
-        error = sm::GetNetworkSM(networkId, isCCM, dtlsConf);
+        error = sm::GetNetworkSM(networkId, isCCM, dtlsConfig);
         if (ERROR_NONE != error)
         {
             WarningMsg(aNid, error.GetMessage());
             error = ERROR_NONE;
         }
     }
-    if (!dtlsConf.IsEmpty())
+    if (!dtlsConfig.IsEmpty())
     {
         goto update;
     }
-    // get network name by aNid
-    // reuse ccm
+    // try with name
     if (!networkName.empty())
     {
-        error = sm::GetNetworkSM(networkName, isCCM, dtlsConf);
+        error = sm::GetNetworkSM(networkName, isCCM, dtlsConfig);
         if (ERROR_NONE != error)
         {
             WarningMsg(aNid, error.GetMessage());
@@ -296,23 +320,23 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
         }
     }
 update:
-    if (dtlsConf.mCertificate.size() > 0)
+    if (dtlsConfig.mCertificate.size() > 0)
     {
-        aConfig.mCertificate = dtlsConf.mCertificate;
+        aConfig.mCertificate = dtlsConfig.mCertificate;
     }
-    if (dtlsConf.mPrivateKey.size() > 0)
+    if (dtlsConfig.mPrivateKey.size() > 0)
     {
-        aConfig.mPrivateKey = dtlsConf.mPrivateKey;
+        aConfig.mPrivateKey = dtlsConfig.mPrivateKey;
     }
-    if (dtlsConf.mTrustAnchor.size() > 0)
+    if (dtlsConfig.mTrustAnchor.size() > 0)
     {
-        aConfig.mTrustAnchor = dtlsConf.mTrustAnchor;
+        aConfig.mTrustAnchor = dtlsConfig.mTrustAnchor;
     }
-    if (dtlsConf.mPSKc.size() > 0)
+    if (dtlsConfig.mPSKc.size() > 0)
     {
-        aConfig.mPSKc = dtlsConf.mPSKc;
+        aConfig.mPSKc = dtlsConfig.mPSKc;
     }
-    if (dtlsConf.IsEmpty())
+    if (dtlsConfig.IsEmpty())
     {
         InfoMsg(aNid, "no updates to DTLS configuration, default configuration will be used");
     }

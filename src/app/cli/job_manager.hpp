@@ -96,6 +96,29 @@ private:
 
     Error PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
     Error PrepareStopJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
+    /**
+     * Updates DTLS parts of Config for the given network.
+     *
+     * If network belongs to a domain other than DefaultDomain, the
+     * appropriate lookup for credentials is done under
+     * $THREAD_SM_ROOT/dom/$did/ folder.
+     *
+     * If network belongs to DefaultDomain, the lookup is sequentially done in:
+     * - $THREAD_SM_ROOT/dom/DefaultDomain/$nid/
+     * - $THREAD_SM_ROOT/dom/DefaultDomain/$nname/
+     * - $THREAD_SM_ROOT/nwk/$nid/
+     * - $THREAD_SM_ROOT/nwk/$nname/
+     *
+     * If network does not belong to any domain, the lookup is done in:
+     * - $THREAD_SM_ROOT/nwk/$nid/
+     * - $THREAD_SM_ROOT/nwk/$nname/
+     *
+     * @note: SM administration personnel is free to give a name to a
+     *        netowrk folder by network id (XPAN ID) or network
+     *        name. However, first search is to be done by network id,
+     *        and if it was successful, i.e. at least one file was
+     *        found not empty, the search is stopped.
+     */
     Error PrepareDtlsConfig(const uint64_t aNid, Config &aConfig);
     Error CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr);
 

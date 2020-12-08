@@ -67,7 +67,9 @@ Error Init(const Config &aDefaultConfig);
 
 Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM);
 
-Error GetNetworkSM(const std::string aNid, bool ccm, SecurityMaterials &aSM);
+Error GetDefaultDomainSM(const std::string aAlias, bool ccm, SecurityMaterials &aSM);
+
+Error GetNetworkSM(const std::string aAlias, bool ccm, SecurityMaterials &aSM);
 
 } // namespace sm
 
