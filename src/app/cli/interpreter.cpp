@@ -259,12 +259,12 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
         config.mPSKc.assign(kMaxPSKcLength, 0xff);
         config.mLogger = SysLogger::Create(LogLevel::kDebug);
     }
-    mJobManager = std::shared_ptr<JobManager>(new JobManager());
+    mJobManager.reset(new JobManager());
     SuccessOrExit(error = mJobManager->Init(config, *this));
     mRegistry.reset(new Registry(aRegistryFile));
     VerifyOrExit(mRegistry != nullptr,
                  error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
-
+    VerifyOrExit(mRegistry->open() == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("registry failed to open"));
 exit:
     return error;
 }
