@@ -52,7 +52,14 @@ class JobManager;
 
 class Interpreter
 {
+    friend class InterpreterTestSuite;
+
 public:
+    using Expression     = std::vector<std::string>;
+    using StringArray    = std::vector<std::string>;
+    using Registry       = ot::commissioner::persistent_storage::registry;
+    using RegistryStatus = ot::commissioner::persistent_storage::registry_status;
+
     Interpreter()  = default;
     ~Interpreter() = default;
 
@@ -98,12 +105,9 @@ private:
         std::string mData;
     };
 
-    using Expression     = std::vector<std::string>;
-    using Evaluator      = std::function<Value(Interpreter *, const Expression &)>;
-    using JobEvaluator   = std::function<Value(Interpreter *, CommissionerAppPtr &, const Expression &)>;
-    using StringArray    = std::vector<std::string>;
-    using Registry       = ot::commissioner::persistent_storage::registry;
-    using RegistryStatus = ot::commissioner::persistent_storage::registry_status;
+    using Evaluator    = std::function<Value(Interpreter *, const Expression &)>;
+    using JobEvaluator = std::function<Value(Interpreter *, CommissionerAppPtr &, const Expression &)>;
+
     /**
      * Multi-network command context.
      *

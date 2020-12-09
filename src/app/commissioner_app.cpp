@@ -42,7 +42,6 @@
 #include "common/utils.hpp"
 
 namespace ot {
-
 namespace commissioner {
 
 JoinerInfo::JoinerInfo(JoinerType aType, uint64_t aEui64, const std::string &aPSKd, const std::string &aProvisioningUrl)
@@ -51,6 +50,11 @@ JoinerInfo::JoinerInfo(JoinerType aType, uint64_t aEui64, const std::string &aPS
     , mPSKd(aPSKd)
     , mProvisioningUrl(aProvisioningUrl)
 {
+}
+
+Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig)
+{
+    return CommissionerApp::Create(aCommApp, aConfig);
 }
 
 Error CommissionerApp::Create(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig)
@@ -561,6 +565,32 @@ Error CommissionerApp::SetMeshLocalPrefix(const std::string &aPrefix, MilliSecon
     SuccessOrExit(error = mCommissioner->SetPendingDataset(pendingDataset));
 
     MergeDataset(mPendingDataset, pendingDataset);
+
+exit:
+    return error;
+}
+
+Error CommissionerApp::GetMeshLocalAddr(std::string &      aMeshLocalAddr,
+                                        const std::string &aMeshLocalPrefix,
+                                        uint16_t           aLocator16)
+{
+    static const size_t kThreadMeshLocalPrefixLength = 8;
+    Error               error;
+    ByteArray           rawAddr;
+    Address             addr;
+
+    SuccessOrExit(error = Ipv6PrefixFromString(rawAddr, aMeshLocalPrefix));
+    VerifyOrExit(rawAddr.size() == kThreadMeshLocalPrefixLength,
+                 error = ERROR_INVALID_ARGS("Thread Mesh local prefix length={} != {}", rawAddr.size(),
+                                            kThreadMeshLocalPrefixLength));
+
+    utils::Encode<uint16_t>(rawAddr, 0x0000);
+    utils::Encode<uint16_t>(rawAddr, 0x00FF);
+    utils::Encode<uint16_t>(rawAddr, 0xFE00);
+    utils::Encode<uint16_t>(rawAddr, aLocator16);
+
+    SuccessOrExit(addr.Set(rawAddr));
+    aMeshLocalAddr = addr.ToString();
 
 exit:
     return error;

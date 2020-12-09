@@ -77,7 +77,7 @@ public:
      * @return ps_status
      * @see ps_status
      */
-    ps_status open();
+    virtual ps_status open() override;
 
     /**
      * Writes cache to file, closes file
@@ -85,7 +85,7 @@ public:
      * @return ps_status
      * @see ps_status
      */
-    ps_status close();
+    virtual ps_status close() override;
 
     /**
      * Adds value to store
@@ -96,10 +96,10 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    ps_status add(registrar const &val, registrar_id &ret_id);
-    ps_status add(domain const &val, domain_id &ret_id);
-    ps_status add(network const &val, network_id &ret_id);
-    ps_status add(border_router const &val, border_router_id &ret_id);
+    virtual ps_status add(registrar const &val, registrar_id &ret_id) override;
+    virtual ps_status add(domain const &val, domain_id &ret_id) override;
+    virtual ps_status add(network const &val, network_id &ret_id) override;
+    virtual ps_status add(border_router const &val, border_router_id &ret_id) override;
 
     /**
      * Deletes value by unique id from store
@@ -109,10 +109,10 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    ps_status del(registrar_id const &id);
-    ps_status del(domain_id const &id);
-    ps_status del(network_id const &id);
-    ps_status del(border_router_id const &id);
+    virtual ps_status del(registrar_id const &id) override;
+    virtual ps_status del(domain_id const &id) override;
+    virtual ps_status del(network_id const &id) override;
+    virtual ps_status del(border_router_id const &id) override;
 
     /**
      * Gets value by unique id from store
@@ -123,10 +123,10 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    ps_status get(registrar_id const &id, registrar &ret_val);
-    ps_status get(domain_id const &id, domain &ret_val);
-    ps_status get(network_id const &id, network &ret_val);
-    ps_status get(border_router_id const &id, border_router &ret_val);
+    virtual ps_status get(registrar_id const &id, registrar &ret_val) override;
+    virtual ps_status get(domain_id const &id, domain &ret_val) override;
+    virtual ps_status get(network_id const &id, network &ret_val) override;
+    virtual ps_status get(border_router_id const &id, border_router &ret_val) override;
 
     /**
      * Updates value in store
@@ -139,10 +139,10 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    ps_status update(registrar const &val);
-    ps_status update(domain const &val);
-    ps_status update(network const &val);
-    ps_status update(border_router const &val);
+    virtual ps_status update(registrar const &val) override;
+    virtual ps_status update(domain const &val) override;
+    virtual ps_status update(network const &val) override;
+    virtual ps_status update(border_router const &val) override;
 
     /**
      * Looks for a matching values in store
@@ -157,10 +157,10 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    ps_status lookup(registrar const &val, std::vector<registrar> &ret);
-    ps_status lookup(domain const &val, std::vector<domain> &ret);
-    ps_status lookup(network const &val, std::vector<network> &ret);
-    ps_status lookup(border_router const &val, std::vector<border_router> &ret);
+    virtual ps_status lookup(registrar const &val, std::vector<registrar> &ret) override;
+    virtual ps_status lookup(domain const &val, std::vector<domain> &ret) override;
+    virtual ps_status lookup(network const &val, std::vector<network> &ret) override;
+    virtual ps_status lookup(border_router const &val, std::vector<border_router> &ret) override;
 
     /**
      * Looks for a matching values in store
@@ -175,21 +175,21 @@ public:
      * @see ps_status
      * @see registry_entries.hpp
      */
-    ps_status lookup_any(registrar const &val, std::vector<registrar> &ret);
-    ps_status lookup_any(domain const &val, std::vector<domain> &ret);
-    ps_status lookup_any(network const &val, std::vector<network> &ret);
-    ps_status lookup_any(border_router const &val, std::vector<border_router> &ret);
+    virtual ps_status lookup_any(registrar const &val, std::vector<registrar> &ret) override;
+    virtual ps_status lookup_any(domain const &val, std::vector<domain> &ret) override;
+    virtual ps_status lookup_any(network const &val, std::vector<network> &ret) override;
+    virtual ps_status lookup_any(border_router const &val, std::vector<border_router> &ret) override;
 
     /**
      * Set current network.
      */
-    ps_status current_network_set(const network_id &nwk_id);
+    virtual ps_status current_network_set(const network_id &nwk_id) override;
     /**
      * Get current network
      *
      * @param nwk_id[out] current network identifier
      */
-    ps_status current_network_get(network_id &nwk_id);
+    virtual ps_status current_network_get(network_id &nwk_id) override;
 
 private:
     std::string            file_name;    /**< name of the file */

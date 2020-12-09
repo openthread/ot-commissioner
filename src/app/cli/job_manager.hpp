@@ -118,6 +118,8 @@ public:
     Error MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br);
 
 private:
+    friend class JobManagerTestSuite;
+
     using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
     using JobPool          = std::vector<Job *>;
     /**

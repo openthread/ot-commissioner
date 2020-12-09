@@ -700,7 +700,7 @@ Error JsonFromFile(std::string &aJson, const std::string &aPath)
     SuccessOrExit(error = ReadFile(jsonStr, aPath));
     try
     {
-        Json json = Json::parse(jsonStr);
+        Json json = Json::parse(StripComments(jsonStr));
         aJson     = json.dump(JSON_INDENT_DEFAULT);
     } catch (JsonException &e)
     {

@@ -78,28 +78,17 @@ namespace ot {
 namespace commissioner {
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
-    {"config", &Interpreter::ProcessConfig},
-    {"start", &Interpreter::ProcessStart},
-    {"stop", &Interpreter::ProcessStop},
-    {"active", &Interpreter::ProcessActive},
-    {"token", &Interpreter::ProcessToken},
-    {"br", &Interpreter::ProcessBr},
-    {"domain", &Interpreter::ProcessDomain},
-    {"network", &Interpreter::ProcessNetwork},
-    {"sessionid", &Interpreter::ProcessSessionId},
-    {"borderagent", &Interpreter::ProcessBorderAgent},
-    {"joiner", &Interpreter::ProcessJoiner},
-    {"commdataset", &Interpreter::ProcessCommDataset},
-    {"opdataset", &Interpreter::ProcessOpDataset},
-    {"bbrdataset", &Interpreter::ProcessBbrDataset},
-    {"reenroll", &Interpreter::ProcessReenroll},
-    {"domainreset", &Interpreter::ProcessDomainReset},
-    {"migrate", &Interpreter::ProcessMigrate},
-    {"mlr", &Interpreter::ProcessMlr},
-    {"announce", &Interpreter::ProcessAnnounce},
-    {"panid", &Interpreter::ProcessPanId},
-    {"energy", &Interpreter::ProcessEnergy},
-    {"exit", &Interpreter::ProcessExit},
+    {"config", &Interpreter::ProcessConfig},       {"start", &Interpreter::ProcessStart},
+    {"stop", &Interpreter::ProcessStop},           {"active", &Interpreter::ProcessActive},
+    {"token", &Interpreter::ProcessToken},         {"br", &Interpreter::ProcessBr},
+    {"domain", &Interpreter::ProcessDomain},       {"network", &Interpreter::ProcessNetwork},
+    {"sessionid", &Interpreter::ProcessSessionId}, {"borderagent", &Interpreter::ProcessBorderAgent},
+    {"joiner", &Interpreter::ProcessJoiner},       {"commdataset", &Interpreter::ProcessCommDataset},
+    {"opdataset", &Interpreter::ProcessOpDataset}, {"bbrdataset", &Interpreter::ProcessBbrDataset},
+    {"reenroll", &Interpreter::ProcessReenroll},   {"domainreset", &Interpreter::ProcessDomainReset},
+    {"migrate", &Interpreter::ProcessMigrate},     {"mlr", &Interpreter::ProcessMlr},
+    {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
+    {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"help", &Interpreter::ProcessHelp},
 };
 
@@ -345,7 +334,7 @@ void Interpreter::CancelCommand()
 
 Interpreter::Expression Interpreter::Read()
 {
-    return ParseExpression(mConsole.Read());
+    return ParseExpression(Console::Read());
 }
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
@@ -392,12 +381,11 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         NidArray nids;
 
         SuccessOrExit(value = ValidateMultiNetworkSyntax(retExpr, nids));
-        if (IsMultiJob(aExpr)) // asynchronous processing required
+        if (IsMultiJob(retExpr)) // asynchronous processing required
         {
-            SuccessOrExit(value = mJobManager->PrepareJobs(aExpr, nids, mContext.HasGroupAlias()));
+            SuccessOrExit(value = mJobManager->PrepareJobs(retExpr, nids, mContext.HasGroupAlias()));
             mJobManager->RunJobs();
             value = mJobManager->CollectJobsValue();
-            mJobManager->CleanupJobs();
         }
         else // synchronous processing possible
         {
@@ -416,6 +404,8 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         }
         value = evaluator->second(this, retExpr);
     }
+    // It is necessary to cleanup import file anyways
+    mJobManager->CleanupJobs();
 exit:
     // do not cleanup mContext here as the export information is
     // needed for post-processing resultant value
