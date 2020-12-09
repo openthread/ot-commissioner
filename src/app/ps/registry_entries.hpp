@@ -145,29 +145,42 @@ struct domain
 /**
  * Extended PAN Id wrapper
  */
-struct ext_pan
+struct xpan_id
 {
     uint64_t value;
-    ext_pan(uint64_t val)
+
+    xpan_id(uint64_t val)
         : value(val)
     {
     }
-    ext_pan()
-        : ext_pan(0)
+
+    xpan_id()
+        : xpan_id(0)
     {
     }
-    ext_pan(const std::string &xpan_str)
+
+    xpan_id(const std::string xpan_str)
     {
         std::istringstream input(xpan_str);
         input >> std::hex >> value;
     }
-    bool operator==(const ext_pan &other) const { return value == other.value; }
-         operator std::string() const
+
+    std::string str() const { return *this; }
+
+    bool operator==(const xpan_id &other) const { return value == other.value; }
+
+    bool operator==(const uint64_t other) const { return value == other; }
+
+    operator std::string() const
     {
         std::ostringstream stream;
         stream << std::setfill('0') << std::setw(sizeof(value) * 2) << std::hex << value;
-        return stream.str();
+        std::string out = stream.str();
+        for_each(out.begin(), out.end(), [](char &c) { c = std::toupper(c); });
+        return out;
     }
+
+    operator uint64_t() const { return value; }
 };
 
 /**
@@ -178,7 +191,7 @@ struct network
     network_id   id;      /**< unique id in registry */
     domain_id    dom_id;  /**< reference to the domain the network belongs to */
     std::string  name;    /**< network name */
-    ext_pan      xpan;    /**< Extended PAN_ID */
+    xpan_id      xpan;    /**< Extended PAN_ID */
     unsigned int channel; /**< network channel */
     std::string  pan;     /**< PAN_ID */
     std::string  mlp;     /**< Mesh-local prefix */
@@ -188,7 +201,7 @@ struct network
     network(network_id const & nid,
             domain_id const &  did,
             std::string const &nname,
-            ext_pan const &    nxpan,
+            xpan_id const &    nxpan,
             unsigned int const nchannel,
             std::string const &npan,
             std::string const &nmlp,
@@ -204,7 +217,7 @@ struct network
     {
     }
     network()
-        : network(EMPTY_ID, EMPTY_ID, "", ext_pan{}, 0, "", "", -1)
+        : network(EMPTY_ID, EMPTY_ID, "", xpan_id{}, 0, "", "", -1)
     {
     }
 };

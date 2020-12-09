@@ -35,6 +35,7 @@
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
 #include "app/cli/security_materials.hpp"
+#include "app/ps/registry.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -192,12 +193,14 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
 
         SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
 
+        persistent_storage::border_router br;
         // TODO: resolve nid to border_router
 
-        // TODO: augment aExpr with br_addr and br_port that are expected by Job handler
-
-        ASSERT(aExpr.size() == 3); // 'start br_addr br_port'
-        SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
+        auto expr = aExpr;
+        expr.push_back(br.agent.mAddr);
+        expr.push_back(std::to_string(br.agent.mPort));
+        ASSERT(expr.size() == 3); // 'start br_addr br_port'
+        SuccessOrExit(error = CreateNewJob(entry->second, expr));
     }
 exit:
     return error;
@@ -239,17 +242,25 @@ exit:
 
 Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
 {
-    Error                 error;
-    std::string           domainId;
-    std::string           networkId;
-    std::string           networkName;
-    bool                  isCCM = false;
-    sm::SecurityMaterials dtlsConfig;
+    Error                       error;
+    std::string                 domainId;
+    std::string                 networkId;
+    std::string                 networkName;
+    bool                        isCCM = false;
+    sm::SecurityMaterials       dtlsConfig;
+    Interpreter::RegistryStatus status;
+    persistent_storage::network nwk;
 
-    // TODO: get domain id by aNid
-    // TODO: get network id by aNid
-    // TODO: get network name by aNid
-    // TODO: get ccm
+    status = mInterpreter->mRegistry->get_network_by_xpan(aNid, nwk);
+    VerifyOrExit(status == Interpreter::RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
+    networkId   = nwk.xpan.str();
+    networkName = nwk.name;
+    isCCM       = nwk.ccm > 0;
+    status      = mInterpreter->mRegistry->get_domain_name_by_xpan(aNid, domainId);
+    if (status != Interpreter::RegistryStatus::REG_SUCCESS)
+    {
+        // TODO: log domain not found
+    }
 
     if (!domainId.empty())
     {
@@ -330,6 +341,7 @@ update:
     {
         InfoMsg(aNid, "no updates to DTLS configuration, default configuration will be used");
     }
+exit:
     return error;
 }
 
@@ -400,10 +412,13 @@ void JobManager::StopCommissionerPool()
 
 Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
 {
-    Error    error = ERROR_NONE;
-    uint64_t nid   = 0;
+    Error                       error = ERROR_NONE;
+    uint64_t                    nid   = 0;
+    Interpreter::RegistryStatus status;
 
-    // TODO: get selected nid from PS
+    status = mInterpreter->mRegistry->get_current_network_xpan(nid);
+    VerifyOrExit(Interpreter::RegistryStatus::REG_SUCCESS == status,
+                 error = ERROR_IO_ERROR("selected network not found"));
 
     if (nid != 0)
     {

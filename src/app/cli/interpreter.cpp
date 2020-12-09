@@ -547,7 +547,7 @@ void Interpreter::Print(const Value &aValue)
 
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
 {
-    std::string nidHex = utils::Hex(utils::Encode(aNid));
+    std::string nidHex = persistent_storage::xpan_id(aNid);
 
     mConsole.Write(nidHex.append(": "));
     mConsole.Write(aMessage, aColor);

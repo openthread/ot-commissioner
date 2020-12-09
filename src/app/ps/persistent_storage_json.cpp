@@ -286,7 +286,7 @@ ps_status persistent_storage_json::lookup(network const &val, std::vector<networ
     pred = [val](network const &el) {
         bool ret = (val.ccm < 0 || val.ccm == el.ccm) && (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
                    (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) &&
-                   (val.name.empty() || (val.name == el.name)) && (val.xpan == 0 || val.xpan == el.xpan) &&
+                   (val.name.empty() || (val.name == el.name)) && (val.xpan.value == 0 || val.xpan == el.xpan) &&
                    (val.pan.empty() || CaseInsensitiveEqual(val.pan, el.pan)) &&
                    (val.mlp.empty() || CaseInsensitiveEqual(val.mlp, el.mlp)) &&
                    (val.channel == 0 || (val.channel == el.channel));
@@ -386,7 +386,7 @@ ps_status persistent_storage_json::lookup_any(network const &val, std::vector<ne
     pred = [val](network const &el) {
         bool ret = (val.ccm < 0 || val.ccm == el.ccm) || (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
                    (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) ||
-                   (val.name.empty() || (val.name == el.name)) || (val.xpan == 0 || val.xpan == el.xpan) ||
+                   (val.name.empty() || (val.name == el.name)) || (val.xpan.value == 0 || val.xpan == el.xpan) ||
                    (val.pan.empty() || CaseInsensitiveEqual(val.pan, el.pan)) ||
                    (val.mlp.empty() || CaseInsensitiveEqual(val.mlp, el.mlp)) ||
                    (val.channel == 0 || (val.channel == el.channel));
@@ -460,12 +460,14 @@ ps_status persistent_storage_json::current_network_get(network_id &nwk_id)
 {
     if (!cache.contains(JSON_CURR_NWK))
     {
-        return PS_ERROR;
+        nwk_id               = network_id{};
+        cache[JSON_CURR_NWK] = nwk_id;
     }
-
-    cache[JSON_CURR_NWK] = nwk_id;
-
-    return cache_to_file();
+    else
+    {
+        nwk_id = cache[JSON_CURR_NWK];
+    }
+    return PS_SUCCESS;
 }
 
 } // namespace persistent_storage
