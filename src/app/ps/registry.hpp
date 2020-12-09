@@ -31,7 +31,8 @@ enum registry_status
      * content
      */
     REG_DATA_INVALID,
-    REG_ERROR /**< operation failed */
+    REG_AMBIGUITY, /**< lookup result was ambiguous */
+    REG_ERROR,     /**< operation failed */
 };
 
 /**
@@ -39,7 +40,8 @@ enum registry_status
  */
 class registry
 {
-    using ext_pan      = ::ot::commissioner::persistent_storage::ext_pan;
+    using xpan_id      = ::ot::commissioner::persistent_storage::xpan_id;
+    using DomainArray  = std::vector<domain>;
     using NetworkArray = std::vector<network>;
     using StringArray  = std::vector<std::string>;
 
@@ -114,7 +116,7 @@ public:
     /**
      * Set current network.
      */
-    registry_status set_current_network(const ext_pan xpan);
+    registry_status set_current_network(const xpan_id xpan);
 
     /**
      * Forget current network
@@ -127,7 +129,13 @@ public:
      */
     registry_status get_current_network(network &ret);
 
-protected:
+    /**
+     * Get current network XPAN ID
+     *
+     * @param [out] ret current network XPAN ID
+     */
+    registry_status get_current_network_xpan(uint64_t &ret);
+
     /**
      * Get network with specified extended PAN id
      *
@@ -139,7 +147,7 @@ protected:
      * @li @ref REG_DATA_INVALID is more than one network was foud
      * @li @ref REG_ERROR on other errors
      */
-    registry_status get_network_by_ext_pan(ext_pan xpan, network &ret);
+    registry_status get_network_by_xpan(const xpan_id xpan, network &ret);
 
     /**
      * Get network with specified name
@@ -149,7 +157,7 @@ protected:
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
-     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_AMBUGUITY is more than one network was foud
      * @li @ref REG_ERROR on other errors
      */
     registry_status get_network_by_name(const std::string &name, network &ret);
@@ -167,6 +175,20 @@ protected:
      */
     registry_status get_network_by_pan(const std::string &pan, network &ret);
 
+    /**
+     * Get domain name for the network identified by XPAN ID
+     *
+     * @param[in] xpan XPAN ID to lookup by
+     * @param[out] name resulting domain name
+     * @return
+     * @li @ref RET_SUCCESS if name is found
+     * @li @ref REG_NOT_FOUND if no network was found
+     * @li @ref REG_AMBUGUITY is more than one network was foud
+     * @li @ref REG_ERROR on other errors
+     */
+    registry_status get_domain_name_by_xpan(const xpan_id xpan, std::string &name);
+
+protected:
     /**
      * Lookup the network
      *

@@ -68,14 +68,10 @@ Error Init(const Config &aDefaultConfig)
         root = getenv("THREAD_SM_ROOT");
         if (root.empty())
         {
-            return ERROR_INVALID_ARGS("ThreadSMRoot is not available");
+            return ERROR_INVALID_ARGS("ThreadSMRoot value is not available");
         }
-        smRoot.Set(root);
     }
-    else
-    {
-        smRoot.Set(root);
-    }
+    smRoot.Set(root);
     return ERROR_NONE;
 }
 

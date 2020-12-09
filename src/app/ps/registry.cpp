@@ -36,9 +36,9 @@ registry_status map_status(ps_status ps_st)
     return REG_ERROR;
 }
 
-const std::string           ALIAS_THIS{"this"};
-const std::string           ALIAS_ALL{"all"};
-const std::string           ALIAS_OTHERS{"others"};
+const std::string ALIAS_THIS{"this"};
+const std::string ALIAS_ALL{"all"};
+const std::string ALIAS_OTHERS{"others"};
 
 } // namespace
 
@@ -227,158 +227,185 @@ registry_status registry::add(BorderAgent const &val)
     return status;
 }
 
-    registry_status registry::get_networks_in_domain(const std::string &dom_name, NetworkArray &ret)
+registry_status registry::get_networks_in_domain(const std::string &dom_name, NetworkArray &ret)
+{
+    registry_status     status;
+    std::vector<domain> domains;
+    domain              dom{EMPTY_ID, dom_name};
+    network             nwk{};
+
+    VerifyOrExit((status = map_status(storage->lookup(dom, domains))) == REG_SUCCESS);
+    VerifyOrExit(domains.size() < 2, status = REG_ERROR);
+
+    nwk.dom_id = domains[0].id;
+    status     = map_status(storage->lookup(nwk, ret));
+
+exit:
+    return status;
+}
+
+registry_status registry::get_all_networks(NetworkArray &ret)
+{
+    registry_status status;
+
+    status = map_status(storage->lookup(network{}, ret));
+
+    return status;
+}
+
+registry_status registry::get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret)
+{
+    registry_status status;
+
+    NetworkArray networks;
+    for (auto alias : aliases)
     {
-        registry_status     status;
-        std::vector<domain> domains;
-        domain              dom{EMPTY_ID, dom_name};
-        network             nwk{};
-
-        VerifyOrExit((status = map_status(storage->lookup(dom, domains))) == REG_SUCCESS);
-        VerifyOrExit(domains.size() < 2, status = REG_ERROR);
-
-        nwk.dom_id = domains[0].id;
-        status     = map_status(storage->lookup(nwk, ret));
-
-    exit:
-        return status;
-    }
-
-    registry_status registry::get_all_networks(NetworkArray & ret)
-    {
-        registry_status status;
-
-        status = map_status(storage->lookup(network{}, ret));
-
-        return status;
-    }
-
-    registry_status registry::get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret)
-    {
-        registry_status status;
-
-        NetworkArray networks;
-        for (auto alias : aliases)
+        if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
         {
-            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            VerifyOrExit((status = get_all_networks(networks)) == REG_SUCCESS);
+            if (alias == ALIAS_OTHERS)
             {
-                VerifyOrExit((status = get_all_networks(networks)) == REG_SUCCESS);
-                if (alias == ALIAS_OTHERS)
+                network nwk_this;
+                VerifyOrExit((status = get_current_network(nwk_this)));
+                auto nwk_iter = find_if(networks.begin(), networks.end(),
+                                        [&nwk_this](const network &el) { return nwk_this.id.id == el.id.id; });
+                if (nwk_iter != networks.end())
                 {
-                    network nwk_this;
-                    VerifyOrExit((status = get_current_network(nwk_this)));
-                    auto nwk_iter = find_if(networks.begin(), networks.end(),
-                                            [&nwk_this](const network &el) { return nwk_this.id.id == el.id.id; });
-                    if (nwk_iter != networks.end())
-                    {
-                        networks.erase(nwk_iter);
-                    }
+                    networks.erase(nwk_iter);
                 }
             }
-            else if (alias == ALIAS_THIS)
-            {
-                // Get selected nwk xpan (no selected is an error)
-                network nwk_this;
-                VerifyOrExit((status = get_current_network(nwk_this)) == registry_status::REG_SUCCESS);
+        }
+        else if (alias == ALIAS_THIS)
+        {
+            // Get selected nwk xpan (no selected is an error)
+            network nwk_this;
+            VerifyOrExit((status = get_current_network(nwk_this)) == registry_status::REG_SUCCESS);
 
-                // Put nwk into networks
-                networks.push_back(nwk_this);
-            }
-            else
+            // Put nwk into networks
+            networks.push_back(nwk_this);
+        }
+        else
+        {
+            network nwk;
+            status = get_network_by_xpan(alias, nwk);
+            if (status != REG_SUCCESS)
             {
-                network nwk;
-                status = get_network_by_ext_pan(alias, nwk);
+                status = get_network_by_name(alias, nwk);
                 if (status != REG_SUCCESS)
                 {
-                    status = get_network_by_name(alias, nwk);
-                    if (status != REG_SUCCESS)
-                    {
-                        VerifyOrExit((status = get_network_by_pan(alias, nwk)) == REG_SUCCESS);
-                    }
+                    VerifyOrExit((status = get_network_by_pan(alias, nwk)) == REG_SUCCESS);
                 }
-                networks.push_back(nwk);
             }
-
-            // Make results unique
-            std::sort(networks.begin(), networks.end(),
-                      [](network const &a, network const &b) { return a.name < b.name; });
-            std::unique(networks.begin(), networks.end(), [](network const &a, network const &b) {
-                return ::ot::commissioner::utils::CaseInsensitiveEqual(a.name, b.name);
-            });
+            networks.push_back(nwk);
         }
 
-        ret.insert(ret.end(), networks.begin(), networks.end());
-
-    exit:
-        return status;
+        // Make results unique
+        std::sort(networks.begin(), networks.end(), [](network const &a, network const &b) { return a.name < b.name; });
+        std::unique(networks.begin(), networks.end(), [](network const &a, network const &b) {
+            return ::ot::commissioner::utils::CaseInsensitiveEqual(a.name, b.name);
+        });
     }
 
-    registry_status registry::forget_current_network()
+    ret.insert(ret.end(), networks.begin(), networks.end());
+
+exit:
+    return status;
+}
+
+registry_status registry::forget_current_network()
+{
+    return set_current_network(network_id{});
+}
+
+registry_status registry::set_current_network(const xpan_id xpan)
+{
+    network         nwk;
+    registry_status status;
+
+    VerifyOrExit((status = get_network_by_xpan(xpan, nwk)) == REG_SUCCESS);
+    status = set_current_network(nwk.id);
+exit:
+    return status;
+}
+
+registry_status registry::set_current_network(const network_id &nwk_id)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->current_network_set(nwk_id));
+}
+
+registry_status registry::get_current_network(network &ret)
+{
+    assert(storage != nullptr);
+    network_id nwk_id;
+    if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
     {
-        return set_current_network(network_id{});
+        return REG_ERROR;
     }
 
-    registry_status registry::set_current_network(const ext_pan xpan)
-    {
-        network         nwk;
-        registry_status status;
+    return (nwk_id.id == EMPTY_ID) ? (ret = network{}, REG_SUCCESS) : map_status(storage->get(nwk_id, ret));
+}
 
-        VerifyOrExit((status = get_network_by_ext_pan(xpan, nwk)) == REG_SUCCESS);
-        status = set_current_network(nwk.id);
-    exit:
-        return status;
-    }
+registry_status registry::get_current_network_xpan(uint64_t &ret)
+{
+    registry_status status;
+    network         nwk;
+    VerifyOrExit(REG_SUCCESS == (status = get_current_network(nwk)));
+    ret = nwk.xpan;
+exit:
+    return status;
+}
 
-    registry_status registry::set_current_network(const network_id &nwk_id)
-    {
-        assert(storage != nullptr);
+registry_status registry::lookup_one(const network &pred, network &ret)
+{
+    registry_status status;
+    NetworkArray    networks;
+    VerifyOrExit((status = map_status(storage->lookup(pred, networks))) == REG_SUCCESS);
+    VerifyOrExit(networks.size() == 1, status = REG_AMBIGUITY);
+    ret = networks[0];
+exit:
+    return status;
+}
 
-        return map_status(storage->current_network_set(nwk_id));
-    }
+registry_status registry::get_network_by_xpan(const xpan_id xpan, network &ret)
+{
+    network nwk{};
+    nwk.xpan = xpan;
+    return lookup_one(nwk, ret);
+}
 
-    registry_status registry::get_current_network(network & ret)
-    {
-        assert(storage != nullptr);
-        network_id nwk_id;
-        if (map_status(storage->current_network_get(nwk_id)) != registry_status::REG_SUCCESS)
-        {
-            return REG_ERROR;
-        }
+registry_status registry::get_network_by_name(const std::string &name, network &ret)
+{
+    network nwk{};
+    nwk.name = name;
+    return lookup_one(nwk, ret);
+}
 
-        return map_status(storage->get(nwk_id, ret));
-    }
+registry_status registry::get_network_by_pan(const std::string &pan, network &ret)
+{
+    network nwk{};
+    nwk.pan = pan;
+    return lookup_one(nwk, ret);
+}
 
-    registry_status registry::lookup_one(const network &pred, network &ret)
-    {
-        registry_status status;
-        NetworkArray    networks;
-        VerifyOrExit((status = map_status(storage->lookup(pred, networks))) == REG_SUCCESS);
-        VerifyOrExit(networks.size() == 1, status = REG_DATA_INVALID);
-        ret = networks[0];
-    exit:
-        return status;
-    }
+registry_status registry::get_domain_name_by_xpan(const xpan_id xpan, std::string &name)
+{
+    registry_status status;
+    network         pred;
+    network         nwk;
+    domain          dom;
+    DomainArray     domains;
 
-    registry_status registry::get_network_by_ext_pan(ext_pan xpan, network & ret)
-    {
-        network nwk{};
-        nwk.xpan = xpan;
-        return lookup_one(nwk, ret);
-    }
-
-    registry_status registry::get_network_by_name(const std::string &name, network &ret)
-    {
-        network nwk{};
-        nwk.name = name;
-        return lookup_one(nwk, ret);
-    }
-
-    registry_status registry::get_network_by_pan(const std::string &pan, network &ret)
-    {
-        network nwk{};
-        nwk.pan = pan;
-        return lookup_one(nwk, ret);
-    }
+    pred.xpan = xpan;
+    VerifyOrExit(REG_SUCCESS == (status = lookup_one(pred, nwk)));
+    dom.id = nwk.dom_id;
+    VerifyOrExit(REG_SUCCESS == (status = map_status(storage->lookup(dom, domains))));
+    VerifyOrExit(domains.size() == 1, status = REG_AMBIGUITY);
+    name = domains[0].name;
+exit:
+    return status;
+}
 
 } // namespace persistent_storage
 } // namespace commissioner
