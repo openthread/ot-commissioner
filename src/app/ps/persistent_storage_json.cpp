@@ -71,6 +71,12 @@ bool persistent_storage_json::cache_struct_validation()
 
 ps_status persistent_storage_json::cache_from_file()
 {
+    if (file_name.empty())
+    {
+        // No persistence, nothing to do
+        return PS_SUCCESS;
+    }
+
     if (semaphore_wait(storage_lock) != ot::os::sem::sem_status::SEM_SUCCESS)
     {
         return PS_ERROR;
@@ -119,6 +125,12 @@ ps_status persistent_storage_json::cache_from_file()
 
 ps_status persistent_storage_json::cache_to_file()
 {
+    if (file_name.empty())
+    {
+        // No persistence, nothing to do
+        return PS_SUCCESS;
+    }
+
     if (semaphore_wait(storage_lock) != ot::os::sem::sem_status::SEM_SUCCESS)
     {
         return PS_ERROR;
@@ -138,6 +150,11 @@ ps_status persistent_storage_json::cache_to_file()
 
 ps_status persistent_storage_json::open()
 {
+    if (file_name.empty())
+    {
+        // No persistence, use default contents
+        cache = json_default();
+    }
     cache_from_file();
     return cache_to_file();
 }

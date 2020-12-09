@@ -677,7 +677,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     case 3:
     {
         // starting network with explicit br_addr and br_port
-        VerifyOrExit(mRegistry->current_network_forget() == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(mRegistry->forget_current_network() == RegistryStatus::REG_SUCCESS,
                      value = ERROR_IO_ERROR("failed to drop network selection"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         break;
