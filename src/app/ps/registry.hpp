@@ -67,6 +67,7 @@ enum registry_status
  */
 class registry
 {
+public:
     using xpan_id           = ::ot::commissioner::persistent_storage::xpan_id;
     using DomainArray       = std::vector<domain>;
     using NetworkArray      = std::vector<network>;
@@ -74,7 +75,6 @@ class registry
     using XpanIdArray       = std::vector<uint64_t>;
     using StringArray       = std::vector<std::string>;
 
-public:
     /**
      * Registry constructor with provided persistent_storage
      * @see persistent_storage
@@ -94,7 +94,7 @@ public:
     /**
      * Registry destructor
      */
-    virtual ~registry();
+    ~registry();
 
     /**
      * Opens and prepares registry for work
@@ -300,10 +300,10 @@ private:
     persistent_storage *storage        = nullptr; /**< persistent storage */
 };
 
+registry *CreateRegistry(const std::string &aFile);
+
 } // namespace persistent_storage
 } // namespace commissioner
 } // namespace ot
-
-extern ot::commissioner::persistent_storage::registry gRegistry;
 
 #endif // _REGISTRY_HPP_

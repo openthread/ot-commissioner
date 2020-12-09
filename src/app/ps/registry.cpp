@@ -42,6 +42,11 @@ const std::string ALIAS_OTHERS{"others"};
 
 } // namespace
 
+registry *CreateRegistry(const std::string &aFile)
+{
+    return new registry(aFile);
+}
+
 registry::registry(persistent_storage *strg)
     : manage_storage(false)
     , storage(strg)

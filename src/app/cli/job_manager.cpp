@@ -56,7 +56,7 @@ Error JobManager::Init(const Config &aConf)
 
     mDefaultConf = aConf;
     SuccessOrExit(error = sm::Init(aConf));
-    SuccessOrExit(error = CommissionerApp::Create(mDefaultCommissioner, aConf));
+    SuccessOrExit(error = CommissionerAppCreate(mDefaultCommissioner, aConf));
 exit:
     return error;
 }
@@ -82,7 +82,7 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
     Interpreter::JobEvaluator eval;
     auto                      mapItem = Interpreter::mJobEvaluatorMap.find(utils::ToLower(aExpr[0]));
 
-    if (mapItem != Interpreter::mJobEvaluatorMap.end())
+    if (mapItem == Interpreter::mJobEvaluatorMap.end())
     {
         return ERROR_INVALID_SYNTAX("{} not eligible for job", aExpr[0]);
     }
@@ -165,8 +165,9 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
             CommissionerAppPtr commissioner;
 
             SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
-            SuccessOrExit(error = CommissionerApp::Create(commissioner, conf));
+            SuccessOrExit(error = CommissionerAppCreate(commissioner, conf));
             mCommissionerPool[nid] = commissioner;
+            entry                  = mCommissionerPool.find(nid);
         }
 
         bool active = entry->second->IsActive();
@@ -580,7 +581,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
             CommissionerAppPtr commissioner = nullptr;
 
             SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
-            SuccessOrExit(error = CommissionerApp::Create(commissioner, conf));
+            SuccessOrExit(error = CommissionerAppCreate(commissioner, conf));
             mCommissionerPool[nid] = commissioner;
             aCommissioner          = mCommissionerPool[nid];
         }

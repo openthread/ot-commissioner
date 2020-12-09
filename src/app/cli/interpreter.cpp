@@ -331,7 +331,7 @@ void Interpreter::CancelCommand()
 
 Interpreter::Expression Interpreter::Read()
 {
-    return ParseExpression(mConsole.Read());
+    return ParseExpression(Console::Read());
 }
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
@@ -378,12 +378,11 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         NidArray nids;
 
         SuccessOrExit(value = ValidateMultiNetworkSyntax(retExpr, nids));
-        if (IsMultiJob(aExpr)) // asynchronous processing required
+        if (IsMultiJob(retExpr)) // asynchronous processing required
         {
-            SuccessOrExit(value = mJobManager->PrepareJobs(aExpr, nids, mContext.HasGroupAlias()));
+            SuccessOrExit(value = mJobManager->PrepareJobs(retExpr, nids, mContext.HasGroupAlias()));
             mJobManager->RunJobs();
             value = mJobManager->CollectJobsValue();
-            mJobManager->CleanupJobs();
         }
         else // synchronous processing possible
         {
@@ -402,6 +401,8 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         }
         value = evaluator->second(this, retExpr);
     }
+    // It is necessary to cleanup import file anyways
+    mJobManager->CleanupJobs();
 exit:
     // do not cleanup mContext here as the export information is
     // needed for post-processing resultant value
@@ -1166,7 +1167,7 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
             std::string meshLocalAddr;
             SuccessOrExit(value = commissioner->GetBorderAgentLocator(locator));
             SuccessOrExit(value = commissioner->GetMeshLocalPrefix(meshLocalPrefix));
-            SuccessOrExit(value = Commissioner::GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
+            SuccessOrExit(value = commissioner->GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
             value = meshLocalAddr;
         }
         else
