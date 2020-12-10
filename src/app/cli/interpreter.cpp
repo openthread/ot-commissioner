@@ -240,6 +240,24 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
     return ToLower(aLhs) == ToLower(aRhs);
 }
 
+bool Interpreter::Context::HasGroupAlias()
+{
+    for (auto alias : mNwkAliases)
+    {
+        if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            return true;
+    }
+    return false;
+}
+
+void Interpreter::Context::Cleanup()
+{
+    mNwkAliases.clear();
+    mDomAliases.clear();
+    mExportFiles.clear();
+    mImportFiles.clear();
+}
+
 Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegistryFile)
 {
     Error error;
@@ -306,42 +324,50 @@ Interpreter::Expression Interpreter::Read()
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 {
-    Expression  retExpr;
-    StringArray nwkAliases;
-    StringArray domAliases;
-    StringArray exportFiles;
-    StringArray importFiles;
-    bool        supported;
-    Value       value;
+    Expression retExpr;
+    bool       supported;
+    Value      value;
 
     VerifyOrExit(!aExpr.empty(), value = ERROR_NONE);
 
-    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles));
+    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
     // export file specification must be single or omitted
-    VerifyOrExit(exportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
+    VerifyOrExit(mContext.mExportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
     // import file specification must be single or omitted
-    VerifyOrExit(importFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
+    VerifyOrExit(mContext.mImportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
 
-    if (exportFiles.size() > 0)
+    if (mContext.mExportFiles.size() > 0)
     {
         supported = IsFeatureSupported(mExportSyntax, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
         // export and import must not be specified simultaneously
-        VerifyOrExit(importFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
+        VerifyOrExit(mContext.mImportFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
     }
-    else if (importFiles.size() > 0)
+    else if (mContext.mImportFiles.size() > 0)
     {
         supported = IsFeatureSupported(mImportSyntax, retExpr);
         VerifyOrExit(supported, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
         // export and import must not be specified simultaneously
-        VerifyOrExit(exportFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
+        VerifyOrExit(mContext.mExportFiles.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_EXP_IMP_MUTUAL));
         // let job manager take care of import data
-        mJobManager->SetImportFile(importFiles.front());
+        mJobManager->SetImportFile(mContext.mImportFiles.front());
     }
 
-    if (IsMultiNetworkSyntax(aExpr) && IsMultiJob(aExpr))
+    if (IsMultiNetworkSyntax(aExpr))
     {
-        value = EvaluateMultiNetwork(retExpr, nwkAliases, domAliases);
+        NidArray nids;
+
+        SuccessOrExit(value = ValidateMultiNetworkSyntax(retExpr, nids));
+        if (IsMultiJob(aExpr)) // asynchronous processing required
+        {
+            SuccessOrExit(value = mJobManager->PrepareJobs(aExpr, nids, mContext.HasGroupAlias()));
+            mJobManager->RunJobs();
+            // TODO: post-process collected values -> build value
+            mJobManager->CleanupJobs();
+        }
+        else // synchronous processing possible
+        {
+        }
     }
     else
     {
@@ -352,14 +378,14 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
             ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
                                                   aExpr.front()));
         }
-        if (importFiles.size() > 0)
+        if (mContext.mImportFiles.size() > 0)
         {
             SuccessOrExit(value = mJobManager->AppendImport(0, retExpr));
         }
         value = evaluator->second(this, retExpr);
     }
-    mJobManager->CleanupJobs();
 exit:
+    mContext.Cleanup();
     ASSERT(mJobManager->IsClean());
     return value;
 }
@@ -381,42 +407,37 @@ bool Interpreter::IsMultiJob(const Expression &aExpr)
     return IsFeatureSupported(mMultiJobExecution, aExpr);
 }
 
-Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
-                                                     const StringArray &aNwkAliases,
-                                                     const StringArray &aDomAliases)
+Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, NidArray &aNids)
 {
-    NidArray nids;
-    bool     groupAlias = false;
-    Error    error;
-    bool     supported;
+    Error error;
+    bool  supported;
 
-    if (aNwkAliases.size() > 0)
+    if (mContext.mNwkAliases.size() > 0)
     {
         // verify if respective syntax supported by the current command
         supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
         // network and domain must not be specified simultaneously
-        VerifyOrExit(aDomAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
+        VerifyOrExit(mContext.mDomAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
         // validate group alias usage; if used, it must be alone
-        for (auto alias : aNwkAliases)
+        for (auto alias : mContext.mNwkAliases)
         {
             if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
             {
-                groupAlias = true;
-                VerifyOrExit(aNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
+                VerifyOrExit(mContext.mNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
             }
         }
         // TODO: resolve aliases to array of network ids
     }
-    else if (aDomAliases.size() > 0)
+    else if (mContext.mDomAliases.size() > 0)
     {
         // verify if respective syntax supported by the current command
         supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
         VerifyOrExit(supported, error = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
         // network and domain must not be specified simultaneously
-        VerifyOrExit(aNwkAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
+        VerifyOrExit(mContext.mNwkAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
         // domain must be single
-        VerifyOrExit(aDomAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
+        VerifyOrExit(mContext.mDomAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
         // TODO: resolve alias to array of network ids
     }
     else
@@ -426,10 +447,7 @@ Interpreter::Value Interpreter::EvaluateMultiNetwork(const Expression & aExpr,
         ASSERT(false); // must not hit this, ever
     }
 
-    VerifyOrExit(nids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
-    SuccessOrExit(error = mJobManager->PrepareJobs(aExpr, nids, groupAlias));
-    mJobManager->RunJobs();
-    // TODO: post-process collected values
+    VerifyOrExit(aNids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
 exit:
     return error;
 }
@@ -455,12 +473,7 @@ bool Interpreter::IsFeatureSupported(const std::vector<StringArray> &aArr, const
     return false;
 }
 
-Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr,
-                                             Expression &      aRetExpr,
-                                             StringArray &     aNwkAliases,
-                                             StringArray &     aDomAliases,
-                                             StringArray &     aExport,
-                                             StringArray &     aImport)
+Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRetExpr)
 {
     enum
     {
@@ -471,10 +484,10 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr,
         ST_IMPORT
     };
     StringArray *arrays[] = {[ST_COMMAND] = &aRetExpr,
-                             [ST_NETWORK] = &aNwkAliases,
-                             [ST_DOMAIN]  = &aDomAliases,
-                             [ST_EXPORT]  = &aExport,
-                             [ST_IMPORT]  = &aImport};
+                             [ST_NETWORK] = &mContext.mNwkAliases,
+                             [ST_DOMAIN]  = &mContext.mDomAliases,
+                             [ST_EXPORT]  = &mContext.mExportFiles,
+                             [ST_IMPORT]  = &mContext.mImportFiles};
     Error        error;
 
     uint8_t     state = ST_COMMAND;
@@ -848,29 +861,27 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
 
     Interpreter::Value   value;
     Expression           retExpr;
-    StringArray          nwkAliases;
-    StringArray          domAliases;
-    StringArray          exportFiles; // Formal for the only call
-    StringArray          importFiles; // Formal for the only call
     network              nwk{};
     std::vector<network> networks;
     ::nlohmann::json     json;
 
-    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr, nwkAliases, domAliases, exportFiles, importFiles));
+    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
     // export file specification must be single or omitted
-    VerifyOrExit(exportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
+    VerifyOrExit(mContext.mExportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_EXPORT));
     // import file specification must be single or omitted
-    VerifyOrExit(importFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
+    VerifyOrExit(mContext.mImportFiles.size() < 2, value = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_IMPORT));
     // network and domain must not be specified simultaneously
-    VerifyOrExit(nwkAliases.size() == 0 || domAliases.size() == 0, value = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
+    VerifyOrExit(mContext.mNwkAliases.size() == 0 || mContext.mDomAliases.size() == 0,
+                 value = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
 
-    if (domAliases.size() > 0)
+    if (mContext.mDomAliases.size() > 0)
     {
-        VerifyOrExit(mRegistry->get_networks_in_domain(domAliases[0], networks) == registry_status::REG_SUCCESS,
-                     value = ERROR_NOT_FOUND("failed to found networks in domain '{}'", domAliases[0]));
+        VerifyOrExit(mRegistry->get_networks_in_domain(mContext.mDomAliases[0], networks) ==
+                         registry_status::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND("failed to found networks in domain '{}'", mContext.mDomAliases[0]));
         ExitNow(value = ERROR_NONE);
     }
-    else if (nwkAliases.size() == 0)
+    else if (mContext.mNwkAliases.size() == 0)
     {
         VerifyOrExit(mRegistry->get_all_networks(networks) == REG_SUCCESS,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
@@ -878,13 +889,13 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     else
     {
         // Quickly check group aliases
-        for (auto alias : nwkAliases)
+        for (auto alias : mContext.mNwkAliases)
         {
             if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
-                VerifyOrExit(nwkAliases.size() == 1, value = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
+                VerifyOrExit(mContext.mNwkAliases.size() == 1, value = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
         }
 
-        VerifyOrExit(mRegistry->get_networks_by_aliases(nwkAliases, networks) == REG_SUCCESS,
+        VerifyOrExit(mRegistry->get_networks_by_aliases(mContext.mNwkAliases, networks) == REG_SUCCESS,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
     }
 

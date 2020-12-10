@@ -104,6 +104,22 @@ private:
     using StringArray    = std::vector<std::string>;
     using Registry       = ot::commissioner::persistent_storage::registry;
     using RegistryStatus = ot::commissioner::persistent_storage::registry_status;
+    /**
+     * Multi-network command context.
+     *
+     * Filled in by ReParseMultiNetworkSyntax(). After that the
+     * context is validated by ValidateMultiNetworkSyntax().
+     */
+    struct Context
+    {
+        StringArray mNwkAliases;
+        StringArray mDomAliases;
+        StringArray mExportFiles;
+        StringArray mImportFiles;
+
+        void Cleanup();
+        bool HasGroupAlias();
+    } mContext;
 
 private:
     Expression Read();
@@ -114,13 +130,8 @@ private:
     bool       IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
     bool       IsMultiJob(const Expression &aExpr);
-    Value EvaluateMultiNetwork(const Expression &aExpr, const StringArray &nwkAliases, const StringArray &domAliases);
-    Error ReParseMultiNetworkSyntax(const Expression &aExpr,
-                                    Expression &      aRretExpr,
-                                    StringArray &     aNwkAliases,
-                                    StringArray &     aDomAliases,
-                                    StringArray &     aExport,
-                                    StringArray &     aImport);
+    Value      ValidateMultiNetworkSyntax(const Expression &aExpr, NidArray &aNids);
+    Error      ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
