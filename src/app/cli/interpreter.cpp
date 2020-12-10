@@ -677,12 +677,12 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         persistent_storage::border_router_id rawid;
 
         SuccessOrExit(value = ParseInteger(rawid.id, expr[1]));
-        expr.pop_back();
-
-        // TODO: get br by raw id
-        // TODO: (re)select network to the one the br belongs to
-
+        VerifyOrExit(mRegistry->get_border_router(rawid, br) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_IO_ERROR("br[{}] not found", rawid.id));
+        VerifyOrExit(mRegistry->set_current_network(br) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_IO_ERROR("network selection failed for nwk[{}]", br.nwk_id.id));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        expr.pop_back();
         expr.push_back(br.agent.mAddr);
         expr.push_back(ToString(br.agent.mPort));
         break;
