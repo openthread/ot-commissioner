@@ -48,11 +48,13 @@ public:
     Job(Interpreter &             aInterpreter,
         CommissionerAppPtr &      aCommApp,
         Interpreter::Expression   aExpr,
-        Interpreter::JobEvaluator aEval)
+        Interpreter::JobEvaluator aEval,
+        uint64_t                  aXpanId)
         : mInterpreter(aInterpreter)
         , mCommissioner(aCommApp)
         , mExpr(aExpr)
         , mEval(aEval)
+        , mXpanId(aXpanId)
     {
     }
     ~Job() = default;
@@ -73,6 +75,7 @@ private:
     Interpreter::Value        mValue;
     std::string               mJson;
     std::thread               mJobThread;
+    uint64_t                  mXpanId;
 };
 
 } // namespace commissioner
