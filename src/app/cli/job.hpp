@@ -66,6 +66,7 @@ public:
 
     Interpreter::Value GetValue() const { return mValue; }
     std::string        GetJsonString() const { return mJson; }
+    std::string        GetCommandString();
 
 private:
     Interpreter &             mInterpreter;

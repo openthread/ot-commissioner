@@ -176,7 +176,7 @@ struct xpan_id
         std::ostringstream stream;
         stream << std::setfill('0') << std::setw(sizeof(value) * 2) << std::hex << value;
         std::string out = stream.str();
-        for_each(out.begin(), out.end(), [](char &c) { c = std::toupper(c); });
+        for_each(out.begin(), out.end() - 1, [](char &c) { c = std::toupper(c); });
         return out;
     }
 

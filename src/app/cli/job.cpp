@@ -32,7 +32,9 @@
  */
 
 #include "app/cli/job.hpp"
+#include "app/ps/registry.hpp"
 #include "common/utils.hpp"
+#include "library/logging.hpp"
 
 namespace ot {
 
@@ -48,11 +50,27 @@ void Job::Wait()
 {
     ASSERT(mJobThread.joinable());
     mJobThread.join();
+    if (!mValue.HasNoError())
+    {
+        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", persistent_storage::xpan_id(mXpanId).str(),
+                  GetCommandString(), mValue.ToString());
+    }
 }
 
 void Job::Cancel()
 {
     mCommissioner->CancelRequests();
+}
+
+std::string Job::GetCommandString()
+{
+    std::ostringstream command;
+    std::string        out;
+
+    for_each(mExpr.begin(), mExpr.end() - 1, [&command](std::string &item) { command << item << " "; });
+    out = command.str();
+    out.pop_back(); // get rid of trailing space
+    return out;
 }
 
 } // namespace commissioner
