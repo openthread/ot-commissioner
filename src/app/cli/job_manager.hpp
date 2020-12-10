@@ -56,12 +56,17 @@ public:
 
     Error Init(const Config &aConf, Interpreter &aInterpreter);
     Error PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
-    void  RunJobs();
-    void  CancelCommand();
-    void  Wait();
-    void  CleanupJobs();
-    void  SetImportFile(const std::string &importFile);
-    void  StopCommissionerPool();
+    /**
+     * Run all prepared jobs.
+     *
+     * The call is blocking due to WaitForJobs() done internally. Job
+     * resultant values remain available until CleanupJobs() is done.
+     */
+    void RunJobs();
+    void CancelCommand();
+    void CleanupJobs();
+    void SetImportFile(const std::string &importFile);
+    void StopCommissionerPool();
     /**
      * Returns a commissioner instance for the currently selected
      * network.
@@ -94,7 +99,10 @@ public:
 private:
     using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
     using JobPool          = std::vector<Job *>;
-
+    /**
+     * Wait for all job threads to join.
+     */
+    void  WaitForJobs();
     Error PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
     Error PrepareStopJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
     /**

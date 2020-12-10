@@ -38,6 +38,7 @@
 #include "app/ps/registry.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "library/logging.hpp"
 
 namespace ot {
 
@@ -255,11 +256,14 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     status = mInterpreter->mRegistry->get_domain_name_by_xpan(aNid, domainName);
     if (status != RegistryStatus::REG_SUCCESS)
     {
-        // TODO: log domain not found
+        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}",
+                  persistent_storage::xpan_id(aNid).str(), status);
     }
 
+    aConfig.mEnableCcm = isCCM;
     if (!domainName.empty())
     {
+        aConfig.mDomainName = domainName;
         if (domainName != "DefaultDomain")
         {
             error = sm::GetDomainSM(domainName, dtlsConfig);
@@ -359,6 +363,7 @@ void JobManager::RunJobs()
         ASSERT(job != NULL);
         job->Run();
     }
+    WaitForJobs();
 }
 
 void JobManager::CancelCommand()
@@ -368,10 +373,10 @@ void JobManager::CancelCommand()
         ASSERT(job != NULL);
         job->Cancel();
     }
-    Wait();
+    WaitForJobs();
 }
 
-void JobManager::Wait()
+void JobManager::WaitForJobs()
 {
     for (auto job : mJobPool)
     {

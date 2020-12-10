@@ -392,17 +392,12 @@ registry_status registry::get_network_by_pan(const std::string &pan, network &re
 registry_status registry::get_domain_name_by_xpan(const xpan_id xpan, std::string &name)
 {
     registry_status status;
-    network         pred;
     network         nwk;
     domain          dom;
-    DomainArray     domains;
 
-    pred.xpan = xpan;
-    VerifyOrExit(REG_SUCCESS == (status = lookup_one(pred, nwk)));
-    dom.id = nwk.dom_id;
-    VerifyOrExit(REG_SUCCESS == (status = map_status(storage->lookup(dom, domains))));
-    VerifyOrExit(domains.size() == 1, status = REG_AMBIGUITY);
-    name = domains[0].name;
+    VerifyOrExit(REG_SUCCESS == (status = get_network_by_xpan(xpan, nwk)));
+    VerifyOrExit(REG_SUCCESS == (status = map_status(storage->get(nwk.dom_id, dom))));
+    name = dom.name;
 exit:
     return status;
 }
