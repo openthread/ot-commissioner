@@ -232,6 +232,21 @@ registry_status registry::get_border_router(border_router_id rawid, border_route
     return map_status(storage->get(rawid, br));
 }
 
+registry_status registry::get_network_xpans_in_domain(const std::string &dom_name, XpanIdArray &ret)
+{
+    NetworkArray    networks;
+    registry_status status = get_networks_in_domain(dom_name, networks);
+
+    if (status == REG_SUCCESS)
+    {
+        for (auto nwk : networks)
+        {
+            ret.push_back(nwk.xpan);
+        }
+    }
+    return status;
+}
+
 registry_status registry::get_networks_in_domain(const std::string &dom_name, NetworkArray &ret)
 {
     registry_status     status;
@@ -255,6 +270,21 @@ registry_status registry::get_all_networks(NetworkArray &ret)
 
     status = map_status(storage->lookup(network{}, ret));
 
+    return status;
+}
+
+registry_status registry::get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret)
+{
+    NetworkArray    networks;
+    registry_status status = get_networks_by_aliases(aliases, networks);
+
+    if (status == REG_SUCCESS)
+    {
+        for (auto nwk : networks)
+        {
+            ret.push_back(nwk.xpan);
+        }
+    }
     return status;
 }
 
