@@ -91,6 +91,14 @@ public:
     registry_status add(BorderAgent const &val);
 
     /**
+     * Get border router record by raw id.
+     *
+     * It is expected that user becomes aware of the border router raw id from
+     * 'br list' results.
+     */
+    registry_status get_border_router(border_router_id rawid, border_router &br);
+
+    /**
      * Get networks of the domain
      *
      * @param[in] dom_name domain name
@@ -117,6 +125,11 @@ public:
      * Set current network.
      */
     registry_status set_current_network(const xpan_id xpan);
+
+    /**
+     * Set current network by border router specified.
+     */
+    registry_status set_current_network(const border_router &br);
 
     /**
      * Forget current network

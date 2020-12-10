@@ -227,6 +227,11 @@ registry_status registry::add(BorderAgent const &val)
     return status;
 }
 
+registry_status registry::get_border_router(border_router_id rawid, border_router &br)
+{
+    return map_status(storage->get(rawid, br));
+}
+
 registry_status registry::get_networks_in_domain(const std::string &dom_name, NetworkArray &ret)
 {
     registry_status     status;
@@ -333,6 +338,13 @@ registry_status registry::set_current_network(const network_id &nwk_id)
     assert(storage != nullptr);
 
     return map_status(storage->current_network_set(nwk_id));
+}
+
+registry_status registry::set_current_network(const border_router &br)
+{
+    assert(storage != nullptr);
+
+    return map_status(storage->current_network_set(br.nwk_id));
 }
 
 registry_status registry::get_current_network(network &ret)
