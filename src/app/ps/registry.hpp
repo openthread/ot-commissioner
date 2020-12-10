@@ -43,6 +43,7 @@ class registry
     using xpan_id      = ::ot::commissioner::persistent_storage::xpan_id;
     using DomainArray  = std::vector<domain>;
     using NetworkArray = std::vector<network>;
+    using XpanIdArray  = std::vector<uint64_t>;
     using StringArray  = std::vector<std::string>;
 
 public:
@@ -108,6 +109,15 @@ public:
     registry_status get_networks_in_domain(const std::string &dom_name, NetworkArray &ret);
 
     /**
+     * Get network XPAN IDs of the domain
+     *
+     * @param[in] dom_name domain name
+     * @param[out] ret vector of network XPAN IDs belonging to the domain
+     * @note Network XPAN IDs will be appended to the end of the output vector
+     */
+    registry_status get_network_xpans_in_domain(const std::string &dom_name, XpanIdArray &ret);
+
+    /**
      * Get list of all networks
      * @param[out] ret vector of all networks
      */
@@ -120,6 +130,14 @@ public:
      * @param[out] ret list of networks
      */
     registry_status get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret);
+
+    /**
+     * Get list of network XPAN IDs by alias
+     *
+     * @param[in] alieses list of network aliases
+     * @param[out] ret list of network XPAN IDs
+     */
+    registry_status get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret);
 
     /**
      * Set current network.

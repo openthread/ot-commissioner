@@ -427,7 +427,9 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
                 VerifyOrExit(mContext.mNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
             }
         }
-        // TODO: resolve aliases to array of network ids
+        RegistryStatus status = mRegistry->get_network_xpans_by_aliases(mContext.mNwkAliases, aNids);
+        VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+                     error = ERROR_IO_ERROR("aliases failed to resolve with status={}", status));
     }
     else if (mContext.mDomAliases.size() > 0)
     {
@@ -438,7 +440,10 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         VerifyOrExit(mContext.mNwkAliases.size() == 0, error = ERROR_INVALID_SYNTAX(SYNTAX_NWK_DOM_MUTUAL));
         // domain must be single
         VerifyOrExit(mContext.mDomAliases.size() < 2, error = ERROR_INVALID_SYNTAX(SYNTAX_MULTI_DOMAIN));
-        // TODO: resolve alias to array of network ids
+        RegistryStatus status = mRegistry->get_network_xpans_in_domain(mContext.mDomAliases.front(), aNids);
+        VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+                     error = ERROR_IO_ERROR("domain '{}' failed to resolve with status={}",
+                                            mContext.mDomAliases.front(), status));
     }
     else
     {
