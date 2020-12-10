@@ -91,7 +91,7 @@ void JobManager::SetImportFile(const std::string &importFile)
     mImportFile = importFile;
 }
 
-Error JobManager::CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr)
+Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
 {
     Interpreter::JobEvaluator eval;
     auto                      mapItem = Interpreter::mJobEvaluatorMap.find(aExpr[0]);
@@ -101,7 +101,7 @@ Error JobManager::CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpre
         return ERROR_INVALID_SYNTAX("{} not eligible for job", aExpr[0]);
     }
     eval     = mapItem->second;
-    Job *job = new Job(*mInterpreter, aCommissioner, aExpr, eval);
+    Job *job = new Job(*mInterpreter, aCommissioner, aExpr, eval, aXpanId);
     mJobPool.push_back(job);
 
     return ERROR_NONE;
@@ -150,7 +150,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             }
         }
 
-        SuccessOrExit(error = CreateNewJob(entry->second, jobExpr));
+        SuccessOrExit(error = CreateJob(entry->second, jobExpr, nid));
     }
 exit:
     return error;
@@ -200,7 +200,7 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
         expr.push_back(br.agent.mAddr);
         expr.push_back(std::to_string(br.agent.mPort));
         ASSERT(expr.size() == 3); // 'start br_addr br_port'
-        SuccessOrExit(error = CreateNewJob(entry->second, expr));
+        SuccessOrExit(error = CreateJob(entry->second, expr, nid));
     }
 exit:
     return error;
@@ -234,7 +234,7 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
             continue;
         }
 
-        SuccessOrExit(error = CreateNewJob(entry->second, aExpr));
+        SuccessOrExit(error = CreateJob(entry->second, aExpr, nid));
     }
 exit:
     return error;
@@ -243,30 +243,26 @@ exit:
 Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
 {
     Error                       error;
-    std::string                 domainId;
-    std::string                 networkId;
-    std::string                 networkName;
+    std::string                 domainName;
     bool                        isCCM = false;
     sm::SecurityMaterials       dtlsConfig;
     Interpreter::RegistryStatus status;
     persistent_storage::network nwk;
 
     status = mInterpreter->mRegistry->get_network_by_xpan(aNid, nwk);
-    VerifyOrExit(status == Interpreter::RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
-    networkId   = nwk.xpan.str();
-    networkName = nwk.name;
-    isCCM       = nwk.ccm > 0;
-    status      = mInterpreter->mRegistry->get_domain_name_by_xpan(aNid, domainId);
-    if (status != Interpreter::RegistryStatus::REG_SUCCESS)
+    VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
+    isCCM  = nwk.ccm > 0;
+    status = mInterpreter->mRegistry->get_domain_name_by_xpan(aNid, domainName);
+    if (status != RegistryStatus::REG_SUCCESS)
     {
         // TODO: log domain not found
     }
 
-    if (!domainId.empty())
+    if (!domainName.empty())
     {
-        if (domainId != "DefaultDomain")
+        if (domainName != "DefaultDomain")
         {
-            error = sm::GetDomainSM(domainId, dtlsConfig);
+            error = sm::GetDomainSM(domainName, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 WarningMsg(aNid, error.GetMessage());
@@ -275,21 +271,21 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
         }
         else
         {
-            error = sm::GetDefaultDomainSM(networkId, isCCM, dtlsConfig);
+            error = sm::GetDefaultDomainSM(nwk.xpan.str(), isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 WarningMsg(aNid, error.GetMessage());
                 error = ERROR_NONE;
             }
-            if (dtlsConfig.IsEmpty())
+            if (!dtlsConfig.IsEmpty())
             {
-                // retry with name
-                error = sm::GetDefaultDomainSM(networkName, isCCM, dtlsConfig);
-                if (ERROR_NONE != error)
-                {
-                    WarningMsg(aNid, error.GetMessage());
-                    error = ERROR_NONE;
-                }
+                goto update;
+            }
+            error = sm::GetDefaultDomainSM(nwk.name, isCCM, dtlsConfig);
+            if (ERROR_NONE != error)
+            {
+                WarningMsg(aNid, error.GetMessage());
+                error = ERROR_NONE;
             }
         }
     }
@@ -297,46 +293,35 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     {
         goto update;
     }
-    if (!networkId.empty())
+    error = sm::GetNetworkSM(nwk.xpan.str(), isCCM, dtlsConfig);
+    if (ERROR_NONE != error)
     {
-        error = sm::GetNetworkSM(networkId, isCCM, dtlsConfig);
-        if (ERROR_NONE != error)
-        {
-            WarningMsg(aNid, error.GetMessage());
-            error = ERROR_NONE;
-        }
+        WarningMsg(aNid, error.GetMessage());
+        error = ERROR_NONE;
     }
     if (!dtlsConfig.IsEmpty())
     {
         goto update;
     }
-    // retry with name
-    if (!networkName.empty())
+    error = sm::GetNetworkSM(nwk.name, isCCM, dtlsConfig);
+    if (ERROR_NONE != error)
     {
-        error = sm::GetNetworkSM(networkName, isCCM, dtlsConfig);
-        if (ERROR_NONE != error)
-        {
-            WarningMsg(aNid, error.GetMessage());
-            error = ERROR_NONE;
-        }
+        WarningMsg(aNid, error.GetMessage());
+        error = ERROR_NONE;
     }
 update:
-    if (dtlsConfig.mCertificate.size() > 0)
-    {
-        aConfig.mCertificate = dtlsConfig.mCertificate;
-    }
-    if (dtlsConfig.mPrivateKey.size() > 0)
-    {
-        aConfig.mPrivateKey = dtlsConfig.mPrivateKey;
-    }
-    if (dtlsConfig.mTrustAnchor.size() > 0)
-    {
-        aConfig.mTrustAnchor = dtlsConfig.mTrustAnchor;
-    }
-    if (dtlsConfig.mPSKc.size() > 0)
-    {
-        aConfig.mPSKc = dtlsConfig.mPSKc;
-    }
+
+#define UPDATE_IF_SET(name)            \
+    if (dtlsConfig.m##name.size() > 0) \
+    aConfig.m##name = dtlsConfig.m##name
+
+    UPDATE_IF_SET(Certificate);
+    UPDATE_IF_SET(PrivateKey);
+    UPDATE_IF_SET(TrustAnchor);
+    UPDATE_IF_SET(PSKc);
+
+#undef UPDATE_IF_SET
+
     if (dtlsConfig.IsEmpty())
     {
         InfoMsg(aNid, "no updates to DTLS configuration, default configuration will be used");
@@ -417,8 +402,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
     Interpreter::RegistryStatus status;
 
     status = mInterpreter->mRegistry->get_current_network_xpan(nid);
-    VerifyOrExit(Interpreter::RegistryStatus::REG_SUCCESS == status,
-                 error = ERROR_IO_ERROR("selected network not found"));
+    VerifyOrExit(RegistryStatus::REG_SUCCESS == status, error = ERROR_IO_ERROR("selected network not found"));
 
     if (nid != 0)
     {

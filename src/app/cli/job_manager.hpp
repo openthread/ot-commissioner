@@ -43,6 +43,7 @@ namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
 using InterpreterPtr     = std::shared_ptr<Interpreter>;
+using RegistryStatus     = ot::commissioner::persistent_storage::registry_status;
 
 class Interpreter;
 class Job;
@@ -120,7 +121,7 @@ private:
      *        found not empty, the search is stopped.
      */
     Error PrepareDtlsConfig(const uint64_t aNid, Config &aConfig);
-    Error CreateNewJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr);
+    Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId);
 
     void ErrorMsg(uint64_t aNid, std::string aMessage)
     {
