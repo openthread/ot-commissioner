@@ -31,30 +31,17 @@
 
 name: Android App Release
 
-on:
-  pull_request:
-    types: [assigned, opened, synchronize, reopened, closed]
+on: [push, pull_request]
 
 jobs:
   build-release:
     runs-on: ubuntu-20.04
-    # We run this job only when the PR branch starts with 'android-release/'.
-    if: startsWith(github.head_ref, 'android-release/')
     steps:
       - uses: actions/checkout@v2
       - name: Check Release Version
         id: check_release_version
         run: |
-          # The PR branch should has the format 'android-release/<release-version>'.
-          # <release-version> should equal to versionName defined in the gradle file.
-          branch_version="${GITHUB_HEAD_REF##*/}"
           gradle_version="$(cd android/openthread_commissioner && ./gradlew -q printVersionName)"
-
-          if [ $branch_version != $gradle_version ]; then
-            echo "branch name should be android-release/${gradle_version}!"
-            exit 1
-          fi
-
           echo "::set-output name=release_version::${gradle_version}"
       - name: Bootstrap
         run: |
@@ -70,6 +57,7 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk \
              ot-commissioner-app-debug-${{ steps.check_release_version.outputs.release_version }}.apk
       - name: Upload APK for release
+        if: success() && github.repository == 'openthread/ot-commissioner' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v2
         with:
           name: ot-commissioner-app-debug-v${{ steps.check_release_version.outputs.release_version }}
