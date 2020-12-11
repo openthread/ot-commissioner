@@ -44,6 +44,7 @@ namespace commissioner {
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
 using InterpreterPtr     = std::shared_ptr<Interpreter>;
 using RegistryStatus     = ot::commissioner::persistent_storage::registry_status;
+using BorderRouter       = ot::commissioner::persistent_storage::border_router;
 
 class Interpreter;
 class Job;
@@ -95,6 +96,8 @@ public:
      * imported part is a value of a map entry under aNid key.
      */
     Error AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr);
+
+    Error MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br);
 
 private:
     using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;

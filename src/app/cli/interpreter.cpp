@@ -659,19 +659,21 @@ exit:
 
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
-    Value                             value;
-    CommissionerAppPtr                commissioner = nullptr;
-    Expression                        expr         = aExpr;
-    persistent_storage::border_router br;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+    Expression         expr         = aExpr;
+    BorderRouter       br;
 
     switch (aExpr.size())
     {
     case 1:
     {
         // starting currently selected network
-
+        uint64_t       nid;
+        RegistryStatus status = mRegistry->get_current_network_xpan(nid);
+        VerifyOrExit(status = RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("getting selected network failed"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
-        // TODO: get br by current network id
+        SuccessOrExit(value = mJobManager->MakeBorderRouterChoice(nid, br));
         expr.push_back(br.agent.mAddr);
         expr.push_back(ToString(br.agent.mPort));
         break;
@@ -683,9 +685,9 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 
         SuccessOrExit(value = ParseInteger(rawid.id, expr[1]));
         VerifyOrExit(mRegistry->get_border_router(rawid, br) == RegistryStatus::REG_SUCCESS,
-                     value = ERROR_IO_ERROR("br[{}] not found", rawid.id));
+                     value = ERROR_NOT_FOUND("br[{}] not found", rawid.id));
         VerifyOrExit(mRegistry->set_current_network(br) == RegistryStatus::REG_SUCCESS,
-                     value = ERROR_IO_ERROR("network selection failed for nwk[{}]", br.nwk_id.id));
+                     value = ERROR_NOT_FOUND("network selection failed for nwk[{}]", br.nwk_id.id));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         expr.pop_back();
         expr.push_back(br.agent.mAddr);

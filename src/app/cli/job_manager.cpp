@@ -172,6 +172,8 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
 
     for (auto nid : aNids)
     {
+        BorderRouter br;
+
         auto entry = mCommissionerPool.find(nid);
         if (entry == mCommissionerPool.end())
         {
@@ -193,10 +195,7 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
         }
 
         SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
-
-        persistent_storage::border_router br;
-        // TODO: resolve nid to border_router
-
+        SuccessOrExit(error = MakeBorderRouterChoice(nid, br));
         auto expr = aExpr;
         expr.push_back(br.agent.mAddr);
         expr.push_back(std::to_string(br.agent.mPort));
@@ -330,6 +329,96 @@ update:
     {
         InfoMsg(aNid, "no updates to DTLS configuration, default configuration will be used");
     }
+exit:
+    return error;
+}
+
+Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
+{
+    using BRArray = std::vector<persistent_storage::border_router>;
+    using Network = persistent_storage::network;
+
+    Error          error;
+    BRArray        brs;
+    BRArray        choice;
+    Network        nwk;
+    RegistryStatus status = mInterpreter->mRegistry->get_border_routers_in_network(aNid, brs);
+
+    VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+                 error = ERROR_NOT_FOUND("br lookup failed with status={}", status));
+    if (brs.size() == 1)
+    {
+        // looks like not much of a choice
+        br = brs.front();
+        ExitNow();
+    }
+    status = mInterpreter->mRegistry->get_network_by_xpan(aNid, nwk);
+    VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_NOT_FOUND("network lookup failed"));
+    if (nwk.ccm > 0) // Dealing with domain network
+    {
+        // - try to find active and connectable Primary BBR
+        for (auto item : brs)
+        {
+            if (item.agent.mState.mBbrIsPrimary && item.agent.mState.mConnectionMode > 0)
+            {
+                if (item.agent.mState.mBbrIsActive)
+                {
+                    br = item;
+                    ExitNow();
+                }
+            }
+        }
+        // - go on with other active and connectable BBRs
+        for (auto item : brs)
+        {
+            if (item.agent.mState.mBbrIsActive && item.agent.mState.mConnectionMode > 0)
+            {
+                choice.push_back(item);
+            }
+        }
+    }
+    else // Dealing with standalone networks
+    {
+        // go on with connectable BRs
+        for (auto item : brs)
+        {
+            if (item.agent.mState.mConnectionMode > 0)
+            {
+                choice.push_back(item);
+            }
+        }
+    }
+
+    // Below a final triage is done
+
+    // - prefer br with high-availability
+    for (auto item : choice)
+    {
+        if (item.agent.mState.mThreadIfStatus > 1 && item.agent.mState.mAvailability > 0)
+        {
+            br = item;
+            ExitNow();
+        }
+    }
+    // - prefer br with Thread Interface actively participating in communication
+    for (auto item : choice)
+    {
+        if (item.agent.mState.mThreadIfStatus > 1)
+        {
+            br = item;
+            ExitNow();
+        }
+    }
+    // - try to find br with Thread Interface at least enabled
+    for (auto item : choice)
+    {
+        if (item.agent.mState.mThreadIfStatus > 0)
+        {
+            br = item;
+            ExitNow();
+        }
+    }
+    ExitNow(error = ERROR_NOT_FOUND("no active BR found"));
 exit:
     return error;
 }

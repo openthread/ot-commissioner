@@ -227,9 +227,22 @@ registry_status registry::add(BorderAgent const &val)
     return status;
 }
 
-registry_status registry::get_border_router(border_router_id rawid, border_router &br)
+registry_status registry::get_border_router(const border_router_id rawid, border_router &br)
 {
     return map_status(storage->get(rawid, br));
+}
+
+registry_status registry::get_border_routers_in_network(const xpan_id xpan, BorderRouterArray &ret)
+{
+    network         nwk;
+    border_router   pred;
+    registry_status status = get_network_by_xpan(xpan, nwk);
+
+    VerifyOrExit(status == REG_SUCCESS);
+    pred.nwk_id = nwk.id;
+    status      = map_status(storage->lookup(pred, ret));
+exit:
+    return status;
 }
 
 registry_status registry::get_network_xpans_in_domain(const std::string &dom_name, XpanIdArray &ret)
