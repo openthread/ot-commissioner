@@ -101,7 +101,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
                 "network list [--nwk <network-alias-list> | --dom <domain-name>]\n"
-                "network select <xpan>|none"},
+                "network select <xpan>|none\n"
+                "network identify"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator"},
@@ -803,6 +804,8 @@ exit:
 
 Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
 {
+    using namespace ot::commissioner::persistent_storage;
+
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
 
@@ -824,11 +827,35 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "select"))
     {
-        SuccessOrExit(value = ProcessNetworkSelect(aExpr));
+        Interpreter::Value value;
+        ::nlohmann::json   json;
+
+        VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
+        VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
+        if (CaseInsensitiveEqual(aExpr[2], "none"))
+        {
+            registry_status status = mRegistry->forget_current_network();
+            VerifyOrExit(status == registry_status::REG_SUCCESS, value = ERROR_IO_ERROR("network select failed"));
+        }
+        else
+        {
+            VerifyOrExit(mRegistry->set_current_network(aExpr[2]) == REG_SUCCESS,
+                         value = ERROR_IO_ERROR("network set failed"));
+            value = std::string("done");
+        }
     }
-    else if (CaseInsensitiveEqual(aExpr[1], "identity"))
+    else if (CaseInsensitiveEqual(aExpr[1], "identify"))
     {
-        SuccessOrExit(value = ProcessNetworkIdentity(aExpr));
+        Interpreter::Value value;
+        ::nlohmann::json   json;
+        network            nwk;
+
+        VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
+        VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
+        VerifyOrExit(mRegistry->get_current_network(nwk) == registry_status::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+        json  = nwk.xpan;
+        value = json.dump(/* indent */ 4);
     }
     else
     {
@@ -907,53 +934,6 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     }
 
     json  = networks;
-    value = json.dump(/* indent */ 4);
-
-exit:
-    return value;
-}
-
-Interpreter::Value Interpreter::ProcessNetworkSelect(const Expression &aExpr)
-{
-    using namespace ot::commissioner::persistent_storage;
-
-    Interpreter::Value value;
-    ::nlohmann::json   json;
-
-    VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
-    VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
-
-    if (CaseInsensitiveEqual(aExpr[2], "none"))
-    {
-        registry_status status = mRegistry->forget_current_network();
-        VerifyOrExit(status == registry_status::REG_SUCCESS, value = ERROR_IO_ERROR("network select failed"));
-    }
-    else
-    {
-        VerifyOrExit(mRegistry->set_current_network(aExpr[2]) == REG_SUCCESS,
-                     value = ERROR_IO_ERROR("network set failed"));
-        value = std::string("done");
-    }
-
-exit:
-    return value;
-}
-
-Interpreter::Value Interpreter::ProcessNetworkIdentity(const Expression &aExpr)
-{
-    using namespace ot::commissioner::persistent_storage;
-
-    Interpreter::Value value;
-    ::nlohmann::json   json;
-    network            nwk;
-
-    VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
-    VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
-
-    VerifyOrExit(mRegistry->get_current_network(nwk) == registry_status::REG_SUCCESS,
-                 value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
-
-    json  = nwk.xpan;
     value = json.dump(/* indent */ 4);
 
 exit:
