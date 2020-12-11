@@ -67,11 +67,12 @@ enum registry_status
  */
 class registry
 {
-    using xpan_id      = ::ot::commissioner::persistent_storage::xpan_id;
-    using DomainArray  = std::vector<domain>;
-    using NetworkArray = std::vector<network>;
-    using XpanIdArray  = std::vector<uint64_t>;
-    using StringArray  = std::vector<std::string>;
+    using xpan_id           = ::ot::commissioner::persistent_storage::xpan_id;
+    using DomainArray       = std::vector<domain>;
+    using NetworkArray      = std::vector<network>;
+    using BorderRouterArray = std::vector<border_router>;
+    using XpanIdArray       = std::vector<uint64_t>;
+    using StringArray       = std::vector<std::string>;
 
 public:
     /**
@@ -124,8 +125,15 @@ public:
      * It is expected that user becomes aware of the border router raw id from
      * 'br list' results.
      */
-    registry_status get_border_router(border_router_id rawid, border_router &br);
+    registry_status get_border_router(const border_router_id rawid, border_router &br);
 
+    /**
+     * Get border routers belonging to the specified network.
+     *
+     * @param[in] xpan network's XPAN ID
+     * @param[out] ret resultant array of @ref border_router records
+     */
+    registry_status get_border_routers_in_network(const xpan_id xpan, BorderRouterArray &ret);
     /**
      * Get networks of the domain
      *
