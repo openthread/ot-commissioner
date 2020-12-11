@@ -456,8 +456,6 @@ void JobManager::WaitForJobs()
 
 void JobManager::StopCommissionerPool()
 {
-    // going blatant straightforward
-    // TODO: actually need to do that in threads
     for (auto commissionerEntry : mCommissionerPool)
     {
         CommissionerAppPtr commissioner = commissionerEntry.second;
