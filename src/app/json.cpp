@@ -692,6 +692,28 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(/* indent */ 4);
 }
 
+Error JsonFromFile(std::string &aJson, std::string &aPath)
+{
+    Error       error;
+    Json        json;
+    std::string jsonStr;
+
+    SuccessOrExit(error = ReadFile(jsonStr, aPath));
+    try
+    {
+        Json jsonSrc = Json::parse(jsonStr);
+    } catch (JsonException &e)
+    {
+        error = {ErrorCode::kBadFormat, e.GetError().GetMessage()};
+    } catch (std::exception &e)
+    {
+        error = {ErrorCode::kBadFormat, e.what()};
+    }
+    aJson = json.dump(4);
+exit:
+    return error;
+}
+
 } // namespace commissioner
 
 } // namespace ot

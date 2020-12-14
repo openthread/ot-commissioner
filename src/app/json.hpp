@@ -76,6 +76,14 @@ std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
+/**
+ * Get clean JSON string from a supposedly JSON file.
+ *
+ * If file includes comments, those are stripped off.
+ * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
+ */
+Error JsonFromFile(std::string &aJson, std::string &aPath);
+
 } // namespace commissioner
 
 } // namespace ot
