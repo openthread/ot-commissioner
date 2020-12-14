@@ -35,6 +35,7 @@
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
 #include "app/cli/security_materials.hpp"
+#include "app/json.hpp"
 #include "app/ps/registry.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -43,6 +44,9 @@
 namespace ot {
 
 namespace commissioner {
+
+using Json   = nlohmann::json;
+using XpanId = persistent_storage::xpan_id;
 
 Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
 {
@@ -246,7 +250,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     std::string                 domainName;
     bool                        isCCM = false;
     sm::SecurityMaterials       dtlsConfig;
-    Interpreter::RegistryStatus status;
+    RegistryStatus              status;
     persistent_storage::network nwk;
 
     status = mInterpreter->mRegistry->get_network_by_xpan(aNid, nwk);
@@ -255,8 +259,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     status = mInterpreter->mRegistry->get_domain_name_by_xpan(aNid, domainName);
     if (status != RegistryStatus::REG_SUCCESS)
     {
-        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}",
-                  persistent_storage::xpan_id(aNid).str(), status);
+        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", XpanId(aNid).str(), status);
     }
 
     aConfig.mEnableCcm = isCCM;
@@ -418,30 +421,74 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
             ExitNow();
         }
     }
-    ExitNow(error = ERROR_NOT_FOUND("no active BR found"));
+    error = ERROR_NOT_FOUND("no active BR found");
 exit:
     return error;
 }
 
 Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr)
 {
-    Error error;
-    (void)aNid;
-    (void)aExpr;
-    // TODO:
-    // load JSON, else return 'bad format' error
-    // find value by nid, else return 'not found' error
-    // - value must be a JSON object, else return 'bad format' error
-    // - the object must be of valid JSON syntax per command
-    //   - commdataset
-    //   - bbrdataset
-    //   - opdataset
-    //   else return 'bad format' error
-    // serialize JSON object to string and append the one to aExp
+    Error       error;
+    XpanId      xpan(aNid);
+    std::string jsonStr;
+    Json        jsonSrc;
+    Json        json;
 
-    // if aNid is 0 : single command supposed (need more analysis)
-    // - if plain dataset object and correct one, append as is
-    // - else try to load by currently selected nid
+    SuccessOrExit(error = JsonFromFile(jsonStr, mImportFile));
+    jsonSrc = Json::parse(jsonStr);
+    if (jsonSrc.count(xpan.str()) > 0)
+    {
+        json = jsonSrc[xpan.str()];
+    }
+    else if (aNid == 0) // must be single command
+    {
+        json = jsonSrc;
+    }
+    else
+    {
+        ExitNow(error = ERROR_NOT_FOUND("'{}' not found", xpan.str()));
+    }
+    jsonStr = json.dump(4);
+    if (aExpr[0] == "opdataset")
+    {
+        VerifyOrExit(aExpr[1] == "set" && aExpr.size() == 3, error = ERROR_INVALID_ARGS("import usupported"));
+        if (aExpr[2] == "active")
+        {
+            ActiveOperationalDataset dataset;
+            SuccessOrExit(error = ActiveDatasetFromJson(dataset, jsonStr));
+            // TODO: try importing wrong format
+        }
+        else if (aExpr[2] == "pending")
+        {
+            PendingOperationalDataset dataset;
+            SuccessOrExit(error = PendingDatasetFromJson(dataset, jsonStr));
+            // TODO: try importing wrong format
+        }
+        else
+        {
+            ExitNow(error = ERROR_INVALID_ARGS("import unsupported"));
+        }
+    }
+    else if (aExpr[0] == "bbrdataset")
+    {
+        BbrDataset dataset;
+        VerifyOrExit(aExpr.size() == 2 && aExpr[1] == "set", error = ERROR_INVALID_ARGS("import usupported"));
+        SuccessOrExit(error = BbrDatasetFromJson(dataset, jsonStr));
+        // TODO: try importing wrong format
+    }
+    else if (aExpr[0] == "commdataset")
+    {
+        CommissionerDataset dataset;
+        VerifyOrExit(aExpr.size() == 2 && aExpr[1] == "set", error = ERROR_INVALID_ARGS("import usupported"));
+        SuccessOrExit(error = CommissionerDatasetFromJson(dataset, jsonStr));
+        // TODO: try importing wrong format
+    }
+    else
+    {
+        ASSERT(false); // never to reach here
+    }
+    aExpr.push_back(jsonStr);
+exit:
     return error;
 }
 
@@ -489,9 +536,9 @@ void JobManager::StopCommissionerPool()
 
 Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
 {
-    Error                       error = ERROR_NONE;
-    uint64_t                    nid   = 0;
-    Interpreter::RegistryStatus status;
+    Error          error = ERROR_NONE;
+    uint64_t       nid   = 0;
+    RegistryStatus status;
 
     status = mInterpreter->mRegistry->get_current_network_xpan(nid);
     VerifyOrExit(RegistryStatus::REG_SUCCESS == status, error = ERROR_IO_ERROR("selected network not found"));

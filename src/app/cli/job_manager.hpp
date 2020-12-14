@@ -96,7 +96,16 @@ public:
      * imported part is a value of a map entry under aNid key.
      */
     Error AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr);
-
+    /**
+     * Make a well-thought choice from border routers belonging to a
+     * given network identified by aNid XPAN ID.
+     *
+     * If CCM mode found enabled, an active Primary BBR is preferred.
+     * Otherwiese, any secondary active BBR is preferred.
+     *
+     * If in non-CCM mode, a BR with most highly avaliable and Thread-active
+     * interface becomes the choice.
+     */
     Error MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br);
 
 private:
