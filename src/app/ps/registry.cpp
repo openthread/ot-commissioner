@@ -286,10 +286,12 @@ registry_status registry::get_all_networks(NetworkArray &ret)
     return status;
 }
 
-registry_status registry::get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret)
+registry_status registry::get_network_xpans_by_aliases(const StringArray &aliases,
+                                                       XpanIdArray &      ret,
+                                                       StringArray &      unresolved)
 {
     NetworkArray    networks;
-    registry_status status = get_networks_by_aliases(aliases, networks);
+    registry_status status = get_networks_by_aliases(aliases, networks, unresolved);
 
     if (status == REG_SUCCESS)
     {
@@ -301,15 +303,21 @@ registry_status registry::get_network_xpans_by_aliases(const StringArray &aliase
     return status;
 }
 
-registry_status registry::get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret)
+registry_status registry::get_networks_by_aliases(const StringArray &aliases,
+                                                  NetworkArray &     ret,
+                                                  StringArray &      unresolved)
 {
     registry_status status;
+    NetworkArray    networks;
 
-    NetworkArray networks;
+    if (aliases.size() == 0)
+        return REG_ERROR;
+
     for (auto alias : aliases)
     {
         if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
         {
+            ASSERT(aliases.size() == 1); // Interpreter must have taken care of this
             VerifyOrExit((status = get_all_networks(networks)) == REG_SUCCESS);
             if (alias == ALIAS_OTHERS)
             {
@@ -327,10 +335,15 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases, Ne
         {
             // Get selected nwk xpan (no selected is an error)
             network nwk_this;
-            VerifyOrExit((status = get_current_network(nwk_this)) == registry_status::REG_SUCCESS);
-
-            // Put nwk into networks
-            networks.push_back(nwk_this);
+            if ((status = get_current_network(nwk_this)) == registry_status::REG_SUCCESS)
+            {
+                // Put nwk into networks
+                networks.push_back(nwk_this);
+            }
+            else // failed 'this' must not break the translation flow
+            {
+                unresolved.push_back(alias);
+            }
         }
         else
         {
@@ -341,10 +354,17 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases, Ne
                 status = get_network_by_name(alias, nwk);
                 if (status != REG_SUCCESS)
                 {
-                    VerifyOrExit((status = get_network_by_pan(alias, nwk)) == REG_SUCCESS);
+                    status = get_network_by_pan(alias, nwk);
                 }
             }
-            networks.push_back(nwk);
+            if (status == REG_SUCCESS)
+            {
+                networks.push_back(nwk);
+            }
+            else // unresolved alias must not break processing
+            {
+                unresolved.push_back(alias);
+            }
         }
 
         // Make results unique
@@ -355,7 +375,7 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases, Ne
     }
 
     ret.insert(ret.end(), networks.begin(), networks.end());
-
+    status = networks.size() > 0 ? REG_SUCCESS : REG_NOT_FOUND;
 exit:
     return status;
 }

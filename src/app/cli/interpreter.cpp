@@ -70,6 +70,8 @@
 #define DOMAIN_STR "domain"
 #define NETWORK_STR "network"
 
+#define COLOR_ALIAS_FAILED Console::Color::kYellow
+
 namespace ot {
 
 namespace commissioner {
@@ -424,7 +426,12 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
                 VerifyOrExit(mContext.mNwkAliases.size() == 1, error = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
             }
         }
-        RegistryStatus status = mRegistry->get_network_xpans_by_aliases(mContext.mNwkAliases, aNids);
+        StringArray    unresolved;
+        RegistryStatus status = mRegistry->get_network_xpans_by_aliases(mContext.mNwkAliases, aNids, unresolved);
+        for (auto alias : unresolved)
+        {
+            PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+        }
         VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
                      error = ERROR_IO_ERROR("aliases failed to resolve with status={}", status));
     }
@@ -563,8 +570,12 @@ void Interpreter::Print(const Value &aValue)
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
 {
     std::string nidHex = persistent_storage::xpan_id(aNid);
+    PrintNetworkMessage(nidHex, aMessage, aColor);
+}
 
-    mConsole.Write(nidHex.append(": "));
+void Interpreter::PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor)
+{
+    mConsole.Write(alias.append(": "));
     mConsole.Write(aMessage, aColor);
     mConsole.Write("\n");
 }
@@ -799,8 +810,9 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         Interpreter::Value value;
         ::nlohmann::json   json;
 
-        VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
-        VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
+        VerifyOrExit(!IsMultiNetworkSyntax(aExpr),
+                     value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK "|" KEYWORD_DOMAIN));
+        VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_SYNTAX("too many arguments"));
         if (CaseInsensitiveEqual(aExpr[2], "none"))
         {
             registry_status status = mRegistry->forget_current_network();
@@ -819,8 +831,9 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         ::nlohmann::json   json;
         network            nwk;
 
-        VerifyOrExit(!IsMultiNetworkSyntax(aExpr), value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
-        VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED));
+        VerifyOrExit(!IsMultiNetworkSyntax(aExpr),
+                     value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK "|" KEYWORD_DOMAIN));
+        VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_SYNTAX("too many arguments"));
         VerifyOrExit(mRegistry->get_current_network(nwk) == registry_status::REG_SUCCESS,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
         json  = nwk.xpan;
@@ -898,8 +911,13 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
                 VerifyOrExit(mContext.mNwkAliases.size() == 1, value = ERROR_INVALID_SYNTAX(SYNTAX_GROUP_ALIAS, alias));
         }
 
-        VerifyOrExit(mRegistry->get_networks_by_aliases(mContext.mNwkAliases, networks) == REG_SUCCESS,
-                     value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+        StringArray    unresolved;
+        RegistryStatus status = mRegistry->get_networks_by_aliases(mContext.mNwkAliases, networks, unresolved);
+        for (auto alias : unresolved)
+        {
+            PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+        }
+        VerifyOrExit(status == REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
     }
 
     json  = networks;

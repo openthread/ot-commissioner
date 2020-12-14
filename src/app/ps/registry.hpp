@@ -164,7 +164,7 @@ public:
      * @param[in] alieses list of network aliases
      * @param[out] ret list of networks
      */
-    registry_status get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret);
+    registry_status get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret, StringArray &unresolved);
 
     /**
      * Get list of network XPAN IDs by alias
@@ -172,7 +172,7 @@ public:
      * @param[in] alieses list of network aliases
      * @param[out] ret list of network XPAN IDs
      */
-    registry_status get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret);
+    registry_status get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret, StringArray &unresolved);
 
     /**
      * Set current network.
