@@ -448,7 +448,7 @@ Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aEx
     {
         ExitNow(error = ERROR_NOT_FOUND("'{}' not found", xpan.str()));
     }
-    jsonStr = json.dump(4);
+    jsonStr = json.dump(JSON_INDENT_DEFAULT);
     if (aExpr[0] == "opdataset")
     {
         VerifyOrExit(aExpr[1] == "set" && aExpr.size() == 3, error = ERROR_INVALID_ARGS("import usupported"));
