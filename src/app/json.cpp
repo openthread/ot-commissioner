@@ -695,13 +695,13 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
 Error JsonFromFile(std::string &aJson, std::string &aPath)
 {
     Error       error;
-    Json        json;
     std::string jsonStr;
 
     SuccessOrExit(error = ReadFile(jsonStr, aPath));
     try
     {
-        Json jsonSrc = Json::parse(jsonStr);
+        Json json = Json::parse(jsonStr);
+        aJson     = json.dump(JSON_INDENT_DEFAULT);
     } catch (JsonException &e)
     {
         error = {ErrorCode::kBadFormat, e.GetError().GetMessage()};
@@ -709,7 +709,6 @@ Error JsonFromFile(std::string &aJson, std::string &aPath)
     {
         error = {ErrorCode::kBadFormat, e.what()};
     }
-    aJson = json.dump(JSON_INDENT_DEFAULT);
 exit:
     return error;
 }
