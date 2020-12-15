@@ -344,7 +344,13 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     bool       supported;
     Value      value;
 
-    VerifyOrExit(!aExpr.empty(), value = ERROR_NONE);
+    // make sure first the command is known
+    auto evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
+    if (evaluator == mEvaluatorMap.end())
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
+                                              aExpr.front()));
+    }
 
     SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
     // export file specification must be single or omitted
@@ -378,22 +384,20 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         {
             SuccessOrExit(value = mJobManager->PrepareJobs(aExpr, nids, mContext.HasGroupAlias()));
             mJobManager->RunJobs();
-            // TODO: post-process collected values -> build value
+            value = mJobManager->CollectJobsValue();
             mJobManager->CleanupJobs();
         }
         else // synchronous processing possible
         {
+            // with multi-network syntax in effect an import semantics
+            // is allowed for job-based processing only (see mImportSyntax)
+            ASSERT(mContext.mImportFiles.size() == 0);
+            value = evaluator->second(this, retExpr);
         }
     }
     else
     {
         // handle single command using selected network
-        auto evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
-        if (evaluator == mEvaluatorMap.end())
-        {
-            ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
-                                                  aExpr.front()));
-        }
         if (mContext.mImportFiles.size() > 0)
         {
             SuccessOrExit(value = mJobManager->AppendImport(0, retExpr));

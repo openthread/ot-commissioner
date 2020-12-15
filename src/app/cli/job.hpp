@@ -64,8 +64,8 @@ public:
     void Cancel();
     bool IsStopped() { return !mJobThread.joinable(); }
 
+    uint64_t           GetXpanId() const { return mXpanId; }
     Interpreter::Value GetValue() const { return mValue; }
-    std::string        GetJsonString() const { return mJson; }
     std::string        GetCommandString();
 
 private:
@@ -74,7 +74,6 @@ private:
     Interpreter::Expression   mExpr;
     Interpreter::JobEvaluator mEval;
     Interpreter::Value        mValue;
-    std::string               mJson;
     std::thread               mJobThread;
     uint64_t                  mXpanId;
 };

@@ -521,6 +521,46 @@ void JobManager::WaitForJobs()
     }
 }
 
+Interpreter::Value JobManager::CollectJobsValue()
+{
+    Interpreter::Value          value;
+    nlohmann::json              json;
+    persistent_storage::xpan_id xpan;
+
+    for (auto job : mJobPool)
+    {
+        ASSERT(job->IsStopped());
+        if (job->GetValue().HasNoError())
+        {
+            xpan = job->GetXpanId();
+            try
+            {
+                std::string valueStr = job->GetValue().ToString();
+                if (valueStr.empty())
+                {
+                    // this may occur with non-dataset commands
+                    // like 'start', 'stop', etc.
+                    valueStr = "true";
+                    // please note, this is where job-based execution
+                    // is different from single command run when
+                    // nothing but [done] is printed; we need to see a
+                    // distinguished result per network
+                }
+                json[xpan.str()] = nlohmann::json::parse(valueStr);
+            } catch (std::exception &e)
+            {
+                ErrorMsg(xpan.value, e.what());
+            }
+        }
+        else // produce error messages immediately before printing value
+        {
+            ErrorMsg(job->GetXpanId(), job->GetValue().ToString());
+        }
+    }
+    value = json.dump(JSON_INDENT_DEFAULT);
+    return value;
+}
+
 void JobManager::StopCommissionerPool()
 {
     for (auto commissionerEntry : mCommissionerPool)

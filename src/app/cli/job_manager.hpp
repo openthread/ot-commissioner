@@ -69,6 +69,14 @@ public:
     void SetImportFile(const std::string &importFile);
     void StopCommissionerPool();
     /**
+     * Collects values from job pool and aggregates those into a
+     * single JSON object ready for output or export.
+     *
+     * Resultant JSON object is a map where key is a job's XPAN ID and
+     * value is an elementary JSON (dataset object, boolean or string)
+     */
+    Interpreter::Value CollectJobsValue();
+    /**
      * Returns a commissioner instance for the currently selected
      * network.
      *
