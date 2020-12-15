@@ -351,6 +351,8 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
                                               aExpr.front()));
     }
+    // prepare for parsing next command
+    mContext.Cleanup();
 
     SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
     // export file specification must be single or omitted
@@ -405,7 +407,8 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         value = evaluator->second(this, retExpr);
     }
 exit:
-    mContext.Cleanup();
+    // do not cleanup mContext here as the export information is
+    // needed for post-processing resultant value
     ASSERT(mJobManager->IsClean());
     return value;
 }
@@ -576,8 +579,39 @@ exit:
 
 void Interpreter::Print(const Value &aValue)
 {
+    Error       error  = {ErrorCode::kUnknown, ""};
     std::string output = aValue.ToString();
 
+    if (aValue.HasNoError() && mContext.mExportFiles.size() > 0)
+    {
+        for (auto path : mContext.mExportFiles)
+        {
+            std::string filePath = path;
+            // TODO: make sure folder path exists, if it's not
+            //       creatable, print error and output to console
+            //       instead
+            error = PathExists(filePath);
+            while (error != ERROR_NONE)
+            {
+                // TODO: suggest new file name by incrementing suffix
+                //       file-name[-suffix].ext
+                error = PathExists(filePath);
+            }
+            error = WriteFile(aValue.ToString(), filePath);
+            if (error != ERROR_NONE)
+            {
+                std::string out = fmt::format(FMT_STRING("failed to write to '{}'\n"), filePath);
+                mConsole.Write(out, Console::Color::kRed);
+                break;
+            }
+        }
+    }
+    if (error == ERROR_NONE)
+    {
+        // value is written to file, no console output expected other than
+        // [done]/[failed]
+        output.clear();
+    }
     if (!output.empty())
     {
         output += "\n";
