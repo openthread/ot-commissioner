@@ -840,6 +840,13 @@ Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
         nlohmann::json      json;
         std::vector<domain> domains;
 
+        for (auto alias : mContext.mDomAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            {
+                ExitNow(value = ERROR_INVALID_SYNTAX("alias '{}' not supported by the command", alias));
+            }
+        }
         if (mContext.mDomAliases.size() != 0)
         {
             StringArray unresolved;
