@@ -153,6 +153,19 @@ public:
     registry_status get_network_xpans_in_domain(const std::string &dom_name, XpanIdArray &ret);
 
     /**
+     * Get list of all domains
+     * @param[out] ret vector of all domains
+     */
+    registry_status get_all_domains(DomainArray &ret);
+
+    /**
+     * Get list of domains by list of aliases.
+     * @param[out] ret vector of all domains
+     * @param[out] unresolved list of aliases failed to resolve
+     */
+    registry_status get_domains_by_aliases(const StringArray &aliases, DomainArray &ret, StringArray &unresolved);
+
+    /**
      * Get list of all networks
      * @param[out] ret vector of all networks
      */
@@ -163,6 +176,7 @@ public:
      *
      * @param[in] alieses list of network aliases
      * @param[out] ret list of networks
+     * @param[out] unresolved list of aliases failed to resolve
      */
     registry_status get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret, StringArray &unresolved);
 
@@ -171,6 +185,7 @@ public:
      *
      * @param[in] alieses list of network aliases
      * @param[out] ret list of network XPAN IDs
+     * @param[out] unresolved list of aliases failed to resolve
      */
     registry_status get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret, StringArray &unresolved);
 

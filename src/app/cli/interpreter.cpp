@@ -77,25 +77,16 @@ namespace ot {
 namespace commissioner {
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
-    {"start", &Interpreter::ProcessStart},
-    {"stop", &Interpreter::ProcessStop},
-    {"active", &Interpreter::ProcessActive},
-    {"token", &Interpreter::ProcessToken},
-    {"network", &Interpreter::ProcessNetwork},
-    {"sessionid", &Interpreter::ProcessSessionId},
-    {"borderagent", &Interpreter::ProcessBorderAgent},
-    {"joiner", &Interpreter::ProcessJoiner},
-    {"commdataset", &Interpreter::ProcessCommDataset},
-    {"opdataset", &Interpreter::ProcessOpDataset},
-    {"bbrdataset", &Interpreter::ProcessBbrDataset},
-    {"reenroll", &Interpreter::ProcessReenroll},
-    {"domainreset", &Interpreter::ProcessDomainReset},
-    {"migrate", &Interpreter::ProcessMigrate},
-    {"mlr", &Interpreter::ProcessMlr},
-    {"announce", &Interpreter::ProcessAnnounce},
-    {"panid", &Interpreter::ProcessPanId},
-    {"energy", &Interpreter::ProcessEnergy},
-    {"exit", &Interpreter::ProcessExit},
+    {"start", &Interpreter::ProcessStart},         {"stop", &Interpreter::ProcessStop},
+    {"active", &Interpreter::ProcessActive},       {"token", &Interpreter::ProcessToken},
+    {"domain", &Interpreter::ProcessDomain},       {"network", &Interpreter::ProcessNetwork},
+    {"sessionid", &Interpreter::ProcessSessionId}, {"borderagent", &Interpreter::ProcessBorderAgent},
+    {"joiner", &Interpreter::ProcessJoiner},       {"commdataset", &Interpreter::ProcessCommDataset},
+    {"opdataset", &Interpreter::ProcessOpDataset}, {"bbrdataset", &Interpreter::ProcessBbrDataset},
+    {"reenroll", &Interpreter::ProcessReenroll},   {"domainreset", &Interpreter::ProcessDomainReset},
+    {"migrate", &Interpreter::ProcessMigrate},     {"mlr", &Interpreter::ProcessMlr},
+    {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
+    {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"help", &Interpreter::ProcessHelp},
 };
 
@@ -105,7 +96,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"active", "active"},
     {"token", "token request <registrar-addr> <registrar-port>\n"
               "token print\n"
-              "token set <signed-token-hex-string-file>"},
+              "token set <signed-token-hex-string-file> <signer-cert-pem-file>"},
+    {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
                 "network list [--nwk <network-alias-list> | --dom <domain-name>]\n"
@@ -174,6 +166,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
                                                Interpreter::StringArray{"opdataset", "get", "active"},
                                                Interpreter::StringArray{"opdataset", "get", "pending"},
                                                Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+                                               Interpreter::StringArray{"domain", "list"},
                                                Interpreter::StringArray{"network", "list"}};
 
 const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
@@ -772,6 +765,47 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
         SuccessOrExit(value = ReadHexStringFile(signedToken, aExpr[2]));
 
         SuccessOrExit(value = commissioner->SetToken(signedToken));
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
+    }
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
+{
+    using namespace ot::commissioner::persistent_storage;
+
+    Value value;
+
+    VerifyOrExit(aExpr.size() > 1, value = ERROR_INVALID_ARGS("too few arguments"));
+    VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
+    if (CaseInsensitiveEqual(aExpr[1], "list"))
+    {
+        RegistryStatus      status;
+        nlohmann::json      json;
+        std::vector<domain> domains;
+
+        if (mContext.mDomAliases.size() != 0)
+        {
+            StringArray unresolved;
+            status = mRegistry->get_domains_by_aliases(mContext.mDomAliases, domains, unresolved);
+            for (auto alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        else
+        {
+            status = mRegistry->get_all_domains(domains);
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        json  = domains;
+        value = json.dump(4);
     }
     else
     {

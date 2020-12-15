@@ -277,6 +277,67 @@ exit:
     return status;
 }
 
+registry_status registry::get_all_domains(DomainArray &ret)
+{
+    registry_status status;
+
+    status = map_status(storage->lookup(domain{}, ret));
+
+    return status;
+}
+
+registry_status registry::get_domains_by_aliases(const StringArray &aliases, DomainArray &ret, StringArray &unresolved)
+{
+    registry_status status;
+    DomainArray     domains;
+
+    for (auto alias : aliases)
+    {
+        domain dom;
+
+        if (alias == ALIAS_THIS)
+        {
+            network nwk;
+            status = get_current_network(nwk);
+            if (status == REG_SUCCESS)
+            {
+                status = map_status(storage->get(nwk.dom_id, dom));
+            }
+        }
+        else
+        {
+            DomainArray result;
+            domain      pred;
+            pred.name = alias;
+            status    = map_status(storage->lookup(pred, result));
+            if (status == REG_SUCCESS)
+            {
+                if (result.size() == 1)
+                {
+                    dom = result.front();
+                }
+                else if (result.size() > 1)
+                {
+                    unresolved.push_back(alias);
+                    ExitNow(status = REG_AMBIGUITY);
+                }
+            }
+        }
+        if (status == REG_SUCCESS)
+        {
+            domains.push_back(dom);
+        }
+        else
+        {
+            unresolved.push_back(alias);
+        }
+    }
+    ret.insert(ret.end(), domains.begin(), domains.end());
+    status = domains.size() > 0 ? REG_SUCCESS : REG_NOT_FOUND;
+exit:
+    return status;
+}
+
 registry_status registry::get_all_networks(NetworkArray &ret)
 {
     registry_status status;
