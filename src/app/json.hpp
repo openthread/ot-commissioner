@@ -43,6 +43,8 @@
 
 #include "app/commissioner_app.hpp"
 
+#define JSON_INDENT_DEFAULT 4
+
 namespace ot {
 
 namespace commissioner {
