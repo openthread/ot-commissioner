@@ -65,7 +65,8 @@ Error Init(const Config &aDefaultConfig)
 
     if (root.empty())
     {
-        root = getenv("THREAD_SM_ROOT");
+        char *tmpRoot = getenv("THREAD_SM_ROOT");
+        root          = ((tmpRoot == nullptr) ? "" : tmpRoot);
         if (root.empty())
         {
             return ERROR_INVALID_ARGS("ThreadSMRoot value is not available");
