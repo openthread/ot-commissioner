@@ -692,7 +692,7 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-Error JsonFromFile(std::string &aJson, std::string &aPath)
+Error JsonFromFile(std::string &aJson, const std::string &aPath)
 {
     Error       error;
     std::string jsonStr;

@@ -880,7 +880,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
 
     Value value;
 
-    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too many arguments"));
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
     if (CaseInsensitiveEqual(aExpr[1], "list"))
     {
         nlohmann::json             json;
@@ -888,7 +888,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         std::vector<network>       networks;
         RegistryStatus             status;
 
-        ASSERT(aExpr.size() == 2);
+        VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
         if (mContext.mDomAliases.size() > 0)
         {
             for (auto dom : mContext.mDomAliases)
@@ -948,14 +948,27 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "add"))
     {
-        // TODO: implement sanity check
+        Error                    error;
+        std::string              jsonStr;
+        nlohmann::json           json;
+        std::vector<BorderAgent> agents;
+
+        SuccessOrExit(error = JsonFromFile(jsonStr, aExpr[2]));
+        json = nlohmann::json::parse(jsonStr);
+        // TODO: implement sanity check of BorderAgent records
+
+        // TODO: import border agents to registry
     }
     else if (CaseInsensitiveEqual(aExpr[1], "delete"))
     {
+        // TODO: implement protection for currently selected network
+        //       (may be at registry level)
+
+        // TODO: do not forget about cascade deletion in registry
     }
     else if (CaseInsensitiveEqual(aExpr[1], "scan"))
     {
-        // TODO:
+        // TODO: implement new handler
     }
     else
     {
