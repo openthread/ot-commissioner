@@ -55,7 +55,7 @@ public:
     JobManager()  = default;
     ~JobManager() = default;
 
-    Error Init(const Config &aConf, Interpreter &aInterpreter);
+    Error Init(const Config &aConf, InterpreterPtr &aInterpreter);
     Error PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
     /**
      * Run all prepared jobs.

@@ -48,12 +48,12 @@ namespace commissioner {
 using Json   = nlohmann::json;
 using XpanId = persistent_storage::xpan_id;
 
-Error JobManager::Init(const Config &aConf, Interpreter &aInterpreter)
+Error JobManager::Init(const Config &aConf, InterpreterPtr &aInterpreter)
 {
     Error error;
 
     mDefaultConf = aConf;
-    mInterpreter = InterpreterPtr(&aInterpreter);
+    mInterpreter = aInterpreter;
     SuccessOrExit(error = sm::Init(aConf));
     SuccessOrExit(error = CommissionerApp::Create(mDefaultCommissioner, aConf));
 exit:

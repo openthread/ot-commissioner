@@ -56,7 +56,9 @@ public:
     Interpreter()  = default;
     ~Interpreter() = default;
 
-    Error Init(const std::string &aConfigFile, const std::string &aRegistry);
+    static Error Init(std::shared_ptr<Interpreter> &aInterpreter,
+                      const std::string &           aConfigFile,
+                      const std::string &           aRegistry);
 
     void Run();
 
