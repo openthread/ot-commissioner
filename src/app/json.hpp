@@ -84,7 +84,7 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
  * If file includes comments, those are stripped off.
  * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
  */
-Error JsonFromFile(std::string &aJson, std::string &aPath);
+Error JsonFromFile(std::string &aJson, const std::string &aPath);
 
 } // namespace commissioner
 
