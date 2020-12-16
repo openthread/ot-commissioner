@@ -83,6 +83,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"stop", &Interpreter::ProcessStop},
     {"active", &Interpreter::ProcessActive},
     {"token", &Interpreter::ProcessToken},
+    {"br", &Interpreter::ProcessBr},
     {"domain", &Interpreter::ProcessDomain},
     {"network", &Interpreter::ProcessNetwork},
     {"sessionid", &Interpreter::ProcessSessionId},
@@ -111,6 +112,10 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"token", "token request <registrar-addr> <registrar-port>\n"
               "token print\n"
               "token set <signed-token-hex-string-file> <signer-cert-pem-file>"},
+    {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
+           "br add <json-file-path>\n"
+           "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"
+           "br scan [--export <json-file-path>] [--timeout <ms>]\n"},
     {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
@@ -171,17 +176,21 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
 };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
-    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"start"},
-                                               Interpreter::StringArray{"stop"},
-                                               Interpreter::StringArray{"active"},
-                                               Interpreter::StringArray{"sessionid"},
-                                               Interpreter::StringArray{"bbrdataset", "get"},
-                                               Interpreter::StringArray{"commdataset", "get"},
-                                               Interpreter::StringArray{"opdataset", "get", "active"},
-                                               Interpreter::StringArray{"opdataset", "get", "pending"},
-                                               Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
-                                               Interpreter::StringArray{"domain", "list"},
-                                               Interpreter::StringArray{"network", "list"}};
+    *new std::vector<Interpreter::StringArray>{
+        Interpreter::StringArray{"start"},
+        Interpreter::StringArray{"stop"},
+        Interpreter::StringArray{"active"},
+        Interpreter::StringArray{"sessionid"},
+        Interpreter::StringArray{"bbrdataset", "get"},
+        Interpreter::StringArray{"commdataset", "get"},
+        Interpreter::StringArray{"opdataset", "get", "active"},
+        Interpreter::StringArray{"opdataset", "get", "pending"},
+        Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+        Interpreter::StringArray{"br", "list"},
+        Interpreter::StringArray{"br", "delete"},
+        Interpreter::StringArray{"domain", "list"},
+        Interpreter::StringArray{"network", "list"},
+    };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
     *new std::vector<Interpreter::StringArray>{
@@ -201,6 +210,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new s
     Interpreter::StringArray{"commdataset", "get"},
     Interpreter::StringArray{"opdataset", "get", "active"},
     Interpreter::StringArray{"opdataset", "get", "pending"},
+    Interpreter::StringArray{"br", "scan"},
 };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mImportSyntax = *new std::vector<Interpreter::StringArray>{
@@ -854,6 +864,98 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
         SuccessOrExit(value = ReadHexStringFile(signedToken, aExpr[2]));
 
         SuccessOrExit(value = commissioner->SetToken(signedToken));
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
+    }
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
+{
+    using namespace ot::commissioner::persistent_storage;
+
+    Value value;
+
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too many arguments"));
+    if (CaseInsensitiveEqual(aExpr[1], "list"))
+    {
+        nlohmann::json             json;
+        std::vector<border_router> routers;
+        std::vector<network>       networks;
+        RegistryStatus             status;
+
+        ASSERT(aExpr.size() == 2);
+        if (mContext.mDomAliases.size() > 0)
+        {
+            for (auto dom : mContext.mDomAliases)
+            {
+                std::vector<network> domNetworks;
+                status = mRegistry->get_networks_in_domain(dom, domNetworks);
+                if (status != RegistryStatus::REG_SUCCESS)
+                {
+                    PrintNetworkMessage(dom, "unrecognized domain", COLOR_ALIAS_FAILED);
+                }
+                else
+                {
+                    networks.insert(networks.end(), domNetworks.begin(), domNetworks.end());
+                }
+            }
+        }
+        else if (mContext.mNwkAliases.size() > 0)
+        {
+            StringArray unresolved;
+            status = mRegistry->get_networks_by_aliases(mContext.mNwkAliases, networks, unresolved);
+            for (auto alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "network alias unknown", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        else
+        {
+            status = mRegistry->get_all_border_routers(routers);
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        if (networks.size() > 0)
+        {
+            for (auto nwk : networks)
+            {
+                std::vector<border_router> nwkRouters;
+                status = mRegistry->get_border_routers_in_network(nwk.xpan, nwkRouters);
+                if (status == RegistryStatus::REG_SUCCESS)
+                {
+                    routers.insert(routers.end(), nwkRouters.begin(), nwkRouters.end());
+                }
+                else
+                {
+                    PrintNetworkMessage(nwk.xpan.value, "lookup failed", COLOR_ALIAS_FAILED);
+                }
+            }
+        }
+        if (routers.size() > 0)
+        {
+            json  = routers;
+            value = json.dump(JSON_INDENT_DEFAULT);
+        }
+        else
+        {
+            value = ERROR_NOT_FOUND("no border routers found");
+        }
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "add"))
+    {
+        // TODO: implement sanity check
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "delete"))
+    {
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "scan"))
+    {
+        // TODO:
     }
     else
     {

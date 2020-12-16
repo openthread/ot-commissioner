@@ -227,6 +227,11 @@ registry_status registry::add(BorderAgent const &val)
     return status;
 }
 
+registry_status registry::get_all_border_routers(BorderRouterArray &ret)
+{
+    return map_status(storage->lookup(border_router{}, ret));
+}
+
 registry_status registry::get_border_router(const border_router_id rawid, border_router &br)
 {
     return map_status(storage->get(rawid, br));

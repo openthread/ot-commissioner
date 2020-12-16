@@ -120,6 +120,12 @@ public:
     registry_status add(BorderAgent const &val);
 
     /**
+     * Get list of all border routers
+     * @param[out] ret vector of all border routers
+     */
+    registry_status get_all_border_routers(BorderRouterArray &ret);
+
+    /**
      * Get border router record by raw id.
      *
      * It is expected that user becomes aware of the border router raw id from
@@ -134,6 +140,7 @@ public:
      * @param[out] ret resultant array of @ref border_router records
      */
     registry_status get_border_routers_in_network(const xpan_id xpan, BorderRouterArray &ret);
+
     /**
      * Get networks of the domain
      *

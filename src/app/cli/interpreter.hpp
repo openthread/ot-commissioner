@@ -139,6 +139,7 @@ private:
     Value ProcessStop(const Expression &aExpr);
     Value ProcessActive(const Expression &aExpr);
     Value ProcessToken(const Expression &aExpr);
+    Value ProcessBr(const Expression &aExpr);
     Value ProcessDomain(const Expression &aExpr);
     Value ProcessNetwork(const Expression &aExpr);
     Value ProcessNetworkList(const Expression &aExpr);
