@@ -269,15 +269,28 @@ registry_status registry::get_networks_in_domain(const std::string &dom_name, Ne
 {
     registry_status     status;
     std::vector<domain> domains;
-    domain              dom{EMPTY_ID, dom_name};
     network             nwk{};
 
-    VerifyOrExit((status = map_status(storage->lookup(dom, domains))) == REG_SUCCESS);
-    VerifyOrExit(domains.size() < 2, status = REG_ERROR);
-
+    if (dom_name == ALIAS_THIS)
+    {
+        domain  curDom;
+        network curNwk;
+        status = get_current_network(curNwk);
+        if (status == REG_SUCCESS)
+        {
+            status = map_status(storage->get(curNwk.dom_id, curDom));
+        }
+        VerifyOrExit(status == REG_SUCCESS);
+        domains.push_back(curDom);
+    }
+    else
+    {
+        domain dom{EMPTY_ID, dom_name};
+        VerifyOrExit((status = map_status(storage->lookup(dom, domains))) == REG_SUCCESS);
+    }
+    VerifyOrExit(domains.size() < 2, status = REG_AMBIGUITY);
     nwk.dom_id = domains[0].id;
     status     = map_status(storage->lookup(nwk, ret));
-
 exit:
     return status;
 }
