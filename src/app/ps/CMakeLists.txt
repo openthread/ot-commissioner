@@ -55,6 +55,7 @@ target_include_directories(persistent-storage
 target_link_libraries(persistent-storage
     PUBLIC
 	    commissioner-common
+		commissioner
 )
 
 if (BUILD_SHARED_LIBS)
