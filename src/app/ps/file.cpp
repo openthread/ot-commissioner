@@ -118,7 +118,21 @@ file_status file_write(std::string const &name, std::string const &data)
         return FS_ERROR;
     }
 
-    write(fd, data.c_str(), data.size());
+    ssize_t written = 0;
+    do
+    {
+        ssize_t result = write(fd, data.c_str() + written, data.size() - written);
+        if (result == -1 && (errno == EAGAIN || errno == EINTR))
+        {
+            continue;
+        }
+        else
+        {
+            close(fd);
+            return FS_ERROR;
+        }
+        written += result;
+    } while (written != (ssize_t)data.size());
     close(fd);
     return FS_SUCCESS;
 }
