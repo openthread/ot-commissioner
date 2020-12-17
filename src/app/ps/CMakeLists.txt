@@ -52,6 +52,11 @@ target_include_directories(persistent-storage
     ${PROJECT_SOURCE_DIR}/src
 )
 
+target_link_libraries(persistent-storage
+    PUBLIC
+	    commissioner-common
+)
+
 if (BUILD_SHARED_LIBS)
     install(TARGETS persistent-storage
             LIBRARY DESTINATION lib
