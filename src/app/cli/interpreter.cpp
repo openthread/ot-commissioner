@@ -575,10 +575,8 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
         else
         {
             inKey = false;
-            if (state == ST_COMMAND)
-            {
-                word = ToLower(word);
-            }
+            // Note: avoid accidental conversion of the PSKd to lower case (see TS 8.2, Joining Device Credential
+            // in the table 8.2
             arrays[state]->push_back(word);
         }
     }
