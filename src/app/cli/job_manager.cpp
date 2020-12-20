@@ -48,12 +48,11 @@ namespace commissioner {
 using Json   = nlohmann::json;
 using XpanId = persistent_storage::xpan_id;
 
-Error JobManager::Init(const Config &aConf, InterpreterPtr &aInterpreter)
+Error JobManager::Init(const Config &aConf)
 {
     Error error;
 
     mDefaultConf = aConf;
-    mInterpreter = aInterpreter;
     SuccessOrExit(error = sm::Init(aConf));
     SuccessOrExit(error = CommissionerApp::Create(mDefaultCommissioner, aConf));
 exit:
@@ -106,7 +105,7 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
         return ERROR_INVALID_SYNTAX("{} not eligible for job", aExpr[0]);
     }
     eval     = mapItem->second;
-    Job *job = new Job(*mInterpreter, aCommissioner, aExpr, eval, aXpanId);
+    Job *job = new Job(mInterpreter, aCommissioner, aExpr, eval, aXpanId);
     mJobPool.push_back(job);
 
     return ERROR_NONE;
@@ -253,10 +252,10 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
     RegistryStatus              status;
     persistent_storage::network nwk;
 
-    status = mInterpreter->mRegistry->get_network_by_xpan(aNid, nwk);
+    status = mInterpreter.mRegistry->get_network_by_xpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
     isCCM  = nwk.ccm > 0;
-    status = mInterpreter->mRegistry->get_domain_name_by_xpan(aNid, domainName);
+    status = mInterpreter.mRegistry->get_domain_name_by_xpan(aNid, domainName);
     if (status != RegistryStatus::REG_SUCCESS)
     {
         LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", XpanId(aNid).str(), status);
@@ -345,7 +344,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
     BRArray        brs;
     BRArray        choice;
     Network        nwk;
-    RegistryStatus status = mInterpreter->mRegistry->get_border_routers_in_network(aNid, brs);
+    RegistryStatus status = mInterpreter.mRegistry->get_border_routers_in_network(aNid, brs);
 
     VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
                  error = ERROR_NOT_FOUND("br lookup failed with status={}", status));
@@ -355,7 +354,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
         br = brs.front();
         ExitNow();
     }
-    status = mInterpreter->mRegistry->get_network_by_xpan(aNid, nwk);
+    status = mInterpreter.mRegistry->get_network_by_xpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_NOT_FOUND("network lookup failed"));
     if (nwk.ccm > 0) // Dealing with domain network
     {
@@ -580,7 +579,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
     uint64_t       nid   = 0;
     RegistryStatus status;
 
-    status = mInterpreter->mRegistry->get_current_network_xpan(nid);
+    status = mInterpreter.mRegistry->get_current_network_xpan(nid);
     VerifyOrExit(RegistryStatus::REG_SUCCESS == status, error = ERROR_IO_ERROR("selected network not found"));
 
     if (nid != 0)

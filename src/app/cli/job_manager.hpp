@@ -42,20 +42,21 @@ namespace ot {
 namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
-using InterpreterPtr     = std::shared_ptr<Interpreter>;
 using RegistryStatus     = ot::commissioner::persistent_storage::registry_status;
 using BorderRouter       = ot::commissioner::persistent_storage::border_router;
 
-class Interpreter;
 class Job;
 
 class JobManager
 {
 public:
-    JobManager()  = default;
+    explicit JobManager(Interpreter &aInterpreter)
+        : mInterpreter(aInterpreter)
+    {
+    }
     ~JobManager() = default;
 
-    Error Init(const Config &aConf, InterpreterPtr &aInterpreter);
+    Error Init(const Config &aConf);
     Error PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
     /**
      * Run all prepared jobs.
@@ -153,22 +154,22 @@ private:
 
     void ErrorMsg(uint64_t aNid, std::string aMessage)
     {
-        mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
+        mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
     }
     void WarningMsg(uint64_t aNid, std::string aMessage)
     {
-        mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
+        mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
     }
     void InfoMsg(uint64_t aNid, std::string aMessage)
     {
-        mInterpreter->PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
+        mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
     }
 
     JobPool            mJobPool;
     CommissionerPool   mCommissionerPool;
     Config             mDefaultConf;
     std::string        mImportFile;
-    InterpreterPtr     mInterpreter         = nullptr;
+    Interpreter &      mInterpreter;
     CommissionerAppPtr mDefaultCommissioner = nullptr;
 };
 

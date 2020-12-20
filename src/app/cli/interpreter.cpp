@@ -284,9 +284,7 @@ void Interpreter::Context::Cleanup()
     mImportFiles.clear();
 }
 
-Error Interpreter::Init(std::shared_ptr<Interpreter> &aInterpreter,
-                        const std::string &           aConfigFile,
-                        const std::string &           aRegistryFile)
+Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegistryFile)
 {
     Error error;
 
@@ -305,13 +303,12 @@ Error Interpreter::Init(std::shared_ptr<Interpreter> &aInterpreter,
         config.mPSKc.assign(kMaxPSKcLength, 0xff);
         config.mLogger = SysLogger::Create(LogLevel::kDebug);
     }
-    aInterpreter->mJobManager.reset(new JobManager());
-    SuccessOrExit(error = aInterpreter->mJobManager->Init(config, aInterpreter));
-    aInterpreter->mRegistry.reset(new Registry(aRegistryFile));
-    VerifyOrExit(aInterpreter->mRegistry != nullptr,
+    mJobManager.reset(new JobManager(*this));
+    SuccessOrExit(error = mJobManager->Init(config));
+    mRegistry.reset(new Registry(aRegistryFile));
+    VerifyOrExit(mRegistry != nullptr,
                  error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
-    VerifyOrExit(aInterpreter->mRegistry->open() == RegistryStatus::REG_SUCCESS,
-                 error = ERROR_IO_ERROR("registry failed to open"));
+    VerifyOrExit(mRegistry->open() == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("registry failed to open"));
 exit:
     return error;
 }
