@@ -31,7 +31,6 @@
  *   The file is the entrance of the commissioner CLI.
  */
 
-#include <memory>
 #include <thread>
 
 #include <signal.h>
@@ -80,8 +79,8 @@ static void PrintVersion()
     Console::Write(OT_COMM_VERSION, Console::Color::kWhite);
 }
 
-static std::shared_ptr<Interpreter> gInterpreter(new Interpreter);
-static sigset_t                     gSignalSet;
+static Interpreter gInterpreter;
+static sigset_t    gSignalSet;
 
 // TODO wire up registry through the command line parameters
 ::ot::commissioner::persistent_storage::registry gRegistry("./registry.json");
@@ -93,7 +92,7 @@ static void HandleSignalInterrupt()
     while (true)
     {
         sigwait(&gSignalSet, &signalNum);
-        gInterpreter->CancelCommand();
+        gInterpreter.CancelCommand();
     }
 }
 
@@ -130,9 +129,9 @@ int main(int argc, const char *argv[])
 
     Console::Write(kLogo, Console::Color::kBlue);
 
-    SuccessOrExit(error = Interpreter::Init(gInterpreter, argv[1], registryFileName));
+    SuccessOrExit(error = gInterpreter.Init(argv[1], registryFileName));
 
-    gInterpreter->Run();
+    gInterpreter.Run();
 
 exit:
     if (error != ErrorCode::kNone)
