@@ -98,7 +98,7 @@ void JobManager::SetImportFile(const std::string &importFile)
 Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
 {
     Interpreter::JobEvaluator eval;
-    auto                      mapItem = Interpreter::mJobEvaluatorMap.find(aExpr[0]);
+    auto                      mapItem = Interpreter::mJobEvaluatorMap.find(utils::ToLower(aExpr[0]));
 
     if (mapItem != Interpreter::mJobEvaluatorMap.end())
     {
@@ -113,9 +113,9 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
 
 Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
 {
-    if (aExpr[0] == "start")
+    if (utils::ToLower(aExpr[0]) == "start")
         return PrepareStartJobs(aExpr, aNids, aGroupAlias);
-    else if (aExpr[0] == "stop")
+    else if (utils::ToLower(aExpr[0]) == "stop")
         return PrepareStopJobs(aExpr, aNids, aGroupAlias);
 
     Error error;
@@ -165,7 +165,7 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
     Config conf  = mDefaultConf;
     Error  error = ERROR_NONE;
 
-    ASSERT(aExpr[0] == "start");
+    ASSERT(utils::ToLower(aExpr[0]) == "start");
     /*
      * Coming here is a result of using multi-network syntax.
      * Therefore, no extra arguments to be used, otherwise it
@@ -213,7 +213,7 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Ni
 {
     Error error = ERROR_NONE;
 
-    ASSERT(aExpr[0] == "stop");
+    ASSERT(utils::ToLower(aExpr[0]) == "stop");
 
     for (auto nid : aNids)
     {
@@ -448,16 +448,17 @@ Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aEx
         ExitNow(error = ERROR_NOT_FOUND("'{}' not found", xpan.str()));
     }
     jsonStr = json.dump(JSON_INDENT_DEFAULT);
-    if (aExpr[0] == "opdataset")
+    if (utils::ToLower(aExpr[0]) == "opdataset")
     {
-        VerifyOrExit(aExpr[1] == "set" && aExpr.size() == 3, error = ERROR_INVALID_ARGS("import usupported"));
-        if (aExpr[2] == "active")
+        VerifyOrExit(utils::ToLower(aExpr[1]) == "set" && aExpr.size() == 3,
+                     error = ERROR_INVALID_ARGS("import usupported"));
+        if (utils::ToLower(aExpr[2]) == "active")
         {
             ActiveOperationalDataset dataset;
             SuccessOrExit(error = ActiveDatasetFromJson(dataset, jsonStr));
             // TODO: try importing wrong format
         }
-        else if (aExpr[2] == "pending")
+        else if (utils::ToLower(aExpr[2]) == "pending")
         {
             PendingOperationalDataset dataset;
             SuccessOrExit(error = PendingDatasetFromJson(dataset, jsonStr));
@@ -468,17 +469,19 @@ Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aEx
             ExitNow(error = ERROR_INVALID_ARGS("import unsupported"));
         }
     }
-    else if (aExpr[0] == "bbrdataset")
+    else if (utils::ToLower(aExpr[0]) == "bbrdataset")
     {
         BbrDataset dataset;
-        VerifyOrExit(aExpr.size() == 2 && aExpr[1] == "set", error = ERROR_INVALID_ARGS("import usupported"));
+        VerifyOrExit(aExpr.size() == 2 && utils::ToLower(aExpr[1]) == "set",
+                     error = ERROR_INVALID_ARGS("import usupported"));
         SuccessOrExit(error = BbrDatasetFromJson(dataset, jsonStr));
         // TODO: try importing wrong format
     }
-    else if (aExpr[0] == "commdataset")
+    else if (utils::ToLower(aExpr[0]) == "commdataset")
     {
         CommissionerDataset dataset;
-        VerifyOrExit(aExpr.size() == 2 && aExpr[1] == "set", error = ERROR_INVALID_ARGS("import usupported"));
+        VerifyOrExit(aExpr.size() == 2 && utils::ToLower(aExpr[1]) == "set",
+                     error = ERROR_INVALID_ARGS("import usupported"));
         SuccessOrExit(error = CommissionerDatasetFromJson(dataset, jsonStr));
         // TODO: try importing wrong format
     }
