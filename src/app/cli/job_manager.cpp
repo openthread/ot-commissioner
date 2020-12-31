@@ -41,6 +41,8 @@
 #include "common/utils.hpp"
 #include "library/logging.hpp"
 
+#define SYNTAX_IMPORT_UNSUPPORTED "import usupported"
+
 namespace ot {
 
 namespace commissioner {
@@ -149,7 +151,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             Error importError = AppendImport(nid, jobExpr);
             if (importError != ERROR_NONE)
             {
-                ErrorMsg(nid, "import entry not found");
+                ErrorMsg(nid, importError.GetMessage());
                 continue;
             }
         }
@@ -445,13 +447,13 @@ Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aEx
     }
     else
     {
-        ExitNow(error = ERROR_NOT_FOUND("'{}' not found", xpan.str()));
+        ExitNow(error = ERROR_NOT_FOUND("import entry not found"));
     }
     jsonStr = json.dump(JSON_INDENT_DEFAULT);
     if (utils::ToLower(aExpr[0]) == "opdataset")
     {
         VerifyOrExit(utils::ToLower(aExpr[1]) == "set" && aExpr.size() == 3,
-                     error = ERROR_INVALID_ARGS("import usupported"));
+                     error = ERROR_INVALID_ARGS(SYNTAX_IMPORT_UNSUPPORTED));
         if (utils::ToLower(aExpr[2]) == "active")
         {
             ActiveOperationalDataset dataset;
@@ -466,14 +468,14 @@ Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aEx
         }
         else
         {
-            ExitNow(error = ERROR_INVALID_ARGS("import unsupported"));
+            ExitNow(error = ERROR_INVALID_ARGS(SYNTAX_IMPORT_UNSUPPORTED));
         }
     }
     else if (utils::ToLower(aExpr[0]) == "bbrdataset")
     {
         BbrDataset dataset;
         VerifyOrExit(aExpr.size() == 2 && utils::ToLower(aExpr[1]) == "set",
-                     error = ERROR_INVALID_ARGS("import usupported"));
+                     error = ERROR_INVALID_ARGS(SYNTAX_IMPORT_UNSUPPORTED));
         SuccessOrExit(error = BbrDatasetFromJson(dataset, jsonStr));
         // TODO: try importing wrong format
     }
@@ -481,7 +483,7 @@ Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aEx
     {
         CommissionerDataset dataset;
         VerifyOrExit(aExpr.size() == 2 && utils::ToLower(aExpr[1]) == "set",
-                     error = ERROR_INVALID_ARGS("import usupported"));
+                     error = ERROR_INVALID_ARGS(SYNTAX_IMPORT_UNSUPPORTED));
         SuccessOrExit(error = CommissionerDatasetFromJson(dataset, jsonStr));
         // TODO: try importing wrong format
     }
