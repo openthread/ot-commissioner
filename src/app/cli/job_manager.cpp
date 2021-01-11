@@ -164,8 +164,7 @@ exit:
 
 Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
 {
-    Config conf  = mDefaultConf;
-    Error  error = ERROR_NONE;
+    Error error = ERROR_NONE;
 
     ASSERT(utils::ToLower(aExpr[0]) == "start");
     /*
@@ -178,35 +177,43 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const N
     for (auto nid : aNids)
     {
         BorderRouter br;
+        Config       conf = mDefaultConf;
 
-        auto entry = mCommissionerPool.find(nid);
-        if (entry == mCommissionerPool.end())
+        error = PrepareDtlsConfig(nid, conf);
+        if (error != ERROR_NONE)
         {
-            CommissionerAppPtr commissioner;
-
-            SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
-            SuccessOrExit(error = CommissionerAppCreate(commissioner, conf));
-            mCommissionerPool[nid] = commissioner;
-            entry                  = mCommissionerPool.find(nid);
-        }
-
-        bool active = entry->second->IsActive();
-        if (active)
-        {
-            if (!aGroupAlias)
-            {
-                InfoMsg(nid, "already started");
-            }
+            ErrorMsg(nid, error.GetMessage());
+            error = ERROR_NONE;
             continue;
         }
+        {
+            auto entry = mCommissionerPool.find(nid);
+            if (entry == mCommissionerPool.end())
+            {
+                CommissionerAppPtr commissioner;
 
-        SuccessOrExit(error = PrepareDtlsConfig(nid, conf));
-        SuccessOrExit(error = MakeBorderRouterChoice(nid, br));
-        auto expr = aExpr;
-        expr.push_back(br.agent.mAddr);
-        expr.push_back(std::to_string(br.agent.mPort));
-        ASSERT(expr.size() == 3); // 'start br_addr br_port'
-        SuccessOrExit(error = CreateJob(entry->second, expr, nid));
+                SuccessOrExit(error = CommissionerAppCreate(commissioner, conf));
+                mCommissionerPool[nid] = commissioner;
+                entry                  = mCommissionerPool.find(nid);
+            }
+
+            bool active = entry->second->IsActive();
+            if (active)
+            {
+                if (!aGroupAlias)
+                {
+                    InfoMsg(nid, "already started");
+                }
+                continue;
+            }
+
+            SuccessOrExit(error = MakeBorderRouterChoice(nid, br));
+            auto expr = aExpr;
+            expr.push_back(br.agent.mAddr);
+            expr.push_back(std::to_string(br.agent.mPort));
+            ASSERT(expr.size() == 3); // 'start br_addr br_port'
+            SuccessOrExit(error = CreateJob(entry->second, expr, nid));
+        }
     }
 exit:
     return error;
@@ -246,7 +253,7 @@ exit:
     return error;
 }
 
-Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
+Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
 {
     Error                       error;
     std::string                 domainName;
@@ -285,7 +292,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
                 WarningMsg(aNid, error.GetMessage());
                 error = ERROR_NONE;
             }
-            if (!dtlsConfig.IsEmpty())
+            if (!dtlsConfig.IsEmpty(isCCM))
             {
                 goto update;
             }
@@ -297,7 +304,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
             }
         }
     }
-    if (!dtlsConfig.IsEmpty())
+    if (!dtlsConfig.IsEmpty(isCCM))
     {
         goto update;
     }
@@ -307,7 +314,7 @@ Error JobManager::PrepareDtlsConfig(const uint64_t aNid, Config &aConfig)
         WarningMsg(aNid, error.GetMessage());
         error = ERROR_NONE;
     }
-    if (!dtlsConfig.IsEmpty())
+    if (!dtlsConfig.IsEmpty(isCCM))
     {
         goto update;
     }
@@ -330,9 +337,24 @@ update:
 
 #undef UPDATE_IF_SET
 
-    if (dtlsConfig.IsEmpty())
+    if (dtlsConfig.IsEmpty(isCCM))
     {
         InfoMsg(aNid, "no updates to DTLS configuration, default configuration will be used");
+    }
+
+#define UPDATE_IF_SET(name)         \
+    if (aConfig.m##name.size() > 0) \
+    dtlsConfig.m##name = aConfig.m##name
+
+    UPDATE_IF_SET(Certificate);
+    UPDATE_IF_SET(PrivateKey);
+    UPDATE_IF_SET(TrustAnchor);
+    UPDATE_IF_SET(PSKc);
+
+#undef UPDATE_IF_SET
+    if (dtlsConfig.IsEmpty(isCCM))
+    {
+        error = ERROR_SECURITY("empty DTLS configuration for the network {}", aNid.str());
     }
 exit:
     return error;

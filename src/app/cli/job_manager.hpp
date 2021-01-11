@@ -36,6 +36,7 @@
 
 #include "app/cli/interpreter.hpp"
 #include "app/commissioner_app.hpp"
+#include "app/ps/registry_entries.hpp"
 
 namespace ot {
 
@@ -49,6 +50,8 @@ class Job;
 
 class JobManager
 {
+    using XpanId = ot::commissioner::persistent_storage::xpan_id;
+
 public:
     explicit JobManager(Interpreter &aInterpreter)
         : mInterpreter(aInterpreter)
@@ -151,7 +154,7 @@ private:
      *        and if it was successful, i.e. at least one file was
      *        found not empty, the search is stopped.
      */
-    Error PrepareDtlsConfig(const uint64_t aNid, Config &aConfig);
+    Error PrepareDtlsConfig(const XpanId aNid, Config &aConfig);
     Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId);
 
     void ErrorMsg(uint64_t aNid, std::string aMessage)
