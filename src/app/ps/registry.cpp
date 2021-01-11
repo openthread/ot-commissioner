@@ -419,7 +419,8 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases,
         {
             // Get selected nwk xpan (no selected is an error)
             network nwk_this;
-            if ((status = get_current_network(nwk_this)) == registry_status::REG_SUCCESS)
+            status = get_current_network(nwk_this);
+            if (status == registry_status::REG_SUCCESS && nwk_this.id.id != EMPTY_ID)
             {
                 // Put nwk into networks
                 networks.push_back(nwk_this);

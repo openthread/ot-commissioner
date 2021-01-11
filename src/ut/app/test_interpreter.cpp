@@ -182,7 +182,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisResolvesWithCurrentSet)
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_ThisUnresolvesWithCurrentUnset)
+TEST_F(InterpreterTestSuite, MNSV_ThisUnresolvesWithCurrentUnset)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -196,6 +196,7 @@ TEST_F(InterpreterTestSuite, DISABLED_MNSV_ThisUnresolvesWithCurrentUnset)
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    EXPECT_EQ(nids.size(), 0);
 }
 
 TEST_F(InterpreterTestSuite, DISABLED_MNSV_AllOtherSameWithCurrentUnselected)
