@@ -193,7 +193,8 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
         Interpreter::StringArray{"opdataset", "get", "pending"},
         Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
     };
-
+const std::vector<Interpreter::StringArray> &Interpreter::mInactiveCommissionerExecution =
+    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"active"}};
 const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new std::vector<Interpreter::StringArray>{
     Interpreter::StringArray{"bbrdataset", "get"},
     Interpreter::StringArray{"commdataset", "get"},
@@ -428,6 +429,11 @@ bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
 bool Interpreter::IsMultiJob(const Expression &aExpr)
 {
     return IsFeatureSupported(mMultiJobExecution, aExpr);
+}
+
+bool Interpreter::IsInactiveCommissionerAllowed(const Expression &aExpr)
+{
+    return IsFeatureSupported(mInactiveCommissionerExecution, aExpr);
 }
 
 Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, NidArray &aNids)

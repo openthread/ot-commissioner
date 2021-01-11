@@ -135,6 +135,7 @@ private:
     bool       IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
     bool       IsMultiJob(const Expression &aExpr);
+    bool       IsInactiveCommissionerAllowed(const Expression &aExpr);
     Value      ValidateMultiNetworkSyntax(const Expression &aExpr, NidArray &aNids);
     Error      ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
 
@@ -198,6 +199,7 @@ private:
     static const std::map<std::string, Evaluator> &   mEvaluatorMap;
     static const std::vector<StringArray> &           mMultiNetworkSyntax;
     static const std::vector<StringArray> &           mMultiJobExecution;
+    static const std::vector<StringArray> &           mInactiveCommissionerExecution;
     static const std::vector<StringArray> &           mExportSyntax;
     static const std::vector<StringArray> &           mImportSyntax;
     static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;

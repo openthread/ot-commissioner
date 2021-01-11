@@ -134,14 +134,18 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArr
             continue;
         }
 
-        bool active = entry->second->IsActive();
-        if (!active)
+        bool isInactiveAllowed = mInterpreter.IsInactiveCommissionerAllowed(aExpr);
+        if (!isInactiveAllowed)
         {
-            if (!aGroupAlias)
+            bool active = entry->second->IsActive();
+            if (!active)
             {
-                WarningMsg(nid, "not started");
+                if (!aGroupAlias)
+                {
+                    WarningMsg(nid, "not started");
+                }
+                continue;
             }
-            continue;
         }
 
         Interpreter::Expression jobExpr = aExpr;

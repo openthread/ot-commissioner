@@ -516,10 +516,13 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByDomain)
     EXPECT_EQ(ctx.mJobManager.mJobPool.size(), 0);
 }
 
-TEST_F(JobManagerTestSuite, DISABLED_BuildFinalResultString)
+TEST_F(JobManagerTestSuite, BuildFinalResultString)
 {
     TestContext ctx;
     SetInitialExpectations(ctx);
+
+    // Formally set default PSKc
+    ctx.mConf.mPSKc = {'1', '0'};
 
     using namespace ot::commissioner::persistent_storage;
     // Prepare test data
@@ -600,11 +603,9 @@ TEST_F(JobManagerTestSuite, DISABLED_BuildFinalResultString)
     json  = nlohmann::json::parse(value.ToString());
     EXPECT_TRUE(json.contains(xpan_id{1}.str()));
     EXPECT_TRUE(json.contains(xpan_id{2}.str()));
-    // TODO fix application logic to report inactive instead of error, then re-enable
     EXPECT_TRUE(json.contains(xpan_id{3}.str()));
     EXPECT_TRUE(json[xpan_id{1}.str()]);
     EXPECT_TRUE(json[xpan_id{2}.str()]);
-    // TODO fix application logic to report inactive instead of error, then re-enable
     EXPECT_FALSE(json[xpan_id{3}.str()]);
     ctx.mJobManager.CleanupJobs();
 
