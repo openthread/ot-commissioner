@@ -57,9 +57,10 @@ struct SecurityMaterials
     // Mandatory for CCM Thread network.
     ByteArray mTrustAnchor; ///< The trust anchor of 'mCertificate'.
 
-    bool IsEmpty()
+    bool IsEmpty(bool isCCM)
     {
-        return mCertificate.size() == 0 && mPrivateKey.size() == 0 && mTrustAnchor.size() == 0 && mPSKc.size() == 0;
+        return (isCCM ? (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)
+                      : (mPSKc.size() == 0));
     }
 };
 
