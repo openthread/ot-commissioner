@@ -738,11 +738,11 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         // starting currently selected network
         uint64_t       nid;
         RegistryStatus status = mRegistry->get_current_network_xpan(nid);
-        VerifyOrExit(status = RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("getting selected network failed"));
+        VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("getting selected network failed"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         SuccessOrExit(value = mJobManager->MakeBorderRouterChoice(nid, br));
         expr.push_back(br.agent.mAddr);
-        expr.push_back(ToString(br.agent.mPort));
+        expr.push_back(std::to_string(br.agent.mPort));
         break;
     }
     case 2:
@@ -758,7 +758,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         expr.pop_back();
         expr.push_back(br.agent.mAddr);
-        expr.push_back(ToString(br.agent.mPort));
+        expr.push_back(std::to_string(br.agent.mPort));
         break;
     }
     case 3:

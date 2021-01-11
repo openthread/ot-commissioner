@@ -199,7 +199,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisUnresolvesWithCurrentUnset)
     EXPECT_EQ(nids.size(), 0);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_AllOtherSameWithCurrentUnselected)
+TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -222,15 +222,23 @@ TEST_F(InterpreterTestSuite, DISABLED_MNSV_AllOtherSameWithCurrentUnselected)
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_AllOtherDifferWithCurrentSelected)
+TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -255,12 +263,20 @@ TEST_F(InterpreterTestSuite, DISABLED_MNSV_AllOtherDifferWithCurrentSelected)
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(std::find(nids.begin(), nids.end(), 1), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 }
 
 TEST_F(InterpreterTestSuite, MNSV_TwoDomSwitchesFail)
@@ -326,31 +342,36 @@ TEST_F(InterpreterTestSuite, MNSV_ExistingDomainResolves)
     EXPECT_EQ(std::find(nids.begin(), nids.end(), 2), nids.end());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_AmbiguousNwkResolutionFails)
+TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
 {
     TestContext ctx;
     InitContext(ctx);
-    // ExtPanIds are same
+
+    network_id nid;
+    ASSERT_EQ(ctx.mRegistry->storage->add(network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, "pan1", "", 0}, nid),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->storage->add(network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, "pan1", "", 0}, nid),
+              registry_status::REG_SUCCESS);
+
     ASSERT_EQ(
         ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         registry_status::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0}, "1",
-                                       1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "", 0,
-                                       0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
+        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                       "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
+                                       0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     NidArray                nids;
-    expr = ctx.mInterpreter.ParseExpression("start --nwk 1");
+    expr = ctx.mInterpreter.ParseExpression("start --nwk pan1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
-    // TODO Registry returns the first network only - must fail if more
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_SameResolutionFromTwoAliasesCollapses)
+TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -369,7 +390,6 @@ TEST_F(InterpreterTestSuite, DISABLED_MNSV_SameResolutionFromTwoAliasesCollapses
     NidArray                nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 net1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
-    // TODO must collapse after Registry
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(nids.size(), 1);
 }
@@ -423,7 +443,7 @@ TEST_F(InterpreterTestSuite, MNSV_DomThisResolvesWithRespectToSelection)
     EXPECT_EQ(nids[0], 1);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_NoAliasesResolvesToThisNwk)
+TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -450,18 +470,20 @@ TEST_F(InterpreterTestSuite, DISABLED_MNSV_NoAliasesResolvesToThisNwk)
     border_router br;
     br.nwk_id = 2;
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    uint64_t nid;
+    ASSERT_EQ(ctx.mRegistry->get_current_network_xpan(nid), registry_status::REG_SUCCESS);
+    ASSERT_EQ(nid, 3);
 
     Interpreter::Expression expr, ret;
     NidArray                nids;
     expr = ctx.mInterpreter.ParseExpression("start");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
-    // TODO Both empty aliases list must resolve to current network
-    EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_EQ(nids.size(), 1);
-    if (nids.size() == 1)
-    {
-        EXPECT_EQ(nids[0], 3);
-    }
+
+    CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = pcaMock; }), Return(Error{})));
+
+    EXPECT_CALL(*pcaMock, Start(_, StrEq("127.0.0.3"), 20003)).Times(1).WillOnce(Return(Error{}));
+    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
 }
 
 TEST_F(InterpreterTestSuite, MNSV_EmptyNwkOrDomMustFail)
@@ -551,7 +573,7 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     br.nwk_id = 0;
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
-    // TODO Attention Channel->Number and SecurityPolicy->Flags
+    // Attention: changed Channel->Number and SecurityPolicy->Flags
     std::string jsonStr = "{\n\
     \"ActiveTimestamp\": {\n\
         \"Seconds\": 56, // 48 bits\n\
@@ -821,8 +843,7 @@ TEST_F(InterpreterTestSuite, PC_StartCurrentNetworkSuccess)
     EXPECT_TRUE(value.HasNoError());
 }
 
-// TODO FIX results in failure on test runner exit (check deinitilization)
-TEST_F(InterpreterTestSuite, DISABLED_PC_StartLegacySyntaxSuccess)
+TEST_F(InterpreterTestSuite, PC_StartLegacySyntaxSuccess)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -841,16 +862,6 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_StartLegacySyntaxSuccess)
     br.nwk_id = 0;
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
-    uint8_t                camIdx                  = 0;
-    CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
-                                                      CommissionerAppMockPtr{new CommissionerAppMock()}};
-    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
-        .Times(2)
-        .WillRepeatedly(
-            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMocks[camIdx++]; }),
-                  Return(Error{})));
-    EXPECT_CALL(*commissionerAppMocks[0], Start(_, _, _)).Times(0);
-    EXPECT_CALL(*commissionerAppMocks[1], Start(_, _, _)).Times(0);
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _)).Times(1).WillRepeatedly(Return(Error{}));
 
     Interpreter::Expression expr;
@@ -860,8 +871,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_StartLegacySyntaxSuccess)
     EXPECT_TRUE(value.HasNoError());
 }
 
-// TODO FIX failure on runner exit (deinitilixation?)
-TEST_F(InterpreterTestSuite, DISABLED_PC_StartLegacySyntaxErrorFails)
+TEST_F(InterpreterTestSuite, PC_StartLegacySyntaxErrorFails)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -880,16 +890,6 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_StartLegacySyntaxErrorFails)
     br.nwk_id = 0;
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
-    uint8_t                camIdx                  = 0;
-    CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
-                                                      CommissionerAppMockPtr{new CommissionerAppMock()}};
-    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
-        .Times(2)
-        .WillRepeatedly(
-            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMocks[camIdx++]; }),
-                  Return(Error{})));
-    EXPECT_CALL(*commissionerAppMocks[0], Start(_, _, _)).Times(0);
-    EXPECT_CALL(*commissionerAppMocks[1], Start(_, _, _)).Times(0);
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _))
         .Times(1)
         .WillRepeatedly(Return(Error{ErrorCode::kAborted, "Test failure"}));
@@ -960,9 +960,6 @@ TEST_F(InterpreterTestSuite, PC_StopLegacySyntaxSuccess)
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _)).Times(1).WillOnce(Return(Error{}));
-    /*
-        EXPECT_CALL(*ctx.mDefaultCommissionerObject, IsActive()).WillOnce(Return(false)).WillRepeatedly(Return(true));
-    */
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -990,31 +987,20 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_Active)
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         registry_status::REG_SUCCESS);
 
-    border_router br;
-    br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
-
-    CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
-    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
-        .WillOnce(
-            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
-
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, IsActive()).Times(2).WillOnce(Return(false)).WillOnce(Return(true));
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    // TODO must call default commissioner, but calls one from a pool
+    // Debug running 'active' from the default CommissionerApp object
     expr  = ctx.mInterpreter.ParseExpression("active");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    // TODO add resukt verification
+    // TODO add result verification
 
     expr  = ctx.mInterpreter.ParseExpression("active");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-
-    EXPECT_CALL(*commissionerAppMock, IsActive()).Times(2).WillOnce(Return(false)).WillOnce(Return(true));
 
     expr  = ctx.mInterpreter.ParseExpression("active --nwk net1");
     value = ctx.mInterpreter.Eval(expr);
@@ -1025,7 +1011,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_Active)
     EXPECT_TRUE(value.HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_Token)
+TEST_F(InterpreterTestSuite, PC_Token)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -1039,14 +1025,13 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_Token)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    const ByteArray token = {'s', 'i', 'g', 'n', 'e', 'd', ' ', 't', 'o', 'k', 'e', 'n'};
+    const ByteArray token = {'1', '2', '3', 'a', 'e', 'f'};
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
     expr  = ctx.mInterpreter.ParseExpression("token print");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    // TODO debug
-    EXPECT_EQ(WriteFile("token", "./token").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
     EXPECT_EQ(WriteFile("cert", "./cert").mCode, ErrorCode::kNone);
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_, _)).WillOnce(Return(Error{}));
     expr  = ctx.mInterpreter.ParseExpression("token set ./token ./cert");
@@ -1129,19 +1114,19 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNoneOnSelected)
     EXPECT_EQ(nwk.id.id, EMPTY_ID);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectOnEmpty)
+TEST_F(InterpreterTestSuite, PC_NetworkSelectOnEmpty)
 {
     TestContext ctx;
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0xFF}),
               registry_status::REG_SUCCESS);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0xFF}),
               registry_status::REG_SUCCESS);
 
     network nwk;
@@ -1152,15 +1137,14 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectOnEmpty)
     Interpreter::Value      value;
 
     // TODO TBD XPAN format on enter
-    expr = ctx.mInterpreter.ParseExpression("network select 0");
-    // TODO fix set_current_network() from string
+    expr  = ctx.mInterpreter.ParseExpression("network select 1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectAnother)
+TEST_F(InterpreterTestSuite, PC_NetworkSelectAnother)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -1168,11 +1152,11 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectAnother)
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "", 0, 0xFF}),
               registry_status::REG_SUCCESS);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "", 0, 0xFF}),
               registry_status::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
@@ -1185,15 +1169,14 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectAnother)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    expr = ctx.mInterpreter.ParseExpression("network select 1");
-    // TODO fix set_current_network() from string
+    expr  = ctx.mInterpreter.ParseExpression("network select 1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 1);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectNonexisting)
+TEST_F(InterpreterTestSuite, PC_NetworkSelectNonexisting)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -1218,8 +1201,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkSelectNonexisting)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    expr = ctx.mInterpreter.ParseExpression("network select 3");
-    // TODO fix set_current_network() from string
+    expr  = ctx.mInterpreter.ParseExpression("network select 3");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
@@ -1496,7 +1478,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_OpdatasetGetActive)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    // TODO Fix export
+    // TODO Implement export
     unlink("./aods.json");
     expr  = ctx.mInterpreter.ParseExpression("opdataset get active --export ./aods.json");
     value = ctx.mInterpreter.Eval(expr);

@@ -453,10 +453,10 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases,
         }
 
         // Make results unique
-        std::sort(networks.begin(), networks.end(), [](network const &a, network const &b) { return a.name < b.name; });
-        std::unique(networks.begin(), networks.end(), [](network const &a, network const &b) {
-            return ::ot::commissioner::utils::CaseInsensitiveEqual(a.name, b.name);
-        });
+        std::sort(networks.begin(), networks.end(), [](network const &a, network const &b) { return a.xpan < b.xpan; });
+        auto last = std::unique(networks.begin(), networks.end(),
+                                [](network const &a, network const &b) { return a.xpan == b.xpan; });
+        networks.erase(last, networks.end());
     }
 
     ret.insert(ret.end(), networks.begin(), networks.end());
