@@ -82,7 +82,7 @@ TEST_F(InterpreterTestSuite, TestInit)
 }
 
 // Multi-network syntax validation (MNSV) test group
-TEST_F(InterpreterTestSuite, DISABLED_MNSV_ValidSyntaxPass)
+TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -109,26 +109,46 @@ TEST_F(InterpreterTestSuite, DISABLED_MNSV_ValidSyntaxPass)
     expr    = ctx.mInterpreter.ParseExpression(command);
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 
     command = "start --nwk this";
     expr    = ctx.mInterpreter.ParseExpression(command);
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 
     command = "start --nwk other";
     expr    = ctx.mInterpreter.ParseExpression(command);
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 
     command = "start --nwk net1 net2";
     expr    = ctx.mInterpreter.ParseExpression(command);
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 
-    command = "start --nwk domain1";
+    command = "start --dom domain1";
     expr    = ctx.mInterpreter.ParseExpression(command);
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+    ret.clear();
+    nids.clear();
 }
 
 TEST_F(InterpreterTestSuite, MNSV_TwoGroupNwkAliasesFail)
