@@ -38,7 +38,7 @@ registry_status map_status(ps_status ps_st)
 
 const std::string ALIAS_THIS{"this"};
 const std::string ALIAS_ALL{"all"};
-const std::string ALIAS_OTHERS{"others"};
+const std::string ALIAS_OTHER{"other"};
 
 } // namespace
 
@@ -399,14 +399,14 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases,
 
     for (auto alias : aliases)
     {
-        if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+        if (alias == ALIAS_ALL || alias == ALIAS_OTHER)
         {
             ASSERT(aliases.size() == 1); // Interpreter must have taken care of this
             VerifyOrExit((status = get_all_networks(networks)) == REG_SUCCESS);
-            if (alias == ALIAS_OTHERS)
+            if (alias == ALIAS_OTHER)
             {
                 network nwk_this;
-                VerifyOrExit((status = get_current_network(nwk_this)));
+                VerifyOrExit((status = get_current_network(nwk_this)) == REG_SUCCESS);
                 auto nwk_iter = find_if(networks.begin(), networks.end(),
                                         [&nwk_this](const network &el) { return nwk_this.id.id == el.id.id; });
                 if (nwk_iter != networks.end())
