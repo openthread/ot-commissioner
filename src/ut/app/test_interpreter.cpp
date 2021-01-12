@@ -1245,12 +1245,12 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkList)
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0xFF}),
               registry_status::REG_SUCCESS);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0xFF}),
               registry_status::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
@@ -1263,7 +1263,11 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_NetworkList)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    expr  = ctx.mInterpreter.ParseExpression("network list --dom domain");
+    CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = pcaMock; }), Return(Error{})));
+
+    expr  = ctx.mInterpreter.ParseExpression("network list --dom domain1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
@@ -1828,18 +1832,18 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrAdd)
     EXPECT_EQ(bra.size(), 2);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_BrList)
+TEST_F(InterpreterTestSuite, PC_BrList)
 {
     TestContext ctx;
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               registry_status::REG_SUCCESS);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               registry_status::REG_SUCCESS);
 
@@ -1850,12 +1854,10 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrList)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    // TODO fix
     expr  = ctx.mInterpreter.ParseExpression("br list --nwk net1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    // TODO fix
     expr  = ctx.mInterpreter.ParseExpression("br list --dom domain1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
