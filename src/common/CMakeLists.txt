@@ -31,6 +31,8 @@ add_library(commissioner-common
     address.hpp
     error.cpp
     error_macros.hpp
+    file_util.cpp
+    file_util.hpp
     time.cpp
     time.hpp
     utils.cpp
@@ -57,6 +59,7 @@ if (OT_COMM_TEST)
         address.hpp
         address_test.cpp
         error_test.cpp
+		file_util_test.cpp
         utils_test.cpp
     )
 

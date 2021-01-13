@@ -35,8 +35,6 @@ add_library(commissioner-app
     border_agent.hpp
     file_logger.cpp
     file_logger.hpp
-    file_util.cpp
-    file_util.hpp
     json.cpp
     json.hpp
     logger_util.hpp

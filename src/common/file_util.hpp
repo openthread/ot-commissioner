@@ -54,6 +54,8 @@ namespace commissioner {
  * @param[in] aFileanme  The name of the target file.
  *
  * @retval Error::kNone  Successfully written the whole string.
+ * @retval Error::kAlreadyExists
+ *                       All path components already exist, nothing to do.
  * @retval ...           Failed to write the string.
  *
  * @note This function is not atomic, which means the target file
@@ -105,7 +107,30 @@ Error ReadPemFile(ByteArray &aData, const std::string &aFilename);
  */
 Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename);
 
+/**
+ * Checks that file by the path exists.
+ *
+ * @param[in] path Filepath to check.
+ *
+ * @retval Error::kNone     File exists.
+ *         Error::kNotFound Other errors.
+ */
 Error PathExists(std::string path);
+
+void SplitPath(const std::string &aPath, std::string &aDirName, std::string &aBaseName);
+
+/**
+ * This function re-creates the file path with missing directory components.
+ *
+ * @attention The function is unable to handle quotes.
+ *
+ * @param[in] path with containing directory to be created
+ * @retval Error::kNone  path successfully restored
+ * @retval ...           failed to re-create the path
+ */
+Error RestoreDirPath(const std::string &aPath);
+
+Error RestoreFilePath(const std::string &aPath);
 
 } // namespace commissioner
 

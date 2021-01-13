@@ -36,8 +36,6 @@ add_library(persistent-storage
     registry_entries.cpp
     nlohmann_json.hpp
     # TODO [TBD] move following files into the /src/library project directory
-    file.hpp
-    file.cpp
     semaphore.hpp
     semaphore.cpp
     semaphore_posix.hpp

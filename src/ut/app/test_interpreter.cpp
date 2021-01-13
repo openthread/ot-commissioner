@@ -7,16 +7,18 @@
 
 #include "gmock/gmock.h"
 
+#include <fmt/format.h>
+
 #define private public
 
 #include "border_agent_functions_mock.hpp"
 #include "commissioner_app_mock.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
-#include "app/file_util.hpp"
 #include "app/ps/persistent_storage_json.hpp"
 #include "app/ps/registry.hpp"
 #include "app/ps/registry_entries.hpp"
+#include "common/file_util.hpp"
 
 using namespace ot::commissioner;
 using namespace ot::commissioner::persistent_storage;
@@ -540,7 +542,9 @@ TEST_F(InterpreterTestSuite, IESV_SingleExportFileMustPass)
 
     Interpreter::Expression expr;
     expr = ctx.mInterpreter.ParseExpression("br scan --export ./2.json");
-    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+
+    Interpreter::Value value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
 }
 
 TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
@@ -1470,7 +1474,7 @@ TEST_F(InterpreterTestSuite, PC_CommdatasetSet)
     EXPECT_FALSE(value.HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_OpdatasetGetActive)
+TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -1490,15 +1494,20 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_OpdatasetGetActive)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    // TODO Implement export
-    unlink("./aods.json");
+    EXPECT_EQ(system("rm -f ./aods.json"), 0);
+    EXPECT_NE(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
+
     expr  = ctx.mInterpreter.ParseExpression("opdataset get active --export ./aods.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.Print(value);
+    EXPECT_EQ(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
+
     std::string jsonStr;
     EXPECT_EQ(ReadFile(jsonStr, "./aods.json").GetCode(), ErrorCode::kNone);
     nlohmann::json json = nlohmann::json::parse(jsonStr);
     EXPECT_TRUE(json.contains("PanId"));
+    EXPECT_EQ(json.at("PanId"), 1);
 }
 
 TEST_F(InterpreterTestSuite, PC_OpdatasetSetActive)
@@ -1772,14 +1781,20 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExport)
     Interpreter::Value      value;
 
     std::string jsonFileName = "./br-list.json";
-    unlink(jsonFileName.c_str());
-    // TODO implementation pending
+
+    EXPECT_EQ(system(fmt::format("rm -rf {}", jsonFileName).c_str()), 0);
+    EXPECT_NE(PathExists(jsonFileName).GetCode(), ErrorCode::kNone);
+
     expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.Print(value);
+    EXPECT_EQ(PathExists(jsonFileName).GetCode(), ErrorCode::kNone);
+
     std::string jsonStr;
     EXPECT_EQ(ReadFile(jsonStr, jsonFileName).GetCode(), ErrorCode::kNone);
-    EXPECT_GE(jsonStr.length(), 1);
+    // TODO output validation
+    nlohmann::json json = nlohmann::json::parse(jsonStr);
 }
 
 TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)

@@ -49,6 +49,7 @@ target_include_directories(commissioner-cli
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app
+		commissioner-common
 		persistent-storage
         ncurses
         pthread

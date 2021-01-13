@@ -32,11 +32,12 @@
  *
  */
 
-#include "app/file_util.hpp"
+#include "common/file_util.hpp"
 
 #include <algorithm>
 
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "common/error_macros.hpp"
@@ -156,6 +157,117 @@ Error PathExists(std::string path)
             return ERROR_NOT_FOUND("path error, errno = {}", errno);
         }
     }
+    return ERROR_NONE;
+}
+
+static void RemoveTrailings(std::string &aPath)
+{
+    constexpr auto NPos = std::string::npos;
+
+    // Special path endings to be removed: "/", "/..", "/."
+    std::string::size_type pos;
+    do
+    {
+        pos = aPath.rfind('/');
+        if (pos == NPos)
+        {
+            pos = aPath.rfind("/.");
+            if (pos == NPos)
+            {
+                pos = aPath.rfind("/..");
+                if (pos == NPos)
+                {
+                    break;
+                }
+            }
+        }
+        aPath.erase(aPath.begin() + pos, aPath.end());
+    } while (true);
+}
+
+void SplitPath(const std::string &aPath, std::string &aDirName, std::string &aBaseName)
+{
+    auto pos = aPath.find_last_of('/');
+    if (pos == std::string::npos)
+    {
+        aDirName  = "";
+        aBaseName = aPath;
+    }
+    else
+    {
+        aDirName  = aPath.substr(0, pos + 1);
+        aBaseName = aPath.substr(pos + 1);
+    }
+}
+
+Error RestoreDirPath(const std::string &aPath)
+{
+    std::string baseName;
+    std::string dirName;
+    Error       error;
+
+    std::string path = aPath;
+    RemoveTrailings(path);
+
+    if (path.empty())
+    {
+        // Nothing to restore: everything possible is already present in the FS:
+        // aPath is either the root directory or relative to the current directory without any named component.
+        return ERROR_ALREADY_EXISTS("Nothing to create for {}", aPath);
+    }
+
+    // Check path exists
+    error = PathExists(path);
+    if (error == ERROR_NONE)
+    {
+        // Only components relative to the path were removed. Path restoration impossible (like for '/tmp/../..'
+        // absolute path
+        return ERROR_REJECTED("Path restoration impossible for path {}", aPath);
+    }
+
+    SplitPath(path, dirName, baseName);
+    if (dirName.empty())
+    {
+        // (baseName == path) => it is already known the path restoration is impossible (from the caller level)
+        return ERROR_REJECTED("Path restoration impossible for path {}", aPath);
+    }
+
+    error = RestoreDirPath(dirName);
+    if (error.GetCode() != ErrorCode::kNone && error.GetCode() != ErrorCode::kAlreadyExists)
+    {
+        return error;
+    }
+
+    int result = mkdir(path.c_str(), 0770);
+    if (result == -1)
+    {
+        return ERROR_IO_ERROR("Failed to create directory {}: {}", path, strerror(errno));
+    }
+
+    return ERROR_NONE;
+}
+
+Error RestoreFilePath(const std::string &aPath)
+{
+    Error error;
+    if (PathExists(aPath).GetCode() != ErrorCode::kNone)
+    {
+        std::string dirName, baseName;
+        SplitPath(aPath, dirName, baseName);
+
+        if (!dirName.empty() && (PathExists(dirName).GetCode() != ErrorCode::kNone))
+        {
+            error = RestoreDirPath(dirName);
+            if (error != ERROR_NONE)
+            {
+                return error;
+            }
+        }
+
+        // Attempt to create empty file
+        return WriteFile("", aPath);
+    }
+
     return ERROR_NONE;
 }
 

@@ -37,11 +37,11 @@
 #include <string.h>
 
 #include "app/cli/job_manager.hpp"
-#include "app/file_util.hpp"
 #include "app/json.hpp"
 #include "app/ps/registry.hpp"
 #include "app/sys_logger.hpp"
 #include "common/error_macros.hpp"
+#include "common/file_util.hpp"
 #include "common/utils.hpp"
 
 #define KEYWORD_NETWORK "--nwk"
@@ -591,9 +591,15 @@ void Interpreter::Print(const Value &aValue)
         for (auto path : mContext.mExportFiles)
         {
             std::string filePath = path;
-            // TODO: make sure folder path exists, if it's not
-            //       creatable, print error and output to console
-            //       instead
+
+            // Make sure folder path exists, if it's not creatable, print error and output to console instead
+            error = RestoreFilePath(path);
+            if (error != ERROR_NONE)
+            {
+                mConsole.Write(error.GetMessage(), Console::Color::kRed);
+                break;
+            }
+#if 0
             error = PathExists(filePath);
             while (error != ERROR_NONE)
             {
@@ -601,6 +607,7 @@ void Interpreter::Print(const Value &aValue)
                 //       file-name[-suffix].ext
                 error = PathExists(filePath);
             }
+#endif
             error = WriteFile(aValue.ToString(), filePath);
             if (error != ERROR_NONE)
             {

@@ -41,7 +41,7 @@
 
 #include "app/commissioner_app.hpp"
 #include "app/file_logger.hpp"
-#include "app/file_util.hpp"
+#include "common/file_util.hpp"
 #include "common/utils.hpp"
 
 namespace ot {

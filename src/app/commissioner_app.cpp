@@ -35,10 +35,10 @@
 
 #include <algorithm>
 
-#include "app/file_util.hpp"
 #include "app/json.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/file_util.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
