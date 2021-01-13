@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2021, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,62 +28,53 @@
 
 /**
  * @file
- *   The file defines OS independent file ops
+ *   This file defines test cases for file utils.
  */
 
-#ifndef _OS_FILE_HPP_
-#define _OS_FILE_HPP_
+#include "common/file_util.hpp"
 
-#include <string>
+#include <catch2/catch.hpp>
 
 namespace ot {
 
-namespace os {
+namespace commissioner {
 
-namespace file {
-
-/**
- * File operation status
- */
-enum file_status
+TEST_CASE("SplitPath", "[file_util]")
 {
-    FS_SUCCESS,          /**< operation succeeded */
-    FS_NOT_EXISTS,       /**< requested file not found */
-    FS_PERMISSION_ERROR, /**< file cannot be opened due to access err */
-    FS_ERROR             /**< other io error */
-};
+    std::string path;
+    std::string dirName  = "123";
+    std::string baseName = "456";
 
-/**
- * Reads file content into string
- *
- * Files are opend in exclusive mode
- *
- * @param[in] name  file name to be read
- * @param[out] data file content
- * @return file_status
- * @see file_status
- */
-file_status file_read(std::string const &name, std::string &data);
+    SECTION("directory and file")
+    {
+        path = "dir/ect/ory/file";
+        SplitPath(path, dirName, baseName);
+        REQUIRE(dirName == std::string("dir/ect/ory/"));
+        REQUIRE(baseName == "file");
+    }
 
-/**
- * Writes data to file.
- *
- * Files are opend in exclusive mode
- *
- * If not exists file will be created.
- * Previous content will be lost.
- *
- * @param[in] name file name to be written/created
- * @param[in] data data to be written
- * @return file_status
- * @see file_status
- */
-file_status file_write(std::string const &name, std::string const &data);
+    SECTION("file only")
+    {
+        path = "file.name";
+        SplitPath(path, dirName, baseName);
+        REQUIRE(dirName.empty());
+        REQUIRE(baseName == path);
+    }
 
-} // namespace file
+    SECTION("pure directory")
+    {
+        path = "dir/ect/ory/";
+        SplitPath(path, dirName, baseName);
+        REQUIRE(dirName == path);
+        REQUIRE(baseName.empty());
+    }
+}
 
-} // namespace os
+TEST_CASE("PathExists", "[file_util]")
+{
+    REQUIRE(PathExists("./").GetCode() == ErrorCode::kNone);
+}
+
+} // namespace commissioner
 
 } // namespace ot
-
-#endif // _OS_FILE_HPP_

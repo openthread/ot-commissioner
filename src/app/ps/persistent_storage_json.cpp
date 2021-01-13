@@ -1,6 +1,6 @@
 
 #include "persistent_storage_json.hpp"
-#include "file.hpp"
+#include "common/file_util.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
@@ -82,9 +82,15 @@ ps_status persistent_storage_json::cache_from_file()
         return PS_ERROR;
     }
 
-    std::string               fdata;
-    ot::os::file::file_status fstat = ot::os::file::file_read(file_name, fdata);
-    if (fstat != ot::os::file::file_status::FS_NOT_EXISTS && fstat != ot::os::file::file_status::FS_SUCCESS)
+    if (RestoreFilePath(file_name).GetCode() != ErrorCode::kNone)
+    {
+        semaphore_post(storage_lock);
+        return PS_ERROR;
+    }
+
+    std::string fdata;
+    Error       error = ReadFile(fdata, file_name);
+    if (error.GetCode() != ErrorCode::kNone)
     {
         semaphore_post(storage_lock);
         return PS_ERROR;
@@ -136,9 +142,8 @@ ps_status persistent_storage_json::cache_to_file()
         return PS_ERROR;
     }
 
-    ot::os::file::file_status fstat = ot::os::file::file_write(file_name, cache.dump(4));
-
-    if (fstat != ot::os::file::file_status::FS_SUCCESS)
+    Error error = WriteFile(cache.dump(4), file_name);
+    if (error.GetCode() != ErrorCode::kNone)
     {
         semaphore_post(storage_lock);
         return PS_ERROR;
