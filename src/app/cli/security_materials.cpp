@@ -151,12 +151,10 @@ static Error GetNetworkSM_impl(const std::string  aNwkFolder,
     }
     else
     {
-        std::string data;
         std::string path = nwkPath + "pskc.txt";
 
         SuccessOrExit(error = PathExists(path));
-        SuccessOrExit(error = ReadFile(data, path));
-        aSM.mPSKc = ByteArray{data.begin(), data.end()};
+        SuccessOrExit(error = ReadHexStringFile(aSM.mPSKc, path));
     }
 exit:
     return error;
