@@ -955,10 +955,117 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         std::vector<BorderAgent> agents;
 
         SuccessOrExit(error = JsonFromFile(jsonStr, aExpr[2]));
+        // TODO [MP]: handle possible failures - will result in exception
         json = nlohmann::json::parse(jsonStr);
-        // TODO: implement sanity check of BorderAgent records
 
-        // TODO: import border agents to registry
+        // Can be either single BorderAgent or an array of them.
+        if (!json.is_array())
+        {
+            // Parse single BorderAgent
+            BorderAgent ba;
+            BorderAgentFromJson(json, ba);
+            agents.push_back(ba);
+        }
+        else
+        {
+            for (auto iter = json.begin(); iter != json.end(); ++iter)
+            {
+                BorderAgent ba;
+                BorderAgentFromJson(*iter, ba);
+                agents.push_back(ba);
+            }
+        }
+        // Sanity check of BorderAgent records
+        for (auto iter = agents.begin(); iter != agents.end(); ++iter)
+        {
+            // Check mandatory fields present
+            constexpr const uint32_t kMandatoryFieldsBits = (BorderAgent::kAddrBit | BorderAgent::kPortBit |
+                                                             BorderAgent::kThreadVersionBit | BorderAgent::kStateBit);
+            if ((iter->mPresentFlags & kMandatoryFieldsBits) != kMandatoryFieldsBits)
+            {
+                error = ERROR_REJECTED("Missing mandatory border agent fields");
+                goto exit;
+            }
+
+            // Check local network information sanity
+            constexpr const uint32_t kNetworkInfoBits =
+                (BorderAgent::kExtendedPanIdBit | BorderAgent::kNetworkNameBit | BorderAgent::kDomainNameBit);
+            if (((iter->mPresentFlags & kNetworkInfoBits) != 0) &&
+                (((iter->mPresentFlags & BorderAgent::kExtendedPanIdBit) == 0) || (iter->mExtendedPanId == 0)))
+            {
+                error = ERROR_REJECTED("XPAN required but not provided for border agent host:port {}:{}", iter->mAddr,
+                                       iter->mPort);
+                goto exit;
+            }
+
+            // Sanity check across inbound data
+            if (iter->mPresentFlags & BorderAgent::kExtendedPanIdBit)
+            {
+                struct
+                {
+                    bool addr : 1;
+                    bool name : 1;
+                    bool domain : 1;
+                } flags = {false, false, false};
+
+                // Network: (XPAN, PAN) combination must be same everywhere
+                std::vector<BorderAgent>::iterator found =
+                    std::find_if(agents.begin(), iter, [=, &flags](BorderAgent a) {
+                        flags.addr = (iter->mAddr == a.mAddr && iter->mPort == a.mPort);
+                        if (flags.addr)
+                        {
+                            return true;
+                        }
+
+#define CHECK_PRESENT_FLAG(record, flag) ((record).mPresentFlags & BorderAgent::k##flag##Bit)
+                        if (CHECK_PRESENT_FLAG(a, ExtendedPanId) == 0)
+                        {
+                            return false;
+                        }
+                        flags.name = (CHECK_PRESENT_FLAG(a, NetworkName) != CHECK_PRESENT_FLAG(*iter, NetworkName)) ||
+                                     ((CHECK_PRESENT_FLAG(*iter, NetworkName) != 0) &&
+                                      iter->mExtendedPanId == a.mExtendedPanId && iter->mNetworkName != a.mNetworkName);
+                        flags.domain = (CHECK_PRESENT_FLAG(a, DomainName) != CHECK_PRESENT_FLAG(*iter, DomainName)) ||
+                                       ((CHECK_PRESENT_FLAG(*iter, DomainName) != 0) &&
+                                        iter->mExtendedPanId == a.mExtendedPanId && iter->mDomainName != a.mDomainName);
+                        return flags.name || flags.domain;
+#undef CHECK_PRESENT_FLAG
+                    });
+                if (found != iter)
+                {
+                    if (flags.addr)
+                    {
+                        error =
+                            ERROR_REJECTED("Address {} and port {} combination is not unique for inbound border agents",
+                                           iter->mAddr, iter->mPort);
+                    }
+                    else if (flags.name)
+                    {
+                        error = ERROR_REJECTED("Two inbound border agents have same XPAN '{}', but different network "
+                                               "names ('{}' and '{}')",
+                                               iter->mExtendedPanId, iter->mNetworkName, found->mNetworkName);
+                    }
+                    else if (flags.domain)
+                    {
+                        error = ERROR_REJECTED(
+                            "Two inbound border agents have same XPAN '{}', but different domain names ('{}' and '{}')",
+                            iter->mExtendedPanId, iter->mDomainName, found->mDomainName);
+                    }
+                    goto exit;
+                }
+            }
+        }
+
+        for (auto agent : agents)
+        {
+            auto status = mRegistry->add(agent);
+            if (status != RegistryStatus::REG_SUCCESS)
+            {
+                error = ERROR_IO_ERROR("Registry insert failure with border agent address {} and port {}", agent.mAddr,
+                                       agent.mPort);
+                goto exit;
+            }
+        }
     }
     else if (CaseInsensitiveEqual(aExpr[1], "delete"))
     {
@@ -2033,6 +2140,53 @@ std::string Interpreter::BaAvailabilityToString(uint32_t aAvailability)
     }
 }
 
-} // namespace commissioner
+static void from_json(const nlohmann::json &aJson, BorderAgent::State &aState)
+{
+    uint32_t stateVal = aJson.get<uint32_t>();
+    aState            = BorderAgent::State(stateVal);
+}
+
+static void from_json(const nlohmann::json &aJson, Timestamp &aTimestamp)
+{
+    aTimestamp = Timestamp::Decode(aJson.get<uint64_t>());
+}
+
+void Interpreter::BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &aAgent)
+{
+    BorderAgent agent;
+
+#define SET_IF_PRESENT(field)                                                  \
+    do                                                                         \
+    {                                                                          \
+        if (aJson.contains(#field))                                            \
+        {                                                                      \
+            agent.mPresentFlags |= BorderAgent::k##field##Bit;                 \
+            agent.m##field = aJson.at(#field).get<decltype(agent.m##field)>(); \
+        }                                                                      \
+    } while (false)
+
+    SET_IF_PRESENT(Addr);
+    SET_IF_PRESENT(Port);
+    SET_IF_PRESENT(ThreadVersion);
+    SET_IF_PRESENT(State);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(ModelName);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(PartitionId);
+    SET_IF_PRESENT(VendorData);
+    SET_IF_PRESENT(VendorOui);
+    SET_IF_PRESENT(DomainName);
+    SET_IF_PRESENT(BbrSeqNumber);
+    SET_IF_PRESENT(BbrPort);
+    SET_IF_PRESENT(ServiceName);
+
+#undef SET_IF_PRESENT
+
+    aAgent = agent;
+}
 
 } // namespace ot
+
+} // namespace commissioner

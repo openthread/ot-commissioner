@@ -366,7 +366,7 @@ static int HandleRecord(const struct sockaddr *from,
     {
         // Actualize Timestamp
         borderAgent.mUpdateTimestamp.mTime = time(0);
-        borderAgent.mPresentFlags |= BorderAgent::kUpdateTimestamp;
+        borderAgent.mPresentFlags |= BorderAgent::kUpdateTimestampBit;
     }
 exit:
     return 0;

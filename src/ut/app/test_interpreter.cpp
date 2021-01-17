@@ -1256,14 +1256,14 @@ TEST_F(InterpreterTestSuite, PC_NetworkList)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0}, "net1", 1, "", "",
-                                       Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "", 0, 0xFFFFF}),
-        registry_status::REG_SUCCESS);
-    ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0}, "net2", 2, "", "",
-                                       Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "", 0, 0xFFFFF}),
-        registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0xFFFFF}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0xFFFFF}),
+              registry_status::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
