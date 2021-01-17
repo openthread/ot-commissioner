@@ -151,6 +151,10 @@ struct BorderAgent
                     (aState & kBbrIsPrimary))
         {
         }
+        State()
+            : State(0)
+        {
+        }
         operator uint32_t() const
         {
             return ((mConnectionMode << 6) & kConnectionModeMask) | ((mThreadIfStatus << 4) & kThreadIfStatus) |
@@ -246,7 +250,7 @@ struct BorderAgent
     static constexpr uint32_t kBbrPortBit         = 1 << 14;
     static constexpr uint32_t kDiscriminatorBit   = 1 << 15;
     static constexpr uint32_t kServiceNameBit     = 1 << 16;
-    static constexpr uint32_t kUpdateTimestamp    = 1 << 17;
+    static constexpr uint32_t kUpdateTimestampBit = 1 << 17;
 
     BorderAgent()
         : BorderAgent{"", 0,  ByteArray{}, "", State{0, 0, 0, 0, 0},

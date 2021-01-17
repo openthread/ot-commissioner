@@ -158,7 +158,7 @@ void to_json(json &j, const border_router &p)
     {
         j[JSON_SERVICE_NAME] = p.agent.mServiceName;
     }
-    if (p.agent.mPresentFlags & BorderAgent::kUpdateTimestamp)
+    if (p.agent.mPresentFlags & BorderAgent::kUpdateTimestampBit)
     {
         j[JSON_UPDATE_TIMESTAMP] = (std::string)p.agent.mUpdateTimestamp;
     }
@@ -253,7 +253,7 @@ void from_json(const json &j, border_router &p)
         if (ts.mTime != 0)
         {
             p.agent.mUpdateTimestamp.mTime = ts.mTime;
-            p.agent.mPresentFlags |= BorderAgent::kUpdateTimestamp;
+            p.agent.mPresentFlags |= BorderAgent::kUpdateTimestampBit;
         }
     }
 }
