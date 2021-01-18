@@ -34,6 +34,9 @@
 #ifndef OT_COMM_NETWORK_DATA_HPP_
 #define OT_COMM_NETWORK_DATA_HPP_
 
+#include <algorithm>
+#include <iomanip>
+#include <sstream>
 #include <string>
 
 #include <stdint.h>
@@ -51,6 +54,50 @@ static constexpr uint8_t kMlrStatusInvalid     = 2;
 static constexpr uint8_t kMlrStatusNoResources = 4;
 static constexpr uint8_t kMlrStatusNotPrimary  = 5;
 static constexpr uint8_t kMlrStatusFailure     = 6;
+
+/**
+ * Extended PAN Id wrapper
+ */
+struct xpan_id
+{
+    uint64_t value;
+
+    xpan_id(uint64_t val)
+        : value(val)
+    {
+    }
+
+    xpan_id()
+        : xpan_id(0)
+    {
+    }
+
+    xpan_id(const std::string xpan_str)
+    {
+        std::istringstream input(xpan_str);
+        input >> std::hex >> value;
+    }
+
+    std::string str() const { return *this; }
+
+    bool operator==(const xpan_id &other) const { return value == other.value; }
+
+    bool operator==(const uint64_t other) const { return value == other; }
+
+    operator std::string() const
+    {
+        std::ostringstream stream;
+        stream << std::setfill('0') << std::setw(sizeof(value) * 2) << std::hex << value;
+        std::string out = stream.str();
+        std::for_each(out.begin(), out.end(), [](char &c) { c = std::toupper(c); });
+        return out;
+    }
+
+    operator uint64_t() const { return value; }
+};
+
+// TODO [MP] Change uint64_t t xpan_id
+typedef std::vector<uint64_t> XpanIdArray;
 
 /**
  * @brief The Commissioner Dataset of the Thread Network Data.
@@ -212,7 +259,7 @@ struct ActiveOperationalDataset
     Timestamp      mActiveTimestamp;
     Channel        mChannel;
     ChannelMask    mChannelMask;
-    ByteArray      mExtendedPanId;
+    xpan_id        mExtendedPanId;
     ByteArray      mMeshLocalPrefix;
     ByteArray      mNetworkMasterKey;
     std::string    mNetworkName;

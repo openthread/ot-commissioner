@@ -1469,7 +1469,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto extendedPanId = tlvSet[tlv::Type::kExtendedPanId])
     {
-        dataset.mExtendedPanId = extendedPanId->GetValue();
+        dataset.mExtendedPanId = std::string(extendedPanId->GetValue().begin(), extendedPanId->GetValue().end());
         dataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
     }
 
@@ -1608,7 +1608,7 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &          
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, aDataset.mExtendedPanId}));
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, aDataset.mExtendedPanId.str()}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit)

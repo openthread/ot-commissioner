@@ -50,7 +50,7 @@ class Job;
 
 class JobManager
 {
-    using XpanId = ot::commissioner::persistent_storage::xpan_id;
+    using XpanId = ot::commissioner::xpan_id;
 
 public:
     explicit JobManager(Interpreter &aInterpreter)

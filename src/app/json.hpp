@@ -43,6 +43,8 @@
 
 #include "app/commissioner_app.hpp"
 
+#include <nlohmann/json.hpp>
+
 #define JSON_INDENT_DEFAULT 4
 
 namespace ot {
@@ -85,6 +87,8 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
  * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
  */
 Error JsonFromFile(std::string &aJson, const std::string &aPath);
+
+void from_json(const nlohmann::json &aJson, Timestamp &aTimestamp);
 
 } // namespace commissioner
 

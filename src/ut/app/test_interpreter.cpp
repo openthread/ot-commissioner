@@ -572,6 +572,8 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     Interpreter::Expression expr;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1");
     EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     border_router br;
     br.nwk_id = 0;
@@ -609,6 +611,7 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
 
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
     expr = ctx.mInterpreter.ParseExpression("opdataset set active --import ./json.json");
+    // TODO [MP] JobManager must cleanup import file data upon import processing (unconditionally).
     EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
 }
 
@@ -659,6 +662,8 @@ TEST_F(InterpreterTestSuite, IESV_NoImportFileMustFail)
     Interpreter::Expression expr;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1");
     EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     border_router br;
     br.nwk_id = 0;
@@ -688,6 +693,8 @@ TEST_F(InterpreterTestSuite, IESV_TwoImportExportClausesMustFail)
     expr  = ctx.mInterpreter.ParseExpression("br scan --export 1.json --export 2.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     expr = ctx.mInterpreter.ParseExpression("opdataset set active --import 1.json --import 2.json");
     EXPECT_FALSE(ctx.mInterpreter.Eval(expr).HasNoError());
@@ -795,10 +802,14 @@ TEST_F(InterpreterTestSuite, PC_StartNetworkSyntaxSuccess)
     expr  = ctx.mInterpreter.ParseExpression("start --nwk net1 net2");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     expr  = ctx.mInterpreter.ParseExpression("start --nwk all");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     expr  = ctx.mInterpreter.ParseExpression("start --dom domain1");
     value = ctx.mInterpreter.Eval(expr);
@@ -841,6 +852,8 @@ TEST_F(InterpreterTestSuite, PC_StartCurrentNetworkSuccess)
     expr  = ctx.mInterpreter.ParseExpression("start --nwk this");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     expr  = ctx.mInterpreter.ParseExpression("start --dom this");
     value = ctx.mInterpreter.Eval(expr);
@@ -938,6 +951,8 @@ TEST_F(InterpreterTestSuite, PC_StopNetworkSyntaxSuccess)
     expr  = ctx.mInterpreter.ParseExpression("start --nwk net1 net2");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
 
     expr  = ctx.mInterpreter.ParseExpression("stop --nwk net1 net2");
     value = ctx.mInterpreter.Eval(expr);
@@ -1816,12 +1831,228 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)
     EXPECT_GE(jsonStr.length(), 1);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_BrAdd)
+TEST_F(InterpreterTestSuite, PC_BrAddNoMandatoryFail)
 {
     TestContext ctx;
     InitContext(ctx);
 
-    std::string brJson       = "[\n\
+    std::string brJsonNoAddr    = "[\n\
+    {\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 1234,\n\
+        \"DomainName\": \"dom1\"\n\
+    }\n\
+]";
+    std::string brJsonNoPort    = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 1234,\n\
+        \"DomainName\": \"dom1\"\n\
+    }\n\
+]";
+    std::string brJsonNoVersion = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 1234,\n\
+        \"DomainName\": \"dom1\"\n\
+    }\n\
+]";
+    std::string brJsonNoState   = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 1234,\n\
+        \"DomainName\": \"dom1\"\n\
+    }\n\
+]";
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    EXPECT_EQ(WriteFile(brJsonNoAddr, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonNoPort, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonNoVersion, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonNoState, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_BrAddWrongLocalNwkDataFail)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    std::string brJsonNwkName            = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+    }\n\
+]";
+    std::string brJsonDomainName         = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"DomainName\": \"dom1\"\n\
+    }\n\
+n]";
+    std::string brJsonNwkNameZeroXPan    = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 0,\n\
+    }\n\
+]";
+    std::string brJsonDomainNameZeroXPan = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 0,\n\
+        \"DomainName\": \"dom1\"\n\
+    }\n\
+]";
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    EXPECT_EQ(WriteFile(brJsonNwkName, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonNwkNameZeroXPan, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonDomainName, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonDomainNameZeroXPan, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_BrAddInterObjectInconsistencyFail)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    std::string brJsonSameAddr                  = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+    },\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+    }\n\
+]";
+    std::string brJsonSameXPanDifferentNwkNames = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net1\",\n\
+        \"ExtendedPanId\": 1234,\n\
+     },\n\
+    {\n\
+        \"Addr\": \"1234::5679\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net2\",\n\
+        \"ExtendedPanId\": 1234,\n\
+    }\n\
+]";
+    std::string brJsonSameXPanDifferentDomains  = "[\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"ExtendedPanId\": 1234,\n\
+        \"NetworkName\": \"net2\",\n\
+        \"DomainName\": \"dom1\"\n\
+    },\n\
+    {\n\
+        \"Addr\": \"1234::5679\",\n\
+        \"Port\": 2000,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net2\",\n\
+        \"ExtendedPanId\": 1234,\n\
+        \"DomainName\": \"dom2\"\n\
+    }\n\
+]";
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    EXPECT_EQ(WriteFile(brJsonSameAddr, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonSameXPanDifferentNwkNames, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    EXPECT_EQ(WriteFile(brJsonSameXPanDifferentDomains, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_BrAdd)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    std::string brJson = "[\n\
     {\n\
         \"Addr\": \"1234::5678\",\n\
         \"Port\": 2000,\n\
@@ -1832,27 +2063,53 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrAdd)
         \"DomainName\": \"dom1\"\n\
     },\n\
     {\n\
-        \"Addr\": \"1234::5678\",\n\
+        \"Addr\": \"1234::5679\",\n\
+        \"Port\": 2001,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net2\",\n\
+        \"ExtendedPanId\": 1235,\n\
+        \"DomainName\": \"dom1\"\n\
+    },\n\
+    {\n\
+        \"Addr\": \"1234::5679\",\n\
         \"Port\": 2000,\n\
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
-        \"NetworkName\": \"net1\",\n\
-        \"ExtendedPanId\": 1234,\n\
+        \"NetworkName\": \"net2\",\n\
+        \"ExtendedPanId\": 1235,\n\
         \"DomainName\": \"dom1\"\n\
-    }\n]";
-    std::string jsonFileName = "./br-list.json";
-    EXPECT_EQ(WriteFile(brJson, jsonFileName).GetCode(), ErrorCode::kNone);
+    },\n\
+    {\n\
+        \"Addr\": \"1234::5678\",\n\
+        \"Port\": 2001,\n\
+        \"ThreadVersion\": \"th1.2\",\n\
+        \"State\": 0,\n\
+        \"NetworkName\": \"net3\",\n\
+        \"ExtendedPanId\": 1236,\n\
+        \"DomainName\": \"dom3\"\n\
+    }\n\
+]";
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    // TODO implementation pending
-    expr  = ctx.mInterpreter.ParseExpression(std::string("br add ") + jsonFileName);
+    EXPECT_EQ(WriteFile(brJson, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    registry::BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
-    EXPECT_EQ(bra.size(), 2);
+
+    BorderRouterArray brs;
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->get_all_border_routers(brs), registry_status::REG_SUCCESS);
+    EXPECT_EQ(brs.size(), 4);
+
+    NetworkArray nwks;
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(nwks.size(), 3);
+
+    DomainArray doms;
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(doms.size(), 2);
 }
 
 TEST_F(InterpreterTestSuite, PC_BrList)
@@ -1907,7 +2164,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrDelete)
     expr  = ctx.mInterpreter.ParseExpression("br delete 1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    registry::BorderRouterArray bra;
+    BorderRouterArray bra;
     EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 }
@@ -1937,7 +2194,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteNetwork)
     expr  = ctx.mInterpreter.ParseExpression("br delete --nwk net1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    registry::BorderRouterArray bra;
+    BorderRouterArray bra;
     EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 }
@@ -1967,7 +2224,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteDomain)
     expr  = ctx.mInterpreter.ParseExpression("br delete --dom domain1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    registry::BorderRouterArray bra;
+    BorderRouterArray bra;
     EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 }

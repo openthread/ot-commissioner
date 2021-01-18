@@ -36,8 +36,6 @@
 
 #include "nlohmann_json.hpp"
 
-#include <iomanip>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -169,46 +167,7 @@ struct domain
     }
 };
 
-/**
- * Extended PAN Id wrapper
- */
-struct xpan_id
-{
-    uint64_t value;
-
-    xpan_id(uint64_t val)
-        : value(val)
-    {
-    }
-
-    xpan_id()
-        : xpan_id(0)
-    {
-    }
-
-    xpan_id(const std::string xpan_str)
-    {
-        std::istringstream input(xpan_str);
-        input >> std::hex >> value;
-    }
-
-    std::string str() const { return *this; }
-
-    bool operator==(const xpan_id &other) const { return value == other.value; }
-
-    bool operator==(const uint64_t other) const { return value == other; }
-
-    operator std::string() const
-    {
-        std::ostringstream stream;
-        stream << std::setfill('0') << std::setw(sizeof(value) * 2) << std::hex << value;
-        std::string out = stream.str();
-        for_each(out.begin(), out.end() - 1, [](char &c) { c = std::toupper(c); });
-        return out;
-    }
-
-    operator uint64_t() const { return value; }
-};
+typedef std::vector<domain> DomainArray;
 
 /**
  * Network entity
@@ -249,6 +208,8 @@ struct network
     }
 };
 
+typedef std::vector<network> NetworkArray;
+
 /**
  * Border router entity
  */
@@ -274,6 +235,8 @@ struct border_router
      */
     virtual ~border_router() {}
 };
+
+typedef std::vector<border_router> BorderRouterArray;
 
 /**
  * API to support conversion to/from JSON

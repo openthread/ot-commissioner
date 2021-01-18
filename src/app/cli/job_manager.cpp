@@ -48,7 +48,7 @@ namespace ot {
 namespace commissioner {
 
 using Json   = nlohmann::json;
-using XpanId = persistent_storage::xpan_id;
+using XpanId = xpan_id;
 
 Error JobManager::Init(const Config &aConf)
 {
@@ -554,9 +554,9 @@ void JobManager::WaitForJobs()
 
 Interpreter::Value JobManager::CollectJobsValue()
 {
-    Interpreter::Value          value;
-    nlohmann::json              json;
-    persistent_storage::xpan_id xpan;
+    Interpreter::Value value;
+    nlohmann::json     json;
+    xpan_id            xpan;
 
     for (auto job : mJobPool)
     {

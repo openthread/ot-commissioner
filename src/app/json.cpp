@@ -37,8 +37,6 @@
 #include <exception>
 #include <iostream>
 
-#include <nlohmann/json.hpp>
-
 #include "app/commissioner_app.hpp"
 #include "app/file_logger.hpp"
 #include "common/file_util.hpp"
@@ -331,7 +329,7 @@ static void to_json(Json &aJson, const Timestamp &aTimestamp)
 #undef SET
 }
 
-static void from_json(const Json &aJson, Timestamp &aTimestamp)
+void from_json(const Json &aJson, Timestamp &aTimestamp)
 {
 #define SET(name) aTimestamp.m##name = aJson.at(#name).get<uint64_t>();
 
@@ -429,6 +427,11 @@ static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
 #undef SET_IF_PRESENT
 }
 
+static void from_json(const Json &aJson, xpan_id &aXpanId)
+{
+    aXpanId = aJson.get<std::string>();
+}
+
 static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
 {
 #define SET_IF_PRESENT(name)                                                  \
@@ -454,7 +457,13 @@ static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
     SET_IF_PRESENT(NetworkMasterKey);
     SET_IF_PRESENT(NetworkName);
     SET_IF_PRESENT(PanId);
-    SET_IF_PRESENT(PSKc);
+    // TODO [MP] Find out why it was broken
+    // SET_IF_PRESENT(PSKc);
+    if (aJson.contains("PSKc"))
+    {
+        (void)utils::Hex(aDataset.mPSKc, aJson["PSKc"]);
+    }
+
     SET_IF_PRESENT(SecurityPolicy);
 
 #undef SET_IF_PRESENT

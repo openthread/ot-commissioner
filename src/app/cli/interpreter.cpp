@@ -635,7 +635,7 @@ void Interpreter::Print(const Value &aValue)
 
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
 {
-    std::string nidHex = persistent_storage::xpan_id(aNid);
+    std::string nidHex = xpan_id(aNid);
     PrintNetworkMessage(nidHex, aMessage, aColor);
 }
 
@@ -954,7 +954,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json           json;
         std::vector<BorderAgent> agents;
 
-        SuccessOrExit(error = JsonFromFile(jsonStr, aExpr[2]));
+        VerifyOrExit((error = JsonFromFile(jsonStr, aExpr[2])) == ERROR_NONE, value = Value(error));
         // TODO [MP]: handle possible failures - will result in exception
         json = nlohmann::json::parse(jsonStr);
 
@@ -983,7 +983,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                                                              BorderAgent::kThreadVersionBit | BorderAgent::kStateBit);
             if ((iter->mPresentFlags & kMandatoryFieldsBits) != kMandatoryFieldsBits)
             {
-                error = ERROR_REJECTED("Missing mandatory border agent fields");
+                value = Value(ERROR_REJECTED("Missing mandatory border agent fields"));
                 goto exit;
             }
 
@@ -993,7 +993,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             if (((iter->mPresentFlags & kNetworkInfoBits) != 0) &&
                 (((iter->mPresentFlags & BorderAgent::kExtendedPanIdBit) == 0) || (iter->mExtendedPanId == 0)))
             {
-                error = ERROR_REJECTED("XPAN required but not provided for border agent host:port {}:{}", iter->mAddr,
+                value = ERROR_REJECTED("XPAN required but not provided for border agent host:port {}:{}", iter->mAddr,
                                        iter->mPort);
                 goto exit;
             }
@@ -1035,19 +1035,20 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 {
                     if (flags.addr)
                     {
-                        error =
+                        value = Value(
                             ERROR_REJECTED("Address {} and port {} combination is not unique for inbound border agents",
-                                           iter->mAddr, iter->mPort);
+                                           iter->mAddr, iter->mPort));
                     }
                     else if (flags.name)
                     {
-                        error = ERROR_REJECTED("Two inbound border agents have same XPAN '{}', but different network "
-                                               "names ('{}' and '{}')",
-                                               iter->mExtendedPanId, iter->mNetworkName, found->mNetworkName);
+                        value =
+                            Value(ERROR_REJECTED("Two inbound border agents have same XPAN '{}', but different network "
+                                                 "names ('{}' and '{}')",
+                                                 iter->mExtendedPanId, iter->mNetworkName, found->mNetworkName));
                     }
                     else if (flags.domain)
                     {
-                        error = ERROR_REJECTED(
+                        value = ERROR_REJECTED(
                             "Two inbound border agents have same XPAN '{}', but different domain names ('{}' and '{}')",
                             iter->mExtendedPanId, iter->mDomainName, found->mDomainName);
                     }
@@ -1061,7 +1062,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             auto status = mRegistry->add(agent);
             if (status != RegistryStatus::REG_SUCCESS)
             {
-                error = ERROR_IO_ERROR("Registry insert failure with border agent address {} and port {}", agent.mAddr,
+                value = ERROR_IO_ERROR("Registry insert failure with border agent address {} and port {}", agent.mAddr,
                                        agent.mPort);
                 goto exit;
             }
@@ -2146,11 +2147,6 @@ static void from_json(const nlohmann::json &aJson, BorderAgent::State &aState)
     aState            = BorderAgent::State(stateVal);
 }
 
-static void from_json(const nlohmann::json &aJson, Timestamp &aTimestamp)
-{
-    aTimestamp = Timestamp::Decode(aJson.get<uint64_t>());
-}
-
 void Interpreter::BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &aAgent)
 {
     BorderAgent agent;
@@ -2187,6 +2183,6 @@ void Interpreter::BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &
     aAgent = agent;
 }
 
-} // namespace ot
-
 } // namespace commissioner
+
+} // namespace ot

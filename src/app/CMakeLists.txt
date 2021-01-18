@@ -82,6 +82,7 @@ if (OT_COMM_TEST)
             ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )
 endif()
 
