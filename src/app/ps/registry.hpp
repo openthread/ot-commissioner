@@ -62,18 +62,15 @@ enum registry_status
     REG_ERROR,     /**< operation failed */
 };
 
+typedef std::vector<std::string> StringArray;
+
 /**
  * Registry implementation
  */
 class registry
 {
 public:
-    using xpan_id           = ::ot::commissioner::persistent_storage::xpan_id;
-    using DomainArray       = std::vector<domain>;
-    using NetworkArray      = std::vector<network>;
-    using BorderRouterArray = std::vector<border_router>;
-    using XpanIdArray       = std::vector<uint64_t>;
-    using StringArray       = std::vector<std::string>;
+    using xpan_id = ot::commissioner::xpan_id;
 
     /**
      * Registry constructor with provided persistent_storage
