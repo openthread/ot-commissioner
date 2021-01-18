@@ -273,6 +273,30 @@ public:
      */
     registry_status get_domain_name_by_xpan(const xpan_id xpan, std::string &name);
 
+    /**
+     * Remove border router record.
+     *
+     * Prevents removing the last router in the selected network.
+     *
+     * @param [in] router_id ID of the border router record to delete
+     * @return
+     * @li @ref REG_SUCCESS if successfully deleted record
+     */
+    registry_status delete_border_router_by_id(const border_router_id router_id);
+
+    /**
+     * Remove border router records corresponding to the network aliases list along with the corresponding networks.
+     *
+     * Fails if alias corresponds to the selected network or contains it.
+     *
+     * @param[in] aliases list of network aliases
+     * @return
+     * @li @ref REG_SUCCESS if all networks were deleted with border routers belonging to them.
+     */
+    registry_status delete_border_routers_in_networks(const StringArray &aliases, StringArray &unresolved);
+
+    registry_status delete_border_routers_in_domain(const std::string &domain_name);
+
 protected:
     /**
      * Lookup the network
@@ -291,6 +315,8 @@ protected:
      * Set current network.
      */
     registry_status set_current_network(const network_id &nwk_id);
+
+    registry_status drop_domain_if_empty(const domain_id &dom_id);
 
 private:
     bool                manage_storage = false;   /**< flag that storage was create outside*/

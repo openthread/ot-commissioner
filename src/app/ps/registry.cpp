@@ -563,6 +563,182 @@ exit:
     return status;
 }
 
+registry_status registry::delete_border_router_by_id(const border_router_id router_id)
+{
+    registry_status            status;
+    border_router              br;
+    network                    current;
+    std::vector<border_router> routers;
+    border_router              pred;
+
+    status = get_current_network(current);
+    if (status == REG_SUCCESS && (current.id.id != EMPTY_ID))
+    {
+        // Check we don't delete the last border router in the current network
+        VerifyOrExit((status = map_status(storage->get(router_id, br))) == REG_SUCCESS);
+        if ((br.agent.mPresentFlags & BorderAgent::kExtendedPanIdBit) && (br.agent.mExtendedPanId == current.xpan))
+        {
+            pred.agent.mExtendedPanId = br.agent.mExtendedPanId;
+            pred.agent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
+            VerifyOrExit((status = map_status(storage->lookup(pred, routers))) == REG_SUCCESS);
+            if (routers.size() <= 1)
+            {
+                status = REG_ERROR;
+                goto exit;
+            }
+        }
+    }
+
+    status = map_status(storage->del(router_id));
+
+    if (br.id.id != EMPTY_ID)
+    {
+        // Was it the last in the network?
+        routers.clear();
+        pred.agent.mExtendedPanId = br.agent.mExtendedPanId;
+        pred.agent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
+        VerifyOrExit((status = map_status(storage->lookup(pred, routers))) == REG_SUCCESS);
+        if (routers.empty())
+        {
+            network nwk;
+            VerifyOrExit((status = map_status(storage->get(br.nwk_id, nwk))) == REG_SUCCESS);
+            VerifyOrExit((status = map_status(storage->del(br.nwk_id))) == REG_SUCCESS);
+
+            VerifyOrExit((status = drop_domain_if_empty(nwk.dom_id)) == REG_SUCCESS);
+        }
+    }
+exit:
+    return status;
+}
+
+registry_status registry::delete_border_routers_in_networks(const StringArray &aliases, StringArray &unresolved)
+{
+    registry_status status;
+    NetworkArray    nwks;
+    network         current;
+
+    // Check aliases acceptable
+    for (auto alias : aliases)
+    {
+        if (alias == ALIAS_ALL || alias == ALIAS_THIS || (alias == ALIAS_OTHER && aliases.size() > 1))
+        {
+            return REG_DATA_INVALID;
+        }
+    }
+
+    VerifyOrExit((status = get_networks_by_aliases(aliases, nwks, unresolved)) == REG_SUCCESS);
+
+    // Processing explicit network aliases
+    if (aliases[0] != ALIAS_OTHER)
+    {
+        VerifyOrExit((status = get_current_network(current)) == REG_SUCCESS);
+    }
+
+    if (current.id.id != EMPTY_ID)
+    {
+        auto found = std::find_if(nwks.begin(), nwks.end(), [&](const network &a) { return a.id.id == current.id.id; });
+        if (found != nwks.end())
+        {
+            status = REG_DATA_INVALID;
+            goto exit;
+        }
+    }
+
+    for (auto nwk : nwks)
+    {
+        BorderRouterArray brs;
+        border_router     br;
+
+        br.nwk_id = nwk.id;
+        VerifyOrExit((status = map_status(storage->lookup(br, brs))) == REG_SUCCESS);
+        for (auto &&br : brs)
+        {
+            VerifyOrExit((status = map_status(storage->del(br.id))) == REG_SUCCESS);
+        }
+
+        VerifyOrExit((status = drop_domain_if_empty(nwk.dom_id)) == REG_SUCCESS);
+    }
+exit:
+    return status;
+}
+
+registry_status registry::drop_domain_if_empty(const domain_id &dom_id)
+{
+    registry_status status = REG_SUCCESS;
+
+    if (dom_id.id != EMPTY_ID)
+    {
+        network              npred;
+        std::vector<network> nwks;
+
+        npred.dom_id = dom_id;
+        status       = map_status(storage->lookup(npred, nwks));
+        VerifyOrExit(status == REG_SUCCESS || status == REG_NOT_FOUND);
+        if (nwks.size() == 0)
+        {
+            // Drop empty domain
+            status = map_status(storage->del(dom_id));
+        }
+    }
+exit:
+    return status;
+}
+
+registry_status registry::delete_border_routers_in_domain(const std::string &domain_name)
+{
+    domain          dom;
+    DomainArray     doms;
+    registry_status status;
+    network         current;
+    XpanIdArray     xpans;
+    StringArray     aliases;
+    StringArray     unresolved;
+
+    dom.name = domain_name;
+    VerifyOrExit((status = map_status(storage->lookup(dom, doms))) == REG_SUCCESS);
+    if (doms.size() != 1)
+    {
+        status = REG_ERROR;
+        goto exit;
+    }
+
+    VerifyOrExit((status = get_current_network(current)) == REG_SUCCESS);
+    if (current.dom_id.id != EMPTY_ID)
+    {
+        domain currentDomain;
+        VerifyOrExit((status = map_status(storage->get(current.dom_id, currentDomain))) == REG_SUCCESS);
+
+        if (currentDomain.name == domain_name)
+        {
+            status = REG_DATA_INVALID;
+            goto exit;
+        }
+    }
+
+    VerifyOrExit((status = get_network_xpans_in_domain(domain_name, xpans)) == REG_SUCCESS);
+    if (xpans.empty())
+    {
+        // Domain is already empty
+        status = map_status(storage->del(doms[0].id));
+        goto exit;
+    }
+
+    for (auto &&xpan : xpans)
+    {
+        // TODO [MP] Should better be of type xpan_it then uint64_t
+        aliases.push_back(xpan_id(xpan).str());
+    }
+    VerifyOrExit((status = delete_border_routers_in_networks(aliases, unresolved)) == REG_SUCCESS);
+    if (!unresolved.empty())
+    {
+        status = REG_AMBIGUITY;
+        goto exit;
+    }
+    // Domain will be deleted
+exit:
+    return status;
+}
+
 } // namespace persistent_storage
 } // namespace commissioner
 } // namespace ot

@@ -1070,10 +1070,47 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "delete"))
     {
-        // TODO: implement protection for currently selected network
-        //       (may be at registry level)
-
-        // TODO: do not forget about cascade deletion in registry
+        if (aExpr.size() > 3 || (aExpr.size() == 3 && !(mContext.mNwkAliases.empty() && mContext.mDomAliases.empty())))
+        {
+            value = Error(ErrorCode::kInvalidArgs, "Too many arguments for `br delete` command`");
+            goto exit;
+        }
+        else if (aExpr.size() == 3)
+        {
+            // Attempt to remove border agent by border_router_id
+            border_router_id brId;
+            try
+            {
+                brId = border_router_id(std::stoi(aExpr[2]));
+            } catch (...)
+            {
+                value = ERROR_INVALID_ARGS("Failed to evaluate border router ID '{}'", aExpr[2]);
+                goto exit;
+            }
+            VerifyOrExit(mRegistry->delete_border_router_by_id(brId) == registry_status::REG_SUCCESS,
+                         value = ERROR_IO_ERROR("Failed to delete border router ID {}", aExpr[2]));
+        }
+        else if (mContext.mNwkAliases.size() > 0)
+        {
+            StringArray unresolved;
+            // Remove all border agents in the networks
+            VerifyOrExit(mRegistry->delete_border_routers_in_networks(mContext.mNwkAliases, unresolved) ==
+                             registry_status::REG_SUCCESS,
+                         value = Error(ErrorCode ::kIOError, "Failed to delete border routers"));
+            // Report unresolved aliases
+            for (auto &&alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            }
+        }
+        else if (mContext.mDomAliases.size() > 0)
+        {
+            StringArray undeleted;
+            // Remove all border agents in the domain
+            VerifyOrExit(
+                mRegistry->delete_border_routers_in_domain(mContext.mDomAliases[0]) == registry_status::REG_SUCCESS,
+                value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}'", mContext.mDomAliases[0]));
+        }
     }
     else if (CaseInsensitiveEqual(aExpr[1], "scan"))
     {
@@ -1086,7 +1123,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
 
 exit:
     return value;
-}
+} // namespace commissioner
 
 Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
 {
