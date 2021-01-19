@@ -571,6 +571,8 @@ registry_status registry::delete_border_router_by_id(const border_router_id rout
     std::vector<border_router> routers;
     border_router              pred;
 
+    VerifyOrExit((status = map_status(storage->get(router_id, br))) == REG_SUCCESS);
+
     status = get_current_network(current);
     if (status == REG_SUCCESS && (current.id.id != EMPTY_ID))
     {
@@ -591,14 +593,13 @@ registry_status registry::delete_border_router_by_id(const border_router_id rout
 
     status = map_status(storage->del(router_id));
 
-    if (br.id.id != EMPTY_ID)
+    if (br.nwk_id.id != EMPTY_ID)
     {
         // Was it the last in the network?
         routers.clear();
-        pred.agent.mExtendedPanId = br.agent.mExtendedPanId;
-        pred.agent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
-        VerifyOrExit((status = map_status(storage->lookup(pred, routers))) == REG_SUCCESS);
-        if (routers.empty())
+        pred.nwk_id = br.nwk_id;
+        status      = map_status(storage->lookup(pred, routers));
+        if (status == REG_NOT_FOUND)
         {
             network nwk;
             VerifyOrExit((status = map_status(storage->get(br.nwk_id, nwk))) == REG_SUCCESS);

@@ -164,14 +164,21 @@ TEST_CASE("Del domain", "[ps_json]")
 
 TEST_CASE("Del network", "[ps_json]")
 {
-    persistent_storage_json psj("./test.tmp");
+    persistent_storage_json psj("");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
+    network_id new_id;
+    REQUIRE(psj.add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{"FFFFFFFFFFFFFFF1"}, 11, "FFF1", "2000:aaa1::0/8", 1},
+                    new_id) == ps_status::PS_SUCCESS);
+    REQUIRE(new_id.id == 0);
+
     REQUIRE(psj.del(network_id(0)) == ps_status::PS_SUCCESS);
+    // Absent network successfully deletes newertheless
     REQUIRE(psj.del(network_id(1)) == ps_status::PS_SUCCESS);
-    REQUIRE(psj.del(network_id(2)) == ps_status::PS_SUCCESS);
-    REQUIRE(psj.del(network_id(50)) == ps_status::PS_SUCCESS);
+
+    NetworkArray nets;
+    REQUIRE(psj.lookup(network{}, nets) == ps_status::PS_NOT_FOUND);
 
     REQUIRE(psj.close() == ps_status::PS_SUCCESS);
 }
@@ -218,7 +225,7 @@ TEST_CASE("Get domain from empty", "[ps_json]")
 
 TEST_CASE("Get network from empty", "[ps_json]")
 {
-    persistent_storage_json psj("./test.tmp");
+    persistent_storage_json psj("");
 
     REQUIRE(psj.open() == ps_status::PS_SUCCESS);
 
