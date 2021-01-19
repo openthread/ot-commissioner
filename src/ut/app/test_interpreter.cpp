@@ -2143,18 +2143,18 @@ TEST_F(InterpreterTestSuite, PC_BrList)
     EXPECT_TRUE(value.HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_BrDelete)
+TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitPass)
 {
     TestContext ctx;
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray(), "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               registry_status::REG_SUCCESS);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               registry_status::REG_SUCCESS);
 
@@ -2167,6 +2167,179 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrDelete)
     BorderRouterArray bra;
     EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
+    EXPECT_EQ(bra[0].id.id, 0);
+}
+
+TEST_F(InterpreterTestSuite, PC_BrDeleteTooManyFail)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete 1 1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete 1 --nwk net1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete 1 --dom domain1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+}
+
+TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitLastPass)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete 1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+    BorderRouterArray bra;
+    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(bra.size(), 1);
+    EXPECT_EQ(bra[0].id.id, 0);
+
+    NetworkArray nwks;
+    EXPECT_EQ(ctx.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(nwks.size(), 1);
+
+    DomainArray doms;
+    EXPECT_EQ(ctx.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(doms.size(), 1);
+}
+
+TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteExplicitSelectedFails)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+
+    EXPECT_EQ(ctx.mRegistry->set_current_network(xpan_id{2}), registry_status::REG_SUCCESS);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete 1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+
+    BorderRouterArray bra;
+    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(bra.size(), 2);
+}
+
+TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteNetworkSuccess)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete --nwk net1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    BorderRouterArray bra;
+    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(bra.size(), 1);
+
+    NetworkArray nwks;
+    EXPECT_EQ(ctx.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(nwks.size(), 1);
+
+    DomainArray doms;
+    EXPECT_EQ(ctx.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(doms.size(), 1);
+}
+
+TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteDomainSuccess)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("br delete --dom domain2");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    BorderRouterArray bra;
+    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(bra.size(), 1);
+    EXPECT_EQ(bra[0].id.id, 0);
+
+    NetworkArray nwks;
+    EXPECT_EQ(ctx.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(nwks.size(), 1);
+
+    DomainArray doms;
+    EXPECT_EQ(ctx.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(doms.size(), 1);
 }
 
 TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteNetwork)
