@@ -125,11 +125,17 @@ struct BorderAgent
         uint32_t mBbrIsActive : 1;
         uint32_t mBbrIsPrimary : 1;
 
-        static constexpr uint32_t kConnectionModeMask = 7 << 6;
-        static constexpr uint32_t kThreadIfStatus     = 3 << 4;
-        static constexpr uint32_t kAvailability       = 3 << 2;
-        static constexpr uint32_t kBbrIsActive        = 1 << 1;
-        static constexpr uint32_t kBbrIsPrimary       = 1;
+        static constexpr uint32_t kConnectionModeOffset = 6;
+        static constexpr uint32_t kThreadIfStatusOffset = 4;
+        static constexpr uint32_t kAvailabilityOffset   = 2;
+        static constexpr uint32_t kBbrIsActiveOffset    = 1;
+        static constexpr uint32_t kBbrIsPrimaryOffset   = 0;
+
+        static constexpr uint32_t kConnectionModeMask = 7 << kConnectionModeOffset;
+        static constexpr uint32_t kThreadIfStatusMask = 3 << kThreadIfStatusOffset;
+        static constexpr uint32_t kAvailabilityMask   = 3 << kAvailabilityOffset;
+        static constexpr uint32_t kBbrIsActiveMask    = 1 << kBbrIsActiveOffset;
+        static constexpr uint32_t kBbrIsPrimaryMask   = 1 << kBbrIsPrimaryOffset;
 
         State(uint32_t aConnectionMode,
               uint32_t aThreadIfStatus,
@@ -144,11 +150,11 @@ struct BorderAgent
         {
         }
         State(uint32_t aState)
-            : State((aState & kConnectionModeMask),
-                    (aState & kThreadIfStatus),
-                    (aState & kAvailability),
-                    (aState & kBbrIsActive),
-                    (aState & kBbrIsPrimary))
+            : State((aState & kConnectionModeMask) >> kConnectionModeOffset,
+                    (aState & kThreadIfStatusMask) >> kThreadIfStatusOffset,
+                    (aState & kAvailabilityMask) >> kAvailabilityOffset,
+                    (aState & kBbrIsActiveMask) >> kBbrIsActiveOffset,
+                    (aState & kBbrIsPrimaryMask) >> kBbrIsPrimaryOffset)
         {
         }
         State()
@@ -157,9 +163,10 @@ struct BorderAgent
         }
         operator uint32_t() const
         {
-            return ((mConnectionMode << 6) & kConnectionModeMask) | ((mThreadIfStatus << 4) & kThreadIfStatus) |
-                   ((mAvailability << 2) & kAvailability) | ((mBbrIsActive << 1) & kBbrIsActive) |
-                   (mBbrIsPrimary & kBbrIsPrimary);
+            return ((mConnectionMode << kConnectionModeOffset) & kConnectionModeMask) |
+                   ((mThreadIfStatus << kThreadIfStatusOffset) & kThreadIfStatusMask) |
+                   ((mAvailability << kAvailabilityOffset) & kAvailabilityMask) |
+                   ((mBbrIsActive << kBbrIsActiveOffset) & kBbrIsActiveMask) | (mBbrIsPrimary & kBbrIsPrimaryMask);
         }
     } mState;
 
