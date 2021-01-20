@@ -187,7 +187,7 @@ void from_json(const json &j, border_router &p)
     {
         uint32_t value;
         j.at(JSON_STATE_BITMAP).get_to(value);
-        p.agent.mState = value;
+        p.agent.mState = BorderAgent::State(value);
         p.agent.mPresentFlags |= BorderAgent::kStateBit;
     }
     if (j.contains(JSON_NWK_REF))
