@@ -41,13 +41,6 @@
 namespace ot {
 
 namespace commissioner {
-
-struct BorderAgentOrErrorMsg
-{
-    BorderAgent mBorderAgent;
-    Error       mError;
-};
-
 static int HandleRecord(const struct sockaddr *from,
                         mdns_entry_type_t      entry,
                         uint16_t               type,

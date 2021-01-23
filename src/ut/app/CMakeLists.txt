@@ -30,6 +30,8 @@ target_include_directories(job-manager-test
       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
       ${PROJECT_SOURCE_DIR}/include
       ${PROJECT_SOURCE_DIR}/src
+	  ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+      ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
 )
 
 set_target_properties(job-manager-test
@@ -38,9 +40,12 @@ set_target_properties(job-manager-test
     )
 
 target_link_libraries(job-manager-test
+    event_core
+    event_pthreads
+	fmt::fmt
     gtest
 	gmock
-	fmt::fmt
+	mdns
 	persistent-storage
 	readline
 	)
@@ -77,6 +82,8 @@ target_include_directories(interpreter-test
       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
       ${PROJECT_SOURCE_DIR}/include
       ${PROJECT_SOURCE_DIR}/src
+	  ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include
+      ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
 )
 
 set_target_properties(interpreter-test
@@ -85,9 +92,12 @@ set_target_properties(interpreter-test
     )
 
 target_link_libraries(interpreter-test
+    event_core
+    event_pthreads
+	fmt::fmt
     gtest
 	gmock
-	fmt::fmt
+	mdns
 	persistent-storage
 	readline
 	)

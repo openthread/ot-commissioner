@@ -189,6 +189,7 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
     static void BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &aAgent);
+    static void BorderAgentToJson(nlohmann::json &aJson, const BorderAgent &aAgent);
 
 private:
     Console                     mConsole;

@@ -34,12 +34,23 @@
 #include "app/cli/interpreter.hpp"
 
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <string.h>
+#include <thread>
+#include <unistd.h>
+
+#include <event2/event-config.h>
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/util.h>
+#include <mdns/mdns.h>
 
 #include "app/cli/job_manager.hpp"
 #include "app/json.hpp"
 #include "app/ps/registry.hpp"
 #include "app/sys_logger.hpp"
+#include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/file_util.hpp"
 #include "common/utils.hpp"
@@ -76,6 +87,302 @@
 namespace ot {
 
 namespace commissioner {
+
+namespace {
+
+struct FDGuard
+{
+    FDGuard()
+        : mFD(-1)
+    {
+    }
+    explicit FDGuard(int aFD)
+        : mFD(aFD)
+    {
+    }
+    // For the time being it is ennough to call close on all file descriptors to be protected: they're from the POSIX
+    // environment. If we'd want support for Windows it would be necessary to add support for file descriptor close
+    // functions (like, say, closesocket() or even mdns_socket_close()).
+    ~FDGuard()
+    {
+        if (mFD > 0)
+        {
+            close(mFD);
+        }
+    }
+
+    int mFD;
+};
+
+inline std::string ToString(const mdns_string_t &aString)
+{
+    return std::string(aString.str, aString.length);
+}
+
+inline ByteArray ToByteArray(const mdns_string_t &aString)
+{
+    return ByteArray{aString.str, aString.str + aString.length};
+}
+
+int HandleRecord(const struct sockaddr *from,
+                 mdns_entry_type_t      entry,
+                 uint16_t               type,
+                 uint16_t               rclass,
+                 uint32_t               ttl,
+                 const void *           data,
+                 size_t                 size,
+                 size_t                 offset,
+                 size_t                 length,
+                 void *                 border_agent)
+{
+    // TODO [MP] Add fromAddr to error strings
+    struct sockaddr_storage fromAddrStorage;
+    Address                 fromAddr;
+    std::string             fromAddrStr;
+    std::string             entryType;
+    char                    nameBuffer[256];
+
+    BorderAgentOrErrorMsg &borderAgentOrErrorMsg = *reinterpret_cast<BorderAgentOrErrorMsg *>(border_agent);
+    BorderAgent &          borderAgent           = borderAgentOrErrorMsg.mBorderAgent;
+    Error &                error                 = borderAgentOrErrorMsg.mError;
+
+    (void)rclass;
+    (void)ttl;
+
+    *reinterpret_cast<struct sockaddr *>(&fromAddrStorage) = *from;
+    if (fromAddr.Set(fromAddrStorage) != ErrorCode::kNone)
+    {
+        ExitNow(error = ERROR_BAD_FORMAT("invalid source address of mDNS response"));
+    }
+
+    fromAddrStr = fromAddr.ToString();
+
+    entryType = (entry == MDNS_ENTRYTYPE_ANSWER) ? "answer"
+                                                 : ((entry == MDNS_ENTRYTYPE_AUTHORITY) ? "authority" : "additional");
+    if (type == MDNS_RECORDTYPE_PTR)
+    {
+        mdns_string_t nameStr     = mdns_record_parse_ptr(data, size, offset, length, nameBuffer, sizeof(nameBuffer));
+        borderAgent.mServiceName  = std::string(nameStr.str, nameStr.length);
+        borderAgent.mPresentFlags = BorderAgent::kServiceNameBit;
+        // TODO(wgtdkp): add debug logging.
+    }
+    else if (type == MDNS_RECORDTYPE_SRV)
+    {
+        mdns_record_srv_t server = mdns_record_parse_srv(data, size, offset, length, nameBuffer, sizeof(nameBuffer));
+
+        borderAgent.mPort = server.port;
+        borderAgent.mPresentFlags |= BorderAgent::kPortBit;
+    }
+    else if (type == MDNS_RECORDTYPE_A)
+    {
+        struct sockaddr_storage addrStorage;
+        struct sockaddr_in      addr;
+        std::string             addrStr;
+
+        mdns_record_parse_a(data, size, offset, length, &addr);
+
+        *reinterpret_cast<struct sockaddr_in *>(&addrStorage) = addr;
+        if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
+        {
+            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv4 address in A record"));
+        }
+
+        addrStr = fromAddr.ToString();
+
+        // We prefer AAAA (IPv6) address than A (IPv4) address.
+        if (!(borderAgent.mPresentFlags & BorderAgent::kAddrBit))
+        {
+            borderAgent.mAddr = addrStr;
+            borderAgent.mPresentFlags |= BorderAgent::kAddrBit;
+        }
+    }
+    else if (type == MDNS_RECORDTYPE_AAAA)
+    {
+        struct sockaddr_storage addrStorage;
+        struct sockaddr_in6     addr;
+        std::string             addrStr;
+
+        mdns_record_parse_aaaa(data, size, offset, length, &addr);
+
+        *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
+        if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
+        {
+            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv6 address in AAAA record"));
+        }
+
+        addrStr = fromAddr.ToString();
+
+        borderAgent.mAddr = addrStr;
+        borderAgent.mPresentFlags |= BorderAgent::kAddrBit;
+    }
+    else if (type == MDNS_RECORDTYPE_TXT)
+    {
+        mdns_record_txt_t txtBuffer[128];
+        size_t            parsed;
+
+        parsed =
+            mdns_record_parse_txt(data, size, offset, length, txtBuffer, sizeof(txtBuffer) / sizeof(mdns_record_txt_t));
+
+        for (size_t i = 0; i < parsed; ++i)
+        {
+            auto key         = ToString(txtBuffer[i].key);
+            auto value       = ToString(txtBuffer[i].value);
+            auto binaryValue = ToByteArray(txtBuffer[i].value);
+
+            if (key == "rv")
+            {
+                VerifyOrExit(value == "1", error = ERROR_BAD_FORMAT("value of TXT Key 'rv' is {} but not 1", value));
+            }
+            else if (key == "tv")
+            {
+                borderAgent.mThreadVersion = value;
+                borderAgent.mPresentFlags |= BorderAgent::kThreadVersionBit;
+            }
+            else if (key == "sb")
+            {
+                auto &bitmap = binaryValue;
+                if (bitmap.size() != 4)
+                {
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'sb' is invalid: value={}", utils::Hex(bitmap)));
+                }
+
+                borderAgent.mState.mConnectionMode = (bitmap[3] & 0x07);
+                borderAgent.mState.mThreadIfStatus = (bitmap[3] & 0x18) >> 3;
+                borderAgent.mState.mAvailability   = (bitmap[3] & 0x60) >> 5;
+                borderAgent.mState.mBbrIsActive    = (bitmap[3] & 0x80) >> 7;
+                borderAgent.mState.mBbrIsPrimary   = (bitmap[2] & 0x01);
+                borderAgent.mPresentFlags |= BorderAgent::kStateBit;
+            }
+            else if (key == "nn")
+            {
+                borderAgent.mNetworkName = value;
+                borderAgent.mPresentFlags |= BorderAgent::kNetworkNameBit;
+            }
+            else if (key == "xp")
+            {
+                auto &extendPanId = binaryValue;
+                if (extendPanId.size() != 8)
+                {
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'xp' is invalid: value={}",
+                                                     utils::Hex(extendPanId)));
+                }
+                else
+                {
+                    borderAgent.mExtendedPanId = utils::Decode<uint64_t>(extendPanId);
+                    borderAgent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
+                }
+            }
+            else if (key == "vn")
+            {
+                borderAgent.mVendorName = value;
+                borderAgent.mPresentFlags |= BorderAgent::kVendorNameBit;
+            }
+            else if (key == "mn")
+            {
+                borderAgent.mModelName = value;
+                borderAgent.mPresentFlags |= BorderAgent::kModelNameBit;
+            }
+            else if (key == "at")
+            {
+                auto &activeTimestamp = binaryValue;
+                if (activeTimestamp.size() != 8)
+                {
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'at' is invalid: value={}",
+                                                     utils::Hex(activeTimestamp)));
+                }
+                else
+                {
+                    borderAgent.mActiveTimestamp = Timestamp::Decode(utils::Decode<uint64_t>(activeTimestamp));
+                    borderAgent.mPresentFlags |= BorderAgent::kActiveTimestampBit;
+                }
+            }
+            else if (key == "pt")
+            {
+                auto &partitionId = binaryValue;
+                if (partitionId.size() != 4)
+                {
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'pt' is invalid: value={}",
+                                                     utils::Hex(partitionId)));
+                }
+                else
+                {
+                    borderAgent.mPartitionId = utils::Decode<uint32_t>(partitionId);
+                    borderAgent.mPresentFlags |= BorderAgent::kPartitionIdBit;
+                }
+            }
+            else if (key == "vd")
+            {
+                borderAgent.mVendorData = value;
+                borderAgent.mPresentFlags |= BorderAgent::kVendorDataBit;
+            }
+            else if (key == "vo")
+            {
+                auto &oui = binaryValue;
+                if (oui.size() != 3)
+                {
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'vo' is invalid: value={}", utils::Hex(oui)));
+                }
+                else
+                {
+                    borderAgent.mVendorOui = oui;
+                    borderAgent.mPresentFlags |= BorderAgent::kVendorOuiBit;
+                }
+            }
+            else if (key == "dn")
+            {
+                borderAgent.mDomainName = value;
+                borderAgent.mPresentFlags |= BorderAgent::kDomainNameBit;
+            }
+            else if (key == "sq")
+            {
+                auto &bbrSeqNum = binaryValue;
+                if (bbrSeqNum.size() != 1)
+                {
+                    ExitNow(error =
+                                ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'sq' is invalid: {}", utils::Hex(bbrSeqNum)));
+                }
+                else
+                {
+                    borderAgent.mBbrSeqNumber = utils::Decode<uint8_t>(bbrSeqNum);
+                    borderAgent.mPresentFlags |= BorderAgent::kBbrSeqNumberBit;
+                }
+            }
+            else if (key == "bb")
+            {
+                auto &bbrPort = binaryValue;
+                if (bbrPort.size() != 2)
+                {
+                    ExitNow(error =
+                                ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'bb' is invalid: {}", utils::Hex(bbrPort)));
+                }
+                else
+                {
+                    borderAgent.mBbrPort = utils::Decode<uint16_t>(bbrPort);
+                    borderAgent.mPresentFlags |= BorderAgent::kBbrPortBit;
+                }
+            }
+            else
+            {
+                // TODO(wgtdkp): add debug logging.
+            }
+        }
+    }
+    else
+    {
+        // TODO(wgtdkp): add debug logging.
+    }
+
+    if (borderAgent.mPresentFlags != 0)
+    {
+        // Actualize Timestamp
+        borderAgent.mUpdateTimestamp.mTime = time(0);
+        borderAgent.mPresentFlags |= BorderAgent::kUpdateTimestampBit;
+    }
+exit:
+    return 0;
+}
+
+} // namespace
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
     {"config", &Interpreter::ProcessConfig},       {"start", &Interpreter::ProcessStart},
@@ -1114,7 +1421,94 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "scan"))
     {
-        // TODO: implement new handler
+        constexpr const mdns_record_type_t kMdnsQueryType  = MDNS_RECORDTYPE_PTR;
+        constexpr const uint32_t           kMdnsBufferSize = 16 * 1024;
+        const std::string                  kServiceName    = "_meshcop._udp.local";
+
+        uint32_t                                  scanTimeout = 10000;
+        int                                       mdnsSocket  = -1;
+        FDGuard                                   fdgMdnsSocket;
+        std::thread                               selectThread;
+        event_base *                              base;
+        timeval                                   tvTimeout;
+        std::unique_ptr<event, void (*)(event *)> mdnsEvent(nullptr, event_free);
+        std::vector<BorderAgentOrErrorMsg>        borderAgents;
+        nlohmann::json                            baJson{std::vector<nlohmann::json>{}};
+        char                                      mdnsSendBuffer[kMdnsBufferSize];
+
+        if (aExpr.size() == 4 && aExpr[2] == "--timeout")
+        {
+            try
+            {
+                scanTimeout = stol(aExpr[3]);
+            } catch (...)
+            {
+                ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", aExpr[3]));
+            }
+        }
+
+        // Open IPv4 mDNS socket
+        mdnsSocket = mdns_socket_open_ipv4();
+        VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
+        fdgMdnsSocket.mFD = mdnsSocket;
+
+        //  Initialize event library
+        base = event_base_new();
+
+        // Instantly register timeout event to stop the event loop
+        evutil_timerclear(&tvTimeout);
+        tvTimeout.tv_sec  = scanTimeout / 1000;
+        tvTimeout.tv_usec = (scanTimeout % 1000) * 1000;
+        event_base_loopexit(base, &tvTimeout);
+
+        // Register event for inbound events on mdnsSocket
+        // The mdnsSocket is already non-blocking (as we need for the event library)
+        auto mdnsReaderParser = [](evutil_socket_t aSocket, short aWhat, void *aArg) {
+            (void)aWhat;
+
+            BorderAgentOrErrorMsg               agent;
+            char                                buf[1024 * 16];
+            std::vector<BorderAgentOrErrorMsg> &agents = *static_cast<std::vector<BorderAgentOrErrorMsg> *>(aArg);
+
+            mdns_query_recv(aSocket, buf, sizeof(buf), HandleRecord, &agent, 1);
+            agents.push_back(agent);
+
+            return;
+        };
+        mdnsEvent = std::unique_ptr<event, void (*)(event *)>(
+            event_new(base, mdnsSocket, EV_READ | EV_PERSIST, mdnsReaderParser, &borderAgents), event_free);
+        event_add(mdnsEvent.get(), nullptr);
+
+        // Start event loop thread
+        selectThread = std::thread([](event_base *aBase) { event_base_dispatch(aBase); }, base);
+
+        // Send mDNS query
+        if (mdns_query_send(mdnsSocket, kMdnsQueryType, kServiceName.c_str(), kServiceName.length(), mdnsSendBuffer,
+                            sizeof(mdnsSendBuffer)) != 0)
+        {
+            // Stop event thread
+            event_base_loopbreak(base);
+            selectThread.join();
+            ExitNow(value = ERROR_IO_ERROR("Sending mDNS query failed"));
+        }
+        // Join the waiting (event loop) thread
+        selectThread.join();
+
+        // Serialize BorderAgents to JSON into value
+        for (auto agentOrError : borderAgents)
+        {
+            if (agentOrError.mError != ErrorCode::kNone)
+            {
+                mConsole.Write(agentOrError.mError.GetMessage(), Console::Color::kRed);
+            }
+            else
+            {
+                nlohmann::json ba;
+                BorderAgentToJson(ba, agentOrError.mBorderAgent);
+                baJson.push_back(ba);
+            }
+        }
+        value = baJson.dump(JSON_INDENT_DEFAULT);
     }
     else
     {
@@ -2218,6 +2612,44 @@ void Interpreter::BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &
 #undef SET_IF_PRESENT
 
     aAgent = agent;
+}
+
+static void to_json(nlohmann::json &aJson, const BorderAgent::State &aState)
+{
+    aJson = static_cast<uint32_t>(aState);
+}
+
+void Interpreter::BorderAgentToJson(nlohmann::json &aJson, const BorderAgent &aAgent)
+{
+    BorderAgent agent;
+
+#define SET_IF_PRESENT(field)                                  \
+    do                                                         \
+    {                                                          \
+        if (aAgent.mPresentFlags & BorderAgent::k##field##Bit) \
+        {                                                      \
+            aJson[#field] = aAgent.m##field;                   \
+        }                                                      \
+    } while (false)
+
+    SET_IF_PRESENT(Addr);
+    SET_IF_PRESENT(Port);
+    SET_IF_PRESENT(ThreadVersion);
+    SET_IF_PRESENT(State);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(ModelName);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(PartitionId);
+    SET_IF_PRESENT(VendorData);
+    SET_IF_PRESENT(VendorOui);
+    SET_IF_PRESENT(DomainName);
+    SET_IF_PRESENT(BbrSeqNumber);
+    SET_IF_PRESENT(BbrPort);
+    SET_IF_PRESENT(ServiceName);
+
+#undef SET_IF_PRESENT
 }
 
 } // namespace commissioner

@@ -525,7 +525,7 @@ TEST_F(InterpreterTestSuite, MNSV_EmptyNwkOrDomMustFail)
 }
 
 // Import/Export Syntax Validation test group
-TEST_F(InterpreterTestSuite, IESV_SingleExportFileMustPass)
+TEST_F(InterpreterTestSuite, DISABLED_IESV_SingleExportFileMustPass)
 {
     TestContext ctx;
     InitContext(ctx);

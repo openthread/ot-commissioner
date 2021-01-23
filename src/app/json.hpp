@@ -89,6 +89,7 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 Error JsonFromFile(std::string &aJson, const std::string &aPath);
 
 void from_json(const nlohmann::json &aJson, Timestamp &aTimestamp);
+void to_json(nlohmann::json &aJson, const Timestamp &aTimestamp);
 
 } // namespace commissioner
 
