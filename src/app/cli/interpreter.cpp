@@ -579,6 +579,7 @@ void Interpreter::Context::Cleanup()
     mDomAliases.clear();
     mExportFiles.clear();
     mImportFiles.clear();
+    mCommandKeys.clear();
 }
 
 Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegistryFile)
@@ -827,13 +828,15 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
         ST_NETWORK,
         ST_DOMAIN,
         ST_EXPORT,
-        ST_IMPORT
+        ST_IMPORT,
+        ST_CMD_KEYS
     };
-    StringArray *arrays[] = {[ST_COMMAND] = &aRetExpr,
-                             [ST_NETWORK] = &mContext.mNwkAliases,
-                             [ST_DOMAIN]  = &mContext.mDomAliases,
-                             [ST_EXPORT]  = &mContext.mExportFiles,
-                             [ST_IMPORT]  = &mContext.mImportFiles};
+    StringArray *arrays[] = {[ST_COMMAND]  = &aRetExpr,
+                             [ST_NETWORK]  = &mContext.mNwkAliases,
+                             [ST_DOMAIN]   = &mContext.mDomAliases,
+                             [ST_EXPORT]   = &mContext.mExportFiles,
+                             [ST_IMPORT]   = &mContext.mImportFiles,
+                             [ST_CMD_KEYS] = &mContext.mCommandKeys};
     Error        error;
 
     uint8_t     state = ST_COMMAND;
@@ -856,6 +859,8 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
         if (prefix == "--")
         {
             VerifyOrExit(!inKey, error = ERROR_INVALID_SYNTAX(SYNTAX_NO_PARAM, lastKey));
+            lastKey = word;
+            inKey   = true;
             if (word == KEYWORD_NETWORK)
                 state = ST_NETWORK;
             else if (word == KEYWORD_DOMAIN)
@@ -866,11 +871,12 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
                 state = ST_IMPORT;
             else
             {
-                error = ERROR_INVALID_SYNTAX(SYNTAX_UNKNOWN_KEY, word);
-                goto exit;
+                // Some commands have command line parameters that are to be passed without any change including the
+                // key.
+                inKey = false;
+                state = ST_CMD_KEYS;
+                arrays[state]->push_back(word);
             }
-            lastKey = word;
-            inKey   = true;
         }
         else
         {
@@ -1436,11 +1442,11 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json                            baJson{std::vector<nlohmann::json>{}};
         char                                      mdnsSendBuffer[kMdnsBufferSize];
 
-        if (aExpr.size() == 4 && aExpr[2] == "--timeout")
+        if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--timeout")
         {
             try
             {
-                scanTimeout = stol(aExpr[3]);
+                scanTimeout = stol(mContext.mCommandKeys[1]);
             } catch (...)
             {
                 ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", aExpr[3]));

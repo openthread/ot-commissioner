@@ -525,7 +525,7 @@ TEST_F(InterpreterTestSuite, MNSV_EmptyNwkOrDomMustFail)
 }
 
 // Import/Export Syntax Validation test group
-TEST_F(InterpreterTestSuite, DISABLED_IESV_SingleExportFileMustPass)
+TEST_F(InterpreterTestSuite, IESV_SingleExportFileMustPass)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -541,7 +541,7 @@ TEST_F(InterpreterTestSuite, DISABLED_IESV_SingleExportFileMustPass)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr;
-    expr = ctx.mInterpreter.ParseExpression("br scan --export ./2.json");
+    expr = ctx.mInterpreter.ParseExpression("br scan --timeout 1 --export ./2.json");
 
     Interpreter::Value value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
@@ -1787,7 +1787,7 @@ TEST_F(InterpreterTestSuite, PC_DomainList)
     EXPECT_TRUE(value.HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExport)
+TEST_F(InterpreterTestSuite, PC_BrScanExport)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -1800,7 +1800,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExport)
     EXPECT_EQ(system(fmt::format("rm -rf {}", jsonFileName).c_str()), 0);
     EXPECT_NE(PathExists(jsonFileName).GetCode(), ErrorCode::kNone);
 
-    expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --export ") + jsonFileName);
+    expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --timeout 1 --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     ctx.mInterpreter.Print(value);
@@ -1808,8 +1808,13 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExport)
 
     std::string jsonStr;
     EXPECT_EQ(ReadFile(jsonStr, jsonFileName).GetCode(), ErrorCode::kNone);
-    // TODO output validation
-    nlohmann::json json = nlohmann::json::parse(jsonStr);
+    try
+    {
+        nlohmann::json json = nlohmann::json::parse(jsonStr);
+    } catch (...)
+    {
+        EXPECT_TRUE(false) << "JSON parse failed";
+    }
 }
 
 TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)
@@ -1822,13 +1827,11 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)
 
     std::string jsonFileName = "./tmpdir/br-list.json";
     ASSERT_EQ(system("rm -rf ./tmpdir"), 0);
-    // TODO implementation pending
-    expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --export ") + jsonFileName);
+    expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --timeout 1 --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    std::string jsonStr;
-    EXPECT_EQ(ReadFile(jsonStr, jsonFileName).GetCode(), ErrorCode::kNone);
-    EXPECT_GE(jsonStr.length(), 1);
+    value = PathExists(jsonFileName);
+    EXPECT_TRUE(value.HasNoError());
 }
 
 TEST_F(InterpreterTestSuite, PC_BrAddNoMandatoryFail)
