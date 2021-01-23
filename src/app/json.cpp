@@ -318,7 +318,7 @@ static void from_json(const Json &aJson, BbrDataset &aDataset)
 #undef SET_IF_PRESENT
 }
 
-static void to_json(Json &aJson, const Timestamp &aTimestamp)
+void to_json(Json &aJson, const Timestamp &aTimestamp)
 {
 #define SET(name) aJson[#name] = aTimestamp.m##name;
 

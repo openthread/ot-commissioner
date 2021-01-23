@@ -313,6 +313,12 @@ struct BorderAgent
     virtual ~BorderAgent() {}
 };
 
+struct BorderAgentOrErrorMsg
+{
+    BorderAgent mBorderAgent;
+    Error       mError;
+};
+
 /**
  * This function is the callback of a discovered Border Agent.
  *
