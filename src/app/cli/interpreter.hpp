@@ -120,6 +120,7 @@ private:
         StringArray mDomAliases;
         StringArray mExportFiles;
         StringArray mImportFiles;
+        StringArray mCommandKeys;
 
         void Cleanup();
         bool HasGroupAlias();
