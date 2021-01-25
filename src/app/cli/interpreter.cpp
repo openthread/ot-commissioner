@@ -1580,16 +1580,17 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
 
-    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "save"))
     {
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         SuccessOrExit(value = commissioner->SaveNetworkData(aExpr[2]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "sync"))
     {
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         SuccessOrExit(value = commissioner->SyncNetworkData());
     }
     else if (CaseInsensitiveEqual(aExpr[1], "list"))
@@ -1618,17 +1619,29 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "identify"))
     {
-        Interpreter::Value value;
-        ::nlohmann::json   json;
-        network            nwk;
+        ::nlohmann::json json;
+        network          nwk;
+        std::string      nwkData;
 
-        VerifyOrExit(!IsMultiNetworkSyntax(aExpr),
-                     value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK "|" KEYWORD_DOMAIN));
         VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_SYNTAX("too many arguments"));
         VerifyOrExit(mRegistry->get_current_network(nwk) == registry_status::REG_SUCCESS,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
-        json  = nwk.xpan;
-        value = json.dump(JSON_INDENT_DEFAULT);
+        if (nwk.id.id == EMPTY_ID)
+        {
+            value = std::string("none");
+        }
+        else
+        {
+            if (nwk.dom_id.id != EMPTY_ID)
+            {
+                VerifyOrExit(mRegistry->get_domain_name_by_xpan(nwk.xpan, nwkData) == REG_SUCCESS,
+                             value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
+                nwkData += '/';
+            }
+            nwkData += nwk.name;
+            json[nwk.xpan.str()] = nwkData;
+            value                = json.dump(JSON_INDENT_DEFAULT);
+        }
     }
     else
     {

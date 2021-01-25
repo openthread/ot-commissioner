@@ -31,6 +31,8 @@ using testing::ReturnRef;
 using testing::StrEq;
 using testing::WithArg;
 
+using Json = nlohmann::json;
+
 class InterpreterTestSuite : public testing::Test
 {
 public:
@@ -1235,19 +1237,19 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNonexisting)
     EXPECT_EQ(nwk.id.id, 0);
 }
 
-TEST_F(InterpreterTestSuite, PC_NetworkIdentify)
+TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithDomain)
 {
     TestContext ctx;
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
               registry_status::REG_SUCCESS);
     ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
-                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
-                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0,
+                                             0x3F}),
               registry_status::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
@@ -1263,6 +1265,86 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentify)
     expr  = ctx.mInterpreter.ParseExpression("network identify");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+
+    Json json;
+    try
+    {
+        json = Json::parse(value.ToString());
+    } catch (Json::parse_error e)
+    {
+        EXPECT_TRUE(false) << "Failed to parse value: " << e.what();
+    }
+    EXPECT_TRUE(json.contains("0000000000000001"));
+    EXPECT_STREQ("domain1/net1", json.at("0000000000000001").get<std::string>().c_str());
+}
+
+TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithoutDomain)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0,
+                                             0x3F}),
+              registry_status::REG_SUCCESS);
+    border_router br;
+    br.nwk_id = 1;
+    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+
+    network nwk;
+    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(nwk.id.id, 1);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("network identify");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    Json json;
+    try
+    {
+        json = Json::parse(value.ToString());
+    } catch (Json::parse_error e)
+    {
+        EXPECT_TRUE(false) << "Failed to parse value: " << e.what();
+    }
+    EXPECT_TRUE(json.contains("0000000000000002"));
+    EXPECT_STREQ("net2", json.at("0000000000000002").get<std::string>().c_str());
+}
+
+TEST_F(InterpreterTestSuite, PC_NetworkIdentifyUnset)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0,
+                                             0x3F}),
+              registry_status::REG_SUCCESS);
+
+    network nwk;
+    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(nwk.id.id, EMPTY_ID);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("network identify");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+    EXPECT_STREQ("none", value.ToString().c_str());
 }
 
 TEST_F(InterpreterTestSuite, PC_NetworkList)
@@ -1289,10 +1371,6 @@ TEST_F(InterpreterTestSuite, PC_NetworkList)
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
-
-    CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
-    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
-        .WillOnce(DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = pcaMock; }), Return(Error{})));
 
     expr  = ctx.mInterpreter.ParseExpression("network list --dom domain1");
     value = ctx.mInterpreter.Eval(expr);
