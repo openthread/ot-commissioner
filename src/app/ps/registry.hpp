@@ -229,7 +229,7 @@ public:
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
-     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
     registry_status get_network_by_xpan(const xpan_id xpan, network &ret);
@@ -242,7 +242,7 @@ public:
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
-     * @li @ref REG_AMBUGUITY is more than one network was foud
+     * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
     registry_status get_network_by_name(const std::string &name, network &ret);
@@ -255,7 +255,7 @@ public:
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
-     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
     registry_status get_network_by_pan(const std::string &pan, network &ret);
@@ -268,7 +268,7 @@ public:
      * @return
      * @li @ref RET_SUCCESS if name is found
      * @li @ref REG_NOT_FOUND if no network was found
-     * @li @ref REG_AMBUGUITY is more than one network was foud
+     * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
     registry_status get_domain_name_by_xpan(const xpan_id xpan, std::string &name);
@@ -306,7 +306,7 @@ protected:
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
-     * @li @ref REG_DATA_INVALID is more than one network was foud
+     * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
     registry_status lookup_one(const network &pred, network &ret);
