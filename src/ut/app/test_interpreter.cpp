@@ -2456,7 +2456,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteDomainSuccess)
     EXPECT_EQ(doms.size(), 1);
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_BrDeleteNetwork)
+TEST_F(InterpreterTestSuite, PC_BrDeleteNetwork)
 {
     TestContext ctx;
     InitContext(ctx);
