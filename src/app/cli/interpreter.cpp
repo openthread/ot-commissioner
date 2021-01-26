@@ -1602,8 +1602,6 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         Interpreter::Value value;
         ::nlohmann::json   json;
 
-        VerifyOrExit(!IsMultiNetworkSyntax(aExpr),
-                     value = ERROR_INVALID_SYNTAX(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK "|" KEYWORD_DOMAIN));
         VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_SYNTAX("too many arguments"));
         if (CaseInsensitiveEqual(aExpr[2], "none"))
         {
@@ -1612,7 +1610,14 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         }
         else
         {
-            VerifyOrExit(mRegistry->set_current_network(aExpr[2]) == REG_SUCCESS,
+            StringArray aliases = {aExpr[2]};
+            XpanIdArray xpans;
+            StringArray unresolved;
+            VerifyOrExit(mRegistry->get_network_xpans_by_aliases(aliases, xpans, unresolved) == REG_SUCCESS,
+                         value = ERROR_IO_ERROR("Failed to resolve extended PAN Id for network {}", aExpr[2]));
+            VerifyOrExit(xpans.size() == 1, value = ERROR_IO_ERROR("Detected {} networks instead of 1 for alias '{}'",
+                                                                   xpans.size(), aExpr[2]));
+            VerifyOrExit(mRegistry->set_current_network(xpans[0]) == REG_SUCCESS,
                          value = ERROR_IO_ERROR("network set failed"));
             value = std::string("done");
         }
