@@ -1237,6 +1237,38 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNonexisting)
     EXPECT_EQ(nwk.id.id, 0);
 }
 
+TEST_F(InterpreterTestSuite, PC_NetworkSelectByName)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, "1.1", BorderAgent::State{0, 0, 0, 0, 0}, "net1", 1,
+                                             "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "", 0,
+                                             0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, "1.1", BorderAgent::State{0, 0, 0, 0, 0}, "net2", 2,
+                                             "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "", 0,
+                                             0x3F | BorderAgent::kDomainNameBit}),
+              registry_status::REG_SUCCESS);
+    border_router br;
+    br.nwk_id = 1;
+    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+
+    network nwk;
+    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(1, nwk.id.id);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("network select net1");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(0, nwk.id.id);
+}
+
 TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithDomain)
 {
     TestContext ctx;
