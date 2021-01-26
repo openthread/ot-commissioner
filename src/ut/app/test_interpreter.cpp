@@ -1945,7 +1945,7 @@ TEST_F(InterpreterTestSuite, PC_BrScanExport)
     }
 }
 
-TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)
+TEST_F(InterpreterTestSuite, PC_BrScanExportDirAbsent)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -1958,6 +1958,7 @@ TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)
     expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --timeout 1 --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+    ctx.mInterpreter.Print(value);
     value = PathExists(jsonFileName);
     EXPECT_TRUE(value.HasNoError());
 }

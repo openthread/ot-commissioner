@@ -160,6 +160,22 @@ Error PathExists(std::string path)
     return ERROR_NONE;
 }
 
+static std::string::size_type EndsWithAtPos(const std::string &testString, const std::string &subString)
+{
+    auto result = std::string::npos;
+    ;
+
+    if (testString.length() >= subString.length())
+    {
+        result = testString.length() - subString.length();
+        if (testString.substr(result) != subString)
+        {
+            result = std::string::npos;
+        }
+    }
+    return result;
+}
+
 static void RemoveTrailings(std::string &aPath)
 {
     constexpr auto NPos = std::string::npos;
@@ -168,13 +184,13 @@ static void RemoveTrailings(std::string &aPath)
     std::string::size_type pos;
     do
     {
-        pos = aPath.rfind('/');
+        pos = EndsWithAtPos(aPath, "/");
         if (pos == NPos)
         {
-            pos = aPath.rfind("/.");
+            pos = EndsWithAtPos(aPath, "/.");
             if (pos == NPos)
             {
-                pos = aPath.rfind("/..");
+                pos = EndsWithAtPos(aPath, "/..");
                 if (pos == NPos)
                 {
                     break;
@@ -220,9 +236,7 @@ Error RestoreDirPath(const std::string &aPath)
     error = PathExists(path);
     if (error == ERROR_NONE)
     {
-        // Only components relative to the path were removed. Path restoration impossible (like for '/tmp/../..'
-        // absolute path
-        return ERROR_REJECTED("Path restoration impossible for path {}", aPath);
+        return error;
     }
 
     SplitPath(path, dirName, baseName);
