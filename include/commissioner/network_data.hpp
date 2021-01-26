@@ -96,8 +96,7 @@ struct xpan_id
     operator uint64_t() const { return value; }
 };
 
-// TODO [MP] Change uint64_t t xpan_id
-typedef std::vector<uint64_t> XpanIdArray;
+typedef std::vector<xpan_id> XpanIdArray;
 
 /**
  * @brief The Commissioner Dataset of the Thread Network Data.
