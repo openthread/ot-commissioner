@@ -46,7 +46,6 @@ namespace ot {
 namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
-using NidArray           = std::vector<uint64_t>;
 
 class JobManager;
 
@@ -137,7 +136,7 @@ private:
     bool       IsMultiNetworkSyntax(const Expression &aExpr);
     bool       IsMultiJob(const Expression &aExpr);
     bool       IsInactiveCommissionerAllowed(const Expression &aExpr);
-    Value      ValidateMultiNetworkSyntax(const Expression &aExpr, NidArray &aNids);
+    Value      ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
     Error      ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
 
     Value ProcessConfig(const Expression &aExpr);

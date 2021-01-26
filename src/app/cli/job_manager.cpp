@@ -113,7 +113,7 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
     return ERROR_NONE;
 }
 
-Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
+Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
 {
     if (utils::ToLower(aExpr[0]) == "start")
         return PrepareStartJobs(aExpr, aNids, aGroupAlias);
@@ -166,7 +166,7 @@ exit:
     return error;
 }
 
-Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
+Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
 {
     Error error = ERROR_NONE;
 
@@ -223,7 +223,7 @@ exit:
     return error;
 }
 
-Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias)
+Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
 {
     Error error = ERROR_NONE;
 

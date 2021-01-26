@@ -60,7 +60,7 @@ public:
     ~JobManager() = default;
 
     Error Init(const Config &aConf);
-    Error PrepareJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
+    Error PrepareJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
     /**
      * Run all prepared jobs.
      *
@@ -129,8 +129,8 @@ private:
      * Wait for all job threads to join.
      */
     void  WaitForJobs();
-    Error PrepareStartJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
-    Error PrepareStopJobs(const Interpreter::Expression &aExpr, const NidArray &aNids, bool aGroupAlias);
+    Error PrepareStartJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
+    Error PrepareStopJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
     /**
      * Updates DTLS parts of Config for the given network.
      *

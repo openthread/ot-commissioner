@@ -687,7 +687,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 
     if (IsMultiNetworkSyntax(aExpr))
     {
-        NidArray nids;
+        XpanIdArray nids;
 
         SuccessOrExit(value = ValidateMultiNetworkSyntax(retExpr, nids));
         if (IsMultiJob(retExpr)) // asynchronous processing required
@@ -744,7 +744,7 @@ bool Interpreter::IsInactiveCommissionerAllowed(const Expression &aExpr)
     return IsFeatureSupported(mInactiveCommissionerExecution, aExpr);
 }
 
-Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, NidArray &aNids)
+Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids)
 {
     Error error;
     bool  supported;

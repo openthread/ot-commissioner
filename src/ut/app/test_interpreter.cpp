@@ -107,7 +107,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
     std::string             command;
     Interpreter::Expression expr;
     Interpreter::Expression ret;
-    NidArray                nids;
+    XpanIdArray             nids;
 
     command = "start --nwk all";
     expr    = ctx.mInterpreter.ParseExpression(command);
@@ -161,7 +161,7 @@ TEST_F(InterpreterTestSuite, MNSV_TwoGroupNwkAliasesFail)
     InitContext(ctx);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -180,7 +180,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisResolvesWithCurrentSet)
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -196,7 +196,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisUnresolvesWithCurrentUnset)
               registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -220,12 +220,12 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     // No current network selected
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{1}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{2}), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -234,8 +234,8 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{1}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{2}), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -261,12 +261,12 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{1}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{2}), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -275,8 +275,8 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_EQ(std::find(nids.begin(), nids.end(), 1), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
+    EXPECT_EQ(std::find(nids.begin(), nids.end(), xpan_id{1}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{2}), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -299,7 +299,7 @@ TEST_F(InterpreterTestSuite, MNSV_TwoDomSwitchesFail)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain1 --dom domain2");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -316,7 +316,7 @@ TEST_F(InterpreterTestSuite, MNSV_UnexistingDomainResolveFails)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain2");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -338,12 +338,12 @@ TEST_F(InterpreterTestSuite, MNSV_ExistingDomainResolves)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
-    EXPECT_EQ(std::find(nids.begin(), nids.end(), 2), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), xpan_id{1}), nids.end());
+    EXPECT_EQ(std::find(nids.begin(), nids.end(), xpan_id{2}), nids.end());
 }
 
 TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
@@ -369,7 +369,7 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk pan1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -391,7 +391,7 @@ TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 net1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -414,7 +414,7 @@ TEST_F(InterpreterTestSuite, MNSV_GroupAndIndividualNwkAliasesMustFail)
         registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 all");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -439,12 +439,12 @@ TEST_F(InterpreterTestSuite, MNSV_DomThisResolvesWithRespectToSelection)
     ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(nids.size(), 1);
-    EXPECT_EQ(nids[0], 1);
+    EXPECT_EQ(nids[0], xpan_id{1});
 }
 
 TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
@@ -479,7 +479,7 @@ TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
     ASSERT_EQ(nid, 3);
 
     Interpreter::Expression expr, ret;
-    NidArray                nids;
+    XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start");
 
     CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
