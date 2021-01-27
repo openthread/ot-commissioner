@@ -99,6 +99,7 @@ template <> struct adl_serializer<ot::commissioner::ByteArray>
         SuccessOrThrow(::ot::commissioner::utils::Hex(aBuf, aJson.get<std::string>()));
     }
 };
+
 } // namespace nlohmann
 
 namespace ot {
@@ -398,6 +399,18 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
     SET(Flags);
 
 #undef SET
+}
+
+static void to_json(Json &aJson, const ot::commissioner::PanId &aPanId)
+{
+    std::ostringstream value;
+    value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0') << aPanId.mValue;
+    aJson = value.str();
+}
+
+static void from_json(const Json &aJson, ot::commissioner::PanId &aPanId)
+{
+    aPanId.mValue = aJson.get<uint16_t>();
 }
 
 static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)

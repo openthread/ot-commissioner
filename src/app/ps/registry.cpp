@@ -740,6 +740,11 @@ exit:
     return status;
 }
 
+registry_status registry::update(const network &nwk)
+{
+    return map_status(storage->update(nwk));
+}
+
 } // namespace persistent_storage
 } // namespace commissioner
 } // namespace ot

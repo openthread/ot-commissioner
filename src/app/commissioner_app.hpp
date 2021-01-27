@@ -200,8 +200,8 @@ public:
     MOCKABLE Error SetNetworkMasterKey(const ByteArray &aMasterKey, MilliSeconds aDelay);
     MOCKABLE Error GetNetworkName(std::string &aNetworkName) const;
     MOCKABLE Error SetNetworkName(const std::string &aNetworkName);
-    MOCKABLE Error GetPanId(uint16_t &aPanId);
-    MOCKABLE Error SetPanId(uint16_t aPanId, MilliSeconds aDelay);
+    MOCKABLE Error GetPanId(PanId &aPanId);
+    MOCKABLE Error SetPanId(PanId aPanId, MilliSeconds aDelay);
     MOCKABLE Error GetPSKc(ByteArray &aPSKc) const;
     MOCKABLE Error SetPSKc(const ByteArray &aPSKc);
 

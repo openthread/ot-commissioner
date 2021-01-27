@@ -45,7 +45,7 @@ namespace ot {
 
 namespace commissioner {
 
-using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
+typedef std::shared_ptr<CommissionerApp> CommissionerAppPtr;
 
 class JobManager;
 

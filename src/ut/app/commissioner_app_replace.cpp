@@ -267,13 +267,13 @@ Error CommissionerApp::SetNetworkName(const std::string &aNetworkName)
     return Error{};
 }
 
-Error CommissionerApp::GetPanId(uint16_t &aPanId)
+Error CommissionerApp::GetPanId(PanId &aPanId)
 {
     UNUSED(aPanId);
     return Error{};
 }
 
-Error CommissionerApp::SetPanId(uint16_t aPanId, MilliSeconds aDelay)
+Error CommissionerApp::SetPanId(PanId aPanId, MilliSeconds aDelay)
 {
     UNUSED(aPanId);
     UNUSED(aDelay);

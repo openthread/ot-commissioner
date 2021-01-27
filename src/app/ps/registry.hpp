@@ -297,6 +297,16 @@ public:
 
     registry_status delete_border_routers_in_domain(const std::string &domain_name);
 
+    /**
+     * Update existing network record.
+     *
+     * @param[in] network record with identifier set.
+     *
+     * @return
+     * @li @ref REG_SUCCESS if update succeeds
+     */
+    registry_status update(const network &nwk);
+
 protected:
     /**
      * Lookup the network
