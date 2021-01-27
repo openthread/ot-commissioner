@@ -70,8 +70,8 @@ public:
     MOCK_METHOD(Error, SetNetworkMasterKey, (const ByteArray &, MilliSeconds));
     MOCK_METHOD(Error, GetNetworkName, (std::string &), (const));
     MOCK_METHOD(Error, SetNetworkName, (const std::string &));
-    MOCK_METHOD(Error, GetPanId, (uint16_t &));
-    MOCK_METHOD(Error, SetPanId, (uint16_t, MilliSeconds));
+    MOCK_METHOD(Error, GetPanId, (PanId &));
+    MOCK_METHOD(Error, SetPanId, (PanId, MilliSeconds));
     MOCK_METHOD(Error, GetPSKc, (ByteArray &), (const));
     MOCK_METHOD(Error, SetPSKc, (const ByteArray &));
     MOCK_METHOD(Error, GetSecurityPolicy, (SecurityPolicy &), (const));

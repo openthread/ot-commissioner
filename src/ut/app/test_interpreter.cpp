@@ -613,7 +613,6 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
 
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
     expr = ctx.mInterpreter.ParseExpression("opdataset set active --import ./json.json");
-    // TODO [MP] JobManager must cleanup import file data upon import processing (unconditionally).
     EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
 }
 
@@ -1604,11 +1603,19 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     TestContext ctx;
     InitContext(ctx);
 
+    network_id nwk_id;
+    EXPECT_EQ(ctx.mRegistry->storage->add(network{EMPTY_ID, EMPTY_ID, "", xpan_id{1}, 0, "", "", 0}, nwk_id),
+              registry_status::REG_SUCCESS);
+    network nwk;
+    EXPECT_EQ(ctx.mRegistry->storage->get(nwk_id, nwk), registry_status::REG_SUCCESS);
+    EXPECT_STREQ("", nwk.pan.c_str());
+
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetActiveDataset(_, _))
         .Times(2)
         .WillRepeatedly(DoAll(WithArg<0>([](ActiveOperationalDataset &a) {
-                                  a.mPanId        = 1;
-                                  a.mPresentFlags = ActiveOperationalDataset::kPanIdBit;
+                                  a.mExtendedPanId = xpan_id{1}, a.mPanId = 1;
+                                  a.mPresentFlags =
+                                      ActiveOperationalDataset::kPanIdBit | ActiveOperationalDataset::kExtendedPanIdBit;
                               }),
                               Return(Error{})));
 
@@ -1618,6 +1625,9 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     expr  = ctx.mInterpreter.ParseExpression("opdataset get active");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+
+    EXPECT_EQ(ctx.mRegistry->storage->get(nwk_id, nwk), registry_status::REG_SUCCESS);
+    EXPECT_STREQ("0x0001", nwk.pan.c_str());
 
     EXPECT_EQ(system("rm -f ./aods.json"), 0);
     EXPECT_NE(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
@@ -1632,7 +1642,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     EXPECT_EQ(ReadFile(jsonStr, "./aods.json").GetCode(), ErrorCode::kNone);
     nlohmann::json json = nlohmann::json::parse(jsonStr);
     EXPECT_TRUE(json.contains("PanId"));
-    EXPECT_EQ(json.at("PanId"), 1);
+    EXPECT_STREQ("0x0001", json.at("PanId").get<std::string>().c_str());
 }
 
 TEST_F(InterpreterTestSuite, PC_OpdatasetSetActive)

@@ -1628,7 +1628,7 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &          
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kPanId, aDataset.mPanId}));
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kPanId, aDataset.mPanId.mValue}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kPSKcBit)

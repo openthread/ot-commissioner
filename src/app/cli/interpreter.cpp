@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <string.h>
 #include <thread>
 #include <unistd.h>
@@ -2031,7 +2032,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
     }
     else if (CaseInsensitiveEqual(aExpr[2], "panid"))
     {
-        uint16_t panid;
+        PanId panid;
         if (isSet)
         {
             uint32_t delay;
@@ -2080,6 +2081,10 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
     else if (CaseInsensitiveEqual(aExpr[2], "active"))
     {
         ActiveOperationalDataset dataset;
+        StringArray              nwkAliases;
+        StringArray              unresolved;
+        XpanIdArray              xpans;
+
         if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -2091,6 +2096,88 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             SuccessOrExit(value = aCommissioner->GetActiveDataset(dataset, 0xFFFF));
             value = ActiveDatasetToJson(dataset);
         }
+        // Update network from active opdataset (no error there, log messages only)
+        do
+        {
+            persistent_storage::network nwk;
+            // Get network object for the opdataset object
+            if ((dataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit) != 0)
+            {
+                xpans.push_back(dataset.mExtendedPanId);
+            }
+            else
+            {
+                if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) != 0)
+                {
+                    std::ostringstream panIdStream;
+                    panIdStream << "0x" << std::hex << std::setfill('0') << std::setw(4) << std::uppercase
+                                << dataset.mPanId;
+                    nwkAliases.push_back(panIdStream.str());
+                }
+                else if ((dataset.mPresentFlags & ActiveOperationalDataset::kNetworkNameBit) != 0)
+                {
+                    nwkAliases.push_back(dataset.mNetworkName);
+                }
+                else
+                {
+                    mConsole.Write("Dataset contains no network identification data", Console::Color::kYellow);
+                    break;
+                }
+                if (mRegistry->get_network_xpans_by_aliases(nwkAliases, xpans, unresolved) !=
+                        persistent_storage::registry_status::REG_SUCCESS ||
+                    xpans.size() != 1)
+                {
+                    mConsole.Write(fmt::format(FMT_STRING("Failed to load network XPAN by alias '{}': got {} XPANs"),
+                                               nwkAliases[0], xpans.size()),
+                                   Console::Color::kYellow);
+                    break;
+                }
+            }
+            if (mRegistry->get_network_by_xpan(xpans[0], nwk) != persistent_storage::registry_status::REG_SUCCESS)
+            {
+                mConsole.Write(fmt::format(FMT_STRING("Failed to load network by XPAN '{}'"), xpans[0].str()),
+                               Console::Color::kYellow);
+                break;
+            }
+
+// Update network object
+#define AODS_FIELD_IF_IS_SET(field, defaultValue) \
+    (((dataset.mPresentFlags & ActiveOperationalDataset::k##field##Bit) == 0) ? (defaultValue) : (dataset.m##field))
+
+            nwk.name    = AODS_FIELD_IF_IS_SET(NetworkName, "");
+            nwk.xpan    = AODS_FIELD_IF_IS_SET(ExtendedPanId, xpan_id{0});
+            nwk.channel = AODS_FIELD_IF_IS_SET(Channel, (Channel{0, 0})).mNumber;
+            nwk.pan     = AODS_FIELD_IF_IS_SET(PanId, PanId{0});
+            if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0)
+            {
+                nwk.pan = "";
+            }
+            else
+            {
+                std::ostringstream value;
+                value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0')
+                      << dataset.mPanId.mValue;
+                nwk.pan = value.str();
+            }
+
+            if ((dataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0)
+            {
+                nwk.mlp = "";
+            }
+            else
+            {
+                nwk.mlp = Ipv6PrefixToString(dataset.mMeshLocalPrefix);
+            }
+            // Magic constant originates from the Spec pt. 8.10.1.15
+            // The flag set indicates 'CCM **not** supported' state
+            nwk.ccm =
+                (((AODS_FIELD_IF_IS_SET(SecurityPolicy, (SecurityPolicy{0, ByteArray{0, 0}})).mFlags[0] & 0x04) == 0)
+                     ? 1
+                     : 0);
+#undef AODS_FIELD_IF_IS_SET
+            // Store network object in the registry
+            mRegistry->update(nwk);
+        } while (false);
     }
     else if (CaseInsensitiveEqual(aExpr[2], "pending"))
     {

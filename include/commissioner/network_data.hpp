@@ -243,6 +243,29 @@ struct SecurityPolicy
 };
 
 /**
+ * A PAN identifier.
+ */
+struct PanId
+{
+    uint16_t mValue;
+    PanId(uint16_t aValue)
+        : mValue(aValue)
+    {
+    }
+    PanId()
+        : PanId(0)
+    {
+    }
+    PanId(std::string aValue) { mValue = strtol(aValue.c_str(), nullptr, 0); }
+    PanId &operator=(uint16_t aValue)
+    {
+        mValue = aValue;
+        return *this;
+    }
+    operator uint16_t() const { return mValue; }
+};
+
+/**
  * @brief The Active Operational Dataset of the Thread Network Data.
  *
  * Each data field except `mActiveTimestamp` is optional. The field is
@@ -262,7 +285,7 @@ struct ActiveOperationalDataset
     ByteArray      mMeshLocalPrefix;
     ByteArray      mNetworkMasterKey;
     std::string    mNetworkName;
-    uint16_t       mPanId;
+    PanId          mPanId;
     ByteArray      mPSKc;
     SecurityPolicy mSecurityPolicy;
 
