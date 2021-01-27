@@ -645,8 +645,8 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     EXPECT_TRUE(json.contains(xpan_id{2}.str()));
     EXPECT_TRUE(json[xpan_id{1}.str()].contains("PanId"));
     EXPECT_TRUE(json[xpan_id{2}.str()].contains("PanId"));
-    EXPECT_EQ(json[xpan_id{1}.str()]["PanId"], 1);
-    EXPECT_EQ(json[xpan_id{2}.str()]["PanId"], 2);
+    EXPECT_STREQ("0x0001", json[xpan_id{1}.str()]["PanId"].get<std::string>().c_str());
+    EXPECT_STREQ("0x0002", json[xpan_id{2}.str()]["PanId"].get<std::string>().c_str());
     ctx.mJobManager.CleanupJobs();
 
     // "opdataset set securitypolicy" command
