@@ -1293,8 +1293,16 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         for (auto iter = agents.begin(); iter != agents.end(); ++iter)
         {
             // Check mandatory fields present
-            constexpr const uint32_t kMandatoryFieldsBits = (BorderAgent::kAddrBit | BorderAgent::kPortBit |
-                                                             BorderAgent::kThreadVersionBit | BorderAgent::kStateBit);
+            // By Thread 1.1.1 spec table 8-4
+            // TODO [MP] by #18: Replace the current with commented.
+            //   Commented is the behavior by the spec. The code in effect is the one by implementation of the OT BR
+            //   Border Agent component.
+            // constexpr const uint32_t kMandatoryFieldsBits =
+            //     (BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kThreadVersionBit |
+            //      BorderAgent::kStateBit | BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
+            constexpr const uint32_t kMandatoryFieldsBits =
+                (BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kThreadVersionBit |
+                 BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
             if ((iter->mPresentFlags & kMandatoryFieldsBits) != kMandatoryFieldsBits)
             {
                 value = Value(ERROR_REJECTED("Missing mandatory border agent fields"));
@@ -1440,7 +1448,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         timeval                                   tvTimeout;
         std::unique_ptr<event, void (*)(event *)> mdnsEvent(nullptr, event_free);
         std::vector<BorderAgentOrErrorMsg>        borderAgents;
-        nlohmann::json                            baJson{std::vector<nlohmann::json>{}};
+        nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
 
         if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--timeout")
