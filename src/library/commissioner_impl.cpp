@@ -42,6 +42,8 @@
 #include "library/openthread/sha256.hpp"
 #include "library/uri.hpp"
 
+#include "common/utils.hpp"
+
 #define CCM_NOT_IMPLEMENTED "CCM features not implemented"
 
 namespace ot {
@@ -1469,7 +1471,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto extendedPanId = tlvSet[tlv::Type::kExtendedPanId])
     {
-        dataset.mExtendedPanId = std::string(extendedPanId->GetValue().begin(), extendedPanId->GetValue().end());
+        dataset.mExtendedPanId = utils::Hex(extendedPanId->GetValue());
         dataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
     }
 
