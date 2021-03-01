@@ -412,7 +412,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
            "br add <json-file-path>\n"
            "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"
-           "br scan [--export <json-file-path>] [--timeout <ms>]\n"},
+           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>]\n"},
     {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
@@ -485,6 +485,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
         Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
         Interpreter::StringArray{"br", "list"},
         Interpreter::StringArray{"br", "delete"},
+        Interpreter::StringArray{"br", "scan"},
         Interpreter::StringArray{"domain", "list"},
         Interpreter::StringArray{"network", "list"},
     };
@@ -1509,6 +1510,22 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         // Join the waiting (event loop) thread
         selectThread.join();
 
+        XpanIdArray xpans;
+        StringArray unresolved;
+        if (!mContext.mNwkAliases.empty())
+        {
+            VerifyOrExit(mRegistry->get_network_xpans_by_aliases(mContext.mNwkAliases, xpans, unresolved) ==
+                             REG_SUCCESS,
+                         value = ERROR_IO_ERROR("Failed to convert network aliases to XPAN IDs"));
+            for (auto alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(!xpans.empty(),
+                         value = ERROR_IO_ERROR(
+                             "No known extended PAN ID discovered for network aliases. Please make complete rescan."));
+        }
+
         // Serialize BorderAgents to JSON into value
         for (auto agentOrError : borderAgents)
         {
@@ -1520,7 +1537,17 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             {
                 nlohmann::json ba;
                 BorderAgentToJson(ba, agentOrError.mBorderAgent);
-                baJson.push_back(ba);
+                if ((mContext.mNwkAliases.empty() && mContext.mDomAliases.empty()) ||
+                    (!mContext.mDomAliases.empty() &&
+                     (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kDomainNameBit) &&
+                     (agentOrError.mBorderAgent.mDomainName == mContext.mDomAliases[0])) ||
+                    (!mContext.mNwkAliases.empty() &&
+                     (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kExtendedPanIdBit) &&
+                     (std::find(xpans.begin(), xpans.end(), xpan_id(agentOrError.mBorderAgent.mExtendedPanId)) !=
+                      xpans.end())))
+                {
+                    baJson.push_back(ba);
+                }
             }
         }
         value = baJson.dump(JSON_INDENT_DEFAULT);
@@ -1712,7 +1739,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     {
         VerifyOrExit(mRegistry->get_networks_in_domain(mContext.mDomAliases[0], networks) ==
                          registry_status::REG_SUCCESS,
-                     value = ERROR_NOT_FOUND("failed to found networks in domain '{}'", mContext.mDomAliases[0]));
+                     value = ERROR_NOT_FOUND("failed to find networks in domain '{}'", mContext.mDomAliases[0]));
         ExitNow(value = ERROR_NONE);
     }
     else if (mContext.mNwkAliases.size() == 0)
