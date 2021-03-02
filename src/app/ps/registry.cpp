@@ -576,12 +576,13 @@ registry_status registry::delete_border_router_by_id(const border_router_id rout
     status = get_current_network(current);
     if (status == REG_SUCCESS && (current.id.id != EMPTY_ID))
     {
+        network brNetwork;
         // Check we don't delete the last border router in the current network
         VerifyOrExit((status = map_status(storage->get(router_id, br))) == REG_SUCCESS);
-        if ((br.agent.mPresentFlags & BorderAgent::kExtendedPanIdBit) && (br.agent.mExtendedPanId == current.xpan))
+        VerifyOrExit((status = map_status(storage->get(br.nwk_id, brNetwork))) == REG_SUCCESS);
+        if (brNetwork.xpan == current.xpan)
         {
-            pred.agent.mExtendedPanId = br.agent.mExtendedPanId;
-            pred.agent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
+            pred.nwk_id = brNetwork.id;
             VerifyOrExit((status = map_status(storage->lookup(pred, routers))) == REG_SUCCESS);
             if (routers.size() <= 1)
             {
@@ -654,7 +655,7 @@ registry_status registry::delete_border_routers_in_networks(const StringArray &a
         VerifyOrExit((status = map_status(storage->lookup(br, brs))) == REG_SUCCESS);
         for (auto &&br : brs)
         {
-            VerifyOrExit((status = map_status(storage->del(br.id))) == REG_SUCCESS);
+            VerifyOrExit((status = delete_border_router_by_id(br.id)) == REG_SUCCESS);
         }
 
         VerifyOrExit((status = drop_domain_if_empty(nwk.dom_id)) == REG_SUCCESS);
