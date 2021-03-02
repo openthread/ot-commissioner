@@ -188,9 +188,6 @@ private:
     static std::string       BaThreadIfStatusToString(uint32_t aIfStatus);
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
-    static void BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &aAgent);
-    static void BorderAgentToJson(nlohmann::json &aJson, const BorderAgent &aAgent);
-
 private:
     Console                     mConsole;
     std::shared_ptr<JobManager> mJobManager = nullptr;

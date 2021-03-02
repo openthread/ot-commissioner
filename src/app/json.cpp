@@ -319,7 +319,7 @@ static void from_json(const Json &aJson, BbrDataset &aDataset)
 #undef SET_IF_PRESENT
 }
 
-void to_json(Json &aJson, const Timestamp &aTimestamp)
+static void to_json(Json &aJson, const Timestamp &aTimestamp)
 {
 #define SET(name) aJson[#name] = aTimestamp.m##name;
 
@@ -330,7 +330,7 @@ void to_json(Json &aJson, const Timestamp &aTimestamp)
 #undef SET
 }
 
-void from_json(const Json &aJson, Timestamp &aTimestamp)
+static void from_json(const Json &aJson, Timestamp &aTimestamp)
 {
 #define SET(name) aTimestamp.m##name = aJson.at(#name).get<uint64_t>();
 
@@ -366,10 +366,7 @@ static void to_json(Json &aJson, const ChannelMaskEntry &aChannelMaskEntry)
 #define SET(name) aJson[#name] = aChannelMaskEntry.m##name;
 
     SET(Page);
-    /** TODO fix #22
     SET(Masks);
-    */
-    aJson["Masks"] = utils::Hex(aChannelMaskEntry.mMasks);
 
 #undef SET
 }
@@ -379,10 +376,7 @@ static void from_json(const Json &aJson, ChannelMaskEntry &aChannelMaskEntry)
 #define SET(name) aJson.at(#name).get_to(aChannelMaskEntry.m##name);
 
     SET(Page);
-    /** TODO fix #22
     SET(Masks);
-    */
-    (void)utils::Hex(aChannelMaskEntry.mMasks, aJson.at("Masks").get<std::string>());
 
 #undef SET
 }
@@ -392,10 +386,7 @@ static void to_json(Json &aJson, const SecurityPolicy &aSecurityPolicy)
 #define SET(name) aJson[#name] = aSecurityPolicy.m##name;
 
     SET(RotationTime);
-    /** TODO fix #22
     SET(Flags);
-    */
-    aJson["Flags"] = utils::Hex(aSecurityPolicy.mFlags);
 
 #undef SET
 }
@@ -405,10 +396,7 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 #define SET(name) aJson.at(#name).get_to(aSecurityPolicy.m##name);
 
     SET(RotationTime);
-    /** TODO fix #22
     SET(Flags);
-    */
-    (void)utils::Hex(aSecurityPolicy.mFlags, aJson.at("Flags").get<std::string>());
 
 #undef SET
 }
@@ -443,24 +431,10 @@ static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
         aJson["MeshLocalPrefix"] = Ipv6PrefixToString(aDataset.mMeshLocalPrefix);
     };
 
-    /* TODO Find out why adl_serializer is ineffective
-       Issue #22
     SET_IF_PRESENT(NetworkMasterKey);
-    */
-    if (aDataset.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit)
-    {
-        aJson["NetworkMasterKey"] = utils::Hex(aDataset.mNetworkMasterKey);
-    }
     SET_IF_PRESENT(NetworkName);
     SET_IF_PRESENT(PanId);
-    /* TODO Find out why adl_serializer is ineffective
-       Issue #22
     SET_IF_PRESENT(PSKc);
-    */
-    if (aDataset.mPresentFlags & ActiveOperationalDataset::kPSKcBit)
-    {
-        aJson["PSKc"] = utils::Hex(aDataset.mPSKc);
-    }
     SET_IF_PRESENT(SecurityPolicy);
 
 #undef SET_IF_PRESENT
@@ -493,27 +467,10 @@ static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
         aDataset.mPresentFlags |= ActiveOperationalDataset::kMeshLocalPrefixBit;
     };
 
-    /* TODO Find out why it is broken
-       Issue #22
     SET_IF_PRESENT(NetworkMasterKey);
-    */
-    if (aJson.contains("NetworkMasterKey"))
-    {
-        (void)utils::Hex(aDataset.mNetworkMasterKey, aJson["NetworkMasterKey"]);
-        aDataset.mPresentFlags |= ActiveOperationalDataset::kNetworkMasterKeyBit;
-    }
-
     SET_IF_PRESENT(NetworkName);
     SET_IF_PRESENT(PanId);
-    // TODO [MP] Find out why it was broken
-    // Issue #22
-    // SET_IF_PRESENT(PSKc);
-    if (aJson.contains("PSKc"))
-    {
-        (void)utils::Hex(aDataset.mPSKc, aJson["PSKc"]);
-        aDataset.mPresentFlags |= ActiveOperationalDataset::kPSKcBit;
-    }
-
+    SET_IF_PRESENT(PSKc);
     SET_IF_PRESENT(SecurityPolicy);
 
 #undef SET_IF_PRESENT
@@ -770,6 +727,86 @@ Error JsonFromFile(std::string &aJson, const std::string &aPath)
     }
 exit:
     return error;
+}
+
+static void from_json(const nlohmann::json &aJson, BorderAgent::State &aState)
+{
+    uint32_t stateVal = aJson.get<uint32_t>();
+    aState            = BorderAgent::State(stateVal);
+}
+
+void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson)
+{
+    BorderAgent agent;
+
+#define SET_IF_PRESENT(field)                                                  \
+    do                                                                         \
+    {                                                                          \
+        if (aJson.contains(#field))                                            \
+        {                                                                      \
+            agent.mPresentFlags |= BorderAgent::k##field##Bit;                 \
+            agent.m##field = aJson.at(#field).get<decltype(agent.m##field)>(); \
+        }                                                                      \
+    } while (false)
+
+    SET_IF_PRESENT(Addr);
+    SET_IF_PRESENT(Port);
+    SET_IF_PRESENT(ThreadVersion);
+    SET_IF_PRESENT(State);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(ModelName);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(PartitionId);
+    SET_IF_PRESENT(VendorData);
+    SET_IF_PRESENT(VendorOui);
+    SET_IF_PRESENT(DomainName);
+    SET_IF_PRESENT(BbrSeqNumber);
+    SET_IF_PRESENT(BbrPort);
+    SET_IF_PRESENT(ServiceName);
+
+#undef SET_IF_PRESENT
+
+    aAgent = agent;
+}
+
+static void to_json(nlohmann::json &aJson, const BorderAgent::State &aState)
+{
+    aJson = static_cast<uint32_t>(aState);
+}
+
+void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson)
+{
+    BorderAgent agent;
+
+#define SET_IF_PRESENT(field)                                  \
+    do                                                         \
+    {                                                          \
+        if (aAgent.mPresentFlags & BorderAgent::k##field##Bit) \
+        {                                                      \
+            aJson[#field] = aAgent.m##field;                   \
+        }                                                      \
+    } while (false)
+
+    SET_IF_PRESENT(Addr);
+    SET_IF_PRESENT(Port);
+    SET_IF_PRESENT(ThreadVersion);
+    SET_IF_PRESENT(State);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(ModelName);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(PartitionId);
+    SET_IF_PRESENT(VendorData);
+    SET_IF_PRESENT(VendorOui);
+    SET_IF_PRESENT(DomainName);
+    SET_IF_PRESENT(BbrSeqNumber);
+    SET_IF_PRESENT(BbrPort);
+    SET_IF_PRESENT(ServiceName);
+
+#undef SET_IF_PRESENT
 }
 
 } // namespace commissioner

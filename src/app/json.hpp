@@ -41,6 +41,7 @@
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
 
+#include "app/border_agent.hpp"
 #include "app/commissioner_app.hpp"
 
 #include <nlohmann/json.hpp>
@@ -80,6 +81,9 @@ std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
+void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
+void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);
+
 /**
  * Get clean JSON string from a supposedly JSON file.
  *
@@ -87,9 +91,6 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
  * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
  */
 Error JsonFromFile(std::string &aJson, const std::string &aPath);
-
-void from_json(const nlohmann::json &aJson, Timestamp &aTimestamp);
-void to_json(nlohmann::json &aJson, const Timestamp &aTimestamp);
 
 } // namespace commissioner
 

@@ -1278,7 +1278,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         {
             // Parse single BorderAgent
             BorderAgent ba;
-            BorderAgentFromJson(json, ba);
+            BorderAgentFromJson(ba, json);
             agents.push_back(ba);
         }
         else
@@ -1286,7 +1286,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             for (auto iter = json.begin(); iter != json.end(); ++iter)
             {
                 BorderAgent ba;
-                BorderAgentFromJson(*iter, ba);
+                BorderAgentFromJson(ba, *iter);
                 agents.push_back(ba);
             }
         }
@@ -1536,7 +1536,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             else
             {
                 nlohmann::json ba;
-                BorderAgentToJson(ba, agentOrError.mBorderAgent);
+                BorderAgentToJson(agentOrError.mBorderAgent, ba);
                 if ((mContext.mNwkAliases.empty() && mContext.mDomAliases.empty()) ||
                     (!mContext.mDomAliases.empty() &&
                      (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kDomainNameBit) &&
@@ -2716,86 +2716,6 @@ std::string Interpreter::BaAvailabilityToString(uint32_t aAvailability)
     default:
         return "reserved";
     }
-}
-
-static void from_json(const nlohmann::json &aJson, BorderAgent::State &aState)
-{
-    uint32_t stateVal = aJson.get<uint32_t>();
-    aState            = BorderAgent::State(stateVal);
-}
-
-void Interpreter::BorderAgentFromJson(const nlohmann::json &aJson, BorderAgent &aAgent)
-{
-    BorderAgent agent;
-
-#define SET_IF_PRESENT(field)                                                  \
-    do                                                                         \
-    {                                                                          \
-        if (aJson.contains(#field))                                            \
-        {                                                                      \
-            agent.mPresentFlags |= BorderAgent::k##field##Bit;                 \
-            agent.m##field = aJson.at(#field).get<decltype(agent.m##field)>(); \
-        }                                                                      \
-    } while (false)
-
-    SET_IF_PRESENT(Addr);
-    SET_IF_PRESENT(Port);
-    SET_IF_PRESENT(ThreadVersion);
-    SET_IF_PRESENT(State);
-    SET_IF_PRESENT(NetworkName);
-    SET_IF_PRESENT(ExtendedPanId);
-    SET_IF_PRESENT(VendorName);
-    SET_IF_PRESENT(ModelName);
-    SET_IF_PRESENT(ActiveTimestamp);
-    SET_IF_PRESENT(PartitionId);
-    SET_IF_PRESENT(VendorData);
-    SET_IF_PRESENT(VendorOui);
-    SET_IF_PRESENT(DomainName);
-    SET_IF_PRESENT(BbrSeqNumber);
-    SET_IF_PRESENT(BbrPort);
-    SET_IF_PRESENT(ServiceName);
-
-#undef SET_IF_PRESENT
-
-    aAgent = agent;
-}
-
-static void to_json(nlohmann::json &aJson, const BorderAgent::State &aState)
-{
-    aJson = static_cast<uint32_t>(aState);
-}
-
-void Interpreter::BorderAgentToJson(nlohmann::json &aJson, const BorderAgent &aAgent)
-{
-    BorderAgent agent;
-
-#define SET_IF_PRESENT(field)                                  \
-    do                                                         \
-    {                                                          \
-        if (aAgent.mPresentFlags & BorderAgent::k##field##Bit) \
-        {                                                      \
-            aJson[#field] = aAgent.m##field;                   \
-        }                                                      \
-    } while (false)
-
-    SET_IF_PRESENT(Addr);
-    SET_IF_PRESENT(Port);
-    SET_IF_PRESENT(ThreadVersion);
-    SET_IF_PRESENT(State);
-    SET_IF_PRESENT(NetworkName);
-    SET_IF_PRESENT(ExtendedPanId);
-    SET_IF_PRESENT(VendorName);
-    SET_IF_PRESENT(ModelName);
-    SET_IF_PRESENT(ActiveTimestamp);
-    SET_IF_PRESENT(PartitionId);
-    SET_IF_PRESENT(VendorData);
-    SET_IF_PRESENT(VendorOui);
-    SET_IF_PRESENT(DomainName);
-    SET_IF_PRESENT(BbrSeqNumber);
-    SET_IF_PRESENT(BbrPort);
-    SET_IF_PRESENT(ServiceName);
-
-#undef SET_IF_PRESENT
 }
 
 } // namespace commissioner
