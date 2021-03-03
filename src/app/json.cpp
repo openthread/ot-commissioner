@@ -410,7 +410,9 @@ static void to_json(Json &aJson, const ot::commissioner::PanId &aPanId)
 
 static void from_json(const Json &aJson, ot::commissioner::PanId &aPanId)
 {
-    aPanId.mValue = aJson.get<uint16_t>();
+    std::string panIdStr;
+    panIdStr = aJson.get<std::string>();
+    aPanId   = PanId(panIdStr);
 }
 
 static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
