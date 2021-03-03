@@ -1610,7 +1610,9 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &          
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, aDataset.mExtendedPanId.str()}));
+        ByteArray buf;
+        (void)utils::Hex(buf, aDataset.mExtendedPanId.str());
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, buf}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit)

@@ -602,7 +602,7 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     \"ExtendedPanId\": \"dead00beef00cafe\",\n\
     \"NetworkName\": \"test-active\",\n\
     \"PSKc\": \"3aa55f91ca47d1e4e71a08cb35e91591\", // ByteArray in hex string.\n\
-    \"PanId\": 64206, // 0xface\n\
+    \"PanId\": \"0xface\", // 0xface\n\
     \"SecurityPolicy\": {\n\
         \"Flags\": \"f8\", // 0xf8\n\
         \"RotationTime\": 672\n\
@@ -612,8 +612,9 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     EXPECT_EQ(WriteFile(jsonStr, "./json.json").mCode, ErrorCode::kNone);
 
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
-    expr = ctx.mInterpreter.ParseExpression("opdataset set active --import ./json.json");
-    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    expr       = ctx.mInterpreter.ParseExpression("opdataset set active --import ./json.json");
+    auto value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
 }
 
 TEST_F(InterpreterTestSuite, IESV_NoExportFileMustFail)
