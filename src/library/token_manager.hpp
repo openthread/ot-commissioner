@@ -54,9 +54,12 @@ public:
     ~TokenManager();
 
     /**
-     * This method initialize the Token Manager.
+     * This method initializes the Token Manager.
      *
      * @param[in]  aConfig  The commissioner configuration.
+     *
+     * @retval  Error::kNone  Successfully initialized the Token Manager.
+     * @retval  ...           Failed to initialize the Token Manager.
      *
      */
     Error Init(const Config &aConfig);
@@ -64,7 +67,7 @@ public:
     /**
      * This method sets the Commissioner Token (COM_TOK).
      *
-     * This method will firstly validate the Commissioner Token against the Domain CA
+     * This method will first validate the Commissioner Token against the Domain CA
      * public key before accepting it. In case `OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE`
      * is enabled, the token will be always be accepted if `aAlwaysAccept` is true.
      * Otherwise, the Commissioner Token validation must succeed before accepting it.
@@ -74,17 +77,24 @@ public:
      *                            Commissioner Token. This paramater has effect only
      *                            when `OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE` is enabled.
      *
+     * @retval  Error::kNone  Successfully set the token.
+     * @retval  ...           Failed to set the token.
+     *
      */
     Error SetToken(const ByteArray &aSignedToken, bool aAlwaysAccept = false);
 
     /**
      * This method returns the COSE-signed Commissioner Token.
      *
+     * @returns  A reference to the signed token.
+     *
      */
     const ByteArray &GetToken() const { return mSignedToken; }
 
     /**
      * This method returns the Domain Name associated with the token (manager).
+     *
+     * @returns  A reference to the domain name.
      *
      */
     const std::string &GetDomainName() const;
@@ -114,6 +124,9 @@ public:
      * @param[out]  aSignature  The generated Commissioner Token Signature (COM_TOK_SIG).
      * @param[in]   aMessage    The CoAP message to be signed.
      *
+     * @retval  Error::kNone  Successfully signed the message.
+     * @retval  ...           Failed to sign the message.
+     *
      */
     Error SignMessage(ByteArray &aSignature, const coap::Message &aMessage);
 
@@ -126,6 +139,9 @@ public:
      * @param[in]  aSignature      The signature of the CoAP message.
      * @param[in]  aSignedMessage  The CoAP message @p aSignature associated to.
      *
+     * @retval  Error::kNone  Successfully validated the signature.
+     * @retval  ...           Failed to validate the signature.
+     *
      */
     Error ValidateSignature(const ByteArray &aSignature, const coap::Message &aSignedMessage);
 
@@ -135,14 +151,20 @@ public:
      * @param[out]  aPublicKey  The parsed public key.
      * @param[in]   aCert       The given PEM/DER encoded certificate.
      *
+     * @retval  Error::kNone  Successfully parsed the public key.
+     * @retval  ...           Failed to parse the public key.
+     *
      */
     static Error ParsePublicKey(mbedtls_pk_context &aPublicKey, const ByteArray &aCert);
 
     /**
      * This method parse private key from PEM/DER encoded certificate.
      *
-     * @param[out]  aPrivateKey  The parsed private key.
-     * @param[in]   aCert        The given PEM/DER encoded certificate.
+     * @param[out]  aPrivateKey     The parsed private key.
+     * @param[in]   aPrivateKeyRaw  The private key in format of PEM/DER encoded byte array.
+     *
+     * @retval  Error::kNone  Successfully parsed the private key.
+     * @retval  ...           Failed to parse the private key.
      *
      */
     static Error ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteArray &aPrivateKeyRaw);
