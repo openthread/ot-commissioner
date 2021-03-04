@@ -1105,16 +1105,15 @@ public:
     /**
      * @brief Set the Commissioner Token.
      *
-     * This method force sets the Commissioner Token if the signature can be verified by provided
-     * certificate.
+     * Sets the Commissioner Token after verifying it against the trust anchor if
+     * `OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE` is disabled. Otherwise, always accept
+     * the Commissioner Token.
      *
      * @param[in] aSignedToken  A COSE_SIGN1 signed Commissioner Token.
-     * @param[in] aSignerCert   A certificate of the signer of @p aSignedToken,
-     *                          encoded in DER or PEM format.
      *
      * @return Error::kNone, succeed; Otherwise, failed.
      */
-    virtual Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) = 0;
+    virtual Error SetToken(const ByteArray &aSignedToken) = 0;
 
     /**
      * @brief Generate PSKc by given passphrase, networkname and extended PAN ID.

@@ -68,8 +68,7 @@ d28443a10126a058aea40366546872656164047818323031392d31322d30315431303a33383a3439
 #### Force set `COM_TOK`
 
 ```shell
-## The trustAnchor is used to validate signature in the COM_TOK.
-> token set ./COM_TOK.hex ./commissioner/trustAnchor.pem
+> token set ./COM_TOK.hex
 [done]
 >
 ```

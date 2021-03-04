@@ -73,6 +73,9 @@ from commissioner import JOINER_TYPE_CCM_AE
 from commissioner import JOINER_TYPE_CCM_NMKP
 from commissioner import ICommissioner
 
+from GRLLibs.UtilityModules.enums import PlatformDiagnosticPacket_Direction, PlatformDiagnosticPacket_Type
+from GRLLibs.ThreadPacket.PlatformPackets import PlatformDiagnosticPacket, PlatformPackets
+
 NEW_LINE = re.compile(r'\r\n|\n')
 COMMISSIONER_USER = 'pi'
 COMMISSIONER_PASSWORD = 'raspberry'
@@ -379,27 +382,46 @@ class OTCommissioner(ICommissioner):
             registrarPort,
         ))
 
-    def setCOM_TOK(self, signedCOM_TOK, verifyCert):
+    def setCOM_TOK(self, signedCOM_TOK):
         path_token = '/tmp/commissioner.token.{}'.format(uuid.uuid4())
         step = 40
         for i in range(0, len(signedCOM_TOK), step):
             data = self._bytes_to_hex(signedCOM_TOK[i:i + step])
             self._command('echo {} >> "{}"'.format(data, path_token))
 
-        path_cert = '/tmp/commissioner.token_cert.{}'.format(uuid.uuid4())
-        self._command('echo "{}" | base64 -d - > "{}"'.format(
-            base64.b64encode(verifyCert).decode(),
-            path_cert,
-        ))
-
-        self._execute_and_check('token set {} {}'.format(
-            path_token,
-            path_cert,
-        ))
+        self._execute_and_check('token set {}'.format(path_token))
 
     def getCOM_TOK(self):
         result = self._execute_and_check('token print')
         return self._hex_to_bytes(result[0])
+
+    def getCommissioningLogs(self):
+        processed_logs = []
+        thci_logs = self._command("grep \"\\[ thci \\]\" {}".format(
+            self.log_file))
+        for log in thci_logs:
+            encrypted_packet = PlatformDiagnosticPacket()
+            if "JOIN_FIN.req:" in log:
+                hex_value = encrypted_packet.split("JOIN_FIN.req:")[-1].strip()
+                payload = list(bytearray.fromhex(hex_value))
+                encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.IN
+                encrypted_packet.Type = PlatformDiagnosticPacket_Type.JOIN_FIN_req
+                encrypted_packet.TLVsLength = len(payload)
+                encrypted_packet.TLVs = PlatformPackets.read(
+                    encrypted_packet.Type, payload)
+            elif "JOIN_FIN.rsp:" in log:
+                hex_value = encrypted_packet.split("JOIN_FIN.rsp:")[-1].strip()
+                payload = list(bytearray.fromhex(hex_value))
+                encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.OUT
+                encrypted_packet.Type = PlatformDiagnosticPacket_Type.JOIN_FIN_rsp
+                encrypted_packet.TLVsLength = len(payload)
+                encrypted_packet.TLVs = PlatformPackets.read(
+                    encrypted_packet.Type, payload)
+            else:
+                raise commissioner.Error(
+                    "bad commissioner thci log: {}".format(log))
+            processed_logs.append(encrypted_packet)
+        return processed_logs
 
     def _execute_and_check(self, command):
         # Escape quotes for bash

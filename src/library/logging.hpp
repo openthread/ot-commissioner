@@ -46,6 +46,7 @@
 #define LOG_REGION_MESHCOP "meshcop"
 #define LOG_REGION_MGMT "mgmt"
 #define LOG_REGION_SOCKET "socket"
+#define LOG_REGION_THCI "thci"
 #define LOG_REGION_TOKEN_MANAGER "token-manager"
 
 #define LOG(aLevel, aRegion, aFmt, ...)                                     \

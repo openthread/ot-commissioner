@@ -240,7 +240,10 @@ Error CommissionerApp::EnableJoiner(JoinerType         aType,
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
-    SuccessOrExit(error = ValidatePSKd(aPSKd));
+    if (aType == JoinerType::kMeshCoP)
+    {
+        SuccessOrExit(error = ValidatePSKd(aPSKd));
+    }
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
@@ -299,7 +302,10 @@ Error CommissionerApp::EnableAllJoiners(JoinerType aType, const std::string &aPS
     commDataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
     auto &steeringData = GetSteeringData(commDataset, aType);
 
-    SuccessOrExit(error = ValidatePSKd(aPSKd));
+    if (aType == JoinerType::kMeshCoP)
+    {
+        SuccessOrExit(error = ValidatePSKd(aPSKd));
+    }
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
     // Set steering data to all 1 to enable all joiners.
@@ -820,13 +826,18 @@ Error CommissionerApp::SetRegistrarHostname(const std::string &aHostname)
 {
     Error      error;
     BbrDataset bbrDataset;
+    BbrDataset bbrDatasetWithRegAddr;
 
     bbrDataset.mRegistrarHostname = aHostname;
     bbrDataset.mPresentFlags |= BbrDataset::kRegistrarHostnameBit;
 
     SuccessOrExit(error = mCommissioner->SetBbrDataset(bbrDataset));
+    SuccessOrExit(error = mCommissioner->GetBbrDataset(bbrDatasetWithRegAddr, BbrDataset::kRegistrarIpv6AddrBit));
+    VerifyOrExit(bbrDatasetWithRegAddr.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit,
+                 error = ERROR_BAD_FORMAT("cannot resolve the Registrar Hostname: {}", aHostname));
 
     MergeDataset(mBbrDataset, bbrDataset);
+    MergeDataset(mBbrDataset, bbrDatasetWithRegAddr);
 
 exit:
     return error;
@@ -989,11 +1000,11 @@ Error CommissionerApp::RequestToken(const std::string &aAddr, uint16_t aPort)
     return mCommissioner->RequestToken(mSignedToken, aAddr, aPort);
 }
 
-Error CommissionerApp::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+Error CommissionerApp::SetToken(const ByteArray &aSignedToken)
 {
     Error error;
 
-    SuccessOrExit(error = mCommissioner->SetToken(aSignedToken, aSignerCert));
+    SuccessOrExit(error = mCommissioner->SetToken(aSignedToken));
 
     mSignedToken = aSignedToken;
 

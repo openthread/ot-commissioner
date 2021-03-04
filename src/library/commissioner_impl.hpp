@@ -187,7 +187,7 @@ public:
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
-    Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) override;
+    Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
 
@@ -197,7 +197,7 @@ private:
     static Error ValidateConfig(const Config &aConfig);
     void         LoggingConfig();
 
-    static Error HandleStateResponse(const coap::Response *aResponse, Error aError);
+    static Error HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory = true);
 
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);
     static ByteArray GetPendingOperationalDatasetTlvs(uint16_t aDatasetFlags);
@@ -225,7 +225,7 @@ private:
     void SendKeepAlive(Timer &aTimer, bool aKeepAlive = true);
 
 #if OT_COMM_CONFIG_CCM_ENABLE
-    Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP);
+    Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP, bool aAppendToken = true);
 #endif
 
     Duration GetKeepAliveInterval() const { return std::chrono::seconds(mConfig.mKeepAliveInterval); };

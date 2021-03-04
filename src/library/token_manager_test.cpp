@@ -45,46 +45,49 @@ namespace ot {
 namespace commissioner {
 
 static const std::string kCommTrustAnchor = "-----BEGIN CERTIFICATE-----\r\n"
-                                            "MIIBejCCAR+gAwIBAgIIc5C+m8ijatIwCgYIKoZIzj0EAwIwGDEWMBQGA1UEAwwN\r\n"
-                                            "VGhyZWFkR3JvdXBDQTAeFw0xOTA2MTkyMTI0MjdaFw0yNDA2MTcyMTI0MjdaMBgx\r\n"
-                                            "FjAUBgNVBAMMDVRocmVhZEdyb3VwQ0EwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC\r\n"
-                                            "AASXse2WkWSTCYW7uKyaKvlFXN/upLEd4uedBov6gDkmtABSUbNPHAgVpMvgP70b\r\n"
-                                            "vLY19kMaIt54ZTuHuZU37OFso1MwUTAPBgNVHRMECDAGAQH/AgEDMB0GA1UdDgQW\r\n"
-                                            "BBSS6nZAQEqPq08nC/O8N52GzXKA+DAfBgNVHSMEGDAWgBSS6nZAQEqPq08nC/O8\r\n"
-                                            "N52GzXKA+DAKBggqhkjOPQQDAgNJADBGAiEA5l70etVXL6pUSU+E/5+8C6yM5HaD\r\n"
-                                            "v8WNLEhNNeunmcMCIQCwyjOK804IuUTv7IOw/6y9ulOwTBHtfPJ8rfRyaVbHPQ==\r\n"
+                                            "MIIB9TCCAZugAwIBAgIBAzAKBggqhkjOPQQDAjBTMREwDwYDVQQDDAhkb21haW5j\r\n"
+                                            "YTETMBEGA1UECwwKT3BlblRocmVhZDEPMA0GA1UECgwGR29vZ2xlMQswCQYDVQQH\r\n"
+                                            "DAJTSDELMAkGA1UEBhMCQ04wHhcNMjAwNzE2MDgxNzI3WhcNMjUwNzE1MDgxNzI3\r\n"
+                                            "WjBTMREwDwYDVQQDDAhkb21haW5jYTETMBEGA1UECwwKT3BlblRocmVhZDEPMA0G\r\n"
+                                            "A1UECgwGR29vZ2xlMQswCQYDVQQHDAJTSDELMAkGA1UEBhMCQ04wWTATBgcqhkjO\r\n"
+                                            "PQIBBggqhkjOPQMBBwNCAAQZBl5N2EWL7XNls/iGq/aT50bfwpt6hR7dy1NjIePo\r\n"
+                                            "AU1Z1rxUOO/y2LplF33ruWaiWEQgvCxxMdwouPUWG4kvo2AwXjAdBgNVHQ4EFgQU\r\n"
+                                            "ntrCM5X/cijrfa7IfRgt+ehXb1cwHwYDVR0jBBgwFoAUntrCM5X/cijrfa7IfRgt\r\n"
+                                            "+ehXb1cwDAYDVR0TBAUwAwEB/zAOBgNVHQ8BAf8EBAMCAYYwCgYIKoZIzj0EAwID\r\n"
+                                            "SAAwRQIhAKrMTukuzKduEGJ+n+qRYNjOyEgSj3zDRtQPD/K9rYt0AiAS1Jkf1QQi\r\n"
+                                            "r5mw4uBcR81ktDEjxFUJ78VfzSooCWlpjQ==\r\n"
                                             "-----END CERTIFICATE-----\r\n";
 
 static const std::string kCommCert = "-----BEGIN CERTIFICATE-----\r\n"
-                                     "MIICATCCAaegAwIBAgIIJU8KN/Bcw4cwCgYIKoZIzj0EAwIwGDEWMBQGA1UEAwwN\r\n"
-                                     "VGhyZWFkR3JvdXBDQTAeFw0xOTA2MTkyMTM2MTFaFw0yNDA2MTcyMTM2MTFaMBox\r\n"
-                                     "GDAWBgNVBAMMD1RocmVhZFJlZ2lzdHJhcjBZMBMGByqGSM49AgEGCCqGSM49AwEH\r\n"
-                                     "A0IABCAwhVvoRpELPssVyvhXLT61Zb3GVKFe+vbt66qLnhYIxckQyTogho/IUE03\r\n"
-                                     "Dxsm+pdZ9nmDu3iGPtqay+pRJPajgdgwgdUwDwYDVR0TBAgwBgEB/wIBAjALBgNV\r\n"
-                                     "HQ8EBAMCBeAwbAYDVR0RBGUwY6RhMF8xCzAJBgNVBAYTAlVTMRUwEwYDVQQKDAxU\r\n"
-                                     "aHJlYWQgR3JvdXAxFzAVBgNVBAMMDlRlc3QgUmVnaXN0cmFyMSAwHgYJKoZIhvcN\r\n"
-                                     "AQkBFhFtYXJ0aW5Ac3Rva29lLm5ldDBHBgNVHSMEQDA+gBSS6nZAQEqPq08nC/O8\r\n"
-                                     "N52GzXKA+KEcpBowGDEWMBQGA1UEAwwNVGhyZWFkR3JvdXBDQYIIc5C+m8ijatIw\r\n"
-                                     "CgYIKoZIzj0EAwIDSAAwRQIgbI7Vrg348jGCENRtT3GbV5FaEqeBaVTeHlkCA99z\r\n"
-                                     "RVACIQDGDdZSWXAR+AlfmrDecYnmp5Vgz8eTyjm9ZziIFXPUwA==\r\n"
+                                     "MIIB5TCCAYygAwIBAgIBAzAKBggqhkjOPQQDAjBTMREwDwYDVQQDDAhkb21haW5j\r\n"
+                                     "YTETMBEGA1UECwwKT3BlblRocmVhZDEPMA0GA1UECgwGR29vZ2xlMQswCQYDVQQH\r\n"
+                                     "DAJTSDELMAkGA1UEBhMCQ04wHhcNMjAwNzE3MDMyMDA4WhcNMjUwNzE2MDMyMDA4\r\n"
+                                     "WjBXMRUwEwYDVQQDDAxjb21taXNzaW9uZXIxEzARBgNVBAsMCk9wZW5UaHJlYWQx\r\n"
+                                     "DzANBgNVBAoMBkdvb2dsZTELMAkGA1UEBwwCU0gxCzAJBgNVBAYTAkNOMFkwEwYH\r\n"
+                                     "KoZIzj0CAQYIKoZIzj0DAQcDQgAE2yJWLNu4accOABbL+8B7TsoD8r0nZzZTYA9b\r\n"
+                                     "BPeE7SkmJag3q2/rxu+t43/TC42/ymXBAEN60LlWg18//PMEpKNNMEswHQYDVR0O\r\n"
+                                     "BBYEFJsDINaJgyWtUYf/D+tWIgxXfqbGMB8GA1UdIwQYMBaAFJ7awjOV/3Io632u\r\n"
+                                     "yH0YLfnoV29XMAkGA1UdEwQCMAAwCgYIKoZIzj0EAwIDRwAwRAIgUeCqd8nlhCGw\r\n"
+                                     "vr0jAGRZsrxag4lRnFqPtM78eQIRvf8CIHUcc4JwB7zUGDiI3vMjbeJn1oyRyirn\r\n"
+                                     "teLOKBXMZguj\r\n"
                                      "-----END CERTIFICATE-----\r\n";
 
-static const std::string kCommKey = "-----BEGIN PRIVATE KEY-----\r\n"
-                                    "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgYJ/MP0dWA9BkYd4W\r\n"
-                                    "s6oRY62hDddaEmrAVm5dtAXE/UGhRANCAAQgMIVb6EaRCz7LFcr4Vy0+tWW9xlSh\r\n"
-                                    "Xvr27euqi54WCMXJEMk6IIaPyFBNNw8bJvqXWfZ5g7t4hj7amsvqUST2\r\n"
-                                    "-----END PRIVATE KEY-----\r\n";
+static const std::string kCommKey = "-----BEGIN EC PRIVATE KEY-----\r\n"
+                                    "MHcCAQEEIMzoNnqSk3ObV6ObkK1t7V3pq4uSBMOvtXLSOD9ifM4koAoGCCqGSM49\r\n"
+                                    "AwEHoUQDQgAE2yJWLNu4accOABbL+8B7TsoD8r0nZzZTYA9bBPeE7SkmJag3q2/r\r\n"
+                                    "xu+t43/TC42/ymXBAEN60LlWg18//PMEpA==\r\n"
+                                    "-----END EC PRIVATE KEY-----\r\n";
 
 // Pre-generated COSE_SIGN1 signed COMT_COK issued by Domain CA
 // (signed by Domain CA private key).
-static const std::string kSignedToken = "d28443a10126a058b0a40366546872656164047818323031392d31322d303654"
-                                        "30393a32303a30312e3732365a01782aefbfbdefbfbd7640404aefbfbdefbfbd"
-                                        "4f270befbfbdefbfbd37efbfbdefbfbdefbfbd72efbfbdefbfbd08a101a5024f"
-                                        "4f542d636f6d6d697373696f6e6572225820c5c910c93a20868fc8504d370f1b"
-                                        "26fa9759f67983bb78863eda9acbea5124f601022158202030855be846910b3e"
-                                        "cb15caf8572d3eb565bdc654a15efaf6edebaa8b9e160820015840c0dae82ebb"
-                                        "19664ed999313665d02f976e5290d6e48597da77963009e57cfd083fea4e07ca"
-                                        "78fc6fa25239a7a1c3b54a4b761947a9e9e29782955c2d00d8c9f6";
+static const std::string kSignedToken = "d28443a10126a058aea40366546872656164047818323032302d30392d313054"
+                                        "31353a35313a33332e3638345a017828efbfbdefbfbdefbfbd33efbfbdefbfbd"
+                                        "7228efbfbd7defbfbdefbfbd7d182defbfbdefbfbd576f5708a101a5024f4f54"
+                                        "2d636f6d6d697373696f6e657201022001215820db22562cdbb869c70e0016cb"
+                                        "fbc07b4eca03f2bd27673653600f5b04f784ed292258202625a837ab6febc6ef"
+                                        "ade37fd30b8dbfca65c100437ad0b956835f3ffcf304a4584004895222f0797d"
+                                        "7c482e1505a76ad6f69911ed5f7a2a341b4a417d109916659d4c824fa8433049"
+                                        "b099d7443f65fd752d3c14d14a8f9b936fee0dc7ad6bd25ef1";
 
 TEST_CASE("signing-message", "[token]")
 {
@@ -110,9 +113,7 @@ TEST_CASE("signing-message", "[token]")
 
     ByteArray signedToken;
     REQUIRE(utils::Hex(signedToken, kSignedToken) == ErrorCode::kNone);
-    REQUIRE(!tokenManager.IsValid());
-    REQUIRE(tokenManager.SetToken(signedToken, config.mTrustAnchor) == ErrorCode::kNone);
-    REQUIRE(tokenManager.IsValid());
+    REQUIRE(tokenManager.SetToken(signedToken) == ErrorCode::kNone);
     REQUIRE(tokenManager.GetToken() == signedToken);
 
     coap::Message pet{coap::Type::kConfirmable, coap::Code::kPost};
@@ -121,7 +122,7 @@ TEST_CASE("signing-message", "[token]")
 
     ByteArray signature;
     REQUIRE(tokenManager.SignMessage(signature, pet) == ErrorCode::kNone);
-    REQUIRE(tokenManager.VerifySignature(signature, pet) == ErrorCode::kNone);
+    REQUIRE(tokenManager.ValidateSignature(signature, pet) == ErrorCode::kNone);
 }
 
 } // namespace commissioner

@@ -186,7 +186,7 @@ public:
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error RequestToken(ByteArray &aSignedToken, const std::string &aAddr, uint16_t aPort) override;
 
-    Error SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert) override;
+    Error SetToken(const ByteArray &aSignedToken) override;
 
 private:
     using AsyncRequest = std::function<void()>;

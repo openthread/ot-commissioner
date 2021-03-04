@@ -196,6 +196,7 @@ static void from_json(const Json &aJson, Config &aConfig)
         aConfig.m##name = aJson[#name]; \
     };
 
+    SET_IF_PRESENT(DomainName);
     SET_IF_PRESENT(Id);
     SET_IF_PRESENT(EnableCcm);
     SET_IF_PRESENT(EnableDtlsDebugLogging);

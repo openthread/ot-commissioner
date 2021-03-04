@@ -10,7 +10,7 @@
     "Id" : "OT-commissioner",
 
     // The domain this commissioner is authorized to.
-    "DomainName" : "Thread",
+    "DomainName" : "TestDomainTCE",
 
     // Controls if CCM mode is enabled.
     "EnableCcm" : true,

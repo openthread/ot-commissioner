@@ -827,24 +827,7 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        Error error;
-
-        SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
-
-        if (!aResponse->GetPayload().empty())
-        {
-            auto stateTlv = GetTlv(tlv::Type::kState, *aResponse);
-            VerifyOrExit(stateTlv != nullptr, error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
-            VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
-                         error = ERROR_REJECTED("request was rejected by peer"));
-        }
-
-    exit:
-        aHandler(error);
+        aHandler(HandleStateResponse(aResponse, aError, /* aStateTlvIsMandatory */ false));
     };
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
@@ -887,12 +870,12 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
     }
 }
 
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken)
 {
     Error error;
 
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("setting COM_TOK in only valid in CCM Mode"));
-    error = mTokenManager.SetToken(aSignedToken, aSignerCert);
+    error = mTokenManager.SetToken(aSignedToken, /* aAlwaysAccept */ true);
 
 exit:
     return error;
@@ -949,10 +932,9 @@ void CommissionerImpl::RequestToken(Handler<ByteArray> aHandler, const std::stri
     aHandler(nullptr, ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
 }
 
-Error CommissionerImpl::SetToken(const ByteArray &aSignedToken, const ByteArray &aSignerCert)
+Error CommissionerImpl::SetToken(const ByteArray &aSignedToken)
 {
     (void)aSignedToken;
-    (void)aSignerCert;
     return ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED);
 }
 #endif // OT_COMM_CONFIG_CCM_ENABLE
@@ -1302,7 +1284,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {
-        SuccessOrExit(error = SignRequest(request));
+        SuccessOrExit(error = SignRequest(request, tlv::Scope::kMeshCoP, /* aAppendToken */ false));
     }
 #endif
 
@@ -1321,7 +1303,7 @@ exit:
 }
 
 #if OT_COMM_CONFIG_CCM_ENABLE
-Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
+Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope, bool aAppendToken)
 {
     Error     error;
     ByteArray signature;
@@ -1330,7 +1312,10 @@ Error CommissionerImpl::SignRequest(coap::Request &aRequest, tlv::Scope aScope)
 
     SuccessOrExit(error = mTokenManager.SignMessage(signature, aRequest));
 
-    SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kCommissionerToken, mTokenManager.GetToken(), aScope}));
+    if (aAppendToken)
+    {
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kCommissionerToken, mTokenManager.GetToken(), aScope}));
+    }
     SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kCommissionerSignature, signature, aScope}));
 
 exit:
@@ -1363,7 +1348,7 @@ tlv::TlvPtr GetTlv(tlv::Type aTlvType, const coap::Message &aMessage, tlv::Scope
     return tlv::GetTlv(aTlvType, aMessage.GetPayload(), aScope);
 }
 
-Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Error aError)
+Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory)
 {
     Error       error;
     tlv::TlvPtr stateTlv = nullptr;
@@ -1373,10 +1358,14 @@ Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Err
                  error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
     VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
                  error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
-    VerifyOrExit((stateTlv = GetTlv(tlv::Type::kState, *aResponse)) != nullptr,
+    stateTlv = GetTlv(tlv::Type::kState, *aResponse);
+    VerifyOrExit((stateTlv != nullptr || !aStateTlvIsMandatory),
                  error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
-    VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
-                 error = ERROR_REJECTED("the request was rejected by peer"));
+    if (stateTlv != nullptr)
+    {
+        VerifyOrExit(stateTlv->GetValueAsInt8() == tlv::kStateAccept,
+                     error = ERROR_REJECTED("the request was rejected by peer"));
+    }
 
 exit:
     return error;
@@ -1952,7 +1941,7 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        aHandler(HandleStateResponse(aResponse, aError));
+        aHandler(HandleStateResponse(aResponse, aError, /* aStateTlvIsMandatory */ false));
     };
 
     SuccessOrExit(error = dstAddr.Set(aDstAddr));

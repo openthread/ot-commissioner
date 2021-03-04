@@ -43,45 +43,130 @@ namespace ot {
 
 namespace commissioner {
 
-// Managing of Commissioner Token, signing message, verifying signature.
+/**
+ * The class holds Commissioner Token, signs messages and verifies signatures.
+ *
+ */
 class TokenManager
 {
 public:
     explicit TokenManager(struct event_base *aEventBase);
     ~TokenManager();
 
-    // Initialized with Commissioner configuration.
+    /**
+     * This method initializes the Token Manager.
+     *
+     * @param[in]  aConfig  The commissioner configuration.
+     *
+     * @retval  Error::kNone  Successfully initialized the Token Manager.
+     * @retval  ...           Failed to initialize the Token Manager.
+     *
+     */
     Error Init(const Config &aConfig);
 
-    bool IsValid() const { return mToken.IsValid(); }
+    /**
+     * This method sets the Commissioner Token (COM_TOK).
+     *
+     * This method will first validate the Commissioner Token against the Domain CA
+     * public key before accepting it. In case `OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE`
+     * is enabled, the token will be always be accepted if `aAlwaysAccept` is true.
+     * Otherwise, the Commissioner Token validation must succeed before accepting it.
+     *
+     * @param[in]  aSignedToken   The COSE-signed Commissioner Token to set to.
+     * @param[in]  aAlwaysAccept  A boolean indicates whether we always accept the given
+     *                            Commissioner Token. This paramater has effect only
+     *                            when `OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE` is enabled.
+     *
+     * @retval  Error::kNone  Successfully set the token.
+     * @retval  ...           Failed to set the token.
+     *
+     */
+    Error SetToken(const ByteArray &aSignedToken, bool aAlwaysAccept = false);
 
-    // Set the signed Commissioner Token when the signature verification succeed.
-    // @param[in] aSignedToken  A COSE-signed Commissioner Token.
-    // @param[in] aCert         A certificate associates to the signing key of @p aSignedToken.
-    Error SetToken(const ByteArray &aSignedToken, const ByteArray &aCert);
-
+    /**
+     * This method returns the COSE-signed Commissioner Token.
+     *
+     * @returns  A reference to the signed token.
+     *
+     */
     const ByteArray &GetToken() const { return mSignedToken; }
 
+    /**
+     * This method returns the Domain Name associated with the token (manager).
+     *
+     * @returns  A reference to the domain name.
+     *
+     */
     const std::string &GetDomainName() const;
 
+    /**
+     * This method cancels Commissioner Token requests.
+     *
+     */
     void CancelRequests() { mRegistrarClient.CancelRequests(); }
 
-    // Request Commissioner Token from registrar.
-    // The protocol is described in `doc/registrar-connector.md`.
+    /**
+     * This method requests Commissioner Token from the registrar.
+     *
+     * @param[in]  aHandler  The handler of the CoAP response.
+     * @param[in]  aAddr     The address of the registrar service.
+     * @param[in]  aPort     The port of the registrar service.
+     *
+     */
     void RequestToken(Commissioner::Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
 
-    // Sign a CoAP message with COSE-Sign1.
-    // Described in 12.5.5 of Thread 1.2 spec.
+    /**
+     * This method signs a CoAP message with COSE-sign1.
+     *
+     * See section 12.5.5 of Thread 1.2 specification for details of
+     * MGMT message signing.
+     *
+     * @param[out]  aSignature  The generated Commissioner Token Signature (COM_TOK_SIG).
+     * @param[in]   aMessage    The CoAP message to be signed.
+     *
+     * @retval  Error::kNone  Successfully signed the message.
+     * @retval  ...           Failed to sign the message.
+     *
+     */
     Error SignMessage(ByteArray &aSignature, const coap::Message &aMessage);
 
-    // Verify the signature in a signed CoAP message.
-    // Described in 12.5.6 of Thread 1.2 spec.
-    Error VerifySignature(const ByteArray &aSignature, const coap::Message &aSignedMessage);
+    /**
+     * This method validates signature of a CoAP message.
+     *
+     * See section 12.5.5 of Thread 1.2 specification for details of
+     * MGMT message signing.
+     *
+     * @param[in]  aSignature      The signature of the CoAP message.
+     * @param[in]  aSignedMessage  The CoAP message @p aSignature associated to.
+     *
+     * @retval  Error::kNone  Successfully validated the signature.
+     * @retval  ...           Failed to validate the signature.
+     *
+     */
+    Error ValidateSignature(const ByteArray &aSignature, const coap::Message &aSignedMessage);
 
-    // Parse the public key from PEM/DER encoded certificate.
+    /**
+     * This method parse public key from PEM/DER encoded certificate.
+     *
+     * @param[out]  aPublicKey  The parsed public key.
+     * @param[in]   aCert       The given PEM/DER encoded certificate.
+     *
+     * @retval  Error::kNone  Successfully parsed the public key.
+     * @retval  ...           Failed to parse the public key.
+     *
+     */
     static Error ParsePublicKey(mbedtls_pk_context &aPublicKey, const ByteArray &aCert);
 
-    // Parse the private key from the PEM/DER encoded private key.
+    /**
+     * This method parse private key from PEM/DER encoded certificate.
+     *
+     * @param[out]  aPrivateKey     The parsed private key.
+     * @param[in]   aPrivateKeyRaw  The private key in format of PEM/DER encoded byte array.
+     *
+     * @retval  Error::kNone  Successfully parsed the private key.
+     * @retval  ...           Failed to parse the private key.
+     *
+     */
     static Error ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteArray &aPrivateKeyRaw);
 
 private:
@@ -93,9 +178,8 @@ private:
     // Move the resource from src to des, leaving the src invalid.
     static void MoveMbedtlsKey(mbedtls_pk_context &aDes, mbedtls_pk_context &aSrc);
 
-    // Verifying the signature in the signed Commissioner Token
-    // with the public key of the signer.
-    Error VerifyToken(CborMap &aToken, const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey);
+    Error ValidateToken(CborMap &aToken, const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey) const;
+    Error ValidateToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey) const;
 
     void         SendTokenRequest(Commissioner::Handler<ByteArray> aHandler);
     static Error MakeTokenRequest(ByteArray &               aBuf,
@@ -108,25 +192,18 @@ private:
     static Error PrepareSigningContent(ByteArray &aContent, const coap::Message &aMessage);
 
     // Get the authorized Commissioner Public Key in the Commissioner Token.
-    Error GetPublicKey(CborMap &aPublicKey) const;
+    Error GetPublicKeyInToken(ByteArray &aPublicKey) const;
 
-    // Set the signed Commissioner Token when the signature verification succeed.
-    // @param[in] aSignedToken  A COSE-signed Commissioner Token.
-    // @param[in] aPublicKey    A public key associates to the signing key of @p aSignedToken.
-    Error SetToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey);
+    // Take the KID from COM_TOK's COSE_Key in the CNF claim.
+    Error GetKeyId(ByteArray &aKeyId, const CborMap &aToken) const;
+    Error GetKeyId(ByteArray &aKeyId) const;
 
     // The sequence number of this commissioner token.
     // Increased 1 for each signing operation.
     uint64_t mSequenceNumber = 0;
 
-    // Take the KID from COM_TOK's COSE_Key in the CNF claim.
-    ByteArray mKeyId;
-
     // The cose signed commissioner token.
     ByteArray mSignedToken;
-
-    // The parsed commissioner token in CBOR structure.
-    CborMap mToken;
 
     std::string        mCommissionerId;
     std::string        mDomainName;

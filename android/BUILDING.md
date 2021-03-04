@@ -12,7 +12,7 @@ This document describes how to build the OT Commissioner Android App.
 The Commissioner Android App is built on top of the native OT Commissioner library. Run the `build-commissioner-libs.sh` script in this directory to build the required libraries:
 
 ```shell
-ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$HOME/Library/Android/sdk/ndk/21.3.6528147 ./build-commissioner-libs.sh
+ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$HOME/Library/Android/sdk/ndk-bundle ./build-commissioner-libs.sh
 ```
 
 This script creates a build directory (`.build-${ANDROID_ABI}`) in the current directory and copies generated libraries into target sub-folders in `openthread_commissioner`.
