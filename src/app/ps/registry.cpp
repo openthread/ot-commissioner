@@ -402,7 +402,7 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases,
     {
         if (alias == ALIAS_ALL || alias == ALIAS_OTHER)
         {
-            ASSERT(aliases.size() == 1); // Interpreter must have taken care of this
+            VerifyOrExit(aliases.size() == 1, status = REG_ERROR); // Interpreter must have taken care of this
             VerifyOrExit((status = get_all_networks(networks)) == REG_SUCCESS);
             if (alias == ALIAS_OTHER)
             {
