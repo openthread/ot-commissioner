@@ -63,6 +63,12 @@ struct BorderAgent
     uint16_t mPort;
 
     /**
+     * The discriminator which uniquely identifies the Border Agent.
+     * Required by only Version>=1.2.0.
+     */
+    ByteArray mDiscriminator;
+
+    /**
      * Version of Thread Specification implemented by the Thread
      * Interface specified as a UTF-8 encoded decimal. Mandatory.
      */
@@ -155,6 +161,7 @@ struct BorderAgent
     static constexpr uint16_t kDomainNameBit      = 1 << 12;
     static constexpr uint16_t kBbrSeqNumberBit    = 1 << 13;
     static constexpr uint16_t kBbrPortBit         = 1 << 14;
+    static constexpr uint16_t kDiscriminatorBit   = 1 << 15;
 };
 
 /**

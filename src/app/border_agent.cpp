@@ -228,6 +228,21 @@ static int HandleRecord(const struct sockaddr *from,
             {
                 VerifyOrExit(value == "1", error = ERROR_BAD_FORMAT("value of TXT Key 'rv' is {} but not 1", value));
             }
+            else if (key == "dd")
+            {
+                auto &discriminator = binaryValue;
+
+                if (discriminator.size() != kExtendedAddrLength)
+                {
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'dd' is invalid: value={}",
+                                                     utils::Hex(discriminator)));
+                }
+                else
+                {
+                    borderAgent.mDiscriminator = discriminator;
+                    borderAgent.mPresentFlags |= BorderAgent::kDiscriminatorBit;
+                }
+            }
             else if (key == "tv")
             {
                 borderAgent.mThreadVersion = value;
@@ -256,7 +271,7 @@ static int HandleRecord(const struct sockaddr *from,
             else if (key == "xp")
             {
                 auto &extendPanId = binaryValue;
-                if (extendPanId.size() != 8)
+                if (extendPanId.size() != kExtendedPanIdLength)
                 {
                     ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'xp' is invalid: value={}",
                                                      utils::Hex(extendPanId)));
