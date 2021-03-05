@@ -702,7 +702,10 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         {
             // with multi-network syntax in effect an import semantics
             // is allowed for job-based processing only (see mImportSyntax)
-            ASSERT(mContext.mImportFiles.size() == 0);
+            VerifyOrExit(mContext.mImportFiles.size() == 0,
+                         value = ERROR_INVALID_SYNTAX(
+                             "Import syntax is not supported in synchronous processing of multi-network command"));
+
             value = evaluator->second(this, retExpr);
         }
     }
@@ -715,12 +718,9 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         }
         value = evaluator->second(this, retExpr);
     }
+exit:
     // It is necessary to cleanup import file anyways
     mJobManager->CleanupJobs();
-exit:
-    // do not cleanup mContext here as the export information is
-    // needed for post-processing resultant value
-    ASSERT(mJobManager->IsClean());
     return value;
 }
 
@@ -772,8 +772,9 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         {
             PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
         }
-        VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
-                     error = ERROR_IO_ERROR("aliases failed to resolve with status={}", status));
+        VerifyOrExit(
+            status == RegistryStatus::REG_SUCCESS,
+            error = ERROR_IO_ERROR("Multi-network syntax violation: aliases failed to resolve with status={}", status));
     }
     else if (mContext.mDomAliases.size() > 0)
     {
@@ -793,7 +794,10 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
     {
         // as we came here to evaluate multi-network command, either
         // network or domain list must have entries
-        ASSERT(false); // must not hit this, ever
+        VerifyOrExit(false,
+                     ERROR_INVALID_SYNTAX(
+                         "Either network or domain list must have entries for multi-network command")); // must not hit
+                                                                                                        // this, ever
     }
 
     VerifyOrExit(aNids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
@@ -1113,7 +1117,6 @@ Interpreter::Value Interpreter::ProcessStartJob(CommissionerAppPtr &aCommissione
 exit:
     if (!existingCommissionerId.empty())
     {
-        ASSERT(error != ErrorCode::kNone);
         error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }
     return error;
