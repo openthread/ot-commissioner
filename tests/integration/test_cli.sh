@@ -58,3 +58,21 @@ test_get_commissioner_dataset()
 
     stop_daemon
 }
+
+test_cancel_command() {
+    set -e
+
+    start_commissioner "${NON_CCM_CONFIG}"
+
+    ## Make sure that the mDNS service has been stopped.
+    stop_border_agent_mdns_service
+
+    ## Expecting error CANCELLED after sending SIGINT
+    send_command_to_commissioner "borderagent discover" "CANCELLED" &
+    sleep 1
+
+    ## send SIGINT to the commissioner CLI to cancel outstanding requests ('borderagent discover' in this case).
+    pkill --signal SIGINT "${COMMISSIONER_CLI}"
+
+    stop_commissioner
+}

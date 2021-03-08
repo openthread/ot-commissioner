@@ -28,6 +28,7 @@
 
 #include "border_agent.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -41,6 +42,8 @@
 namespace ot {
 
 namespace commissioner {
+
+static std::atomic<bool> gIsDiscoverCancelled;
 
 struct BorderAgentOrErrorMsg
 {
@@ -59,6 +62,11 @@ static int HandleRecord(const struct sockaddr *from,
                         size_t                 length,
                         void *                 user_data);
 
+void CancelDiscoverBorderAgent()
+{
+    gIsDiscoverCancelled = true;
+}
+
 Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout)
 {
     static constexpr size_t             kDefaultBufferSize = 1024 * 16;
@@ -67,18 +75,21 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 
     Error   error;
     uint8_t buf[kDefaultBufferSize];
+    size_t  borderAgentCount = 0;
 
     auto begin = std::chrono::system_clock::now();
 
     int socket = mdns_socket_open_ipv4();
     VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
+    gIsDiscoverCancelled = false;
+
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
     {
         ExitNow(error = ERROR_IO_ERROR("failed to send mDNS query"));
     }
 
-    while (begin + std::chrono::milliseconds(aTimeout) >= std::chrono::system_clock::now())
+    while (!gIsDiscoverCancelled && begin + std::chrono::milliseconds(aTimeout) >= std::chrono::system_clock::now())
     {
         BorderAgentOrErrorMsg curBorderAgentOrErrorMsg;
 
@@ -91,10 +102,14 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
         else if (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags != 0)
         {
             aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, ERROR_NONE);
+            ++borderAgentCount;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    VerifyOrExit(!gIsDiscoverCancelled, error = ERROR_CANCELLED("Border Agent discovery was cancelled"));
+    VerifyOrExit(borderAgentCount != 0, error = ERROR_TIMEOUT("Found no Border Agent"));
 
 exit:
     if (socket >= 0)
