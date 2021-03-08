@@ -84,6 +84,11 @@ static constexpr size_t kMaxPSKcLength = 16;
 static constexpr size_t kMaxNetworkNameLength = 16;
 
 /**
+ * The extended address length.
+ */
+static constexpr size_t kExtendedAddrLength = 8;
+
+/**
  * The extended PAN ID length.
  */
 static constexpr size_t kExtendedPanIdLength = 8;

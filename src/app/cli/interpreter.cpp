@@ -1153,6 +1153,7 @@ std::string Interpreter::ToString(const BorderAgent &aBorderAgent)
 
     BUILD_STRING(Addr, aBorderAgent.mAddr);
     BUILD_STRING(Port, std::to_string(aBorderAgent.mPort));
+    BUILD_STRING(Discriminator, utils::Hex(aBorderAgent.mDiscriminator));
     BUILD_STRING(ThreadVersion, aBorderAgent.mThreadVersion);
     if (aBorderAgent.mPresentFlags & BorderAgent::kStateBit)
     {
