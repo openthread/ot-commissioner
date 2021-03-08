@@ -35,7 +35,7 @@ readonly TEST_ROOT_DIR=${CUR_DIR}
 readonly RUNTIME_DIR=/tmp/test-ot-commissioner
 
 readonly OPENTHREAD_REPO=https://github.com/openthread/openthread
-readonly OPENTHREAD_BRANCH=master
+readonly OPENTHREAD_BRANCH=main
 readonly OPENTHREAD=${OT_COMM_OPENTHREAD:-"${RUNTIME_DIR}/openthread"}
 
 readonly NON_CCM_CLI=${RUNTIME_DIR}/ot-cli-ftd-non-ccm
