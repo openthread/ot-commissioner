@@ -70,7 +70,7 @@ void CborValue::Move(CborValue &dst, CborValue &src)
 
 Error CborValue::Serialize(uint8_t *aBuf, size_t &aLength, size_t aMaxLength) const
 {
-    ASSERT(mIsRoot && mCbor != nullptr);
+    ASSERT(mCbor != nullptr);
     ssize_t written = cn_cbor_encoder_write(aBuf, 0, aMaxLength, mCbor);
     if (written == -1)
     {
