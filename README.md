@@ -22,12 +22,12 @@ More information about Thread can be found at [threadgroup.org](http://threadgro
 
 To learn more about OpenThread, visit [openthread.io](https://openthread.io).
 
-[ot-comm-gh-action-build]: https://github.com/openthread/ot-commissioner/actions?query=workflow%3ABuild+branch%3Amaster+event%3Apush
-[ot-comm-gh-action-build-svg]: https://github.com/openthread/ot-commissioner/workflows/Build/badge.svg?branch=master&event=push
-[ot-comm-gh-action-tests]: https://github.com/openthread/ot-commissioner/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush
-[ot-comm-gh-action-tests-svg]: https://github.com/openthread/ot-commissioner/workflows/Tests/badge.svg?branch=master&event=push
+[ot-comm-gh-action-build]: https://github.com/openthread/ot-commissioner/actions?query=workflow%3ABuild+branch%3Amain+event%3Apush
+[ot-comm-gh-action-build-svg]: https://github.com/openthread/ot-commissioner/workflows/Build/badge.svg?branch=main&event=push
+[ot-comm-gh-action-tests]: https://github.com/openthread/ot-commissioner/actions?query=workflow%3ATests+branch%3Amain+event%3Apush
+[ot-comm-gh-action-tests-svg]: https://github.com/openthread/ot-commissioner/workflows/Tests/badge.svg?branch=main&event=push
 [ot-comm-codecov]: https://codecov.io/gh/openthread/ot-commissioner
-[ot-comm-codecov-svg]: https://codecov.io/gh/openthread/ot-commissioner/branch/master/graph/badge.svg
+[ot-comm-codecov-svg]: https://codecov.io/gh/openthread/ot-commissioner/branch/main/graph/badge.svg
 
 ## Getting started
 
