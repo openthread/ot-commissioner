@@ -68,6 +68,8 @@ readonly PANID=0xface
 readonly XPANID=dead00beef00cafe
 readonly MASTERKEY=00112233445566778899aabbccddeeff
 readonly PSKC=3aa55f91ca47d1e4e71a08cb35e91591
+readonly CHANNEL_MASK=0x07fff800
+readonly SECURITY_POLICY=(672 onrcb)
 
 die() {
   echo " *** ERROR: " "$@"
@@ -220,11 +222,16 @@ form_network() {
     set -e
     local pskc=$1
 
-    sudo "${OT_CTL}" channel "${CHANNEL}"
-    sudo "${OT_CTL}" panid "${PANID}"
-    sudo "${OT_CTL}" extpanid "${XPANID}"
-    sudo "${OT_CTL}" pskc "${pskc}"
-    sudo "${OT_CTL}" masterkey "${MASTERKEY}"
+    sudo "${OT_CTL}" dataset clear
+    sudo "${OT_CTL}" dataset activetimestamp 1
+    sudo "${OT_CTL}" dataset channel "${CHANNEL}"
+    sudo "${OT_CTL}" dataset panid "${PANID}"
+    sudo "${OT_CTL}" dataset extpanid "${XPANID}"
+    sudo "${OT_CTL}" dataset pskc "${pskc}"
+    sudo "${OT_CTL}" dataset masterkey "${MASTERKEY}"
+    sudo "${OT_CTL}" dataset channelmask "${CHANNEL_MASK}"
+    sudo "${OT_CTL}" dataset securitypolicy "${SECURITY_POLICY[@]}"
+    sudo "${OT_CTL}" dataset commit active
     sudo "${OT_CTL}" ifconfig up
     sudo "${OT_CTL}" thread start
 
