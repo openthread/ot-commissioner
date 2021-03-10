@@ -408,7 +408,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"active", "active"},
     {"token", "token request <registrar-addr> <registrar-port>\n"
               "token print\n"
-              "token set <signed-token-hex-string-file> <signer-cert-pem-file>"},
+              "token set <signed-token-hex-string-file>"},
     {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
            "br add <json-file-path>\n"
            "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"

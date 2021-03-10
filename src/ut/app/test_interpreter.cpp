@@ -1061,9 +1061,8 @@ TEST_F(InterpreterTestSuite, PC_Token)
     EXPECT_TRUE(value.HasNoError());
 
     EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("cert", "./cert").mCode, ErrorCode::kNone);
-    EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_, _)).WillOnce(Return(Error{}));
-    expr  = ctx.mInterpreter.ParseExpression("token set ./token ./cert");
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_)).WillOnce(Return(Error{}));
+    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 }

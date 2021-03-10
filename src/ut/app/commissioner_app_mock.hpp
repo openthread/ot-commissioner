@@ -92,7 +92,7 @@ public:
     MOCK_METHOD(Error, Migrate, (const std::string &, const std::string &));
     MOCK_METHOD(const ByteArray &, GetToken, (), (const));
     MOCK_METHOD(Error, RequestToken, (const std::string &, uint16_t));
-    MOCK_METHOD(Error, SetToken, (const ByteArray &, const ByteArray &));
+    MOCK_METHOD(Error, SetToken, (const ByteArray &));
     MOCK_METHOD(Error, RegisterMulticastListener, (const std::vector<std::string> &, Seconds));
     MOCK_METHOD(Error, AnnounceBegin, (uint32_t, uint8_t, MilliSeconds, const std::string &));
     MOCK_METHOD(Error, PanIdQuery, (uint32_t, uint16_t, const std::string &));
