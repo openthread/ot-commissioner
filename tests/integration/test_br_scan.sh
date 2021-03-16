@@ -41,3 +41,18 @@ test_br_scan() {
     stop_commissioner
     stop_border_agent_mdns_service
 }
+
+test_br_scan_export() {
+    set -e
+
+    start_border_agent_mdns_service
+    start_commissioner "${NON_CCM_CONFIG}"
+
+    send_command_to_commissioner "br add --export /tmp/br_scan_export.json" "[done]"
+
+    stop_commissioner
+    stop_border_agent_mdns_service
+
+	grep -q "ExtendedPanId" /tmp/br_scan_export.json
+	jsonlint-php /tmp/br_scan_export.json
+}
