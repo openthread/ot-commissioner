@@ -256,7 +256,8 @@ uninstall_borderagent_mdn_data() {
 
 	for fname in $(ls -1 ${ba_mdns_data_dir})
 	do
-		rm -f /etc/avahi/services/${fname}
+		# We really want to sudo here
+		sudo rm -f /etc/avahi/services/${fname}
 	done
 }
 
