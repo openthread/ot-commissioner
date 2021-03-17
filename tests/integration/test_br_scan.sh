@@ -32,7 +32,7 @@
 test_br_scan() {
     set -e
 
-	install_borderagent_mdn_data br_scan_initial
+	install_borderagent_mdn_data etc/br_scan_initial
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
@@ -41,13 +41,13 @@ test_br_scan() {
 
     stop_commissioner
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdn_data br_scan_initial
+	uninstall_borderagent_mdn_data etc/br_scan_initial
 }
 
 test_br_scan_export() {
     set -e
 
-	install_borderagent_mdn_data br_scan_initial
+	install_borderagent_mdn_data etc/br_scan_initial
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
@@ -55,7 +55,7 @@ test_br_scan_export() {
 
     stop_commissioner
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdn_data br_scan_initial
+	uninstall_borderagent_mdn_data etc/br_scan_initial
 	
 	grep -q "ExtendedPanId" /tmp/br_scan_export.json
 	jsonlint-php /tmp/br_scan_export.json
