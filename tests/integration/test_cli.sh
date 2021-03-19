@@ -31,8 +31,6 @@
 
 test_network_sync()
 {
-    set -e
-
     start_daemon
     form_network "${PSKC}"
 
@@ -46,8 +44,6 @@ test_network_sync()
 
 test_get_commissioner_dataset()
 {
-    set -e
-
     start_daemon
     form_network "${PSKC}"
 

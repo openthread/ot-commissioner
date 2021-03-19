@@ -30,8 +30,6 @@
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_petition() {
-    set -e
-
     start_daemon
     form_network "${PSKC}"
 

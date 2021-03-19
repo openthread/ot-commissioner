@@ -30,8 +30,6 @@
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_active_dataset_set_network_name() {
-    set -e
-
     start_daemon
     form_network "${PSKC}"
 
@@ -48,8 +46,6 @@ test_active_dataset_set_network_name() {
 }
 
 test_pending_dataset_set_channel() {
-    set -e
-
     start_daemon
     form_network "${PSKC}"
 
