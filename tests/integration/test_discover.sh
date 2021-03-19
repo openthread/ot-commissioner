@@ -30,8 +30,6 @@
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_discover() {
-    set -e
-
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 

@@ -31,8 +31,6 @@
 
 test_ccm_token()
 {
-    set -e
-
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
@@ -46,8 +44,6 @@ test_ccm_token()
 
 test_ccm_bbr_dataset()
 {
-    set -e
-
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
@@ -67,8 +63,6 @@ test_ccm_bbr_dataset()
 
 test_ccm_reenroll()
 {
-    set -e
-
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
@@ -79,8 +73,6 @@ test_ccm_reenroll()
 
 test_ccm_domainreset()
 {
-    set -e
-
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.
@@ -91,8 +83,6 @@ test_ccm_domainreset()
 
 test_ccm_migrate()
 {
-    set -e
-
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## Expect UNIMPLEMENTED error since we turned off CCM features in integration tests.

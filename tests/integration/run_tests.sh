@@ -37,6 +37,7 @@
 ##       'test_*.sh' files.
 ##
 
+. "$(dirname "$0")"/common.sh
 . "$(dirname "$0")"/test_announce_begin.sh
 . "$(dirname "$0")"/test_ccm.sh
 . "$(dirname "$0")"/test_cli.sh
@@ -52,6 +53,7 @@
 ## Note: A test case must be started with 'test_' to make it runnable.
 run_test_case() {
     local test_case=$1
+    local output_file="/tmp/${test_case}.txt"
 
     echo "====== test case: [ ${test_case} ] ======"
 
@@ -62,7 +64,7 @@ run_test_case() {
     ## we cannot declare output with `local`,
     ## because `local` is a command and its return value iwll override
     ## return value of the test case.
-    output=$(${test_case})
+    $(set -xeuo pipefail && ${test_case} &> "${output_file}")
     local result=$?
 
     if [ ${result} = 0 ]; then
@@ -72,7 +74,7 @@ run_test_case() {
         echo "state: fail"
 
         echo "------ test output begin ------"
-        echo "${output}"
+        cat "${output_file}"
         echo "------ test output end ------"
 
         echo "------ ot-daemon log begin ------"
@@ -94,7 +96,7 @@ run_test_case() {
 main () {
     local test_case_to_run=""
 
-    if [ -n "$#" ]; then
+    if [ "$#" != "0" ]; then
         test_case_to_run="$1"
     fi
 

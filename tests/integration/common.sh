@@ -79,8 +79,6 @@ executable_or_die() {
 }
 
 start_daemon() {
-    set -e
-
     cd "${RUNTIME_DIR}"
 
     if pidof ot-daemon; then
@@ -94,8 +92,6 @@ start_daemon() {
 }
 
 stop_daemon() {
-    set -e
-
     sudo killall ot-daemon || true
     sleep 1
     (pidof ot-daemon && die "killing ot-daemon failed") || true
@@ -104,7 +100,6 @@ stop_daemon() {
 ## Start commissioner daemon.
 ## Args: $1: configuration file path.
 start_commissioner() {
-    set -e
     if [ -n "$(pgrep -f "${COMMISSIONER_DAEMON}")" ]; then
         sudo kill -9 "$(pgrep -f "${COMMISSIONER_DAEMON}")"
     fi
@@ -123,8 +118,6 @@ start_commissioner() {
 ## Initialize commissioner daemon with given configuration file.
 ## Args: $1: configuration file path.
 init_commissioner() {
-    set -e
-
     local config=$1
 
     echo "initializating commissioner daemon with configuration file: ${config}"
@@ -133,7 +126,6 @@ init_commissioner() {
 
 ## Stop commissioner
 stop_commissioner() {
-    set -e
     send_command_to_commissioner "stop"
     ${COMMISSIONER_CTL} exit || true
 }
@@ -145,9 +137,11 @@ stop_commissioner() {
 ##       is expected to success if this argument is
 ##       not specified.
 send_command_to_commissioner() {
-    set -e
     local command=$1
-    local expect_error=$2
+    local expect_error=""
+    if [ "$#" == 2 ]; then
+        expect_error="$2"
+    fi
     local result
     result=$(${COMMISSIONER_CTL} execute "${command}")
 
@@ -166,7 +160,6 @@ send_command_to_commissioner() {
 ##           "meshcop", "ae", "nmkp";
 ## Return: "succeed" or "failed";
 start_joiner() {
-    set -e
     local joiner_type=$1
     local joiner_binary=""
     local joining_cmd=""
@@ -217,7 +210,6 @@ EOF
 ## Form a Thread network with border agent as the leader.
 ## Args: $1: PSKc.
 form_network() {
-    set -e
     local pskc=$1
 
     sudo "${OT_CTL}" channel "${CHANNEL}"
@@ -229,6 +221,8 @@ form_network() {
     sudo "${OT_CTL}" thread start
 
     sleep 3
+
+    sudo "${OT_CTL}" state
 }
 
 start_border_agent_mdns_service() {
