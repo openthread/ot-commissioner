@@ -1,0 +1,27 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+
+<service-group>
+  <name replace-wildcards="yes">Fake Border Agents for test 1</name>
+
+  <service>
+    <type>_meshcop._udp</type>
+    <domain-name>local</domain-name>
+    <host-name>ba1.local</host-name>
+    <port>49192</port>
+    <txt-record value-format="text">rv=1</txt-record>
+    <txt-record value-format="text">tv=1.2.0</txt-record>
+    <txt-record value-format="binary-hex">sb=00000031</txt-record>
+    <txt-record value-format="text">nn=thread1</txt-record>
+    <txt-record value-format="binary-hex">xp=1111111111111111</txt-record>
+    <txt-record value-format="text">vn=openthread</txt-record>
+    <txt-record value-format="text">mn=ot-br-1.2</txt-record>
+    <txt-record value-format="binary-hex">at=0000000000000000</txt-record>
+    <txt-record value-format="binary-hex">pt=ab352e08</txt-record>
+    <txt-record value-format="text">vd=https://openthread.io</txt-record>
+    <txt-record value-format="binary-hex">vo=000000</txt-record>
+    <txt-record value-format="text">dn=TestDomainName</txt-record>
+    <txt-record value-format="binary-hex">sq=09</txt-record>
+    <txt-record value-format="binary-hex">bb=e717</txt-record>
+  </service>
+</service-group>

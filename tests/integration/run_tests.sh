@@ -39,10 +39,11 @@
 
 . "$(dirname "$0")"/common.sh
 . "$(dirname "$0")"/test_announce_begin.sh
+. "$(dirname "$0")"/test_br_scan.sh
 . "$(dirname "$0")"/test_ccm.sh
 . "$(dirname "$0")"/test_cli.sh
+. "$(dirname "$0")"/test_domain_manipulations.sh
 . "$(dirname "$0")"/test_discover.sh
-. "$(dirname "$0")"/test_br_scan.sh
 . "$(dirname "$0")"/test_energy_scan.sh
 . "$(dirname "$0")"/test_joining.sh
 . "$(dirname "$0")"/test_native_commissioner.sh

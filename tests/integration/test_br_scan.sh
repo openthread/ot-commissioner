@@ -32,7 +32,7 @@
 test_br_scan() {
     set -e
 
-	install_borderagent_mdn_data etc/br_scan_initial
+	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
@@ -41,13 +41,13 @@ test_br_scan() {
 
     stop_commissioner
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdn_data etc/br_scan_initial
+	uninstall_borderagent_mdns_data etc/br_scan_initial
 }
 
 test_br_scan_export() {
     set -e
 
-	install_borderagent_mdn_data etc/br_scan_initial
+	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
@@ -55,7 +55,7 @@ test_br_scan_export() {
 
     stop_commissioner
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdn_data etc/br_scan_initial
+	uninstall_borderagent_mdns_data etc/br_scan_initial
 	
 	grep -q "ExtendedPanId" /tmp/br_scan_export.json
 	jsonlint-php /tmp/br_scan_export.json
@@ -65,7 +65,7 @@ test_br_scan_export() {
 test_registry() {
     set -e
 
-	install_borderagent_mdn_data etc/br_scan_initial
+	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
@@ -75,7 +75,63 @@ test_registry() {
 	
     stop_commissioner
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdn_data etc/br_scan_initial
+	uninstall_borderagent_mdns_data etc/br_scan_initial
 
 	rm -f /tmp/br_scan_export.json
+}
+
+test_scan_filter() {
+    set -e
+
+	rm -f /tmp/br_scan_export.json /tmp/registry.json
+
+	install_borderagent_mdns_data etc/br_scan_initial
+    start_border_agent_mdns_service
+    start_commissioner "${NON_CCM_CONFIG}"
+
+    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json" "[done]"
+	send_command_to_commissioner "br add /tmp/br_scan_export.json" "[done]"
+	send_command_to_commissioner "network list" "thread1"
+
+	send_command_to_commissioner "br scan --nwk thread1 --export /tmp/br_scan_export-thread1.json" "[done]"
+
+	cnt=$(grep "Address" /tmp/br_scan_export-thread1.json | wc -l)
+	[[ "$cnt" == "2" ]] || {
+		echo Expected 2 BR records, detected $cnt
+		exit 1
+	}
+	
+    stop_commissioner
+    stop_border_agent_mdns_service
+	uninstall_borderagent_mdns_data etc/br_scan_initial
+
+	rm -f /tmp/br_scan_export.json /tmp/br_scan_export-thread1.json
+}
+
+test_br_update_on_add() {
+    set -e
+
+	rm -f /tmp/br_scan_export.json /tmp/registry.json
+
+	install_borderagent_mdns_data etc/br_scan_initial
+    start_border_agent_mdns_service
+    start_commissioner "${NON_CCM_CONFIG}"
+
+    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json"
+	send_command_to_commissioner "br add /tmp/br_scan_export.json"
+	send_command_to_commissioner "br list --nwk thread2" "::3"
+
+    stop_border_agent_mdns_service
+	uninstall_borderagent_mdns_data etc/br_scan_initial
+	install_borderagent_mdns_data etc/br_scan_modified
+
+    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json"
+	send_command_to_commissioner "br add /tmp/br_scan_export.json"
+	send_command_to_commissioner "br list --nwk thread2" "::5"
+
+    stop_commissioner
+    stop_border_agent_mdns_service
+	uninstall_borderagent_mdns_data etc/br_scan_modified
+
+	rm -f /tmp/br_scan_export.json /tmp/nwk-thread2.json
 }
