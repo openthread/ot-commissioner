@@ -29,6 +29,8 @@
 
 set -e
 
+# Bootstrap with CCM dependencies.
+readonly WITH_CCM="${WITH_CCM:-1}"
 readonly MIN_CMAKE_VERSION="3.10.1"
 
 ## Match the version to see if current version is greater than or euqal to required version.
@@ -130,5 +132,14 @@ fi
 readonly CUR_DIR="$(dirname "$(realpath -s "$0")")"
 
 cd "${CUR_DIR}/.."
-git submodule update --init --recursive --depth=1
+if [ "${WITH_CCM}" = "1" ]; then
+    git submodule update --init --recursive --depth=1 --progress
+else
+    git submodule update --init --recursive --depth=1 --progress -- third_party/mbedtls/repo
+    git submodule update --init --recursive --depth=1 --progress -- third_party/Catch2/repo
+    git submodule update --init --recursive --depth=1 --progress -- third_party/json/repo
+    git submodule update --init --recursive --depth=1 --progress -- third_party/libevent/repo
+    git submodule update --init --recursive --depth=1 --progress -- third_party/mdns/repo
+    git submodule update --init --recursive --depth=1 --progress -- third_party/fmtlib/repo
+fi
 cd -
