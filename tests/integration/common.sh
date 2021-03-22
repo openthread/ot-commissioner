@@ -235,7 +235,7 @@ petition_commissioner() {
     send_command_to_commissioner "start :: ${ba_port}"
 }
 
-install_borderagent_mdn_data() {
+install_borderagent_mdns_data() {
 	local ba_mdns_data_dir=$1
 
 	[[ -d "${ba_mdns_data_dir}" ]] || {
@@ -246,7 +246,7 @@ install_borderagent_mdn_data() {
 	sudo cp "${ba_mdns_data_dir}"/* /etc/avahi/services/
 }
 
-uninstall_borderagent_mdn_data() {
+uninstall_borderagent_mdns_data() {
 	local ba_mdns_data_dir=$1
 
 	[[ -d "${ba_mdns_data_dir}" ]] || {
