@@ -81,19 +81,16 @@ readonly CHANNEL_MASK=0x07fff800
 readonly SECURITY_POLICY=(672 onrc)
 readonly MESH_LOCAL_PREFIX="fd00:db8::"
 
-die()
-{
+die() {
     echo " *** ERROR: " "$@"
     exit 1
 }
 
-executable_or_die()
-{
+executable_or_die() {
     [ -x "$1" ] || die "Missing executable: $1"
 }
 
-start_daemon()
-{
+start_daemon() {
     cd "${RUNTIME_DIR}"
 
     if pidof ot-daemon; then
@@ -101,15 +98,14 @@ start_daemon()
     fi
 
     sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
-    sudo "${OT_DAEMON}" -Iwpan0 -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" >"${OT_DAEMON_LOG}" 2>&1 &
+    sudo "${OT_DAEMON}" -Iwpan0 -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" 2>&1 | tee "${OT_DAEMON_LOG}" &
 
     sleep 15
 
     pidof ot-daemon || die "Failed to start ot-daemon"
 }
 
-stop_daemon()
-{
+stop_daemon() {
     sudo killall ot-daemon || true
     sleep 1
     (pidof ot-daemon && die "killing ot-daemon failed") || true
@@ -117,8 +113,7 @@ stop_daemon()
 
 ## Start commissioner daemon.
 ## Args: $1: configuration file path.
-start_commissioner()
-{
+start_commissioner() {
     if [ -n "$(pgrep -f "${COMMISSIONER_DAEMON}")" ]; then
         sudo kill -9 "$(pgrep -f "${COMMISSIONER_DAEMON}")"
     fi
@@ -126,7 +121,7 @@ start_commissioner()
     local config=$1
 
     echo "starting commissioner daemon: [ ${COMMISSIONER_DAEMON} --cli ${COMMISSIONER_CLI} ]"
-    python3 -u "${COMMISSIONER_DAEMON}" --cli "${COMMISSIONER_CLI}" --timeout 200 >"${COMMISSIONER_DAEMON_LOG}" 2>&1 &
+    python3 -u "${COMMISSIONER_DAEMON}" --cli "${COMMISSIONER_CLI}" --timeout 200 2>&1 | tee "${COMMISSIONER_DAEMON_LOG}" &
     sleep 1
 
     pgrep -f "${COMMISSIONER_DAEMON}"
@@ -136,8 +131,7 @@ start_commissioner()
 
 ## Initialize commissioner daemon with given configuration file.
 ## Args: $1: configuration file path.
-init_commissioner()
-{
+init_commissioner() {
     local config=$1
 
     echo "initializating commissioner daemon with configuration file: ${config}"
@@ -145,8 +139,7 @@ init_commissioner()
 }
 
 ## Stop commissioner
-stop_commissioner()
-{
+stop_commissioner() {
     send_command_to_commissioner "stop"
     ${COMMISSIONER_CTL} exit || true
 }
@@ -157,8 +150,7 @@ stop_commissioner()
 ##   $2: the expected error (optional). The command
 ##       is expected to success if this argument is
 ##       not specified.
-send_command_to_commissioner()
-{
+send_command_to_commissioner() {
     local command=$1
     local expect_error=""
     if [ "$#" == 2 ]; then
@@ -181,8 +173,7 @@ send_command_to_commissioner()
 ## Args: $1: the type of the joiner, valid values are:
 ##           "meshcop", "ae", "nmkp";
 ## Return: "succeed" or "failed";
-start_joiner()
-{
+start_joiner() {
     local joiner_type=$1
     local joiner_binary=""
     local joining_cmd=""
@@ -230,15 +221,13 @@ expect {
 EOF
 }
 
-ot_ctl()
-{
+ot_ctl() {
     sudo timeout -k 5 10 "${OT_CTL}" "$@"
 }
 
 ## Form a Thread network with border agent as the leader.
 ## Args: $1: PSKc.
-form_network()
-{
+form_network() {
     local pskc=$1
 
     sudo "${OT_CTL}" dataset clear
@@ -261,15 +250,13 @@ form_network()
     ot_ctl state
 }
 
-petition_commissioner()
-{
+petition_commissioner() {
     local ba_port
     ba_port="$(sudo "${OT_CTL}" ba port | grep -o '[0-9]\+')"
     send_command_to_commissioner "start :: ${ba_port}"
 }
 
-install_borderagent_mdns_data()
-{
+install_borderagent_mdns_data() {
     local ba_mdns_data_dir=$1
 
     [[ -d ${ba_mdns_data_dir} ]] || {
@@ -282,13 +269,11 @@ install_borderagent_mdns_data()
     sleep 3
 }
 
-uninstall_borderagent_mdns_data()
-{
+uninstall_borderagent_mdns_data() {
     sudo rm -f /etc/avahi/services/*.service
 }
 
-start_border_agent_mdns_service()
-{
+start_border_agent_mdns_service() {
     ## See etc/avahi/services/border-agent.service
     ## for the service registration.
     sudo service avahi-daemon restart
@@ -297,15 +282,13 @@ start_border_agent_mdns_service()
     sleep 3
 }
 
-stop_border_agent_mdns_service()
-{
+stop_border_agent_mdns_service() {
     sudo service avahi-daemon stop
 }
 
 declare -a jobids
 
-mdns_hosts_map_addresses()
-{
+mdns_hosts_map_addresses() {
     local last_addr
     local last_br
 
@@ -319,8 +302,7 @@ mdns_hosts_map_addresses()
     sleep 3
 }
 
-mdns_hosts_unmap_addresses()
-{
+mdns_hosts_unmap_addresses() {
     for i in ${!jobids[*]}; do
         if [ ${jobids[$i]} -ne 0 ]; then
             kill ${jobids[$i]}
@@ -329,8 +311,7 @@ mdns_hosts_unmap_addresses()
     done
 }
 
-commissioner_mdns_scan_import()
-{
+commissioner_mdns_scan_import() {
     set -e
     local src_dir=$1
 

@@ -55,8 +55,7 @@
 ## Run a test case and collect the result.
 ## Return: 0, test case succeed, 1, test case failed;
 ## Note: A test case must be started with 'test_' to make it runnable.
-run_test_case()
-{
+run_test_case() {
     local test_case=$1
     local output_file="/tmp/${test_case}.txt"
 
@@ -70,7 +69,12 @@ run_test_case()
     ## because `local` is a command and its return value iwll override
     ## return value of the test case.
 
-    $(set -xeuo pipefail && ${test_case} &>"${output_file}")
+    if [[ ${VERBOSE} ]]; then
+        (set -xeuo pipefail && ${test_case})
+    else
+        (set -xeuo pipefail && ${test_case} &>"${output_file}")
+    fi
+
     local result=$?
 
     if [ ${result} = 0 ]; then
@@ -103,8 +107,7 @@ run_test_case()
     return ${result}
 }
 
-main()
-{
+main() {
     local test_case_to_run=""
 
     if [ "$#" != "0" ]; then
