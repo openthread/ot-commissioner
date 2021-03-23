@@ -64,7 +64,11 @@ run_test_case() {
     ## we cannot declare output with `local`,
     ## because `local` is a command and its return value iwll override
     ## return value of the test case.
-    $(set -xeuo pipefail && ${test_case} &> "${output_file}")
+    if [[ ${VERBOSE} ]]; then
+        (set -xeuo pipefail && ${test_case})
+    else
+        (set -xeuo pipefail && ${test_case} &> "${output_file}")
+    fi
     local result=$?
 
     if [ ${result} = 0 ]; then

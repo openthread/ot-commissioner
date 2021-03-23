@@ -86,7 +86,7 @@ start_daemon() {
     fi
 
     sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
-    sudo "${OT_DAEMON}" "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
+    sudo "${OT_DAEMON}" "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" 2>&1 | tee "${OT_DAEMON_LOG}" &
 
     sleep 10
 }
@@ -107,7 +107,7 @@ start_commissioner() {
     local config=$1
 
     echo "starting commissioner daemon: [ ${COMMISSIONER_DAEMON} --cli ${COMMISSIONER_CLI} ]"
-    python -u "${COMMISSIONER_DAEMON}" --cli "${COMMISSIONER_CLI}" --timeout 200 > "${COMMISSIONER_DAEMON_LOG}" 2>&1 &
+    python -u "${COMMISSIONER_DAEMON}" --cli "${COMMISSIONER_CLI}" --timeout 200 2>&1 | tee "${COMMISSIONER_DAEMON_LOG}" &
     sleep 1
 
     pgrep -f "${COMMISSIONER_DAEMON}"
