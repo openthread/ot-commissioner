@@ -18,7 +18,7 @@
     <txt-record value-format="text">mn=ot-br-1.2</txt-record>
     <txt-record value-format="binary-hex">at=0000000000000000</txt-record>
     <txt-record value-format="binary-hex">pt=ab352e08</txt-record>
-    <txt-record value-format="text">vd=https://openthread.io</txt-record>
+    <txt-record value-format="text">vd=OpenThread</txt-record>
     <txt-record value-format="binary-hex">vo=000000</txt-record>
     <txt-record value-format="text">dn=TestDomainName</txt-record>
     <txt-record value-format="binary-hex">sq=09</txt-record>

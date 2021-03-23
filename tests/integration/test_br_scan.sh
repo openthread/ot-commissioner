@@ -37,7 +37,7 @@ test_br_scan() {
     start_commissioner "${NON_CCM_CONFIG}"
 
     ## TODO(wgtdkp): verify the output
-    send_command_to_commissioner "br scan" "[done]"
+    send_command_to_commissioner "br scan"
 
     stop_commissioner
     stop_border_agent_mdns_service
@@ -47,35 +47,36 @@ test_br_scan() {
 test_br_scan_export() {
     set -e
 
-	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
+	mdns_hosts_map_addresses
+	sudo cp ${CUR_DIR}/etc/br_scan_initial/br_scan_border_agent-1.service /etc/avahi/services/
     start_commissioner "${NON_CCM_CONFIG}"
 
-    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json" "[done]"
+    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json"
 
     stop_commissioner
+	mdns_hosts_unmap_addresses
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdns_data etc/br_scan_initial
 	
-	grep -q "ExtendedPanId" /tmp/br_scan_export.json
+	grep -q "Addr" /tmp/br_scan_export.json
 	jsonlint-php /tmp/br_scan_export.json
 	rm -f /tmp/br_scan_export.json
+	sudo rm -f /etc/avahi/services/br_scan_border_agent-1.service
 }
 
 test_registry() {
     set -e
 
-	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
+	mdns_hosts_map_addresses
     start_commissioner "${NON_CCM_CONFIG}"
+	commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
 
-    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json" "[done]"
-	send_command_to_commissioner "br add /tmp/br_scan_export.json" "[done]"
-	send_command_to_commissioner "network list" "[done]"
+	send_command_to_commissioner "network list" "thread1"
 	
     stop_commissioner
+	mdns_hosts_unmap_addresses
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdns_data etc/br_scan_initial
 
 	rm -f /tmp/br_scan_export.json
 }
@@ -83,29 +84,28 @@ test_registry() {
 test_scan_filter() {
     set -e
 
-	rm -f /tmp/br_scan_export.json /tmp/registry.json
+	rm -f /tmp/br_scan_export.json
 
-	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
+	mdns_hosts_map_addresses
     start_commissioner "${NON_CCM_CONFIG}"
+	commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
 
-    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json" "[done]"
-	send_command_to_commissioner "br add /tmp/br_scan_export.json" "[done]"
 	send_command_to_commissioner "network list" "thread1"
 
-	send_command_to_commissioner "br scan --nwk thread1 --export /tmp/br_scan_export-thread1.json" "[done]"
+	sudo cp ${CUR_DIR}/etc/br_scan_initial/br_scan_border_agent-1.service /etc/avahi/services/
+	sleep 3
+	send_command_to_commissioner "br scan --nwk thread1" "Addr"
+	send_command_to_commissioner "br scan --nwk thread2 --export /tmp/br_scan_export.json"
+	sudo rm -f /etc/avahi/services/br_scan_border_agent-1.service
 
-	cnt=$(grep "Address" /tmp/br_scan_export-thread1.json | wc -l)
-	[[ "$cnt" == "2" ]] || {
-		echo Expected 2 BR records, detected $cnt
-		exit 1
-	}
-	
+	grep -qv "Addr" /tmp/br_scan_export.json
+
     stop_commissioner
+	mdns_hosts_unmap_addresses
     stop_border_agent_mdns_service
-	uninstall_borderagent_mdns_data etc/br_scan_initial
 
-	rm -f /tmp/br_scan_export.json /tmp/br_scan_export-thread1.json
+	rm -f /tmp/br_scan_export.json
 }
 
 test_br_update_on_add() {
@@ -113,23 +113,25 @@ test_br_update_on_add() {
 
 	rm -f /tmp/br_scan_export.json /tmp/registry.json
 
-	install_borderagent_mdns_data etc/br_scan_initial
     start_border_agent_mdns_service
+	mdns_hosts_map_addresses
     start_commissioner "${NON_CCM_CONFIG}"
+	commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
 
-    send_command_to_commissioner "br scan --export /tmp/br_scan_export.json"
-	send_command_to_commissioner "br add /tmp/br_scan_export.json"
-	send_command_to_commissioner "br list --nwk thread2" "::3"
+	send_command_to_commissioner "br list --nwk thread3" '\:\:5'
 
-    stop_border_agent_mdns_service
-	uninstall_borderagent_mdns_data etc/br_scan_initial
+	kill ${jobids[3]}
+	avahi-publish-service -a ba4.local ::6 &
+	jobids[3]=$!
+	sleep 3
 	install_borderagent_mdns_data etc/br_scan_modified
 
     send_command_to_commissioner "br scan --export /tmp/br_scan_export.json"
 	send_command_to_commissioner "br add /tmp/br_scan_export.json"
-	send_command_to_commissioner "br list --nwk thread2" "::5"
+	send_command_to_commissioner "br list --nwk thread3" '\:\:6'
 
     stop_commissioner
+	mdns_hosts_unmap_addresses
     stop_border_agent_mdns_service
 	uninstall_borderagent_mdns_data etc/br_scan_modified
 

@@ -63,11 +63,7 @@ setup_commissioner() {
 
 setup_border_agent_mdns_service() {
     sudo apt-get update
-    sudo apt-get install -y --no-install-recommends dbus avahi-daemon
-
-    ## Install the Border Agent service configure file to
-    ## the default directory read by avahi-daemon.
-    sudo cp "${CUR_DIR}/../etc/avahi/services/border-agent.service" /etc/avahi/services
+    sudo apt-get install -y --no-install-recommends dbus avahi-daemon avahi-utils
 }
 
 main() {

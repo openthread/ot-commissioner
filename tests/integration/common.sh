@@ -244,6 +244,7 @@ install_borderagent_mdns_data() {
 	}
 
 	sudo cp "${ba_mdns_data_dir}"/* /etc/avahi/services/
+	sleep 3
 }
 
 uninstall_borderagent_mdns_data() {
@@ -272,4 +273,48 @@ start_border_agent_mdns_service() {
 
 stop_border_agent_mdns_service() {
     sudo service avahi-daemon stop
+}
+
+declare -a jobids
+
+mdns_hosts_map_addresses() {
+	local last_addr
+	local last_br
+
+	for i in $(seq 0 3)
+	do
+		last_br=$(($i + 1))
+		last_addr=$(($i + 2))
+		avahi-publish-service -a ba$last_br.local ::$last_addr &
+		jobids[$i]=$!
+	done
+
+	sleep 3
+}
+
+mdns_hosts_unmap_addresses() {
+	for i in ${!jobids[*]}
+	do
+		if [ ${jobids[$i]} -ne 0 ]
+		then
+			kill ${jobids[$i]}
+			jobids[$i]=0
+		fi
+	done
+}
+
+commissioner_mdns_scan_import() {
+	set -e
+	local src_dir=$1
+
+	rm -f /tmp/nwk.json
+	for i in $(ls -1 $src_dir)
+	do
+		sudo cp $src_dir/$i /etc/avahi/services/
+		sleep 3
+		send_command_to_commissioner "br scan --timeout 1000 --export /tmp/nwk.json"
+		send_command_to_commissioner "br add /tmp/nwk.json"
+		rm -f /tmp/nwk.json
+		sudo rm -f /etc/avahi/services/$i
+	done
 }
