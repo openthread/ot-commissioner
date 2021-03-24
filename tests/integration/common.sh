@@ -216,13 +216,14 @@ ot_ctl() {
 form_network() {
     local pskc=$1
 
-    ot_ctl channel "${CHANNEL}"
-    ot_ctl panid "${PANID}"
-    ot_ctl extpanid "${XPANID}"
-    ot_ctl pskc "${pskc}"
-    ot_ctl masterkey "${MASTERKEY}"
-    ot_ctl ifconfig up
-    ot_ctl thread start
+    sudo "${OT_CTL}" channel "${CHANNEL}"
+	sudo "${OT_CTL}" networkname "${NETWORK_NAME}"
+    sudo "${OT_CTL}" panid "${PANID}"
+    sudo "${OT_CTL}" extpanid "${XPANID}"
+    sudo "${OT_CTL}" pskc "${pskc}"
+    sudo "${OT_CTL}" masterkey "${MASTERKEY}"
+    sudo "${OT_CTL}" ifconfig up
+    sudo "${OT_CTL}" thread start
 
     sleep 3
 
