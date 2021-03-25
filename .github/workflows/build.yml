@@ -83,6 +83,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           ninja
           sudo ninja install
@@ -111,6 +112,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON            \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                 -DCMAKE_INSTALL_PREFIX=/usr/local           \
+                -DOT_COMM_WARNING_AS_ERROR=ON               \
                 ..
           ninja
           sudo ninja install
@@ -132,6 +134,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           make -j2
           sudo make install
@@ -160,6 +163,7 @@ jobs:
                 -DOT_COMM_ANDROID=ON                                                                \
                 -DOT_COMM_APP=OFF                                                                   \
                 -DOT_COMM_TEST=OFF                                                                  \
+                -DOT_COMM_WARNING_AS_ERROR=ON                                                       \
                 ..
           ninja
 
@@ -179,6 +183,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
                 -DCMAKE_BUILD_TYPE=Release       \
                 -DOT_COMM_JAVA_BINDING=ON        \
+                -DOT_COMM_WARNING_AS_ERROR=ON    \
                 ..
           ninja
 
@@ -198,5 +203,6 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           ninja
