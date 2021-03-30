@@ -49,6 +49,7 @@ jobs:
                 -DOT_COMM_COVERAGE=ON             \
                 -DOT_COMM_REFERENCE_DEVICE=ON     \
                 -DOT_COMM_CCM=OFF                 \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           ninja
           sudo ninja install
