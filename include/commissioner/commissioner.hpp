@@ -504,6 +504,19 @@ public:
     virtual Error Resign() = 0;
 
     /**
+     * @brief Set the Mesh-local Prefix of current connected Thread network.
+     *
+     * The user should get the Mesh-local Prefix with `GetActiveDataset` and set the prefix
+     * with this method, before initiating any other MGMT commands.
+     *
+     * @param[in] aMeshLocalPrefix  The Mesh-local Prefix of current Thread network.
+     *
+     * @retval Error::kNone         Successfully set the Mesh-local Prefix.
+     * @retval Error::kInvalidArgs  The Mesh-local Prefix is not valid.
+     */
+    virtual Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix) = 0;
+
+    /**
      * @brief Asynchronously get the Commissioner Dataset.
      *
      * This method request Commissioner Dataset from the leader of the Thread network
@@ -746,13 +759,10 @@ public:
      * It always returns immediately without waiting for the completion.
      *
      * @param[in, out] aHandler            A handler of all errors; Guaranteed to be called.
-     * @param[in]      aPbbrAddr           A primary Backbone Router address that
-     *                                     MGMT_SEC_PENDING_SET.req will be sent to.
      * @param[in]      aMaxRetrievalTimer  A Maximum Retrieval Timer.
      * @param[in]      aDataset            A Pending Operational Dataset to be set.
      */
     virtual void SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                         const std::string &              aPbbrAddr,
                                          uint32_t                         aMaxRetrievalTimer,
                                          const PendingOperationalDataset &aDataset) = 0;
 
@@ -763,16 +773,12 @@ public:
      * by sending MGMT_SEC_PENDING_SET.req message.
      * It will not return until errors happened, timeouted or succeed.
      *
-     * @param[in] aPbbrAddr           A primary Backbone Router address that MGMT_SEC_PENDING_SET.req
-     *                                will be sent to.
      * @param[in] aMaxRetrievalTimer  A Maximum Retrieval Timer.
      * @param[in] aDataset            A Pending Operational Dataset to be set.
      *
      * @return Error::kNone, succeed; otherwise, failed;
      */
-    virtual Error SetSecurePendingDataset(const std::string &              aPbbrAddr,
-                                          uint32_t                         aMaxRetrievalTimer,
-                                          const PendingOperationalDataset &aDataset) = 0;
+    virtual Error SetSecurePendingDataset(uint32_t aMaxRetrievalTimer, const PendingOperationalDataset &aDataset) = 0;
 
     /**
      * @brief Asynchronously command a Thread device to reenroll.
@@ -1036,15 +1042,12 @@ public:
      * It always returns immediately without waiting for the completion.
      *
      * @param[in, out] aHandler            A handler of all errors; Guaranteed to be called.
-     * @param[in]      aPbbrAddr           A Primary Backbone Router Address that the MLR.req message
-     *                                     will be sent to.
      * @param[in]      aMulticastAddrList  A list of multicast address to be registered.
      * @param[in]      aTimeout            A time period after which the registration as a
      *                                     listener to the included multicast group(s) expires;
      *                                     in seconds.
      */
     virtual void RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                           const std::string &             aPbbrAddr,
                                            const std::vector<std::string> &aMulticastAddrList,
                                            uint32_t                        aTimeout) = 0;
 
@@ -1056,15 +1059,12 @@ public:
      * It will not return until errors happened, timeouted or succeed.
      *
      * @param[out] aStatus             The Status.
-     * @param[in]  aPbbrAddr           A Primary Backbone Router Address that the MLR.req message
-     *                                 will be sent to.
      * @param[in]  aMulticastAddrList  A list of multicast address to be registered.
      * @param[in]  aTimeout            A time period after which the registration as a
      *                                 listener to the included multicast group(s) expires; In seconds.
      * @return Error::kNone, succeed, the address has been successfully registered; Otherwise, failed;
      */
     virtual Error RegisterMulticastListener(uint8_t &                       aStatus,
-                                            const std::string &             aPbbrAddr,
                                             const std::vector<std::string> &aMulticastAddrList,
                                             uint32_t                        aTimeout) = 0;
 
@@ -1146,19 +1146,6 @@ public:
      * @param[in]      aJoinerId      A Joiner ID.
      */
     static void AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerId);
-
-    /**
-     * @brief Get the Thread mesh local address of given 16bits mesh local prefix and locator.
-     *
-     * @param[out] aMeshLocalAddr    The returned mesh local address.
-     * @param[in]  aMeshLocalPrefix  A mesh local prefix of the address.
-     * @param[in]  aLocator16        A 16bits locator.
-     *
-     * @return Error::kNone, succeed; Otherwise, failed.
-     */
-    static Error GetMeshLocalAddr(std::string &      aMeshLocalAddr,
-                                  const std::string &aMeshLocalPrefix,
-                                  uint16_t           aLocator16);
 };
 
 } // namespace commissioner

@@ -103,6 +103,8 @@ public:
     void  Resign(ErrorHandler aHandler) override;
     Error Resign() override;
 
+    Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix) override;
+
     void  GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetCommissionerDataset(CommissionerDataset &aDataset, uint16_t aDatasetFlags) override;
 
@@ -131,12 +133,9 @@ public:
     Error SetPendingDataset(const PendingOperationalDataset &aDataset) override;
 
     void  SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                  const std::string &              aPbbrAddr,
                                   uint32_t                         aMaxRetrievalTimer,
                                   const PendingOperationalDataset &aDataset) override;
-    Error SetSecurePendingDataset(const std::string &              aPbbrAddr,
-                                  uint32_t                         aMaxRetrievalTimer,
-                                  const PendingOperationalDataset &aDataset) override;
+    Error SetSecurePendingDataset(uint32_t aMaxRetrievalTimer, const PendingOperationalDataset &aDataset) override;
 
     void  CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr) override;
     Error CommandReenroll(const std::string &aDstAddr) override;
@@ -150,11 +149,9 @@ public:
     Error CommandMigrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork) override;
 
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                    const std::string &             aPbbrAddr,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;
     Error RegisterMulticastListener(uint8_t &                       aStatus,
-                                    const std::string &             aPbbrAddr,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;
 

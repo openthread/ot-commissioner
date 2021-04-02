@@ -48,6 +48,10 @@ namespace ot {
 
 namespace commissioner {
 
+static constexpr size_t kMeshLocalPrefixLength = 8;
+
+static constexpr uint16_t kLeaderAloc16 = 0xFC00;
+
 static constexpr uint16_t kDefaultMmPort = 61631;
 
 static constexpr uint32_t kMinKeepAliveInterval = 30;
@@ -112,32 +116,6 @@ void Commissioner::AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerI
         std::fill(aSteeringData.begin(), aSteeringData.end(), 0);
     }
     ComputeBloomFilter(aSteeringData, aJoinerId);
-}
-
-Error Commissioner::GetMeshLocalAddr(std::string &      aMeshLocalAddr,
-                                     const std::string &aMeshLocalPrefix,
-                                     uint16_t           aLocator16)
-{
-    static const size_t kThreadMeshLocalPrefixLength = 8;
-    Error               error;
-    ByteArray           rawAddr;
-    Address             addr;
-
-    SuccessOrExit(error = Ipv6PrefixFromString(rawAddr, aMeshLocalPrefix));
-    VerifyOrExit(rawAddr.size() == kThreadMeshLocalPrefixLength,
-                 error = ERROR_INVALID_ARGS("Thread Mesh local prefix length={} != {}", rawAddr.size(),
-                                            kThreadMeshLocalPrefixLength));
-
-    utils::Encode<uint16_t>(rawAddr, 0x0000);
-    utils::Encode<uint16_t>(rawAddr, 0x00FF);
-    utils::Encode<uint16_t>(rawAddr, 0xFE00);
-    utils::Encode<uint16_t>(rawAddr, aLocator16);
-
-    SuccessOrExit(addr.Set(rawAddr));
-    aMeshLocalAddr = addr.ToString();
-
-exit:
-    return error;
 }
 
 CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase)
@@ -271,9 +249,7 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
         }
     };
 
-    LOG_DEBUG(LOG_REGION_MESHCOP, "starting petition: border agent = ({}, {})", aAddr, aPort);
     VerifyOrExit(!IsActive(), error = ERROR_INVALID_STATE("cannot petition when the commissioner is running"));
-
     LOG_DEBUG(LOG_REGION_MESHCOP, "starting petition: border agent = ({}, {})", aAddr, aPort);
 
     if (mBrClient.IsConnected())
@@ -305,6 +281,7 @@ void CommissionerImpl::Resign(ErrorHandler aHandler)
     }
 
     Disconnect();
+    mMeshLocalPrefix.clear();
 
     aHandler(ERROR_NONE);
 }
@@ -357,6 +334,27 @@ void CommissionerImpl::CancelRequests()
         mTokenManager.CancelRequests();
     }
 #endif
+}
+
+Error CommissionerImpl::SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix)
+{
+    constexpr uint8_t meshLocalPrefix[] = {0xfd};
+    Error             error;
+
+    VerifyOrExit(!aMeshLocalPrefix.empty(), error = ERROR_NONE);
+    VerifyOrExit(aMeshLocalPrefix.size() == kMeshLocalPrefixLength,
+                 error = ERROR_INVALID_ARGS("Thread Mesh-local Prefix length must be {}", kMeshLocalPrefixLength));
+    VerifyOrExit(
+        std::equal(aMeshLocalPrefix.begin(), aMeshLocalPrefix.begin() + sizeof(meshLocalPrefix), meshLocalPrefix),
+        error = ERROR_INVALID_ARGS("Thread mesh-local Prefix must starts with fd00::/8"));
+    error = ERROR_NONE;
+
+exit:
+    if (error == ErrorCode::kNone)
+    {
+        mMeshLocalPrefix = aMeshLocalPrefix;
+    }
+    return error;
 }
 
 void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
@@ -489,6 +487,7 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
         }
     };
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtActiveGet));
     if (!datasetList.empty())
     {
@@ -502,7 +501,15 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    if (mMeshLocalPrefix.empty())
+    {
+        // Request Active Dataset from the BA when we don't possess the mesh-local prefix.
+        mBrClient.SendRequest(request, onResponse);
+    }
+    else
+    {
+        mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
+    }
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_GET.req");
 
@@ -539,6 +546,8 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
                  error = ERROR_INVALID_ARGS("Network Master Key cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtActiveSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodeActiveOperationalDataset(request, aDataset));
@@ -550,7 +559,7 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_SET.req");
 
@@ -592,6 +601,8 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         }
     };
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPendingGet));
     if (!datasetList.empty())
     {
@@ -605,7 +616,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_GET.req");
 
@@ -633,6 +644,8 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
                  error = ERROR_INVALID_ARGS("Delay Timer is mandatory for a Pending Operational Dataset"));
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPendingSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodePendingOperationalDataset(request, aDataset));
@@ -644,7 +657,7 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_SET.req");
 
@@ -667,6 +680,8 @@ void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aD
     };
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
+
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_SET.req is only valid in CCM mode"));
     VerifyOrExit((aDataset.mPresentFlags & BbrDataset::kRegistrarIpv6AddrBit) == 0,
                  error = ERROR_INVALID_ARGS("trying to set Registrar IPv6 Address which is read-only"));
@@ -680,7 +695,7 @@ void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aD
         SuccessOrExit(error = SignRequest(request));
     }
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
 
@@ -718,6 +733,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
     };
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
     VerifyOrExit(IsCcmMode(), error = ERROR_INVALID_STATE("sending MGMT_BBR_GET.req is only valid in CCM mode"));
 
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtBbrGet));
@@ -727,7 +743,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
         SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
     }
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
 
@@ -739,31 +755,33 @@ exit:
 }
 
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)
 {
     Error         error;
-    Address       dstAddr;
+    Address       pbbrAddr;
     ByteArray     secureDissemination;
-    std::string   uri = "coaps://[" + aPbbrAddr + "]" + uri::kMgmtPendingGet;
+    std::string   uri;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         aHandler(HandleStateResponse(aResponse, aError));
     };
 
-    VerifyOrExit(IsCcmMode(),
-                 error = ERROR_INVALID_STATE("sending MGMT_SEC_PENDING_SET.req is only valid in CCM mode"));
-
     // Delay timer is mandatory.
     VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
                  error = ERROR_INVALID_ARGS("Delay Timer is mandatory for a Secure Pending Operational Dataset"));
 
-    SuccessOrExit(error = dstAddr.Set(aPbbrAddr));
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
+    VerifyOrExit(IsCcmMode(),
+                 error = ERROR_INVALID_STATE("sending MGMT_SEC_PENDING_SET.req is only valid in CCM mode"));
 
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtSecPendingSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
+
+    pbbrAddr = GetPrimaryBbrLocator();
+    uri      = "coaps://[" + pbbrAddr.ToString() + "]" + uri::kMgmtPendingGet;
 
     utils::Encode(secureDissemination, aDataset.mPendingTimestamp.Encode());
     utils::Encode(secureDissemination, aMaxRetrievalTimer);
@@ -777,7 +795,7 @@ void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     
         SuccessOrExit(error = SignRequest(request));
     }
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    mProxyClient.SendRequest(request, onResponse, pbbrAddr, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_SEC_PENDING_SET.req");
 
@@ -894,11 +912,9 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
 }
 
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)
 {
-    (void)aPbbrAddr;
     (void)aMaxRetrievalTimer;
     (void)aDataset;
     aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
@@ -940,12 +956,10 @@ Error CommissionerImpl::SetToken(const ByteArray &aSignedToken)
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                                 const std::string &             aPbbrAddr,
                                                  const std::vector<std::string> &aMulticastAddrList,
                                                  uint32_t                        aTimeout)
 {
     Error     error;
-    Address   dstAddr;
     Address   multicastAddr;
     ByteArray rawAddresses;
 
@@ -975,7 +989,6 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         }
     };
 
-    SuccessOrExit(error = dstAddr.Set(aPbbrAddr));
     VerifyOrExit(!aMulticastAddrList.empty(), error = ERROR_INVALID_ARGS("Multicast Address List cannot be empty"));
 
     for (const auto &addr : aMulticastAddrList)
@@ -986,6 +999,8 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         rawAddresses.insert(rawAddresses.end(), multicastAddr.GetRaw().begin(), multicastAddr.GetRaw().end());
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(!mMeshLocalPrefix.empty(), error = ERROR_INVALID_STATE("no valid Mesh-local Prefix is set"));
     SuccessOrExit(error = request.SetUriPath(uri::kMlr));
     SuccessOrExit(
         error = AppendTlv(request, {tlv::Type::kThreadCommissionerSessionId, GetSessionId(), tlv::Scope::kThread}));
@@ -999,7 +1014,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    mProxyClient.SendRequest(request, onResponse, GetPrimaryBbrLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MLR.req");
 
@@ -1041,6 +1056,7 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
         request.SetType(coap::Type::kNonConfirmable);
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtAnnounceBegin));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = MakeChannelMask(channelMask, aChannelMask));
@@ -1094,6 +1110,7 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
         request.SetType(coap::Type::kNonConfirmable);
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPanidQuery));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = MakeChannelMask(channelMask, aChannelMask));
@@ -1148,6 +1165,7 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
         request.SetType(coap::Type::kNonConfirmable);
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtEdScan));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = MakeChannelMask(channelMask, aChannelMask));
@@ -1223,9 +1241,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         aHandler(existingCommissionerId.empty() ? nullptr : &existingCommissionerId, error);
     };
 
-    VerifyOrExit(mState == State::kDisabled,
-                 error = ERROR_INVALID_STATE("cannot petition when the commissioner is running"));
-
+    VerifyOrExit(mState == State::kDisabled, error = ERROR_INVALID_STATE("the commissioner is petitioning or active"));
     SuccessOrExit(error = request.SetUriPath(uri::kPetitioning));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerId, mConfig.mId}));
 
@@ -2192,6 +2208,35 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
     {
         aTimer.Start(nextShot);
     }
+}
+
+Address CommissionerImpl::GetAnycastLocator(uint16_t aAloc16) const
+{
+    ASSERT(!mMeshLocalPrefix.empty());
+
+    Address   ret;
+    Error     error;
+    ByteArray alocAddr = mMeshLocalPrefix;
+
+    utils::Encode<uint16_t>(alocAddr, 0x0000);
+    utils::Encode<uint16_t>(alocAddr, 0x00FF);
+    utils::Encode<uint16_t>(alocAddr, 0xFE00);
+    utils::Encode<uint16_t>(alocAddr, aAloc16);
+
+    error = ret.Set(alocAddr);
+    ASSERT(error == ErrorCode::kNone);
+
+    return ret;
+}
+
+Address CommissionerImpl::GetLeaderLocator(void) const
+{
+    return GetAnycastLocator(kLeaderAloc16);
+}
+
+Address CommissionerImpl::GetPrimaryBbrLocator(void) const
+{
+    return GetAnycastLocator(kPrimaryBbrAloc16);
 }
 
 } // namespace commissioner
