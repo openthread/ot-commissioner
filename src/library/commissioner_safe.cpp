@@ -208,6 +208,14 @@ Error CommissionerSafe::Resign()
     return pro.get_future().get();
 }
 
+Error CommissionerSafe::SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix)
+{
+    std::promise<Error> pro;
+
+    PushAsyncRequest([&]() { pro.set_value(mImpl->SetMeshLocalPrefix(aMeshLocalPrefix)); });
+    return pro.get_future().get();
+}
+
 void CommissionerSafe::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
 {
     PushAsyncRequest([=]() { mImpl->GetCommissionerDataset(aHandler, aDatasetFlags); });
@@ -365,21 +373,18 @@ Error CommissionerSafe::SetPendingDataset(const PendingOperationalDataset &aData
 }
 
 void CommissionerSafe::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)
 {
-    PushAsyncRequest([=]() { mImpl->SetSecurePendingDataset(aHandler, aPbbrAddr, aMaxRetrievalTimer, aDataset); });
+    PushAsyncRequest([=]() { mImpl->SetSecurePendingDataset(aHandler, aMaxRetrievalTimer, aDataset); });
 }
 
-Error CommissionerSafe::SetSecurePendingDataset(const std::string &              aPbbrAddr,
-                                                uint32_t                         aMaxRetrievalTimer,
-                                                const PendingOperationalDataset &aDataset)
+Error CommissionerSafe::SetSecurePendingDataset(uint32_t aMaxRetrievalTimer, const PendingOperationalDataset &aDataset)
 {
     std::promise<Error> pro;
     auto                wait = [&pro](Error aError) { pro.set_value(aError); };
 
-    SetSecurePendingDataset(wait, aPbbrAddr, aMaxRetrievalTimer, aDataset);
+    SetSecurePendingDataset(wait, aMaxRetrievalTimer, aDataset);
     return pro.get_future().get();
 }
 
@@ -428,15 +433,13 @@ Error CommissionerSafe::CommandMigrate(const std::string &aDstAddr, const std::s
 }
 
 void CommissionerSafe::RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                                 const std::string &             aPbbrAddr,
                                                  const std::vector<std::string> &aMulticastAddrList,
                                                  uint32_t                        aTimeout)
 {
-    PushAsyncRequest([=]() { mImpl->RegisterMulticastListener(aHandler, aPbbrAddr, aMulticastAddrList, aTimeout); });
+    PushAsyncRequest([=]() { mImpl->RegisterMulticastListener(aHandler, aMulticastAddrList, aTimeout); });
 }
 
 Error CommissionerSafe::RegisterMulticastListener(uint8_t &                       aStatus,
-                                                  const std::string &             aPbbrAddr,
                                                   const std::vector<std::string> &aMulticastAddrList,
                                                   uint32_t                        aTimeout)
 {
@@ -449,7 +452,7 @@ Error CommissionerSafe::RegisterMulticastListener(uint8_t &                     
         pro.set_value(error);
     };
 
-    RegisterMulticastListener(wait, aPbbrAddr, aMulticastAddrList, aTimeout);
+    RegisterMulticastListener(wait, aMulticastAddrList, aTimeout);
     return pro.get_future().get();
 }
 

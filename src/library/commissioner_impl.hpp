@@ -102,6 +102,8 @@ public:
     void  Resign(ErrorHandler aHandler) override;
     Error Resign() override { return ERROR_UNIMPLEMENTED(""); }
 
+    Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix) override;
+
     void  GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetCommissionerDataset(CommissionerDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
@@ -130,10 +132,9 @@ public:
     Error SetPendingDataset(const PendingOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                    const std::string &             aPbbrAddr,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;
-    Error RegisterMulticastListener(uint8_t &, const std::string &, const std::vector<std::string> &, uint32_t) override
+    Error RegisterMulticastListener(uint8_t &, const std::vector<std::string> &, uint32_t) override
     {
         return ERROR_UNIMPLEMENTED("");
     }
@@ -165,10 +166,9 @@ public:
     // Commercial Commissioning features.
 
     void  SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                  const std::string &              aPbbrAddr,
                                   uint32_t                         aMaxRetrievalTimer,
                                   const PendingOperationalDataset &aDataset) override;
-    Error SetSecurePendingDataset(const std::string &, uint32_t, const PendingOperationalDataset &) override
+    Error SetSecurePendingDataset(uint32_t, const PendingOperationalDataset &) override
     {
         return ERROR_UNIMPLEMENTED("");
     }
@@ -221,6 +221,10 @@ private:
 
     void SendPetition(PetitionHandler aHandler);
 
+    Address GetAnycastLocator(uint16_t aAloc16) const;
+    Address GetLeaderLocator(void) const;
+    Address GetPrimaryBbrLocator(void) const;
+
     // Set @p aKeepAlive to false to resign the commissioner role.
     void SendKeepAlive(Timer &aTimer, bool aKeepAlive = true);
 
@@ -259,6 +263,7 @@ private:
     Timer mKeepAliveTimer;
 
     coap::CoapSecure mBrClient;
+    ByteArray        mMeshLocalPrefix;
 
     std::map<ByteArray, JoinerSession> mJoinerSessions;
     Timer                              mJoinerSessionTimer;

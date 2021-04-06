@@ -78,8 +78,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                 "network sync"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
-                    "borderagent get locator\n"
-                    "borderagent get meshlocaladdr"},
+                    "borderagent get locator"},
     {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]\n"
                "joiner enableall (meshcop|ae|nmkp) [<joiner-password>] [<provisioning-url>]\n"
                "joiner disable (meshcop|ae|nmkp) <joiner-eui64>\n"
@@ -434,16 +433,6 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
             uint16_t locator;
             SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
             value = ToHex(locator);
-        }
-        else if (CaseInsensitiveEqual(aExpr[2], "meshlocaladdr"))
-        {
-            uint16_t    locator;
-            std::string meshLocalPrefix;
-            std::string meshLocalAddr;
-            SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
-            SuccessOrExit(value = mCommissioner->GetMeshLocalPrefix(meshLocalPrefix));
-            SuccessOrExit(value = Commissioner::GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
-            value = meshLocalAddr;
         }
         else
         {

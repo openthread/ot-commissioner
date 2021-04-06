@@ -249,7 +249,6 @@ public:
     const EnergyReportMap &GetAllEnergyReports() const;
 
     const std::string &GetDomainName() const;
-    Error              GetPrimaryBbrAddr(std::string &aAddr);
 
 private:
     CommissionerApp() = default;
