@@ -451,8 +451,6 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
 
         SuccessOrExit(error = aError);
         SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, *aRawDataset));
-        VerifyOrExit(dataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit,
-                     error = ERROR_BAD_FORMAT("Active Timestamp is not included in MGMT_ACTIVE_GET.rsp"));
 
         aHandler(&dataset, error);
     exit:
@@ -585,12 +583,11 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
                      error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_PENDING_GET.rsp message"));
 
         SuccessOrExit(error = DecodePendingOperationalDataset(dataset, *aResponse));
-        VerifyOrExit(dataset.mPresentFlags | PendingOperationalDataset::kActiveTimestampBit,
-                     error = ERROR_BAD_FORMAT("Active Timestamp is not included in MGMT_PENDING_GET.rsp"));
-        VerifyOrExit(dataset.mPresentFlags | PendingOperationalDataset::kPendingTimestampBit,
-                     error = ERROR_BAD_FORMAT("Pending Timestamp is not included in MGMT_PENDING_GET.rsp"));
-        VerifyOrExit(dataset.mPresentFlags | PendingOperationalDataset::kDelayTimerBit,
-                     error = ERROR_BAD_FORMAT("Delay Timer is not included in MGMT_PENDING_GET.rsp"));
+        if (dataset.mPresentFlags != 0)
+        {
+            VerifyOrExit(dataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
+                         error = ERROR_BAD_FORMAT("Delay Timer is not included in MGMT_PENDING_GET.rsp"));
+        }
 
         aHandler(&dataset, error);
 
