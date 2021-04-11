@@ -208,14 +208,6 @@ Error CommissionerSafe::Resign()
     return pro.get_future().get();
 }
 
-Error CommissionerSafe::SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix)
-{
-    std::promise<Error> pro;
-
-    PushAsyncRequest([&]() { pro.set_value(mImpl->SetMeshLocalPrefix(aMeshLocalPrefix)); });
-    return pro.get_future().get();
-}
-
 void CommissionerSafe::GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags)
 {
     PushAsyncRequest([=]() { mImpl->GetCommissionerDataset(aHandler, aDatasetFlags); });

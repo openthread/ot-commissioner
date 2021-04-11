@@ -44,6 +44,8 @@ namespace ot {
 
 namespace commissioner {
 
+class CommissionerImpl;
+
 // The UDP proxy endpoint that sends UDP data by encapsulating
 // it in the UDP_TX.ntf message.
 class ProxyEndpoint : public Endpoint
@@ -75,11 +77,12 @@ private:
 class ProxyClient
 {
 public:
-    ProxyClient(struct event_base *aEventBase, coap::CoapSecure &aBrClient)
-        : mEndpoint(aBrClient)
-        , mCoap(aEventBase, mEndpoint)
-    {
-    }
+    ProxyClient(CommissionerImpl &aCommissioner, coap::CoapSecure &aBrClient);
+
+    void SendRequest(const coap::Request & aRequest,
+                     coap::ResponseHandler aHandler,
+                     uint16_t              aPeerAloc16,
+                     uint16_t              aPeerPort);
 
     void SendRequest(const coap::Request & aRequest,
                      coap::ResponseHandler aHandler,
@@ -96,9 +99,23 @@ public:
 
     void CancelRequests() { mCoap.CancelRequests(); }
 
+    void FetchMeshLocalPrefix(Commissioner::ErrorHandler aHandler);
+
+    const ByteArray &GetMeshLocalPrefix(void) const { return mMeshLocalPrefix; }
+    void             ClearMeshLocalPrefix(void) { mMeshLocalPrefix.clear(); }
+
+    Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix);
+
+    Address GetAnycastLocator(uint16_t aAloc16) const;
+
 private:
-    ProxyEndpoint mEndpoint;
-    coap::Coap    mCoap;
+    CommissionerImpl &mCommissioner;
+    ProxyEndpoint     mEndpoint;
+    coap::Coap        mCoap;
+
+    // The Mesh-Local prefix of current connected Thread network.
+    // Used to compute Mesh-Local address of UDP_TX.ntf peer.
+    ByteArray mMeshLocalPrefix;
 };
 
 } // namespace commissioner

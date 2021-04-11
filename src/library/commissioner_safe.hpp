@@ -103,8 +103,6 @@ public:
     void  Resign(ErrorHandler aHandler) override;
     Error Resign() override;
 
-    Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix) override;
-
     void  GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetCommissionerDataset(CommissionerDataset &aDataset, uint16_t aDatasetFlags) override;
 

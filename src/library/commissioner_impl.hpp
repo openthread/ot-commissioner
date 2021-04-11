@@ -102,8 +102,6 @@ public:
     void  Resign(ErrorHandler aHandler) override;
     Error Resign() override { return ERROR_UNIMPLEMENTED(""); }
 
-    Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix) override;
-
     void  GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetCommissionerDataset(CommissionerDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
@@ -222,10 +220,6 @@ private:
 
     void SendPetition(PetitionHandler aHandler);
 
-    Address GetAnycastLocator(uint16_t aAloc16) const;
-    Address GetLeaderLocator(void) const;
-    Address GetPrimaryBbrLocator(void) const;
-
     // Set @p aKeepAlive to false to resign the commissioner role.
     void SendKeepAlive(Timer &aTimer, bool aKeepAlive = true);
 
@@ -264,7 +258,6 @@ private:
     Timer mKeepAliveTimer;
 
     coap::CoapSecure mBrClient;
-    ByteArray        mMeshLocalPrefix;
 
     std::map<ByteArray, JoinerSession> mJoinerSessions;
     Timer                              mJoinerSessionTimer;

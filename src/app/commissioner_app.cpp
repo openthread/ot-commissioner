@@ -151,7 +151,6 @@ Error CommissionerApp::SyncNetworkData(void)
     BbrDataset                bbrDataset;
 
     SuccessOrExit(error = mCommissioner->GetActiveDataset(activeDataset, 0xFFFF));
-    SuccessOrExit(error = mCommissioner->SetMeshLocalPrefix(activeDataset.mMeshLocalPrefix));
     SuccessOrExit(error = mCommissioner->GetPendingDataset(pendingDataset, 0xFFFF));
     SuccessOrExit(error = mCommissioner->SetCommissionerDataset(mCommDataset));
     if (IsCcmMode())
@@ -535,7 +534,7 @@ Error CommissionerApp::GetMeshLocalPrefix(std::string &aPrefix)
     SuccessOrExit(error = mCommissioner->GetActiveDataset(mActiveDataset, 0xFFFF));
 
     VerifyOrExit(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit,
-                 error = ERROR_NOT_FOUND("cannot find valid Mesh-local Prefix in Active Operational Dataset"));
+                 error = ERROR_NOT_FOUND("cannot find valid Mesh-Local Prefix in Active Operational Dataset"));
     aPrefix = Ipv6PrefixToString(mActiveDataset.mMeshLocalPrefix);
 
 exit:
