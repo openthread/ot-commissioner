@@ -368,10 +368,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         CommissionerDataset dataset;
 
         SuccessOrExit(error = aError);
-        ASSERT(aResponse != nullptr);
-
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_COMM_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = DecodeCommissionerDataset(dataset, *aResponse));
 
@@ -473,8 +470,7 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_ACTIVE_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         aHandler(&aResponse->GetPayload(), error);
 
@@ -579,8 +575,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         PendingOperationalDataset dataset;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_PENDING_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = DecodePendingOperationalDataset(dataset, *aResponse));
         if (dataset.mPresentFlags != 0)
@@ -715,8 +710,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
         BbrDataset dataset;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_BBR_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = DecodeBbrDataset(dataset, *aResponse));
 
@@ -968,10 +962,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         uint8_t     status;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         statusTlv = GetTlv(tlv::Type::kThreadStatus, *aResponse, tlv::Scope::kThread);
         VerifyOrExit(statusTlv != nullptr, error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
@@ -1037,10 +1028,7 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
     exit:
         aHandler(error);
@@ -1091,10 +1079,7 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
     exit:
         aHandler(error);
@@ -1146,10 +1131,7 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
     exit:
         aHandler(error);
@@ -1201,9 +1183,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         std::string existingCommissionerId;
 
         SuccessOrExit(error = aError);
-
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = GetTlvSet(tlvSet, *aResponse));
 
@@ -1361,16 +1341,26 @@ tlv::TlvPtr GetTlv(tlv::Type aTlvType, const coap::Message &aMessage, tlv::Scope
     return tlv::GetTlv(aTlvType, aMessage.GetPayload(), aScope);
 }
 
+Error CommissionerImpl::CheckCoapResponseCode(const coap::Response &aResponse)
+{
+    Error error = ERROR_NONE;
+
+    VerifyOrExit(aResponse.GetCode() == coap::Code::kChanged,
+                 error = ERROR_COAP_ERROR("request for {} failed: {}", aResponse.GetRequestUri(),
+                                          coap::CodeToString(aResponse.GetCode())));
+
+exit:
+    return error;
+}
+
 Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory)
 {
     Error       error;
     tlv::TlvPtr stateTlv = nullptr;
 
     SuccessOrExit(error = aError);
-    VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                 error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-    VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                 error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+    SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
     stateTlv = GetTlv(tlv::Type::kState, *aResponse);
     VerifyOrExit((stateTlv != nullptr || !aStateTlvIsMandatory),
                  error = ERROR_BAD_FORMAT("no valid State TLV found in response"));

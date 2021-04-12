@@ -49,6 +49,115 @@ namespace commissioner {
 
 namespace coap {
 
+std::string CodeToString(Code aCode)
+{
+    std::string str;
+
+    switch (aCode)
+    {
+    /*
+     * Methods (0.XX).
+     */
+    case Code::kEmpty:
+        str = "EMPTY";
+        break;
+    case Code::kGet:
+        str = "GET";
+        break;
+    case Code::kPost:
+        str = "POST";
+        break;
+
+    case Code::kPut:
+        str = "PUT";
+        break;
+
+    case Code::kDelete:
+        str = "DELETE";
+        break;
+
+    /*
+     * Success (2.XX).
+     */
+    case Code::kCreated:
+        str = "CREATED";
+        break;
+    case Code::kDeleted:
+        str = "DELETED";
+        break;
+    case Code::kValid:
+        str = "VALID";
+        break;
+    case Code::kChanged:
+        str = "CHANGED";
+        break;
+    case Code::kContent:
+        str = "CONTENT";
+        break;
+
+    /*
+     * Client side errors (4.XX).
+     */
+    case Code::kBadRequest:
+        str = "BAD_REQUEST";
+        break;
+    case Code::kUnauthorized:
+        str = "UNAUTHORIZED";
+        break;
+    case Code::kBadOption:
+        str = "BAD_OPTION";
+        break;
+    case Code::kForBidden:
+        str = "FORBIDDEN";
+        break;
+    case Code::kNotFound:
+        str = "NOT_FOUND";
+        break;
+    case Code::kMethodNotAllowed:
+        str = "METHOD_NOT_ALLOWED";
+        break;
+    case Code::kNotAcceptable:
+        str = "NOT_ACCEPTABLE";
+        break;
+    case Code::kPreconditionFailed:
+        str = "PRECONDITIONFAILED";
+        break;
+    case Code::kRequestTooLarge:
+        str = "REQUEST_TOOL_LARGE";
+        break;
+    case Code::kUnsupportedFormat:
+        str = "UNSUPPORTED_FORMAT";
+        break;
+
+    /*
+     * Server side errors (5.XX).
+     */
+    case Code::kInternalError:
+        str = "INTERNAL_ERROR";
+        break;
+    case Code::kNotImplemented:
+        str = "NOT_IMPLEMENTED";
+        break;
+    case Code::kBadGateway:
+        str = "BAD_GATEWAY";
+        break;
+    case Code::kServiceUnavailable:
+        str = "SERVICE_UNAVAILABLE";
+        break;
+    case Code::kGatewayTimeout:
+        str = "BATEWAY_TIMEOUT";
+        break;
+    case Code::kProxyNotSupported:
+        str = "PROXY_NOT_SUPPORTED";
+        break;
+    default:
+        str = "UNKNOWN";
+        break;
+    }
+
+    return "CoAP::" + str;
+}
+
 Message::Message(Type aType, Code aCode)
     : Message()
 {
@@ -567,7 +676,7 @@ exit:
     return;
 }
 
-void Coap::HandleResponse(const Response &aResponse)
+void Coap::HandleResponse(Response &aResponse)
 {
     const RequestHolder *requestHolder = nullptr;
     std::string          requestUri    = "UNKNOWN_URI";
@@ -583,6 +692,7 @@ void Coap::HandleResponse(const Response &aResponse)
     }
 
     requestHolder->mRequest->GetUriPath(requestUri).IgnoreError();
+    aResponse.SetRequestUri(requestUri);
     switch (aResponse.GetType())
     {
     case Type::kReset:
@@ -1152,6 +1262,20 @@ void Message::SetToken(uint8_t aTokenLength)
 
     mHeader.mTokenLength = aTokenLength;
     random::non_crypto::FillBuffer(mHeader.mToken, aTokenLength);
+}
+
+void Message::SetRequestUri(const std::string &aUri)
+{
+    ASSERT(IsResponse());
+
+    mRequestUri = aUri;
+}
+
+std::string Message::GetRequestUri(void) const
+{
+    ASSERT(IsResponse());
+
+    return mRequestUri;
 }
 
 } // namespace coap

@@ -147,9 +147,14 @@ enum class ErrorCode : int
     kRejected = 16,
 
     /**
+     * The operation was failed because with a CoAP error.
+     */
+    kCoapError = 17,
+
+    /**
      * The error is out of the address space of OT Commissioner.
      */
-    kUnknown = 17,
+    kUnknown = 18,
 };
 
 /**
