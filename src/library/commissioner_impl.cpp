@@ -392,7 +392,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         SuccessOrExit(AppendTlv(request, {tlv::Type::kGet, tlvTypes}));
     }
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_GET.req");
 
@@ -432,7 +432,7 @@ void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const Commi
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, GetLeaderLocator(), kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_SET.req");
 
