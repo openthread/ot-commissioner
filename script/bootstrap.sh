@@ -109,6 +109,7 @@ elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
 
     ## Install packages
+    brew update
     brew install coreutils \
                  readline \
                  cmake \
