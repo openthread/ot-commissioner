@@ -692,7 +692,11 @@ void Coap::HandleResponse(Response &aResponse)
     }
 
     requestHolder->mRequest->GetUriPath(requestUri).IgnoreError();
-    aResponse.SetRequestUri(requestUri);
+    if (aResponse.IsResponse())
+    {
+        aResponse.SetRequestUri(requestUri);
+    }
+
     switch (aResponse.GetType())
     {
     case Type::kReset:
