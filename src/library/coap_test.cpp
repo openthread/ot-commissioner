@@ -344,6 +344,8 @@ private:
 
 TEST_CASE("coap-message-confirmable", "[coap]")
 {
+    bool sendSeparateEmptyAck = false;
+
     Address localhost;
     REQUIRE(localhost.Set("127.0.0.1") == ErrorCode::kNone);
 
@@ -359,7 +361,7 @@ TEST_CASE("coap-message-confirmable", "[coap]")
     Coap coap1{eventBase, peer1};
 
     REQUIRE(coap1.AddResource(
-                {"/hello", [&coap1](const Request &aRequest) {
+                {"/hello", [&coap1, &sendSeparateEmptyAck](const Request &aRequest) {
                      REQUIRE(aRequest.IsRequest());
                      REQUIRE(aRequest.GetType() == Type::kConfirmable);
                      REQUIRE(aRequest.GetCode() == Code::kGet);
@@ -374,6 +376,11 @@ TEST_CASE("coap-message-confirmable", "[coap]")
 
                      REQUIRE(aRequest.GetPayload() == ByteArray{'h', 'e', 'l', 'l', 'o', ',', ' ', 'C', 'o', 'A', 'P'});
 
+                     if (sendSeparateEmptyAck)
+                     {
+                         REQUIRE(coap1.SendAck(aRequest) == ErrorCode::kNone);
+                     }
+
                      Response response{Type::kAcknowledgment, Code::kContent};
                      REQUIRE(response.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
                      response.Append("Ack...");
@@ -386,6 +393,31 @@ TEST_CASE("coap-message-confirmable", "[coap]")
         REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
         REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
         request.Append("hello, CoAP");
+
+        coap0.SendRequest(request, [&eventBase](const Response *aResponse, Error aError) {
+            REQUIRE(aResponse != nullptr);
+            REQUIRE(aError == ErrorCode::kNone);
+
+            REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
+
+            ContentFormat contentFormat;
+            REQUIRE(aResponse->GetContentFormat(contentFormat) == ErrorCode::kNone);
+            REQUIRE(contentFormat == ContentFormat::kTextPlain);
+
+            REQUIRE(aResponse->GetPayload() == ByteArray{'A', 'c', 'k', '.', '.', '.'});
+
+            event_base_loopbreak(eventBase);
+        });
+    }
+
+    SECTION("basic confirmable message with separate ack")
+    {
+        Message request{Type::kConfirmable, Code::kGet};
+        REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
+        REQUIRE(request.SetContentFormat(ContentFormat::kTextPlain) == ErrorCode::kNone);
+        request.Append("hello, CoAP");
+
+        sendSeparateEmptyAck = true;
 
         coap0.SendRequest(request, [&eventBase](const Response *aResponse, Error aError) {
             REQUIRE(aResponse != nullptr);
