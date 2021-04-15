@@ -34,7 +34,7 @@ test_petition() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "active"
     stop_commissioner
 

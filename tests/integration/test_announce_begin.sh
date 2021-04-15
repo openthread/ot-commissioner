@@ -34,7 +34,8 @@ test_announce_begin() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+
+    petition_commissioner
     send_command_to_commissioner "active"
     send_command_to_commissioner "announce 0xffffffff 2 32 ff02::2"
     stop_commissioner
