@@ -159,6 +159,7 @@ registry_status registry::add(BorderAgent const &val)
                 }
                 nwk.dom_id = dom.id;
                 nwk.xpan   = val.mExtendedPanId;
+                nwk.ccm    = ((val.mState.mConnectionMode == 4) ? 1 : 0);
                 status     = map_status(storage->add(nwk, nwk_id));
                 if (status != REG_SUCCESS)
                 {
