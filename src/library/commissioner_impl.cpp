@@ -2106,13 +2106,6 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}",
               utils::Hex(joinerId), joinerRouterLocator, dtlsRecords.size());
 
-    joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
-    if (joinerPSKd.empty())
-    {
-        LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
-        ExitNow(error = ERROR_REJECTED("joiner(ID={}) is disabled", utils::Hex(joinerId)));
-    }
-
     {
         auto it = mJoinerSessions.find(joinerId);
         if (it != mJoinerSessions.end() && it->second.Disabled())
@@ -2124,6 +2117,13 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
         if (it == mJoinerSessions.end())
         {
             Address localAddr;
+
+            joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
+            if (joinerPSKd.empty())
+            {
+                LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
+                ExitNow(error = ERROR_REJECTED("joiner(ID={}) is disabled", utils::Hex(joinerId)));
+            }
 
             SuccessOrExit(error = mBrClient.GetLocalAddr(localAddr));
             it = mJoinerSessions
