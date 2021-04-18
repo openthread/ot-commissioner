@@ -57,7 +57,6 @@ swig_add_library(commissioner-java
 
 swig_link_libraries(commissioner-java
     commissioner
-    commissioner-common
 )
 
 ## GCC is too strict on this in optimization mode, see http://www.swig.org/Doc3.0/Java.html#Java_compiling_dynamic

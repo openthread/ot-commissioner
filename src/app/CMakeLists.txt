@@ -42,9 +42,9 @@ add_library(commissioner-app
 target_link_libraries(commissioner-app
     PUBLIC
         commissioner
-        commissioner-common
+        commissioner-common-headers
     PRIVATE
-        fmt::fmt
+        fmt::fmt-header-only
         mdns
         nlohmann_json::nlohmann_json
 )
