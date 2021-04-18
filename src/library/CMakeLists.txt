@@ -80,11 +80,11 @@ target_link_libraries(commissioner
         mbedtls
         mbedx509
         mbedcrypto
-        fmt::fmt
+        fmt::fmt-header-only
         event_core
         event_pthreads
         $<$<NOT:$<BOOL:${OT_COMM_ANDROID}>>:pthread>
-        commissioner-common
+        $<TARGET_OBJECTS:commissioner-common-objects>
 )
 
 target_compile_definitions(commissioner
@@ -121,7 +121,6 @@ if (BUILD_SHARED_LIBS)
             $<TARGET_FILE:mbedtls>
             $<TARGET_FILE:mbedx509>
             $<TARGET_FILE:mbedcrypto>
-            $<TARGET_FILE:fmt::fmt>
             $<TARGET_FILE:event_core_shared>
             $<TARGET_FILE:event_pthreads_shared>
             DESTINATION lib
@@ -165,12 +164,10 @@ if (OT_COMM_TEST)
             mbedtls
             mbedx509
             mbedcrypto
-            fmt::fmt
             event_core
             event_pthreads
             commissioner
             $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
-            commissioner-common
     )
 
     target_compile_definitions(commissioner-test

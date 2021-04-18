@@ -26,7 +26,19 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-add_library(commissioner-common
+add_library(commissioner-common-headers INTERFACE)
+
+target_link_libraries(commissioner-common-headers
+    INTERFACE fmt::fmt-header-only
+)
+
+target_include_directories(commissioner-common-headers
+    INTERFACE
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/src
+)
+
+add_library(commissioner-common-objects OBJECT
     address.cpp
     address.hpp
     error.cpp
@@ -37,22 +49,9 @@ add_library(commissioner-common
     utils.hpp
 )
 
-target_link_libraries(commissioner-common
-    PUBLIC fmt::fmt
+target_link_libraries(commissioner-common-objects
+    PUBLIC commissioner-common-headers
 )
-
-target_include_directories(commissioner-common
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/src
-)
-
-if (BUILD_SHARED_LIBS)
-    install(TARGETS commissioner-common
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-    )
-endif()
 
 if (OT_COMM_TEST)
     add_library(commissioner-common-test OBJECT
@@ -62,11 +61,11 @@ if (OT_COMM_TEST)
         utils_test.cpp
     )
 
+    target_link_libraries(commissioner-common-test
+        PUBLIC commissioner-common-headers
+    )
+
     target_include_directories(commissioner-common-test
-        PRIVATE
-            ${PROJECT_SOURCE_DIR}/include
-            ${PROJECT_SOURCE_DIR}/src
-            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-            ${PROJECT_SOURCE_DIR}/third_party/fmtlib/repo/include
+        PRIVATE ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
     )
 endif()
