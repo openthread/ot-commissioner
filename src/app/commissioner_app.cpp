@@ -63,6 +63,10 @@ Error CommissionerApp::Create(std::shared_ptr<CommissionerApp> &aCommApp, const 
     auto  app = std::shared_ptr<CommissionerApp>(new CommissionerApp());
 
     SuccessOrExit(error = app->Init(aConfig));
+    if (aConfig.mCommissionerToken.size() > 0)
+    {
+        app->SetToken(aConfig.mCommissionerToken);
+    }
 
     aCommApp = app;
 

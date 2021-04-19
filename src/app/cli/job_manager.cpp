@@ -317,6 +317,7 @@ update:
     UPDATE_IF_SET(Certificate);
     UPDATE_IF_SET(PrivateKey);
     UPDATE_IF_SET(TrustAnchor);
+    UPDATE_IF_SET(CommissionerToken);
     UPDATE_IF_SET(PSKc);
 
 #undef UPDATE_IF_SET
@@ -333,6 +334,7 @@ update:
     UPDATE_IF_SET(Certificate);
     UPDATE_IF_SET(PrivateKey);
     UPDATE_IF_SET(TrustAnchor);
+    UPDATE_IF_SET(CommissionerToken);
     UPDATE_IF_SET(PSKc);
 
 #undef UPDATE_IF_SET

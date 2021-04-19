@@ -57,6 +57,9 @@ struct SecurityMaterials
     // Mandatory for CCM Thread network.
     ByteArray mTrustAnchor; ///< The trust anchor of 'mCertificate'.
 
+    // Optional for CCM Thread network.
+    ByteArray mCommissionerToken; ///< COM_TOK
+
     bool IsEmpty(bool isCCM)
     {
         return (isCCM ? (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)
