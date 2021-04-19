@@ -1301,7 +1301,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithDomain)
     try
     {
         json = Json::parse(value.ToString());
-    } catch (Json::parse_error e)
+    } catch (Json::parse_error &e)
     {
         EXPECT_TRUE(false) << "Failed to parse value: " << e.what();
     }
@@ -1342,7 +1342,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithoutDomain)
     try
     {
         json = Json::parse(value.ToString());
-    } catch (Json::parse_error e)
+    } catch (Json::parse_error &e)
     {
         EXPECT_TRUE(false) << "Failed to parse value: " << e.what();
     }
