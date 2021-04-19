@@ -102,6 +102,21 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
         }
         *element.second = bytes;
     }
+
+    do
+    {
+        std::string path = domPath + "tok.cbor";
+        if (ERROR_NONE != PathExists(path))
+        {
+            break;
+        }
+        ByteArray bytes;
+        Error     tokenError = ReadHexStringFile(bytes, path);
+        if (ERROR_NONE == tokenError)
+        {
+            aSM.mCommissionerToken = bytes;
+        }
+    } while (false);
 exit:
     return error;
 }
@@ -148,6 +163,21 @@ static Error GetNetworkSM_impl(const std::string  aNwkFolder,
             }
             *element.second = bytes;
         }
+
+        do
+        {
+            std::string path = nwkPath + "tok.cbor";
+            if (ERROR_NONE != PathExists(path))
+            {
+                break;
+            }
+            ByteArray bytes;
+            Error     tokenError = ReadHexStringFile(bytes, path);
+            if (ERROR_NONE == tokenError)
+            {
+                aSM.mCommissionerToken = bytes;
+            }
+        } while (false);
     }
     else
     {
