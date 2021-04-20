@@ -47,12 +47,10 @@ target_include_directories(commissioner-common
         ${PROJECT_SOURCE_DIR}/src
 )
 
-if (BUILD_SHARED_LIBS)
-    install(TARGETS commissioner-common
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-    )
-endif()
+install(TARGETS commissioner-common
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+)
 
 if (OT_COMM_TEST)
     add_library(commissioner-common-test OBJECT

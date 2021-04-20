@@ -109,27 +109,34 @@ install(TARGETS commissioner
 ## Install third-party shared libraries. We need to install
 ## those shared libraries to enable commissioner-cli.
 ##
-## We here install the built .so files directly
+## We here install the .a/.so files directly
 ## because those third-party libraries are included
 ## as EXCLUDE_FROM_ALL, which means `install()` is
 ## disabled for them (intended).
-if (BUILD_SHARED_LIBS)
-    install(FILES
-            $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cn-cbor::cn-cbor>>
-            $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cose>>
-            $<$<BOOL:${OT_COMM_APP}>:$<TARGET_FILE:mdns>>
-            $<TARGET_FILE:mbedtls>
-            $<TARGET_FILE:mbedx509>
-            $<TARGET_FILE:mbedcrypto>
-            $<TARGET_FILE:fmt::fmt>
-            $<TARGET_FILE:event_core_shared>
-            $<TARGET_FILE:event_pthreads_shared>
-            DESTINATION lib
-    )
 
-    ## Update ldconfig links and caches.
-    install(CODE "execute_process(COMMAND sudo ldconfig)")
+if (BUILD_SHARED_LIBS)
+    set(EVENT_CORE event_core_shared)
+    set(EVENT_PTHREADS event_pthreads_shared)
+else()
+    set(EVENT_CORE event_core_static)
+    set(EVENT_PTHREADS event_pthreads_static)
 endif()
+
+install(FILES
+        $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cn-cbor::cn-cbor>>
+        $<$<BOOL:${OT_COMM_CCM}>:$<TARGET_FILE:cose>>
+        $<$<BOOL:${OT_COMM_APP}>:$<TARGET_FILE:mdns>>
+        $<TARGET_FILE:mbedtls>
+        $<TARGET_FILE:mbedx509>
+        $<TARGET_FILE:mbedcrypto>
+        $<TARGET_FILE:fmt::fmt>
+        $<TARGET_FILE:${EVENT_CORE}>
+        $<TARGET_FILE:${EVENT_PTHREADS}>
+        DESTINATION lib
+)
+
+## Update ldconfig links and caches.
+install(CODE "execute_process(COMMAND sudo ldconfig)")
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/commissioner
         DESTINATION include
