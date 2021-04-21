@@ -225,6 +225,12 @@ form_network() {
     sudo "${OT_CTL}" state
 }
 
+petition_commissioner() {
+    local ba_port
+    ba_port="$(sudo "${OT_CTL}" ba port | grep -o '[0-9]\+')"
+    send_command_to_commissioner "start :: ${ba_port}"
+}
+
 start_border_agent_mdns_service() {
     ## See etc/avahi/services/border-agent.service
     ## for the service registration.
