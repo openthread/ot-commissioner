@@ -124,11 +124,6 @@ static constexpr uint16_t kDefaultAeUdpPort = 1001;
 static constexpr uint16_t kDefaultNmkpUdpPort = 1002;
 
 /**
- * The fixed primary backbone router anycast locator.
- */
-static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
-
-/**
  * If using radio 915Mhz. Default radio freq of Thread is 2.4Ghz.
  *
  * Used to encoding ChannelMask TLV.

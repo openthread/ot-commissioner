@@ -504,19 +504,6 @@ public:
     virtual Error Resign() = 0;
 
     /**
-     * @brief Set the Mesh-local Prefix of current connected Thread network.
-     *
-     * The user should get the Mesh-local Prefix with `GetActiveDataset` and set the prefix
-     * with this method, before initiating any other MGMT commands.
-     *
-     * @param[in] aMeshLocalPrefix  The Mesh-local Prefix of current Thread network.
-     *
-     * @retval Error::kNone         Successfully set the Mesh-local Prefix.
-     * @retval Error::kInvalidArgs  The Mesh-local Prefix is not valid.
-     */
-    virtual Error SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix) = 0;
-
-    /**
      * @brief Asynchronously get the Commissioner Dataset.
      *
      * This method request Commissioner Dataset from the leader of the Thread network
