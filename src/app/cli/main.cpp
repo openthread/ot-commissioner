@@ -78,9 +78,6 @@ static void PrintVersion()
 static Interpreter gInterpreter;
 static sigset_t    gSignalSet;
 
-// TODO wire up registry through the command line parameters
-::ot::commissioner::persistent_storage::registry gRegistry("./registry.json");
-
 static void HandleSignalInterrupt()
 {
     int signalNum = 0;
