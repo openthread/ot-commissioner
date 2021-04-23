@@ -1298,15 +1298,9 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         {
             // Check mandatory fields present
             // By Thread 1.1.1 spec table 8-4
-            // TODO [MP] by #18: Replace the current with commented.
-            //   Commented is the behavior by the spec. The code in effect is the one by implementation of the OT BR
-            //   Border Agent component.
-            // constexpr const uint32_t kMandatoryFieldsBits =
-            //     (BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kThreadVersionBit |
-            //      BorderAgent::kStateBit | BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
             constexpr const uint32_t kMandatoryFieldsBits =
                 (BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kThreadVersionBit |
-                 BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
+                 BorderAgent::kStateBit | BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
             if ((iter->mPresentFlags & kMandatoryFieldsBits) != kMandatoryFieldsBits)
             {
                 value = Value(ERROR_REJECTED("Missing mandatory border agent fields"));
