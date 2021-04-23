@@ -207,7 +207,7 @@ expect {
 EOF
 }
 
-call_ot_ctl() {
+ot_ctl() {
     sudo timeout -k 5 10 "${OT_CTL}" "$@"
 }
 
@@ -216,17 +216,17 @@ call_ot_ctl() {
 form_network() {
     local pskc=$1
 
-    call_ot_ctl channel "${CHANNEL}"
-    call_ot_ctl panid "${PANID}"
-    call_ot_ctl extpanid "${XPANID}"
-    call_ot_ctl pskc "${pskc}"
-    call_ot_ctl masterkey "${MASTERKEY}"
-    call_ot_ctl ifconfig up
-    call_ot_ctl thread start
+    ot_ctl channel "${CHANNEL}"
+    ot_ctl panid "${PANID}"
+    ot_ctl extpanid "${XPANID}"
+    ot_ctl pskc "${pskc}"
+    ot_ctl masterkey "${MASTERKEY}"
+    ot_ctl ifconfig up
+    ot_ctl thread start
 
     sleep 3
 
-    call_ot_ctl state
+    ot_ctl state
 }
 
 start_border_agent_mdns_service() {
