@@ -1,4 +1,4 @@
-<#!/bin/bash
+#!/bin/bash
 #
 #  Copyright (c) 2021, The OpenThread Commissioner Authors.
 #  All rights reserved.
@@ -31,9 +31,17 @@
 
 mdns_announce_add_th() {
 	sudo cp ${CUR_DIR}/etc/test_harness/* /etc/avahi/services/
+
+    local ba_port
+    ba_port="$(sudo "${OT_CTL}" ba port | grep -o '[0-9]\+')"
+	sudo sed -i "s/49191/$ba_port/" /etc/avahi/services/border-agent.service
+	cat /etc/avahi/services/border-agent.service
 	sleep 3
+	start_border_agent_mdns_service
+
 	send_command_to_commissioner "br scan --timeout 1000 --export /tmp/nwk.json"
 	sed -i '/Addr/ s/^.*$/"Addr": "::1",/' /tmp/nwk.json
+
 	send_command_to_commissioner "br add /tmp/nwk.json"
 	rm -f /tmp/nwk.json
 	sudo rm -f /etc/avahi/services/*.service
@@ -43,15 +51,14 @@ test_network_list() {
     set -e
 
     start_border_agent_mdns_service
-    start_commissioner "${NON_CCM_CONFIG}"
 	mdns_hosts_map_addresses
+    start_commissioner "${NON_CCM_CONFIG}"
 	commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
 
 	send_command_to_commissioner "network list" "thread1"
 	
     stop_commissioner
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
 test_select_identify() {
@@ -74,13 +81,10 @@ test_select_identify() {
 
     stop_commissioner
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
 test_start_stop_selected() {
     set -e
-
-    start_border_agent_mdns_service
 
 	start_daemon
 	form_network "${PSKC}"
@@ -89,6 +93,7 @@ test_start_stop_selected() {
 
 	mdns_announce_add_th
 
+	send_command_to_commissioner "br list"
 	send_command_to_commissioner "network identify" "none"
 	send_command_to_commissioner "network select openthread-test"
 	send_command_to_commissioner "start"
@@ -101,7 +106,6 @@ test_start_stop_selected() {
 
     stop_commissioner
 	stop_daemon
-    stop_border_agent_mdns_service
 }
 
 test_start_stop_mn_explicit() {
@@ -109,8 +113,6 @@ test_start_stop_mn_explicit() {
 
 	aods_fn="/tmp/aods.json"
 	
-    start_border_agent_mdns_service
-
 	start_daemon
 	form_network "${PSKC}"
 
@@ -129,7 +131,6 @@ test_start_stop_mn_explicit() {
     stop_commissioner
 	stop_daemon
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
 test_start_stop_mn_all() {
@@ -137,8 +138,6 @@ test_start_stop_mn_all() {
 
 	aods_fn="/tmp/aods.json"
 	
-    start_border_agent_mdns_service
-
 	start_daemon
 	form_network "${PSKC}"
 
@@ -162,7 +161,6 @@ test_start_stop_mn_all() {
     stop_commissioner
 	stop_daemon
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
 test_start_stop_mn_other() {
@@ -170,8 +168,6 @@ test_start_stop_mn_other() {
 
 	aods_fn="/tmp/aods.json"
 	
-    start_border_agent_mdns_service
-
 	start_daemon
 	form_network "${PSKC}"
 
@@ -197,7 +193,6 @@ test_start_stop_mn_other() {
     stop_commissioner
 	stop_daemon
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
 test_start_stop_mn_dom() {
@@ -205,8 +200,6 @@ test_start_stop_mn_dom() {
 
 	aods_fn="/tmp/aods.json"
 	
-    start_border_agent_mdns_service
-
 	start_daemon
 	form_network "${PSKC}"
 
@@ -233,41 +226,41 @@ test_start_stop_mn_dom() {
     stop_commissioner
 	stop_daemon
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
-_network_management() {
+test_network_management() {
     set -e
 
-    start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
+	start_border_agent_mdns_service
 	mdns_hosts_map_addresses
 	commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
+
+	send_command_to_commissioner "br list"
+	send_command_to_commissioner "network list"
 
 	send_command_to_commissioner "network list --nwk thread1" "1111111111111111"
 	send_command_to_commissioner "network list --dom TestDomainName" "2222222222222222"
 	send_command_to_commissioner "network list --nwk all" "3333333333333333"
-	send_command_to_commissioner "network list --dom all" "3333333333333333"
 	send_command_to_commissioner "network select thread3"
 	send_command_to_commissioner "network list --nwk this" "3333333333333333"
 	send_command_to_commissioner "network list --nwk other" "2222222222222222"
 	send_command_to_commissioner "network list --dom this" "3333333333333333"
 
-	send_command_to_commissioner "domain list --dom all" "TestDomainName2"
-	send_command_to_commissioner "domain list --dom all" "TestDomainName"
 	send_command_to_commissioner "domain list --dom this" "TestDomainName2"
-	send_command_to_commissioner "domain list --dom other" "TestDomainName"
 
-	send_command_to_commissioner "br list --nwk thread1" '"addr": "::1"'
-	send_command_to_commissioner "br list --nwk thread2" '"addr": "::3"'
-	send_command_to_commissioner "br list --dom TestDomainName" '"addr": "::1"'
-	send_command_to_commissioner "br list --dom TestDomainName2" '"addr": "::4"'
+	send_command_to_commissioner "br list --nwk thread1" '"addr": "::2"'
+	send_command_to_commissioner "br list --nwk thread2" '"addr": "::4"'
+	send_command_to_commissioner "br list --dom TestDomainName" '"addr": "::2"'
+	send_command_to_commissioner "br list --dom TestDomainName2" '"addr": "::5"'
 	send_command_to_commissioner "network select none"
 
 	send_command_to_commissioner "br delete 3"
 	send_command_to_commissioner "br list --dom TestDomainName2" '\[failed\]'
 	send_command_to_commissioner "br delete --nwk thread2"
 	send_command_to_commissioner "br list --nwk thread2" '\[failed\]'
+	send_command_to_commissioner "br list"
+	send_command_to_commissioner "network list"
 	## Recursive behavior: RB 3 was last in NWK thread3 dom TestDomainName2
 	send_command_to_commissioner "network list --nwk thread3" '\[failed\]'
 	send_command_to_commissioner "domain list  --dom TestDomainName2" '\[failed\]'
@@ -279,7 +272,6 @@ _network_management() {
 	
     stop_commissioner
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 }
 
 test_mn_input_data() {
@@ -303,8 +295,6 @@ test_mn_input_data() {
 test_mn_input_data_export_import() {
     set -e
 
-    start_border_agent_mdns_service
-
     start_daemon
     form_network "${PSKC}"
 
@@ -324,15 +314,12 @@ test_mn_input_data_export_import() {
 
     stop_commissioner
     stop_daemon
-	stop_border_agent_mdns_service
 
 	rm -f /tmp/aods.json
 }
 
 test_start_on_fake_br_data() {
 	set -e
-
-	start_border_agent_mdns_service
 
 	start_daemon
 	form_network "${PSKC}"
@@ -348,5 +335,4 @@ test_start_on_fake_br_data() {
 
 	stop_commissioner
 	stop_daemon
-	stop_border_agent_mdns_service
 }

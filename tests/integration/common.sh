@@ -89,6 +89,8 @@ start_daemon() {
     sudo "${OT_DAEMON}" -Iwpan0 -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
 
     sleep 10
+
+	pidof ot-daemon || die "Failed to start ot-daemon"
 }
 
 stop_daemon() {
@@ -244,23 +246,13 @@ install_borderagent_mdns_data() {
 		exit 1
 	}
 
+	sudo rm -f /etc/avahi/services/*.service
 	sudo cp "${ba_mdns_data_dir}"/* /etc/avahi/services/
 	sleep 3
 }
 
 uninstall_borderagent_mdns_data() {
-	local ba_mdns_data_dir=$1
-
-	[[ -d "${ba_mdns_data_dir}" ]] || {
-		echo "'${ba_mdns_data_dir}' is not a directory"
-		exit 1
-	}
-
-	for fname in $(ls -1 ${ba_mdns_data_dir})
-	do
-		# We really want to sudo here
-		sudo rm -f /etc/avahi/services/${fname}
-	done
+	sudo rm -f /etc/avahi/services/*.service
 }
 
 start_border_agent_mdns_service() {
@@ -308,6 +300,7 @@ commissioner_mdns_scan_import() {
 	set -e
 	local src_dir=$1
 
+	sudo rm -f /etc/avahi/services/*.service
 	rm -f /tmp/nwk.json
 	for i in $(ls -1 $src_dir)
 	do

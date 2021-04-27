@@ -38,6 +38,7 @@
 ##
 
 . "$(dirname "$0")"/common.sh
+
 . "$(dirname "$0")"/test_announce_begin.sh
 . "$(dirname "$0")"/test_br_scan.sh
 . "$(dirname "$0")"/test_ccm.sh
@@ -67,6 +68,7 @@ run_test_case() {
     ## we cannot declare output with `local`,
     ## because `local` is a command and its return value iwll override
     ## return value of the test case.
+
     $(set -xeuo pipefail && ${test_case} &> "${output_file}")
     local result=$?
 

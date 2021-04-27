@@ -40,8 +40,6 @@ test_br_scan() {
     send_command_to_commissioner "br scan"
 
     stop_commissioner
-    stop_border_agent_mdns_service
-	uninstall_borderagent_mdns_data etc/br_scan_initial
 }
 
 test_br_scan_export() {
@@ -49,19 +47,20 @@ test_br_scan_export() {
 
     start_border_agent_mdns_service
 	mdns_hosts_map_addresses
+	sudo rm -f /etc/avahi/services/*.service
 	sudo cp ${CUR_DIR}/etc/br_scan_initial/br_scan_border_agent-1.service /etc/avahi/services/
+	sleep 3
     start_commissioner "${NON_CCM_CONFIG}"
 
     send_command_to_commissioner "br scan --export /tmp/br_scan_export.json"
 
     stop_commissioner
-	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 	
 	grep -q "Addr" /tmp/br_scan_export.json
 	jsonlint-php /tmp/br_scan_export.json
 	rm -f /tmp/br_scan_export.json
 	sudo rm -f /etc/avahi/services/br_scan_border_agent-1.service
+	mdns_hosts_unmap_addresses
 }
 
 test_registry() {
@@ -76,7 +75,6 @@ test_registry() {
 	
     stop_commissioner
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 
 	rm -f /tmp/br_scan_export.json
 }
@@ -103,8 +101,7 @@ test_scan_filter() {
 
     stop_commissioner
 	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
-
+ 
 	rm -f /tmp/br_scan_export.json
 }
 
@@ -131,8 +128,6 @@ test_br_update_on_add() {
 	send_command_to_commissioner "br list --nwk thread3" '\:\:6'
 
     stop_commissioner
-	mdns_hosts_unmap_addresses
-    stop_border_agent_mdns_service
 	uninstall_borderagent_mdns_data etc/br_scan_modified
 
 	rm -f /tmp/br_scan_export.json /tmp/nwk-thread2.json
