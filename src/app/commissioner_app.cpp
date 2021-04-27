@@ -1006,18 +1006,6 @@ const std::string &CommissionerApp::GetDomainName() const
     return mCommissioner->GetDomainName();
 }
 
-Error CommissionerApp::GetPrimaryBbrAddr(std::string &aAddr)
-{
-    Error       error;
-    std::string meshLocalPrefix;
-
-    SuccessOrExit(error = GetMeshLocalPrefix(meshLocalPrefix));
-    SuccessOrExit(error = GetMeshLocalAddr(aAddr, meshLocalPrefix, kPrimaryBbrAloc16));
-
-exit:
-    return error;
-}
-
 const ByteArray &CommissionerApp::GetToken() const
 {
     return mSignedToken;

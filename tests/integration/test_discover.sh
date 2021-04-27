@@ -41,7 +41,5 @@ test_discover() {
     send_command_to_commissioner "borderagent discover"
 
     stop_commissioner
-    stop_border_agent_mdns_service
 
-	uninstall_borderagent_mdns_data "${CUR_DIR}/../etc/avahi/services"
 }

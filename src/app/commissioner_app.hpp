@@ -268,7 +268,6 @@ public:
     MOCKABLE const EnergyReportMap &GetAllEnergyReports() const;
 
     const std::string &GetDomainName() const;
-    Error              GetPrimaryBbrAddr(std::string &aAddr);
 
 private:
     friend Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);
