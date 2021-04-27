@@ -607,7 +607,7 @@ registry_status registry::delete_border_router_by_id(const border_router_id rout
             VerifyOrExit((status = map_status(storage->lookup(pred, routers))) == REG_SUCCESS);
             if (routers.size() <= 1)
             {
-                status = REG_ERROR;
+                status = REG_RESTRICTED;
                 goto exit;
             }
         }
@@ -643,7 +643,11 @@ registry_status registry::delete_border_routers_in_networks(const StringArray &a
     // Check aliases acceptable
     for (auto alias : aliases)
     {
-        if (alias == ALIAS_ALL || alias == ALIAS_THIS || (alias == ALIAS_OTHER && aliases.size() > 1))
+        if (alias == ALIAS_THIS)
+        {
+            return REG_RESTRICTED;
+        }
+        if (alias == ALIAS_ALL || (alias == ALIAS_OTHER && aliases.size() > 1))
         {
             return REG_DATA_INVALID;
         }
@@ -662,7 +666,7 @@ registry_status registry::delete_border_routers_in_networks(const StringArray &a
         auto found = std::find_if(nwks.begin(), nwks.end(), [&](const network &a) { return a.id.id == current.id.id; });
         if (found != nwks.end())
         {
-            status = REG_DATA_INVALID;
+            status = REG_RESTRICTED;
             goto exit;
         }
     }
@@ -733,7 +737,7 @@ registry_status registry::delete_border_routers_in_domain(const std::string &dom
 
         if (currentDomain.name == domain_name)
         {
-            status = REG_DATA_INVALID;
+            status = REG_RESTRICTED;
             goto exit;
         }
     }
