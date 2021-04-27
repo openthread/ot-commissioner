@@ -60,6 +60,7 @@ enum registry_status
     REG_DATA_INVALID,
     REG_AMBIGUITY, /**< lookup result was ambiguous */
     REG_ERROR,     /**< operation failed */
+    REG_RESTRICTED /**< operation restricted */
 };
 
 typedef std::vector<std::string> StringArray;

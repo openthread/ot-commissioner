@@ -1407,29 +1407,53 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 value = ERROR_INVALID_ARGS("Failed to evaluate border router ID '{}'", aExpr[2]);
                 goto exit;
             }
-            VerifyOrExit(mRegistry->delete_border_router_by_id(brId) == registry_status::REG_SUCCESS,
-                         value = ERROR_IO_ERROR("Failed to delete border router ID {}", aExpr[2]));
+            auto status = mRegistry->delete_border_router_by_id(brId);
+            if (status == registry_status::REG_RESTRICTED)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border router ID {}: last router in the current network",
+                                       aExpr[2]);
+            }
+            else if (status != registry_status::REG_SUCCESS)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border router ID {}", aExpr[2]);
+            }
+            VerifyOrExit(status == registry_status::REG_SUCCESS);
         }
         else if (mContext.mNwkAliases.size() > 0)
         {
             StringArray unresolved;
             // Remove all border agents in the networks
-            VerifyOrExit(mRegistry->delete_border_routers_in_networks(mContext.mNwkAliases, unresolved) ==
-                             registry_status::REG_SUCCESS,
-                         value = Error(ErrorCode ::kIOError, "Failed to delete border routers"));
+            auto status = mRegistry->delete_border_routers_in_networks(mContext.mNwkAliases, unresolved);
+            if (status == registry_status::REG_RESTRICTED)
+            {
+                value = ERROR_IO_ERROR("Can't delete all border routers from the current network");
+            }
+            else if (status != registry_status::REG_SUCCESS)
+            {
+                value = Error(ErrorCode ::kIOError, "Failed to delete border routers");
+            }
             // Report unresolved aliases
             for (auto &&alias : unresolved)
             {
                 PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
             }
+            VerifyOrExit(status == registry_status::REG_SUCCESS);
         }
         else if (mContext.mDomAliases.size() > 0)
         {
             StringArray undeleted;
             // Remove all border agents in the domain
-            VerifyOrExit(
-                mRegistry->delete_border_routers_in_domain(mContext.mDomAliases[0]) == registry_status::REG_SUCCESS,
-                value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}'", mContext.mDomAliases[0]));
+            auto status = mRegistry->delete_border_routers_in_domain(mContext.mDomAliases[0]);
+            if (status == registry_status::REG_RESTRICTED)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}' of the current network",
+                                       mContext.mDomAliases[0]);
+            }
+            else if (status != registry_status::REG_SUCCESS)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}'", mContext.mDomAliases[0]);
+            }
+            VerifyOrExit(status == registry_status::REG_SUCCESS);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[1], "scan"))
