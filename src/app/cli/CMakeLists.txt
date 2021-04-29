@@ -46,11 +46,6 @@ target_link_libraries(commissioner-cli
         readline
 )
 
-target_compile_definitions(commissioner-cli
-    PUBLIC
-        OT_COMM_VERSION="${PROJECT_VERSION}"
-)
-
 install(TARGETS commissioner-cli
         RUNTIME DESTINATION bin
 )

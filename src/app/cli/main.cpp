@@ -38,10 +38,6 @@
 #include "app/cli/interpreter.hpp"
 #include "common/utils.hpp"
 
-#ifndef OT_COMM_VERSION
-#error "OT_COMM_VERSION not defined"
-#endif
-
 using namespace ot::commissioner;
 
 /**
@@ -74,7 +70,7 @@ static void PrintUsage(const std::string &aProgram)
 
 static void PrintVersion()
 {
-    Console::Write(OT_COMM_VERSION, Console::Color::kWhite);
+    Console::Write(Commissioner::GetVersion(), Console::Color::kWhite);
 }
 
 static Interpreter gInterpreter;

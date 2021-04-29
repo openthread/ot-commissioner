@@ -85,6 +85,7 @@ target_link_libraries(commissioner
         event_pthreads
         $<$<NOT:$<BOOL:${OT_COMM_ANDROID}>>:pthread>
         commissioner-common
+        commissioner-version
 )
 
 target_compile_definitions(commissioner
