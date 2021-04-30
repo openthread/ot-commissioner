@@ -1743,7 +1743,6 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
         VerifyOrExit(mRegistry->get_networks_in_domain(mContext.mDomAliases[0], networks) ==
                          registry_status::REG_SUCCESS,
                      value = ERROR_NOT_FOUND("failed to find networks in domain '{}'", mContext.mDomAliases[0]));
-        ExitNow(value = ERROR_NONE);
     }
     else if (mContext.mNwkAliases.size() == 0)
     {
