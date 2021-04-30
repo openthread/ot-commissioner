@@ -36,6 +36,21 @@ registry_status map_status(ps_status ps_st)
     return REG_ERROR;
 }
 
+registry_status is_xpan_string(std::string candidate)
+{
+    if (candidate.empty() || candidate.length() > 16)
+        return REG_ERROR;
+    for (auto c : candidate)
+    {
+        if (!std::isxdigit(c))
+        {
+            return REG_ERROR;
+        }
+    }
+
+    return REG_SUCCESS;
+}
+
 const std::string ALIAS_THIS{"this"};
 const std::string ALIAS_ALL{"all"};
 const std::string ALIAS_OTHER{"other"};
@@ -435,7 +450,12 @@ registry_status registry::get_networks_by_aliases(const StringArray &aliases,
         else
         {
             network nwk;
-            status = get_network_by_xpan(alias, nwk);
+
+            status = is_xpan_string(alias);
+            if (status == REG_SUCCESS)
+            {
+                status = get_network_by_xpan(alias, nwk);
+            }
             if (status != REG_SUCCESS)
             {
                 status = get_network_by_name(alias, nwk);
