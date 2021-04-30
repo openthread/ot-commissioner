@@ -241,6 +241,11 @@ static void from_json(const Json &aJson, Config &aConfig)
         SuccessOrThrow(ReadPemFile(aConfig.mTrustAnchor, aJson["TrustAnchorFile"]));
     }
 
+    if (aJson.contains("ComTokFile"))
+    {
+        SuccessOrThrow(ReadHexStringFile(aConfig.mCommissionerToken, aJson["ComTokFile"]));
+    }
+
     if (aJson.contains("ThreadSMRoot"))
     {
         aConfig.mThreadSMRoot = aJson["ThreadSMRoot"];

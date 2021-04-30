@@ -33,6 +33,7 @@
 
 #include "app/cli/security_materials.hpp"
 #include <string>
+#include "app/cli/console.hpp"
 #include "common/error_macros.hpp"
 #include "common/file_util.hpp"
 #include "common/utils.hpp"
@@ -68,7 +69,7 @@ Error Init(const Config &aDefaultConfig)
         root = STR_SAFE(getenv("THREAD_SM_ROOT"));
         if (root.empty())
         {
-            return ERROR_INVALID_ARGS("ThreadSMRoot value is not available");
+            Console::Write("ThreadSMRoot value is not available", Console::Color::kYellow);
         }
     }
     smRoot.Set(root);
@@ -82,8 +83,8 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
     std::vector<SMPair> smElements{
         {"cert.pem", &aSM.mCertificate}, {"priv.pem", &aSM.mPrivateKey}, {"ca.pem", &aSM.mTrustAnchor}};
 
-    VerifyOrExit(!smRoot.Get().empty(),
-                 error = ERROR_INVALID_ARGS("ThreadSMRoot is not known. Unable to access Security Materials."));
+    // If SM root is unset, do nothing
+    VerifyOrExit(!smRoot.Get().empty());
 
     domPath = smRoot.Get().append("/dom/").append(aDid).append("/");
     SuccessOrExit(error = PathExists(domPath));
@@ -139,8 +140,9 @@ static Error GetNetworkSM_impl(const std::string  aNwkFolder,
     Error       error;
     std::string nwkPath;
 
-    VerifyOrExit(!smRoot.Get().empty(),
-                 error = ERROR_INVALID_ARGS("ThreadSMRoot is not known. Unable to access Security Materials."));
+    // If SM root is unset, do nothing
+    VerifyOrExit(!smRoot.Get().empty());
+
     nwkPath = smRoot.Get().append(aNwkFolder).append(aAlias).append("/");
     SuccessOrExit(error = PathExists(nwkPath));
     if (aCCM)

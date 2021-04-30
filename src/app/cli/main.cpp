@@ -98,7 +98,6 @@ int main(int argc, const char *argv[])
     using namespace ::ot::commissioner::utils;
 
     Error       error;
-    Config      config;
     std::string registryFileName;
 
     if (argc < 2 || ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
