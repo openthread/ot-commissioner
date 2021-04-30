@@ -44,6 +44,7 @@
 . "$(dirname "$0")"/test_discover.sh
 . "$(dirname "$0")"/test_energy_scan.sh
 . "$(dirname "$0")"/test_joining.sh
+. "$(dirname "$0")"/test_native_commissioner.sh
 . "$(dirname "$0")"/test_operational_dataset.sh
 . "$(dirname "$0")"/test_pan_id_query.sh
 . "$(dirname "$0")"/test_petition.sh
