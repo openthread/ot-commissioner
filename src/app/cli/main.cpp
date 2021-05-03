@@ -35,6 +35,8 @@
 
 #include <signal.h>
 
+#include <getopt.h>
+
 #include "app/cli/interpreter.hpp"
 #include "common/utils.hpp"
 
@@ -64,8 +66,17 @@ static const std::string kLogo =
 static void PrintUsage(const std::string &aProgram)
 {
     static const std::string usage = "usage: \n"
-                                     "    " +
-                                     aProgram + " [<config-file>]";
+                                     "help digest:\n    " +
+                                     aProgram +
+                                     "-h|--help\n"
+                                     "version:\n    " +
+                                     aProgram +
+                                     "-v|--version\n"
+                                     "common options\n    " +
+                                     aProgram +
+                                     "[-r|--registry <registryFileName>] [-c|--config <configFileName>]\n"
+                                     "or\n    " +
+                                     aProgram + " [-r|--registry <registryFileName>] [configFileName]";
 
     Console::Write(usage, Console::Color::kWhite);
 }
@@ -89,35 +100,59 @@ static void HandleSignalInterrupt()
     }
 }
 
+static option commissioner_cli_options[] = {{"help", no_argument, nullptr, 'h'},
+                                            {"version", no_argument, nullptr, 'v'},
+                                            {"registry", required_argument, nullptr, 'r'},
+                                            {"config", required_argument, nullptr, 'c'},
+                                            {nullptr, 0, nullptr, 0}};
+
 int main(int argc, const char *argv[])
 {
     using namespace ::ot::commissioner::utils;
 
-    Error       error;
-    std::string configFile;
-    std::string registryFileName;
+    Error error;
 
-    if (argc >= 2)
+    std::string progName = argv[0];
+    std::string registryFileName;
+    std::string configFileName;
+
+    int  ch;
+    bool parse_params = true;
+
+    while (parse_params)
     {
-        if (ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
+        ch = getopt_long(argc, (char *const *)argv, "hvc:r:", commissioner_cli_options, nullptr);
+        switch (ch)
         {
-            PrintUsage(argv[0]);
+        case 'h':
+            PrintUsage(progName);
             ExitNow();
-        }
-        else if (ToLower(argv[1]) == "-v" || ToLower(argv[1]) == "--version")
-        {
+            break;
+        case 'v':
             PrintVersion();
             ExitNow();
-        }
-        else
-        {
-            configFile = argv[1];
-        }
+            break;
+        case 'r':
+            registryFileName = optarg;
+            break;
+        case 'c':
+            configFileName = optarg;
+            break;
+        default:
+            parse_params = false;
+            break;
+        };
     }
+    argc -= optind;
+    argv += optind;
 
-    if (argc == 4 && ToLower(argv[2]) == "-r")
+    if (configFileName.empty())
     {
-        registryFileName = argv[3];
+        // If any option left unprocessed then it must be a config file path
+        if (argc != 0)
+        {
+            configFileName = argv[0];
+        }
     }
 
     // Block signals in this thread and subsequently spawned threads.
@@ -129,7 +164,7 @@ int main(int argc, const char *argv[])
 
     Console::Write(kLogo, Console::Color::kBlue);
 
-    SuccessOrExit(error = gInterpreter.Init(configFile, registryFileName));
+    SuccessOrExit(error = gInterpreter.Init(configFileName, registryFileName));
 
     gInterpreter.Run();
 
