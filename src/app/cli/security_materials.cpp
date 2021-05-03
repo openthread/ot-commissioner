@@ -99,9 +99,13 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
         error = ReadPemFile(bytes, path);
         if (error != ERROR_NONE)
         {
-            // log error
+            std::string out = fmt::format(FMT_STRING("Failed to read security data from file {}"), path);
+            Console::Write(out, Console::Color::kRed);
         }
-        *element.second = bytes;
+        else
+        {
+            *element.second = bytes;
+        }
     }
 
     do
@@ -161,9 +165,13 @@ static Error GetNetworkSM_impl(const std::string  aNwkFolder,
             error = ReadPemFile(bytes, path);
             if (error != ERROR_NONE)
             {
-                // log error
+                std::string out = fmt::format(FMT_STRING("Failed to read security data from file {}"), path);
+                Console::Write(out, Console::Color::kRed);
             }
-            *element.second = bytes;
+            else
+            {
+                *element.second = bytes;
+            }
         }
 
         do
