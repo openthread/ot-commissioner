@@ -488,6 +488,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
         Interpreter::StringArray{"br", "scan"},
         Interpreter::StringArray{"domain", "list"},
         Interpreter::StringArray{"network", "list"},
+        Interpreter::StringArray{"token", "request"},
     };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
