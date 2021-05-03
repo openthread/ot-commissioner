@@ -71,8 +71,9 @@ test_native_commissioner() {
     ba_lla=$(grep -A+1 'ipaddr linklocal' "${LEADER_OUTPUT}" | tail -n1 | tr -d '\r\n')
     ba_port=$(grep -A+1 'ba port' "${LEADER_OUTPUT}" | tail -n1 | tr -d '\r\n')
 
+    # Thread of the daemon node is disabled so that the daemon transmits un-secure
+    # 15.4 frames to the Border Agent node on behalf of the commissioner.
     start_daemon
-
     ot_ctl ifconfig up
     ot_ctl panid 0xface
 
