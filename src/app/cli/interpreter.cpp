@@ -1660,8 +1660,7 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "select"))
     {
-        Interpreter::Value value;
-        ::nlohmann::json   json;
+        ::nlohmann::json json;
 
         VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_SYNTAX("too many arguments"));
         if (CaseInsensitiveEqual(aExpr[2], "none"))
@@ -1680,8 +1679,8 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
                                                                    xpans.size(), aExpr[2]));
             VerifyOrExit(mRegistry->set_current_network(xpans[0]) == REG_SUCCESS,
                          value = ERROR_IO_ERROR("network set failed"));
-            value = std::string("done");
         }
+        value = std::string("done");
     }
     else if (CaseInsensitiveEqual(aExpr[1], "identify"))
     {

@@ -1231,7 +1231,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNonexisting)
 
     expr  = ctx.mInterpreter.ParseExpression("network select 3");
     value = ctx.mInterpreter.Eval(expr);
-    EXPECT_TRUE(value.HasNoError());
+    EXPECT_FALSE(value.HasNoError());
     EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 }
@@ -2019,12 +2019,10 @@ TEST_F(InterpreterTestSuite, PC_BrAddNoMandatoryFail)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    // TODO [MP] re-enable with #18 fixed
-    // TODO [MP] Add missing checks with #18 fixed
-    // EXPECT_EQ(WriteFile(brJsonNoState, "./json.json"), Error{});
-    // expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
-    // value = ctx.mInterpreter.Eval(expr);
-    // EXPECT_FALSE(value.HasNoError());
+    EXPECT_EQ(WriteFile(brJsonNoState, "./json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
 }
 
 TEST_F(InterpreterTestSuite, PC_BrAddWrongLocalNwkDataFail)
