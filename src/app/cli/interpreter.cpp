@@ -809,7 +809,7 @@ bool Interpreter::IsFeatureSupported(const std::vector<StringArray> &aArr, const
 {
     for (auto commandCase : aArr)
     {
-        if (commandCase.size() != aExpr.size())
+        if (commandCase.size() > aExpr.size())
             continue;
 
         bool matching = false;
