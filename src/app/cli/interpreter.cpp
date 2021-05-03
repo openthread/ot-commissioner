@@ -503,8 +503,11 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
         Interpreter::StringArray{"opdataset", "get", "pending"},
         Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
     };
+
 const std::vector<Interpreter::StringArray> &Interpreter::mInactiveCommissionerExecution =
-    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"active"}};
+    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"active"},
+                                               Interpreter::StringArray{"token", "request"}};
+
 const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new std::vector<Interpreter::StringArray>{
     Interpreter::StringArray{"bbrdataset", "get"},
     Interpreter::StringArray{"commdataset", "get"},
