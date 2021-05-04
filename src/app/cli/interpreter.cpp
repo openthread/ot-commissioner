@@ -34,8 +34,10 @@
 #include "app/cli/interpreter.hpp"
 
 #include <algorithm>
+#include <fcntl.h>
 #include <functional>
 #include <memory>
+#include <signal.h>
 #include <sstream>
 #include <string.h>
 #include <thread>
@@ -101,7 +103,7 @@ struct FDGuard
         : mFD(aFD)
     {
     }
-    // For the time being it is ennough to call close on all file descriptors to be protected: they're from the POSIX
+    // For the time being it is enough to call close on all file descriptors to be protected: they're from the POSIX
     // environment. If we'd want support for Windows it would be necessary to add support for file descriptor close
     // functions (like, say, closesocket() or even mdns_socket_close()).
     ~FDGuard()
@@ -607,12 +609,26 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
         config.mPSKc.assign(kMaxPSKcLength, 0xff);
         config.mLogger = SysLogger::Create(LogLevel::kDebug);
     }
+
+    int flags;
+
+    mCancelCommand = false;
+
     mJobManager.reset(new JobManager(*this));
     SuccessOrExit(error = mJobManager->Init(config));
     mRegistry.reset(new Registry(aRegistryFile));
     VerifyOrExit(mRegistry != nullptr,
                  error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
     VerifyOrExit(mRegistry->open() == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("registry failed to open"));
+
+    VerifyOrExit(pipe(mCancelPipe) != -1,
+                 error = ERROR_IO_ERROR("failed to initialize command cancellation structures"));
+    // set both pipe FDs non-blocking
+    flags = fcntl(mCancelPipe[0], F_GETFL, 0);
+    fcntl(mCancelPipe[0], F_SETFL, flags | O_NONBLOCK);
+    flags = fcntl(mCancelPipe[1], F_GETFL, 0);
+    fcntl(mCancelPipe[1], F_SETFL, flags | O_NONBLOCK);
+
 exit:
     return error;
 }
@@ -634,17 +650,18 @@ exit:
 
 void Interpreter::CancelCommand()
 {
-#if 0 // TODO: need to understand that Stop() on inactive commissioner
-    if (mCommissioner->IsActive())
-    {
-        mCommissioner->CancelRequests();
-    }
-    else
-    {
-        mCommissioner->Stop();
-    }
-#endif
+    int cancelData = 1;
     mJobManager->CancelCommand();
+    // For commands being handled in place
+    mCancelCommand = true;
+
+    // reading from non-blocking pipe
+    if (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) == -1 && errno == EAGAIN)
+    {
+        cancelData = -1;
+        // No data in the pipe, write is safe (no overflow)
+        write(mCancelPipe[1], &cancelData, sizeof(cancelData));
+    }
 }
 
 Interpreter::Expression Interpreter::Read()
@@ -657,6 +674,11 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     Expression retExpr;
     bool       supported;
     Value      value;
+    int        cancelData;
+
+    mCancelCommand = false;
+    while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
+        ;
 
     // make sure first the command is known
     auto evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
@@ -1473,6 +1495,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         event_base *                              base;
         timeval                                   tvTimeout;
         std::unique_ptr<event, void (*)(event *)> mdnsEvent(nullptr, event_free);
+        std::unique_ptr<event, void (*)(event *)> cancelEvent(nullptr, event_free);
         std::vector<BorderAgentOrErrorMsg>        borderAgents;
         nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
@@ -1520,6 +1543,17 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             event_new(base, mdnsSocket, EV_READ | EV_PERSIST, mdnsReaderParser, &borderAgents), event_free);
         event_add(mdnsEvent.get(), nullptr);
 
+        // Stop event queue on data in the mCancelPipe
+        auto mdnsCancelEventQueue = [](evutil_socket_t aSocket, short aWhat, void *aArg) {
+            (void)aSocket;
+            (void)aWhat;
+            event_base *ev_base = (event_base *)aArg;
+            event_base_loopbreak(ev_base);
+        };
+        cancelEvent = std::unique_ptr<event, void (*)(event *)>(
+            event_new(base, mCancelPipe[0], EV_READ | EV_PERSIST, mdnsCancelEventQueue, base), event_free);
+        event_add(cancelEvent.get(), nullptr);
+
         // Start event loop thread
         selectThread = std::thread([](event_base *aBase) { event_base_dispatch(aBase); }, base);
 
@@ -1534,6 +1568,14 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         }
         // Join the waiting (event loop) thread
         selectThread.join();
+
+        if (mCancelCommand)
+        {
+            int cancelData;
+            while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
+                ;
+            ExitNow(value = ERROR_CANCELLED("Scan cancelled by user"));
+        }
 
         XpanIdArray xpans;
         StringArray unresolved;

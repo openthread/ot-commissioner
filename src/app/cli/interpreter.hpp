@@ -34,6 +34,7 @@
 #ifndef OT_COMM_APP_CLI_INTERPRETER_HPP_
 #define OT_COMM_APP_CLI_INTERPRETER_HPP_
 
+#include <atomic>
 #include <map>
 
 #include "app/border_agent.hpp"
@@ -194,6 +195,9 @@ private:
     std::shared_ptr<Registry>   mRegistry   = nullptr;
 
     bool mShouldExit = false;
+
+    std::atomic_bool mCancelCommand;
+    int              mCancelPipe[2] = {-1, -1};
 
     static const std::map<std::string, std::string> & mUsageMap;
     static const std::map<std::string, Evaluator> &   mEvaluatorMap;

@@ -537,12 +537,28 @@ void JobManager::RunJobs()
 
 void JobManager::CancelCommand()
 {
+    CommissionerAppPtr commissioner = nullptr;
+    Error              error        = ERROR_NONE;
+
     for (auto job : mJobPool)
     {
         ASSERT(job != NULL);
         job->Cancel();
     }
     WaitForJobs();
+
+    error = GetSelectedCommissioner(commissioner);
+    if (error == ERROR_NONE)
+    {
+        if (commissioner->IsActive())
+        {
+            commissioner->CancelRequests();
+        }
+        else
+        {
+            commissioner->Stop();
+        }
+    }
 }
 
 void JobManager::WaitForJobs()
