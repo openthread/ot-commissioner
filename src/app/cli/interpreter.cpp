@@ -138,7 +138,6 @@ int HandleRecord(const struct sockaddr *from,
                  size_t                 length,
                  void *                 border_agent)
 {
-    // TODO [MP] Add fromAddr to error strings
     struct sockaddr_storage fromAddrStorage;
     Address                 fromAddr;
     std::string             fromAddrStr;
@@ -187,7 +186,7 @@ int HandleRecord(const struct sockaddr *from,
         *reinterpret_cast<struct sockaddr_in *>(&addrStorage) = addr;
         if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
         {
-            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv4 address in A record"));
+            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv4 address in A record from {}", fromAddrStr));
         }
 
         addrStr = fromAddr.ToString();
@@ -210,7 +209,7 @@ int HandleRecord(const struct sockaddr *from,
         *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
         if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
         {
-            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv6 address in AAAA record"));
+            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv6 address in AAAA record from {}", fromAddrStr));
         }
 
         addrStr = fromAddr.ToString();
@@ -234,7 +233,8 @@ int HandleRecord(const struct sockaddr *from,
 
             if (key == "rv")
             {
-                VerifyOrExit(value == "1", error = ERROR_BAD_FORMAT("value of TXT Key 'rv' is {} but not 1", value));
+                VerifyOrExit(value == "1", error = ERROR_BAD_FORMAT("value of TXT Key 'rv' is {} but not 1 from {}",
+                                                                    value, fromAddrStr));
             }
             else if (key == "tv")
             {
@@ -246,7 +246,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &bitmap = binaryValue;
                 if (bitmap.size() != 4)
                 {
-                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'sb' is invalid: value={}", utils::Hex(bitmap)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'sb' is invalid: value={} from {}",
+                                                     utils::Hex(bitmap), fromAddrStr));
                 }
 
                 borderAgent.mState.mConnectionMode = (bitmap[3] & 0x07);
@@ -266,8 +267,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &extendPanId = binaryValue;
                 if (extendPanId.size() != 8)
                 {
-                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'xp' is invalid: value={}",
-                                                     utils::Hex(extendPanId)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'xp' is invalid: value={} from {}",
+                                                     utils::Hex(extendPanId), fromAddrStr));
                 }
                 else
                 {
@@ -290,8 +291,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &activeTimestamp = binaryValue;
                 if (activeTimestamp.size() != 8)
                 {
-                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'at' is invalid: value={}",
-                                                     utils::Hex(activeTimestamp)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'at' is invalid: value={} from {}",
+                                                     utils::Hex(activeTimestamp), fromAddrStr));
                 }
                 else
                 {
@@ -304,8 +305,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &partitionId = binaryValue;
                 if (partitionId.size() != 4)
                 {
-                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'pt' is invalid: value={}",
-                                                     utils::Hex(partitionId)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'pt' is invalid: value={} from {}",
+                                                     utils::Hex(partitionId), fromAddrStr));
                 }
                 else
                 {
@@ -323,7 +324,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &oui = binaryValue;
                 if (oui.size() != 3)
                 {
-                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'vo' is invalid: value={}", utils::Hex(oui)));
+                    ExitNow(error = ERROR_BAD_FORMAT("value of TXT Key 'vo' is invalid: value={} from {}",
+                                                     utils::Hex(oui), fromAddrStr));
                 }
                 else
                 {
@@ -341,8 +343,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &bbrSeqNum = binaryValue;
                 if (bbrSeqNum.size() != 1)
                 {
-                    ExitNow(error =
-                                ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'sq' is invalid: {}", utils::Hex(bbrSeqNum)));
+                    ExitNow(error = ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'sq' is invalid: {} from {}",
+                                                     utils::Hex(bbrSeqNum), fromAddrStr));
                 }
                 else
                 {
@@ -355,8 +357,8 @@ int HandleRecord(const struct sockaddr *from,
                 auto &bbrPort = binaryValue;
                 if (bbrPort.size() != 2)
                 {
-                    ExitNow(error =
-                                ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'bb' is invalid: {}", utils::Hex(bbrPort)));
+                    ExitNow(error = ERROR_BAD_FORMAT("[mDNS] value of TXT Key 'bb' is invalid: {} from {}",
+                                                     utils::Hex(bbrPort), fromAddrStr));
                 }
                 else
                 {
@@ -405,9 +407,12 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
     {"config", "config get pskc\n"
                "config set pskc <pskc-hex-string>"},
-    {"start", "start <border-agent-addr> <border-agent-port>"},
-    {"stop", "stop"},
-    {"active", "active"},
+    {"start", "start <border-agent-addr> <border-agent-port>\n"
+              "start [ --nwk <network-alias-list | --dom <domain-alias>]"},
+    {"stop", "stop\n"
+             "stop [ --nwk <network-alias-list | --dom <domain-alias>]"},
+    {"active", "active\n"
+               "active [ --nwk <network-alias-list | --dom <domain-alias>]"},
     {"token", "token request <registrar-addr> <registrar-port>\n"
               "token print\n"
               "token set <signed-token-hex-string-file>"},
@@ -421,7 +426,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                 "network list [--nwk <network-alias-list> | --dom <domain-name>]\n"
                 "network select <xpan>|none\n"
                 "network identify"},
-    {"sessionid", "sessionid"},
+    {"sessionid", "sessionid\n"
+                  "sessionid [ --nwk <network-alias-list | --dom <domain-alias>]"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator"},
     {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]\n"
@@ -431,36 +437,44 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                "joiner getport (meshcop|ae|nmkp)\n"
                "joiner setport (meshcop|ae|nmkp) <joiner-udp-port>"},
     {"commdataset", "commdataset get\n"
+                    "commdataset get  [ --nwk <network-alias-list | --dom <domain-alias>] [--export <json-file-path>]\n"
                     "commdataset set '<commissioner-dataset-in-json-string>'"},
-    {"opdataset", "opdataset get activetimestamp\n"
-                  "opdataset get channel\n"
-                  "opdataset set channel <page> <channel> <delay-in-milliseconds>\n"
-                  "opdataset get channelmask\n"
-                  "opdataset set channelmask (<page> <channel-mask>)...\n"
-                  "opdataset get xpanid\n"
-                  "opdataset set xpanid <extended-pan-id>\n"
-                  "opdataset get meshlocalprefix\n"
-                  "opdataset set meshlocalprefix <prefix> <delay-in-milliseconds>\n"
-                  "opdataset get networkmasterkey\n"
-                  "opdataset set networkmasterkey <network-master-key> <delay-in-milliseconds>\n"
-                  "opdataset get networkname\n"
-                  "opdataset set networkname <network-name>\n"
-                  "opdataset get panid\n"
-                  "opdataset set panid <panid> <delay-in-milliseconds>\n"
-                  "opdataset get pskc\n"
-                  "opdataset set pskc <PSKc>\n"
-                  "opdataset get securitypolicy\n"
-                  "opdataset set securitypolicy <rotation-timer> <flags-hex>\n"
-                  "opdataset get active\n"
-                  "opdataset set active '<active-dataset-in-json-string>'\n"
-                  "opdataset get pending\n"
-                  "opdataset set pending '<pending-dataset-in-json-string>'"},
+    {"opdataset",
+     "opdataset get activetimestamp\n"
+     "opdataset get channel\n"
+     "opdataset set channel <page> <channel> <delay-in-milliseconds>\n"
+     "opdataset get channelmask\n"
+     "opdataset set channelmask (<page> <channel-mask>)...\n"
+     "opdataset get xpanid\n"
+     "opdataset set xpanid <extended-pan-id>\n"
+     "opdataset get meshlocalprefix\n"
+     "opdataset set meshlocalprefix <prefix> <delay-in-milliseconds>\n"
+     "opdataset get networkmasterkey\n"
+     "opdataset set networkmasterkey <network-master-key> <delay-in-milliseconds>\n"
+     "opdataset get networkname\n"
+     "opdataset set networkname <network-name>\n"
+     "opdataset get panid\n"
+     "opdataset set panid <panid> <delay-in-milliseconds>\n"
+     "opdataset get pskc\n"
+     "opdataset set pskc <PSKc>\n"
+     "opdataset get securitypolicy\n"
+     "opdataset set securitypolicy <rotation-timer> <flags-hex>\n"
+     "opdataset set securitypolicy <rotation-timer> <flags-hex> [ --nwk <network-alias-list | --dom <domain-alias>]\n"
+     "opdataset get active\n"
+     "opdataset get active [ --nwk <network-alias-list | --dom <domain-alias>] [--export <JSON-path>]\n"
+     "opdataset set active '<active-dataset-in-json-string>'\n"
+     "opdataset set active--import <json-file-path>\n"
+     "opdataset get pending\n"
+     "opdataset get pending [ --nwk <network-alias-list | --dom <domain-alias>] [--export <JSON-path>]\n"
+     "opdataset set pending '<pending-dataset-in-json-string>'\n"
+     "opdataset set pending --import <json-file-path>"},
     {"bbrdataset", "bbrdataset get trihostname\n"
                    "bbrdataset set trihostname <TRI-hostname>\n"
                    "bbrdataset get reghostname\n"
                    "bbrdataset set reghostname <registrar-hostname>\n"
                    "bbrdataset get regaddr\n"
                    "bbrdataset get\n"
+                   "bbrdataset get [ --nwk <network-alias-list | --dom <domain-alias>]\n"
                    "bbrdataset set '<bbr-dataset-in-json-string>'"},
     {"reenroll", "reenroll <device-addr>"},
     {"domainreset", "domainreset <device-addr>"},
@@ -660,7 +674,8 @@ void Interpreter::CancelCommand()
     {
         cancelData = -1;
         // No data in the pipe, write is safe (no overflow)
-        write(mCancelPipe[1], &cancelData, sizeof(cancelData));
+        ssize_t result = write(mCancelPipe[1], &cancelData, sizeof(cancelData));
+        (void)result;
     }
 }
 
@@ -1299,7 +1314,6 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         std::vector<BorderAgent> agents;
 
         VerifyOrExit((error = JsonFromFile(jsonStr, aExpr[2])) == ERROR_NONE, value = Value(error));
-        // TODO [MP]: handle possible failures - will result in exception
         json = nlohmann::json::parse(jsonStr);
 
         // Can be either single BorderAgent or an array of them.

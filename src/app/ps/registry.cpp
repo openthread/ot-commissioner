@@ -207,7 +207,6 @@ registry_status registry::add(BorderAgent const &val)
                 throw REG_ERROR;
             }
 
-            // TODO [MP] Fix: BorderAgent key is xpan + addr
             // Lookup border_router by address and port to decide to add() or update()
             // Assuming address and port are set (it should be so).
             border_router lookup_br{};
@@ -752,7 +751,6 @@ registry_status registry::delete_border_routers_in_domain(const std::string &dom
 
     for (auto &&xpan : xpans)
     {
-        // TODO [MP] Should better be of type xpan_it then uint64_t
         aliases.push_back(xpan_id(xpan).str());
     }
     VerifyOrExit((status = delete_border_routers_in_networks(aliases, unresolved)) == REG_SUCCESS);
