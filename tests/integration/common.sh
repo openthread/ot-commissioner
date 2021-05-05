@@ -86,7 +86,7 @@ start_daemon() {
     fi
 
     sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
-    sudo "${OT_DAEMON}" -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
+    sudo "${OT_DAEMON}" -Iwpan0 -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
 
     sleep 10
 }
