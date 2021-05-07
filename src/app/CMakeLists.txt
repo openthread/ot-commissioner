@@ -40,6 +40,8 @@ add_library(commissioner-app
     logger_util.hpp
     sys_logger.cpp
     sys_logger.hpp
+    mdns_handler.hpp
+    mdns_handler.cpp
 )
 
 target_link_libraries(commissioner-app

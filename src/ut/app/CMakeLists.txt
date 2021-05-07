@@ -7,6 +7,7 @@ add_executable(job-manager-test
 	${PROJECT_SOURCE_DIR}/src/app/ps/persistent_storage_json.cpp
 	${PROJECT_SOURCE_DIR}/src/common/file_util.cpp
 	${PROJECT_SOURCE_DIR}/src/app/json.cpp
+	${PROJECT_SOURCE_DIR}/src/app/mdns_handler.cpp
 	${PROJECT_SOURCE_DIR}/src/app/cli/console.cpp
 	${PROJECT_SOURCE_DIR}/src/common/utils.cpp
 	${PROJECT_SOURCE_DIR}/src/common/error.cpp
@@ -59,6 +60,7 @@ add_executable(interpreter-test
 	${PROJECT_SOURCE_DIR}/src/app/ps/persistent_storage_json.cpp
 	${PROJECT_SOURCE_DIR}/src/common/file_util.cpp
 	${PROJECT_SOURCE_DIR}/src/app/json.cpp
+	${PROJECT_SOURCE_DIR}/src/app/mdns_handler.cpp
 	${PROJECT_SOURCE_DIR}/src/app/cli/console.cpp
 	${PROJECT_SOURCE_DIR}/src/common/utils.cpp
 	${PROJECT_SOURCE_DIR}/src/common/error.cpp
