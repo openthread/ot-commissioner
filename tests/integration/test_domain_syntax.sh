@@ -30,16 +30,14 @@
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 mdns_announce_add_th() {
-	sudo rm -f /etc/avahi/services/*.service
 	sudo cp ${CUR_DIR}/etc/test_harness/* /etc/avahi/services/
 
     local ba_port
     ba_port="$(sudo "${OT_CTL}" ba port | grep -o '[0-9]\+')"
 	sudo sed -i "s/49191/$ba_port/" /etc/avahi/services/border-agent.service
 	cat /etc/avahi/services/border-agent.service
-
-	start_border_agent_mdns_service
 	sleep 3
+	start_border_agent_mdns_service
 
 	send_command_to_commissioner "br scan --timeout 1000 --export /tmp/nwk.json"
 	sed -i '/Addr/ s/^.*$/"Addr": "::1",/' /tmp/nwk.json
@@ -103,7 +101,7 @@ test_start_stop_selected() {
 	send_command_to_commissioner "stop"
 	send_command_to_commissioner "network select none"
 	send_command_to_commissioner "start --dom TestDomainName"
-	send_command_to_commissioner "opdataset get active --dom TestDomainName" "DEAD00BEEF00CAFE"
+	send_command_to_commissioner "opdataset get active --dom TestDomainName" "openthread-test"
 	send_command_to_commissioner "stop --nwk all"
 
     stop_commissioner
@@ -155,7 +153,8 @@ test_start_stop_mn_all() {
 	send_command_to_commissioner "sessionid --nwk all" 'DEAD00BEEF00CAFE": \d*'
 	send_command_to_commissioner "opdataset get active --nwk all" 'DEAD00BEEF00CAFE": {'
 	send_command_to_commissioner "commdataset get --nwk all" 'DEAD00BEEF00CAFE": {'
-	send_command_to_commissioner "opdataset set securitypolicy 273 00f8 --nwk all"
+# TODO issue #29
+#	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk all"
 	send_command_to_commissioner "opdataset get pending --nwk all"
 	send_command_to_commissioner "stop --nwk all"
 
@@ -185,7 +184,8 @@ test_start_stop_mn_other() {
 	send_command_to_commissioner "sessionid --nwk other" 'DEAD00BEEF00CAFE": \d*'
 	send_command_to_commissioner "opdataset get active --nwk other" 'DEAD00BEEF00CAFE": {'
 	send_command_to_commissioner "commdataset get --nwk other" 'DEAD00BEEF00CAFE": {'
-	send_command_to_commissioner "opdataset set securitypolicy 273 00f8 --nwk other"
+# TODO issue #29
+#	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk other"
 	send_command_to_commissioner "opdataset get pending --nwk other"
 	send_command_to_commissioner "stop --nwk other"
 	send_command_to_commissioner "network select none"
@@ -216,7 +216,8 @@ test_start_stop_mn_dom() {
 	send_command_to_commissioner "sessionid --dom TestDomainName" 'DEAD00BEEF00CAFE": \d*'
 	send_command_to_commissioner "opdataset get active --dom TestDomainName" 'DEAD00BEEF00CAFE": {'
 	send_command_to_commissioner "commdataset get --dom TestDomainName" 'DEAD00BEEF00CAFE": {'
-	send_command_to_commissioner "opdataset set securitypolicy 273 00f8 --dom TestDomainName"
+# TODO issue #29
+#	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --dom TestDomainName"
 	send_command_to_commissioner "opdataset get pending --dom TestDomainName"
 	send_command_to_commissioner "stop --dom TestDomainName"
 
