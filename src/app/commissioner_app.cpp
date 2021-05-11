@@ -65,7 +65,7 @@ Error CommissionerApp::Create(std::shared_ptr<CommissionerApp> &aCommApp, const 
     SuccessOrExit(error = app->Init(aConfig));
     if (aConfig.mCommissionerToken.size() > 0)
     {
-        (void)app->SetToken(aConfig.mCommissionerToken);
+        app->SetToken(aConfig.mCommissionerToken).IgnoreError();
     }
 
     aCommApp = app;
@@ -514,8 +514,7 @@ Error CommissionerApp::GetExtendedPanId(ByteArray &aExtendedPanId) const
 
     VerifyOrExit(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit,
                  error = ERROR_NOT_FOUND("cannot find valid Extended PAN ID in Active Operational Dataset"));
-    extendedPanIdString = mActiveDataset.mExtendedPanId.str();
-    aExtendedPanId      = ByteArray(extendedPanIdString.begin(), extendedPanIdString.end());
+    aExtendedPanId = utils::Encode(mActiveDataset.mExtendedPanId.value);
 
 exit:
     return error;
