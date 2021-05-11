@@ -32,7 +32,7 @@
  */
 
 #include "persistent_storage_json.hpp"
-#include "common/file_util.hpp"
+#include "app/file_util.hpp"
 #include "common/utils.hpp"
 
 namespace ot {

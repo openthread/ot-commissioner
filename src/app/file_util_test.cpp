@@ -31,7 +31,7 @@
  *   This file defines test cases for file utils.
  */
 
-#include "common/file_util.hpp"
+#include "app/file_util.hpp"
 
 #include <catch2/catch.hpp>
 
