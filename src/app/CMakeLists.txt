@@ -37,8 +37,8 @@ add_library(commissioner-app
     file_logger.hpp
     json.cpp
     json.hpp
-	mdns_handler.hpp
-	mdns_handler.cpp
+    mdns_handler.hpp
+    mdns_handler.cpp
 )
 
 target_link_libraries(commissioner-app
