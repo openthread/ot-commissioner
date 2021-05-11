@@ -35,45 +35,44 @@ add_library(persistent-storage
     registry_entries.hpp
     registry_entries.cpp
     nlohmann_json.hpp
-    # TODO [TBD] move following files into the /src/library project directory
     semaphore.hpp
     semaphore.cpp
     semaphore_posix.hpp
 )
 
 target_include_directories(persistent-storage
-  PUBLIC
+    PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
-  PRIVATE
+    PRIVATE
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/src
 )
 
 target_link_libraries(persistent-storage
     PUBLIC
-	    commissioner-common
-		commissioner
+    commissioner-common
+    commissioner
 )
 
 if (BUILD_SHARED_LIBS)
     install(TARGETS persistent-storage
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
     )
 endif()
 
 if (OT_COMM_TEST)
     add_library(commissioner-ps-test OBJECT
-      persistent_storage_json_test.cpp
-	  registry_test.cpp
+        persistent_storage_json_test.cpp
+        registry_test.cpp
     )
 
     target_include_directories(commissioner-ps-test
         PRIVATE
-	    ${PROJECT_SOURCE_DIR}/include
-	    ${PROJECT_SOURCE_DIR}/src
-	    ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-	    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )
 endif (OT_COMM_TEST)

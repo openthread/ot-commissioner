@@ -43,20 +43,19 @@ add_executable(commissioner-cli
 target_include_directories(commissioner-cli
     PRIVATE
         ${PROJECT_SOURCE_DIR}/src
-		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
-		${PROJECT_BINARY_DIR}/third_party/libevent/repo/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include>
         ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
 )
 
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app
-		commissioner-common
+        commissioner-common
         event_core
         event_pthreads
-		mdns
-        ncurses
-		persistent-storage
+        mdns
+        persistent-storage
         pthread
         readline
 )
