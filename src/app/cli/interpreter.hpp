@@ -57,8 +57,8 @@ class Interpreter
 public:
     using Expression     = std::vector<std::string>;
     using StringArray    = std::vector<std::string>;
-    using Registry       = ot::commissioner::persistent_storage::registry;
-    using RegistryStatus = ot::commissioner::persistent_storage::registry_status;
+    using Registry       = ot::commissioner::persistent_storage::Registry;
+    using RegistryStatus = Registry::Status;
 
     Interpreter()  = default;
     ~Interpreter() = default;
