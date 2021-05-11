@@ -46,32 +46,32 @@ namespace ot {
 namespace commissioner {
 namespace persistent_storage {
 
-/**
- * Registry operation status
- */
-enum registry_status
-{
-    REG_SUCCESS,   /**< operation succeeded */
-    REG_NOT_FOUND, /**< requested data not found */
-    /**
-     * param combination invalid or new data conflicts with registry
-     * content
-     */
-    REG_DATA_INVALID,
-    REG_AMBIGUITY, /**< lookup result was ambiguous */
-    REG_ERROR,     /**< operation failed */
-    REG_RESTRICTED /**< operation restricted */
-};
-
 typedef std::vector<std::string> StringArray;
 
 /**
  * Registry implementation
  */
-class registry
+class Registry
 {
 public:
     using xpan_id = ot::commissioner::xpan_id;
+
+    /**
+     * Registry operation status
+     */
+    enum class Status : uint8_t
+    {
+        REG_SUCCESS,   /**< operation succeeded */
+        REG_NOT_FOUND, /**< requested data not found */
+        /**
+         * param combination invalid or new data conflicts with registry
+         * content
+         */
+        REG_DATA_INVALID,
+        REG_AMBIGUITY, /**< lookup result was ambiguous */
+        REG_ERROR,     /**< operation failed */
+        REG_RESTRICTED /**< operation restricted */
+    };
 
     /**
      * Registry constructor with provided persistent_storage
@@ -79,30 +79,30 @@ public:
      *
      * @param[in] strg persistent storage to be used
      */
-    registry(persistent_storage *strg);
+    Registry(PersistentStorage *strg);
 
     /**
-     * Registry constructor with default persistent_storage impl
-     * @see persistent_storage_json
+     * Registry constructor with default PersistentStorage impl
+     * @see PersistentStorage_json
      *
-     * @param[in] name persistent_storage_json file name
+     * @param[in] name PersistentStorage_json file name
      */
-    registry(std::string const &name);
+    Registry(std::string const &name);
 
     /**
      * Registry destructor
      */
-    ~registry();
+    ~Registry();
 
     /**
      * Opens and prepares registry for work
      */
-    registry_status open();
+    Status Open();
 
     /**
      * Closes registry
      */
-    registry_status close();
+    Status Close();
 
     /**
      *  Adds necessary values to the registry.
@@ -112,16 +112,16 @@ public:
      * and @ref domain entities and even create and add the if necessary.
      *
      * @param[in] val value to be added
-     * @return @ref registry_status
+     * @return @ref Status
      * @see registry_entries.hpp
      */
-    registry_status add(BorderAgent const &val);
+    Status Add(BorderAgent const &val);
 
     /**
      * Get list of all border routers
      * @param[out] ret vector of all border routers
      */
-    registry_status get_all_border_routers(BorderRouterArray &ret);
+    Status GetAllBorderRouters(BorderRouterArray &ret);
 
     /**
      * Get border router record by raw id.
@@ -129,7 +129,7 @@ public:
      * It is expected that user becomes aware of the border router raw id from
      * 'br list' results.
      */
-    registry_status get_border_router(const border_router_id rawid, border_router &br);
+    Status GetBorderRouter(const border_router_id rawid, border_router &br);
 
     /**
      * Get border routers belonging to the specified network.
@@ -137,7 +137,7 @@ public:
      * @param[in] xpan network's XPAN ID
      * @param[out] ret resultant array of @ref border_router records
      */
-    registry_status get_border_routers_in_network(const xpan_id xpan, BorderRouterArray &ret);
+    Status GetBorderRoutersInNetwork(const xpan_id xpan, BorderRouterArray &ret);
 
     /**
      * Get networks of the domain
@@ -146,7 +146,7 @@ public:
      * @param[out] ret vector of networks belonging to the domain
      * @note Network records will be appended to the end of the output network vector
      */
-    registry_status get_networks_in_domain(const std::string &dom_name, NetworkArray &ret);
+    Status GetNetworksInDomain(const std::string &dom_name, NetworkArray &ret);
 
     /**
      * Get network XPAN IDs of the domain
@@ -155,26 +155,26 @@ public:
      * @param[out] ret vector of network XPAN IDs belonging to the domain
      * @note Network XPAN IDs will be appended to the end of the output vector
      */
-    registry_status get_network_xpans_in_domain(const std::string &dom_name, XpanIdArray &ret);
+    Status GetNetworkXpansInDomain(const std::string &dom_name, XpanIdArray &ret);
 
     /**
      * Get list of all domains
      * @param[out] ret vector of all domains
      */
-    registry_status get_all_domains(DomainArray &ret);
+    Status GetAllDomains(DomainArray &ret);
 
     /**
      * Get list of domains by list of aliases.
      * @param[out] ret vector of all domains
      * @param[out] unresolved list of aliases failed to resolve
      */
-    registry_status get_domains_by_aliases(const StringArray &aliases, DomainArray &ret, StringArray &unresolved);
+    Status GetDomainsByAliases(const StringArray &aliases, DomainArray &ret, StringArray &unresolved);
 
     /**
      * Get list of all networks
      * @param[out] ret vector of all networks
      */
-    registry_status get_all_networks(NetworkArray &ret);
+    Status GetAllNetworks(NetworkArray &ret);
 
     /**
      * Get list of networks by alias
@@ -183,7 +183,7 @@ public:
      * @param[out] ret list of networks
      * @param[out] unresolved list of aliases failed to resolve
      */
-    registry_status get_networks_by_aliases(const StringArray &aliases, NetworkArray &ret, StringArray &unresolved);
+    Status GetNetworksByAliases(const StringArray &aliases, NetworkArray &ret, StringArray &unresolved);
 
     /**
      * Get list of network XPAN IDs by alias
@@ -192,35 +192,35 @@ public:
      * @param[out] ret list of network XPAN IDs
      * @param[out] unresolved list of aliases failed to resolve
      */
-    registry_status get_network_xpans_by_aliases(const StringArray &aliases, XpanIdArray &ret, StringArray &unresolved);
+    Status GetNetworkXpansByAliases(const StringArray &aliases, XpanIdArray &ret, StringArray &unresolved);
 
     /**
      * Set current network.
      */
-    registry_status set_current_network(const xpan_id xpan);
+    Status SetCurrentNetwork(const xpan_id xpan);
 
     /**
      * Set current network by border router specified.
      */
-    registry_status set_current_network(const border_router &br);
+    Status SetCurrentNetwork(const border_router &br);
 
     /**
      * Forget current network
      */
-    registry_status forget_current_network();
+    Status ForgetCurrentNetwork();
     /**
      * Get current network
      *
      * @param [out] ret current network data
      */
-    registry_status get_current_network(network &ret);
+    Status GetCurrentNetwork(network &ret);
 
     /**
      * Get current network XPAN ID
      *
      * @param [out] ret current network XPAN ID
      */
-    registry_status get_current_network_xpan(uint64_t &ret);
+    Status GetCurrentNetworkXpan(uint64_t &ret);
 
     /**
      * Get network with specified extended PAN id
@@ -233,7 +233,7 @@ public:
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    registry_status get_network_by_xpan(const xpan_id xpan, network &ret);
+    Status GetNetworkByXpan(const xpan_id xpan, network &ret);
 
     /**
      * Get network with specified name
@@ -246,7 +246,7 @@ public:
      * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    registry_status get_network_by_name(const std::string &name, network &ret);
+    Status GetNetworkByName(const std::string &name, network &ret);
 
     /**
      * Get network with specified PAN id
@@ -259,7 +259,7 @@ public:
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    registry_status get_network_by_pan(const std::string &pan, network &ret);
+    Status GetNetworkByPan(const std::string &pan, network &ret);
 
     /**
      * Get domain name for the network identified by XPAN ID
@@ -272,7 +272,7 @@ public:
      * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    registry_status get_domain_name_by_xpan(const xpan_id xpan, std::string &name);
+    Status GetDomainNameByXpan(const xpan_id xpan, std::string &name);
 
     /**
      * Remove border router record.
@@ -283,7 +283,7 @@ public:
      * @return
      * @li @ref REG_SUCCESS if successfully deleted record
      */
-    registry_status delete_border_router_by_id(const border_router_id router_id);
+    Status DeleteBorderRouterById(const border_router_id router_id);
 
     /**
      * Remove border router records corresponding to the network aliases list along with the corresponding networks.
@@ -294,9 +294,9 @@ public:
      * @return
      * @li @ref REG_SUCCESS if all networks were deleted with border routers belonging to them.
      */
-    registry_status delete_border_routers_in_networks(const StringArray &aliases, StringArray &unresolved);
+    Status DeleteBorderRoutersInNetworks(const StringArray &aliases, StringArray &unresolved);
 
-    registry_status delete_border_routers_in_domain(const std::string &domain_name);
+    Status DeleteBorderRoutersInDomain(const std::string &domain_name);
 
     /**
      * Update existing network record.
@@ -306,7 +306,7 @@ public:
      * @return
      * @li @ref REG_SUCCESS if update succeeds
      */
-    registry_status update(const network &nwk);
+    Status Update(const network &nwk);
 
 protected:
     /**
@@ -320,21 +320,21 @@ protected:
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    registry_status lookup_one(const network &pred, network &ret);
+    Status LookupOne(const network &pred, network &ret);
 
     /**
      * Set current network.
      */
-    registry_status set_current_network(const network_id &nwk_id);
+    Status SetCurrentNetwork(const network_id &nwk_id);
 
-    registry_status drop_domain_if_empty(const domain_id &dom_id);
+    Status DropDomainIfEmpty(const domain_id &dom_id);
 
 private:
-    bool                manage_storage = false;   /**< flag that storage was create outside*/
-    persistent_storage *storage        = nullptr; /**< persistent storage */
+    bool               manage_storage = false;   /**< flag that storage was create outside*/
+    PersistentStorage *storage        = nullptr; /**< persistent storage */
 };
 
-registry *CreateRegistry(const std::string &aFile);
+Registry *CreateRegistry(const std::string &aFile);
 
 } // namespace persistent_storage
 } // namespace commissioner

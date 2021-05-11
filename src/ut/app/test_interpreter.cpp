@@ -36,9 +36,9 @@ using Json = nlohmann::json;
 class InterpreterTestSuite : public testing::Test
 {
 public:
-    using Registry              = ::ot::commissioner::persistent_storage::registry;
-    using RegistryStatus        = ::ot::commissioner::persistent_storage::registry_status;
-    using PersistentStorageJson = ot::commissioner::persistent_storage::persistent_storage_json;
+    using Registry              = ::ot::commissioner::persistent_storage::Registry;
+    using RegistryStatus        = ::ot::commissioner::persistent_storage::Registry::Status;
+    using PersistentStorageJson = ot::commissioner::persistent_storage::PersistentStorageJson;
     typedef std::shared_ptr<CommissionerAppMock> CommissionerAppMockPtr;
 
     InterpreterTestSuite()          = default;
@@ -92,17 +92,17 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     std::string             command;
     Interpreter::Expression expr;
@@ -171,13 +171,13 @@ TEST_F(InterpreterTestSuite, MNSV_ThisResolvesWithCurrentSet)
 {
     TestContext ctx;
     InitContext(ctx);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -190,10 +190,10 @@ TEST_F(InterpreterTestSuite, MNSV_ThisUnresolvesWithCurrentUnset)
 {
     TestContext ctx;
     InitContext(ctx);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -208,15 +208,15 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     // No current network selected
 
     Interpreter::Expression expr, ret;
@@ -247,18 +247,18 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -288,15 +288,15 @@ TEST_F(InterpreterTestSuite, MNSV_TwoDomSwitchesFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -310,10 +310,10 @@ TEST_F(InterpreterTestSuite, MNSV_UnexistingDomainResolveFails)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -327,15 +327,15 @@ TEST_F(InterpreterTestSuite, MNSV_ExistingDomainResolves)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -352,21 +352,21 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
     InitContext(ctx);
 
     network_id nid;
-    ASSERT_EQ(ctx.mRegistry->storage->add(network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, "pan1", "", 0}, nid),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->storage->add(network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, "pan1", "", 0}, nid),
-              registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->storage->Add(network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, "pan1", "", 0}, nid),
+              PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->storage->Add(network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, "pan1", "", 0}, nid),
+              PersistentStorage::Status::PS_SUCCESS);
 
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -380,15 +380,15 @@ TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -403,15 +403,15 @@ TEST_F(InterpreterTestSuite, MNSV_GroupAndIndividualNwkAliasesMustFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -425,18 +425,18 @@ TEST_F(InterpreterTestSuite, MNSV_DomThisResolvesWithRespectToSelection)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
@@ -452,30 +452,30 @@ TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net3", 3, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.4", 20004, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.4", 20004, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net4", 4, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 2;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
     uint64_t nid;
-    ASSERT_EQ(ctx.mRegistry->get_current_network_xpan(nid), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->GetCurrentNetworkXpan(nid), RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(nid, 3);
 
     Interpreter::Expression expr, ret;
@@ -495,28 +495,28 @@ TEST_F(InterpreterTestSuite, MNSV_EmptyNwkOrDomMustFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net3", 3, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.4", 20004, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.4", 20004, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net4", 4, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr, ret;
     expr = ctx.mInterpreter.ParseExpression("start --nwk");
@@ -532,15 +532,15 @@ TEST_F(InterpreterTestSuite, IESV_SingleExportFileMustPass)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     expr = ctx.mInterpreter.ParseExpression("br scan --timeout 1 --export ./2.json");
@@ -554,15 +554,15 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
     EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
@@ -579,7 +579,7 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
 
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     // Attention: changed Channel->Number and SecurityPolicy->Flags
     std::string jsonStr = "{\n\
@@ -622,15 +622,15 @@ TEST_F(InterpreterTestSuite, IESV_NoExportFileMustFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -644,15 +644,15 @@ TEST_F(InterpreterTestSuite, IESV_NoImportFileMustFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
     EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
@@ -669,7 +669,7 @@ TEST_F(InterpreterTestSuite, IESV_NoImportFileMustFail)
 
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     expr = ctx.mInterpreter.ParseExpression("opdataset set active --import");
     EXPECT_FALSE(ctx.mInterpreter.Eval(expr).HasNoError());
@@ -680,15 +680,15 @@ TEST_F(InterpreterTestSuite, IESV_TwoImportExportClausesMustFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -708,15 +708,15 @@ TEST_F(InterpreterTestSuite, CMNO_MultipleSuccessfullJobsPass)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     uint8_t                camIdx                  = 0;
     CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
@@ -741,15 +741,15 @@ TEST_F(InterpreterTestSuite, CMNO_UnsuccessfullResultFromAJobMustNotFail)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     uint8_t                camIdx                  = 0;
     CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
@@ -777,15 +777,15 @@ TEST_F(InterpreterTestSuite, PC_StartNetworkSyntaxSuccess)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     uint8_t                camIdx                  = 0;
     CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
@@ -823,19 +823,19 @@ TEST_F(InterpreterTestSuite, PC_StartCurrentNetworkSuccess)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     uint8_t                camIdx                  = 0;
     CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
@@ -867,19 +867,19 @@ TEST_F(InterpreterTestSuite, PC_StartLegacySyntaxSuccess)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _)).Times(1).WillRepeatedly(Return(Error{}));
 
@@ -895,19 +895,19 @@ TEST_F(InterpreterTestSuite, PC_StartLegacySyntaxErrorFails)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _))
         .Times(1)
@@ -925,15 +925,15 @@ TEST_F(InterpreterTestSuite, PC_StopNetworkSyntaxSuccess)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     uint8_t                camIdx                  = 0;
     CommissionerAppMockPtr commissionerAppMocks[2] = {CommissionerAppMockPtr{new CommissionerAppMock()},
@@ -966,19 +966,19 @@ TEST_F(InterpreterTestSuite, PC_StopLegacySyntaxSuccess)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _)).Times(1).WillOnce(Return(Error{}));
 
@@ -998,15 +998,15 @@ TEST_F(InterpreterTestSuite, PC_Active)
     TestContext ctx;
     InitContext(ctx);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
     ASSERT_EQ(
-        ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        registry_status::REG_SUCCESS);
+        RegistryStatus::REG_SUCCESS);
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, IsActive()).Times(2).WillOnce(Return(false)).WillOnce(Return(true));
 
@@ -1087,17 +1087,17 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNoneOnEmpty)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, EMPTY_ID);
 
     Interpreter::Expression expr;
@@ -1106,7 +1106,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNoneOnEmpty)
     expr  = ctx.mInterpreter.ParseExpression("network select none");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, EMPTY_ID);
 }
 
@@ -1116,20 +1116,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNoneOnSelected)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 
     Interpreter::Expression expr;
@@ -1138,7 +1138,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNoneOnSelected)
     expr  = ctx.mInterpreter.ParseExpression("network select none");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, EMPTY_ID);
 }
 
@@ -1148,17 +1148,17 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectOnEmpty)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0xFF}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0xFF}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, EMPTY_ID);
 
     Interpreter::Expression expr;
@@ -1168,7 +1168,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectOnEmpty)
     expr  = ctx.mInterpreter.ParseExpression("network select 1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 }
 
@@ -1178,20 +1178,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectAnother)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0xFF}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0xFF}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 
     Interpreter::Expression expr;
@@ -1200,7 +1200,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectAnother)
     expr  = ctx.mInterpreter.ParseExpression("network select 1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 1);
 }
 
@@ -1210,20 +1210,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNonexisting)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 
     Interpreter::Expression expr;
@@ -1232,7 +1232,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectNonexisting)
     expr  = ctx.mInterpreter.ParseExpression("network select 3");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 }
 
@@ -1242,20 +1242,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectByName)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 1;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(1, nwk.id.id);
 
     Interpreter::Expression expr;
@@ -1264,7 +1264,7 @@ TEST_F(InterpreterTestSuite, PC_NetworkSelectByName)
     expr  = ctx.mInterpreter.ParseExpression("network select net1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(0, nwk.id.id);
 }
 
@@ -1274,20 +1274,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithDomain)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0,
                                              0x3F}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 
     Interpreter::Expression expr;
@@ -1315,20 +1315,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithoutDomain)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0,
                                              0x3F}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 1;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 1);
 
     Interpreter::Expression expr;
@@ -1356,17 +1356,17 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyUnset)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0,
                                              0x3F}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, EMPTY_ID);
 
     Interpreter::Expression expr;
@@ -1384,20 +1384,20 @@ TEST_F(InterpreterTestSuite, PC_NetworkList)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0xFFFFF}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0xFFFFF}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
     border_router br;
     br.nwk_id = 0;
-    ASSERT_EQ(ctx.mRegistry->set_current_network(br), registry_status::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
 
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->get_current_network(nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetCurrentNetwork(nwk), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwk.id.id, 0);
 
     Interpreter::Expression expr;
@@ -1604,10 +1604,10 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     InitContext(ctx);
 
     network_id nwk_id;
-    EXPECT_EQ(ctx.mRegistry->storage->add(network{EMPTY_ID, EMPTY_ID, "", xpan_id{1}, 0, "", "", 0}, nwk_id),
-              registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->storage->Add(network{EMPTY_ID, EMPTY_ID, "", xpan_id{1}, 0, "", "", 0}, nwk_id),
+              PersistentStorage::Status::PS_SUCCESS);
     network nwk;
-    EXPECT_EQ(ctx.mRegistry->storage->get(nwk_id, nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->storage->Get(nwk_id, nwk), PersistentStorage::Status::PS_SUCCESS);
     EXPECT_STREQ("", nwk.pan.c_str());
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetActiveDataset(_, _))
@@ -1626,7 +1626,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    EXPECT_EQ(ctx.mRegistry->storage->get(nwk_id, nwk), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->storage->Get(nwk_id, nwk), PersistentStorage::Status::PS_SUCCESS);
     EXPECT_STREQ("0x0001", nwk.pan.c_str());
 
     EXPECT_EQ(system("rm -f ./aods.json"), 0);
@@ -1890,14 +1890,14 @@ TEST_F(InterpreterTestSuite, PC_DomainList)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2224,15 +2224,15 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
     EXPECT_TRUE(value.HasNoError());
 
     BorderRouterArray brs;
-    EXPECT_EQ(ctx.mInterpreter.mRegistry->get_all_border_routers(brs), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllBorderRouters(brs), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(brs.size(), 4);
 
     NetworkArray nwks;
-    EXPECT_EQ(ctx.mInterpreter.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllNetworks(nwks), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwks.size(), 3);
 
     DomainArray doms;
-    EXPECT_EQ(ctx.mInterpreter.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllDomains(doms), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(doms.size(), 2);
 }
 
@@ -2242,14 +2242,14 @@ TEST_F(InterpreterTestSuite, PC_BrList)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2273,14 +2273,14 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitPass)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray(), "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray(), "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2289,7 +2289,7 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitPass)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
     EXPECT_EQ(bra[0].id.id, 0);
 }
@@ -2300,14 +2300,14 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteTooManyFail)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2337,14 +2337,14 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitLastPass)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2353,16 +2353,16 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitLastPass)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
     EXPECT_EQ(bra[0].id.id, 0);
 
     NetworkArray nwks;
-    EXPECT_EQ(ctx.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllNetworks(nwks), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwks.size(), 1);
 
     DomainArray doms;
-    EXPECT_EQ(ctx.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllDomains(doms), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(doms.size(), 1);
 }
 
@@ -2372,16 +2372,16 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitSelectedFails)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
-    EXPECT_EQ(ctx.mRegistry->set_current_network(xpan_id{2}), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->SetCurrentNetwork(xpan_id{2}), RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2391,7 +2391,7 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitSelectedFails)
     EXPECT_FALSE(value.HasNoError());
 
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 2);
 }
 
@@ -2401,14 +2401,14 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteNetworkSuccess)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2418,15 +2418,15 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteNetworkSuccess)
     EXPECT_TRUE(value.HasNoError());
 
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 
     NetworkArray nwks;
-    EXPECT_EQ(ctx.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllNetworks(nwks), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwks.size(), 1);
 
     DomainArray doms;
-    EXPECT_EQ(ctx.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllDomains(doms), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(doms.size(), 1);
 }
 
@@ -2436,14 +2436,14 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteDomainSuccess)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2453,16 +2453,16 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteDomainSuccess)
     EXPECT_TRUE(value.HasNoError());
 
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
     EXPECT_EQ(bra[0].id.id, 0);
 
     NetworkArray nwks;
-    EXPECT_EQ(ctx.mRegistry->get_all_networks(nwks), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllNetworks(nwks), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(nwks.size(), 1);
 
     DomainArray doms;
-    EXPECT_EQ(ctx.mRegistry->get_all_domains(doms), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllDomains(doms), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(doms.size(), 1);
 }
 
@@ -2472,18 +2472,18 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteNetwork)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2492,7 +2492,7 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteNetwork)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 }
 
@@ -2502,18 +2502,18 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteDomain)
     InitContext(ctx);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
-    ASSERT_EQ(ctx.mRegistry->add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                              "net1", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
-              registry_status::REG_SUCCESS);
+              RegistryStatus::REG_SUCCESS);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2522,6 +2522,6 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteDomain)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     BorderRouterArray bra;
-    EXPECT_EQ(ctx.mRegistry->get_all_border_routers(bra), registry_status::REG_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 }

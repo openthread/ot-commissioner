@@ -43,7 +43,7 @@ namespace ot {
 namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
-using RegistryStatus     = ot::commissioner::persistent_storage::registry_status;
+using RegistryStatus     = ot::commissioner::persistent_storage::Registry::Status;
 using BorderRouter       = ot::commissioner::persistent_storage::border_router;
 
 class Job;

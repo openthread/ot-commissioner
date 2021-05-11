@@ -56,7 +56,7 @@ namespace persistent_storage {
  * @see registry_entries.hpp
  * @see persistent_storage.hpp
  */
-class persistent_storage_json : public persistent_storage
+class PersistentStorageJson : public PersistentStorage
 {
 public:
     /**
@@ -64,69 +64,69 @@ public:
      *
      * @param[in] name file name to be used as storage
      */
-    persistent_storage_json(std::string const &fname);
+    PersistentStorageJson(std::string const &fname);
 
     /**
      * Destructor
      */
-    virtual ~persistent_storage_json();
+    virtual ~PersistentStorageJson();
 
     /**
      * Opens file, loads cache
      *
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      */
-    virtual ps_status open() override;
+    virtual Status Open() override;
 
     /**
      * Writes cache to file, closes file
      *
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      */
-    virtual ps_status close() override;
+    virtual Status Close() override;
 
     /**
      * Adds value to store
      *
      * @param[in] val value to be added
      * @param[out] ret_id unique id of the inserted value
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      * @see registry_entries.hpp
      */
-    virtual ps_status add(registrar const &val, registrar_id &ret_id) override;
-    virtual ps_status add(domain const &val, domain_id &ret_id) override;
-    virtual ps_status add(network const &val, network_id &ret_id) override;
-    virtual ps_status add(border_router const &val, border_router_id &ret_id) override;
+    virtual Status Add(registrar const &val, registrar_id &ret_id) override;
+    virtual Status Add(domain const &val, domain_id &ret_id) override;
+    virtual Status Add(network const &val, network_id &ret_id) override;
+    virtual Status Add(border_router const &val, border_router_id &ret_id) override;
 
     /**
      * Deletes value by unique id from store
      *
      * @param[in] id value's id to be deleted
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      * @see registry_entries.hpp
      */
-    virtual ps_status del(registrar_id const &id) override;
-    virtual ps_status del(domain_id const &id) override;
-    virtual ps_status del(network_id const &id) override;
-    virtual ps_status del(border_router_id const &id) override;
+    virtual Status Del(registrar_id const &id) override;
+    virtual Status Del(domain_id const &id) override;
+    virtual Status Del(network_id const &id) override;
+    virtual Status Del(border_router_id const &id) override;
 
     /**
      * Gets value by unique id from store
      *
      * @param[in] id value's unique id
      * @param[out] ret_val value from registry
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      * @see registry_entries.hpp
      */
-    virtual ps_status get(registrar_id const &id, registrar &ret_val) override;
-    virtual ps_status get(domain_id const &id, domain &ret_val) override;
-    virtual ps_status get(network_id const &id, network &ret_val) override;
-    virtual ps_status get(border_router_id const &id, border_router &ret_val) override;
+    virtual Status Get(registrar_id const &id, registrar &ret_val) override;
+    virtual Status Get(domain_id const &id, domain &ret_val) override;
+    virtual Status Get(network_id const &id, network &ret_val) override;
+    virtual Status Get(border_router_id const &id, border_router &ret_val) override;
 
     /**
      * Updates value in store
@@ -135,14 +135,14 @@ public:
      * If value was found it is replaced with val. Old value is lost.
      *
      * @param[in] val new value
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      * @see registry_entries.hpp
      */
-    virtual ps_status update(registrar const &val) override;
-    virtual ps_status update(domain const &val) override;
-    virtual ps_status update(network const &val) override;
-    virtual ps_status update(border_router const &val) override;
+    virtual Status Update(registrar const &val) override;
+    virtual Status Update(domain const &val) override;
+    virtual Status Update(network const &val) override;
+    virtual Status Update(border_router const &val) override;
 
     /**
      * Looks for a matching values in store
@@ -153,14 +153,14 @@ public:
      *
      * @param[in] val value's fields to compare with.
      * @param[out] ret values matched val condition.
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      * @see registry_entries.hpp
      */
-    virtual ps_status lookup(registrar const &val, std::vector<registrar> &ret) override;
-    virtual ps_status lookup(domain const &val, std::vector<domain> &ret) override;
-    virtual ps_status lookup(network const &val, std::vector<network> &ret) override;
-    virtual ps_status lookup(border_router const &val, std::vector<border_router> &ret) override;
+    virtual Status Lookup(registrar const &val, std::vector<registrar> &ret) override;
+    virtual Status Lookup(domain const &val, std::vector<domain> &ret) override;
+    virtual Status Lookup(network const &val, std::vector<network> &ret) override;
+    virtual Status Lookup(border_router const &val, std::vector<border_router> &ret) override;
 
     /**
      * Looks for a matching values in store
@@ -171,25 +171,25 @@ public:
      *
      * @param[in] val value's fields to compare with.
      * @param[out] ret values matched val condition.
-     * @return ps_status
-     * @see ps_status
+     * @return Status
+     * @see Status
      * @see registry_entries.hpp
      */
-    virtual ps_status lookup_any(registrar const &val, std::vector<registrar> &ret) override;
-    virtual ps_status lookup_any(domain const &val, std::vector<domain> &ret) override;
-    virtual ps_status lookup_any(network const &val, std::vector<network> &ret) override;
-    virtual ps_status lookup_any(border_router const &val, std::vector<border_router> &ret) override;
+    virtual Status LookupAny(registrar const &val, std::vector<registrar> &ret) override;
+    virtual Status LookupAny(domain const &val, std::vector<domain> &ret) override;
+    virtual Status LookupAny(network const &val, std::vector<network> &ret) override;
+    virtual Status LookupAny(border_router const &val, std::vector<border_router> &ret) override;
 
     /**
      * Set current network.
      */
-    virtual ps_status current_network_set(const network_id &nwk_id) override;
+    virtual Status CurrentNetworkSet(const network_id &nwk_id) override;
     /**
      * Get current network
      *
      * @param nwk_id[out] current network identifier
      */
-    virtual ps_status current_network_get(network_id &nwk_id) override;
+    virtual Status CurrentNetworkGet(network_id &nwk_id) override;
 
 private:
     std::string            file_name;    /**< name of the file */
@@ -199,12 +199,12 @@ private:
     /**
      * Reads data from file to cache
      */
-    ps_status cache_from_file();
+    Status CacheFromFile();
 
     /**
      * Writes cache to file
      */
-    ps_status cache_to_file();
+    Status CacheToFile();
 
     /**
      * Generates default empty Json structure
@@ -212,22 +212,21 @@ private:
      * {rgr_seq:0, dom_seq:0, nwk_seq:0, br_seq:0,
      *  rgr:[], dom:[], nwk:[], br:[]}
      */
-    nlohmann::json json_default();
+    nlohmann::json JsonDefault();
 
     /**
      * Json structure validation
      */
-    bool cache_struct_validation();
+    bool CacheStructValidation();
 
     /**
      * Adds all types of values to store
      */
-    template <typename V, typename I>
-    ps_status add_one(V const &val, I &ret_id, std::string seq_name, std::string arr_name)
+    template <typename V, typename I> Status AddOne(V const &val, I &ret_id, std::string seq_name, std::string arr_name)
     {
-        if (cache_from_file() != PS_SUCCESS)
+        if (CacheFromFile() != Status::PS_SUCCESS)
         {
-            return PS_ERROR;
+            return Status::PS_ERROR;
         }
 
         V ins_val = val;
@@ -238,70 +237,70 @@ private:
 
         cache[arr_name].push_back(ins_val);
 
-        return cache_to_file();
+        return CacheToFile();
     }
 
     /**
      * Deletes all types of values from store
      */
-    template <typename V, typename I> ps_status del_id(I const &id, std::string arr_name)
+    template <typename V, typename I> Status DelId(I const &id, std::string arr_name)
     {
         auto it_end = std::remove_if(std::begin(cache[arr_name]), std::end(cache[arr_name]),
                                      [&id](const V &el) { return el.id.id == id.id; });
         cache[arr_name].erase(it_end, std::end(cache[arr_name]));
 
-        return cache_to_file();
+        return CacheToFile();
     }
 
     /**
      * Gets all types of values from store
      */
-    template <typename V, typename I> ps_status get_id(I const &id, V &ret, std::string arr_name)
+    template <typename V, typename I> Status GetId(I const &id, V &ret, std::string arr_name)
     {
         auto it_val = std::find_if(std::begin(cache[arr_name]), std::end(cache[arr_name]),
                                    [&id](V const &el) { return el.id.id == id.id; });
         if (it_val == std::end(cache[arr_name]))
         {
-            return PS_NOT_FOUND;
+            return Status::PS_NOT_FOUND;
         }
 
         ret = *it_val;
 
-        return PS_SUCCESS;
+        return Status::PS_SUCCESS;
     }
 
     /**
      * Updates all types of values in store
      */
-    template <typename V> ps_status upd_id(V const &new_val, std::string arr_name)
+    template <typename V> Status UpdId(V const &new_val, std::string arr_name)
     {
         auto it_val = std::find_if(std::begin(cache[arr_name]), std::end(cache[arr_name]),
                                    [&new_val](const V &el) { return el.id.id == new_val.id.id; });
         if (it_val == std::end(cache[arr_name]))
         {
-            return PS_NOT_FOUND;
+            return Status::PS_NOT_FOUND;
         }
 
         *it_val = new_val;
 
-        return cache_to_file();
+        return CacheToFile();
     }
 
     /**
      * Looks for a value of any type
      */
     template <typename V>
-    ps_status lookup_pred(std::function<bool(V const &)> pred, std::vector<V> &ret, std::string arr_name)
+    Status LookupPred(std::function<bool(V const &)> pred, std::vector<V> &ret, std::string arr_name)
     {
         size_t prev_s = ret.size();
         std::copy_if(std::begin(cache[arr_name]), std::end(cache[arr_name]), std::back_inserter(ret), pred);
 
         if (ret.size() > prev_s)
         {
-            return PS_SUCCESS;
+            return Status::PS_SUCCESS;
         }
 
-        return PS_NOT_FOUND;
+        return Status::PS_NOT_FOUND;
     }
 };
 
