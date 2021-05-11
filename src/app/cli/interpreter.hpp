@@ -114,7 +114,7 @@ private:
      * Filled in by ReParseMultiNetworkSyntax(). After that the
      * context is validated by ValidateMultiNetworkSyntax().
      */
-    struct Context
+    struct MultiNetCommandContext
     {
         StringArray mNwkAliases;
         StringArray mDomAliases;

@@ -311,7 +311,7 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
     return ToLower(aLhs) == ToLower(aRhs);
 }
 
-bool Interpreter::Context::HasGroupAlias()
+bool Interpreter::MultiNetCommandContext::HasGroupAlias()
 {
     for (auto alias : mNwkAliases)
     {
@@ -321,7 +321,7 @@ bool Interpreter::Context::HasGroupAlias()
     return false;
 }
 
-void Interpreter::Context::Cleanup()
+void Interpreter::MultiNetCommandContext::Cleanup()
 {
     mNwkAliases.clear();
     mDomAliases.clear();
