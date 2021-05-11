@@ -104,7 +104,7 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
 
     if (mapItem == Interpreter::mJobEvaluatorMap.end())
     {
-        return ERROR_INVALID_SYNTAX("{} not eligible for job", aExpr[0]);
+        return ERROR_INVALID_COMMAND("{} not eligible for job", aExpr[0]);
     }
     eval     = mapItem->second;
     Job *job = new Job(mInterpreter, aCommissioner, aExpr, eval, aXpanId);
