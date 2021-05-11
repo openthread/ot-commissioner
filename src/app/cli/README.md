@@ -705,6 +705,7 @@ br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)
 >
 
 ### (Initial) discovery of border routers (default timeout is 10000 ms).
+### The command provides data on border routers and Thread networks and domains they belong to.
 > br scan --timeout 2000 --export border-routers.json
 [done]
 
