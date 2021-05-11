@@ -1611,7 +1611,7 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &          
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit)
     {
         ByteArray buf;
-        (void)utils::Hex(buf, aDataset.mExtendedPanId.str());
+        utils::Hex(buf, aDataset.mExtendedPanId.str()).IgnoreError();
         SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, buf}));
     }
 

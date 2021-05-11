@@ -66,7 +66,7 @@ Error Init(const Config &aDefaultConfig)
 
     if (root.empty())
     {
-        root = STR_SAFE(getenv("THREAD_SM_ROOT"));
+        root = SafeStr(getenv("THREAD_SM_ROOT"));
         if (root.empty())
         {
             Console::Write("ThreadSMRoot value is not available", Console::Color::kYellow);
