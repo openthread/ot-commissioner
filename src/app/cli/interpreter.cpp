@@ -33,22 +33,99 @@
 
 #include "app/cli/interpreter.hpp"
 
+#include <algorithm>
+#include <fcntl.h>
+#include <functional>
+#include <memory>
+#include <signal.h>
+#include <sstream>
 #include <string.h>
+#include <thread>
+#include <unistd.h>
 
+#include <event2/event-config.h>
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/util.h>
+#include <mdns/mdns.h>
+
+#include "app/cli/job_manager.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
+#include "app/mdns_handler.hpp"
+#include "app/ps/registry.hpp"
+#include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+
+#define KEYWORD_NETWORK "--nwk"
+#define KEYWORD_DOMAIN "--dom"
+#define KEYWORD_EXPORT "--export"
+#define KEYWORD_IMPORT "--import"
+
+#define ALIAS_THIS "this"
+#define ALIAS_NONE "none"
+#define ALIAS_ALL "all"
+#define ALIAS_OTHERS "others"
+
+#define SYNTAX_NO_PARAM "keyword {} used with no parameter"
+#define SYNTAX_UNKNOWN_KEY "unknown keyword {} encountered"
+#define SYNTAX_MULTI_DOMAIN "multiple domain specification not allowed"
+#define SYNTAX_MULTI_EXPORT "multiple files not allowed for --export"
+#define SYNTAX_MULTI_IMPORT "multiple files not allowed for --import"
+#define SYNTAX_NWK_DOM_MUTUAL "--nwk and --dom are mutually exclusive"
+#define SYNTAX_EXP_IMP_MUTUAL "--export and --import are mutually exclusive"
+#define SYNTAX_NOT_SUPPORTED "{} is not supported by the command"
+#define SYNTAX_GROUP_ALIAS "{} must not combine with any other network alias"
+
+#define RUNTIME_EMPTY_NIDS "specified alias(es) resolved to empty list of networks"
+#define RUNTIME_AMBIGUOUS "network alias {} is ambiguous"
+
+#define NOT_FOUND_STR "Failed to find registry entity of type: "
+#define DOMAIN_STR "domain"
+#define NETWORK_STR "network"
+
+#define COLOR_ALIAS_FAILED Console::Color::kYellow
 
 namespace ot {
 
 namespace commissioner {
+
+namespace {
+
+struct FDGuard
+{
+    FDGuard()
+        : mFD(-1)
+    {
+    }
+    explicit FDGuard(int aFD)
+        : mFD(aFD)
+    {
+    }
+    // For the time being it is enough to call close on all file descriptors to be protected: they're from the POSIX
+    // environment. If we'd want support for Windows it would be necessary to add support for file descriptor close
+    // functions (like, say, closesocket() or even mdns_socket_close()).
+    ~FDGuard()
+    {
+        if (mFD > 0)
+        {
+            close(mFD);
+        }
+    }
+
+    int mFD;
+};
+
+} // namespace
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
     {"start", &Interpreter::ProcessStart},
     {"stop", &Interpreter::ProcessStop},
     {"active", &Interpreter::ProcessActive},
     {"token", &Interpreter::ProcessToken},
+    {"br", &Interpreter::ProcessBr},
+    {"domain", &Interpreter::ProcessDomain},
     {"network", &Interpreter::ProcessNetwork},
     {"sessionid", &Interpreter::ProcessSessionId},
     {"borderagent", &Interpreter::ProcessBorderAgent},
@@ -74,8 +151,16 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"token", "token request <registrar-addr> <registrar-port>\n"
               "token print\n"
               "token set <signed-token-hex-string-file>"},
+    {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
+           "br add <json-file-path>\n"
+           "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"
+           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>]\n"},
+    {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
-                "network sync"},
+                "network sync\n"
+                "network list [--nwk <network-alias-list> | --dom <domain-name>]\n"
+                "network select <xpan>|none\n"
+                "network identify"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
                     "borderagent get locator"},
@@ -129,6 +214,66 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"help", "help [<command>]"},
 };
 
+const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
+    *new std::vector<Interpreter::StringArray>{
+        Interpreter::StringArray{"start"},
+        Interpreter::StringArray{"stop"},
+        Interpreter::StringArray{"active"},
+        Interpreter::StringArray{"sessionid"},
+        Interpreter::StringArray{"bbrdataset", "get"},
+        Interpreter::StringArray{"commdataset", "get"},
+        Interpreter::StringArray{"opdataset", "get", "active"},
+        Interpreter::StringArray{"opdataset", "get", "pending"},
+        Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+        Interpreter::StringArray{"br", "list"},
+        Interpreter::StringArray{"br", "delete"},
+        Interpreter::StringArray{"br", "scan"},
+        Interpreter::StringArray{"domain", "list"},
+        Interpreter::StringArray{"network", "list"},
+        Interpreter::StringArray{"token", "request"},
+    };
+
+const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
+    *new std::vector<Interpreter::StringArray>{
+        Interpreter::StringArray{"start"},
+        Interpreter::StringArray{"stop"},
+        Interpreter::StringArray{"active"},
+        Interpreter::StringArray{"sessionid"},
+        Interpreter::StringArray{"bbrdataset", "get"},
+        Interpreter::StringArray{"commdataset", "get"},
+        Interpreter::StringArray{"opdataset", "get", "active"},
+        Interpreter::StringArray{"opdataset", "get", "pending"},
+        Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+    };
+
+const std::vector<Interpreter::StringArray> &Interpreter::mInactiveCommissionerExecution =
+    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"active"},
+                                               Interpreter::StringArray{"token", "request"}};
+
+const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new std::vector<Interpreter::StringArray>{
+    Interpreter::StringArray{"bbrdataset", "get"},
+    Interpreter::StringArray{"commdataset", "get"},
+    Interpreter::StringArray{"opdataset", "get", "active"},
+    Interpreter::StringArray{"opdataset", "get", "pending"},
+    Interpreter::StringArray{"br", "scan"},
+};
+
+const std::vector<Interpreter::StringArray> &Interpreter::mImportSyntax = *new std::vector<Interpreter::StringArray>{
+    Interpreter::StringArray{"opdataset", "set", "active"},
+    Interpreter::StringArray{"opdataset", "set", "pending"},
+};
+
+const std::map<std::string, Interpreter::JobEvaluator> &Interpreter::mJobEvaluatorMap =
+    *new std::map<std::string, Interpreter::JobEvaluator>{
+        {"start", &Interpreter::ProcessStartJob},
+        {"stop", &Interpreter::ProcessStopJob},
+        {"active", &Interpreter::ProcessActiveJob},
+        {"sessionid", &Interpreter::ProcessSessionIdJob},
+        {"commdataset", &Interpreter::ProcessCommDatasetJob},
+        {"opdataset", &Interpreter::ProcessOpDatasetJob},
+        {"bbrdataset", &Interpreter::ProcessBbrDatasetJob},
+    };
+
 template <typename T> static std::string ToHex(T aInteger)
 {
     return "0x" + utils::Hex(utils::Encode(aInteger));
@@ -166,16 +311,52 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
     return ToLower(aLhs) == ToLower(aRhs);
 }
 
-Error Interpreter::Init(const std::string &aConfigFile)
+bool Interpreter::MultiNetCommandContext::HasGroupAlias()
+{
+    for (auto alias : mNwkAliases)
+    {
+        if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            return true;
+    }
+    return false;
+}
+
+void Interpreter::MultiNetCommandContext::Cleanup()
+{
+    mNwkAliases.clear();
+    mDomAliases.clear();
+    mExportFiles.clear();
+    mImportFiles.clear();
+    mCommandKeys.clear();
+}
+
+Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegistryFile)
 {
     Error error;
 
     std::string configJson;
     Config      config;
 
+    int flags;
+
+    mCancelCommand = false;
+
+    mJobManager.reset(new JobManager(*this));
     SuccessOrExit(error = ReadFile(configJson, aConfigFile));
     SuccessOrExit(error = ConfigFromJson(config, configJson));
-    SuccessOrExit(error = CommissionerApp::Create(mCommissioner, config));
+    SuccessOrExit(error = mJobManager->Init(config));
+    mRegistry.reset(new Registry(aRegistryFile));
+    VerifyOrExit(mRegistry != nullptr,
+                 error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
+    VerifyOrExit(mRegistry->Open() == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("registry failed to open"));
+
+    VerifyOrExit(pipe(mCancelPipe) != -1,
+                 error = ERROR_IO_ERROR("failed to initialize command cancellation structures"));
+    // set both pipe FDs non-blocking
+    flags = fcntl(mCancelPipe[0], F_GETFL, 0);
+    fcntl(mCancelPipe[0], F_SETFL, flags | O_NONBLOCK);
+    flags = fcntl(mCancelPipe[1], F_GETFL, 0);
+    fcntl(mCancelPipe[1], F_SETFL, flags | O_NONBLOCK);
 
 exit:
     return error;
@@ -185,7 +366,7 @@ void Interpreter::Run()
 {
     Expression expr;
 
-    VerifyOrExit(mCommissioner != nullptr);
+    VerifyOrExit(mJobManager != nullptr);
 
     while (!mShouldExit)
     {
@@ -198,45 +379,325 @@ exit:
 
 void Interpreter::CancelCommand()
 {
-    if (mCommissioner->IsActive())
+    int cancelData = 1;
+    mJobManager->CancelCommand();
+    // For commands being handled in place
+    mCancelCommand = true;
+
+    // reading from non-blocking pipe
+    if (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) == -1 && errno == EAGAIN)
     {
-        mCommissioner->CancelRequests();
-    }
-    else
-    {
-        mCommissioner->Stop();
+        cancelData = -1;
+        // No data in the pipe, write is safe (no overflow)
+        ssize_t result = write(mCancelPipe[1], &cancelData, sizeof(cancelData));
+        (void)result;
     }
 }
 
 Interpreter::Expression Interpreter::Read()
 {
-    return ParseExpression(mConsole.Read());
+    return ParseExpression(Console::Read());
 }
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 {
-    Value                                            value;
-    std::map<std::string, Evaluator>::const_iterator evaluator;
+    Expression retExpr;
+    bool       supported;
+    Value      value;
+    int        cancelData;
 
-    VerifyOrExit(!aExpr.empty(), value = ERROR_NONE);
+    mCancelCommand = false;
+    while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
+        ;
 
-    evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
+    // make sure first the command is known
+    auto evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
     if (evaluator == mEvaluatorMap.end())
     {
         ExitNow(value = ERROR_INVALID_COMMAND("'{}' is not a valid command, type 'help' to list all commands",
                                               aExpr.front()));
     }
+    // prepare for parsing next command
+    mContext.Cleanup();
 
-    value = evaluator->second(this, aExpr);
+    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
+    // export file specification must be single or omitted
+    VerifyOrExit(mContext.mExportFiles.size() < 2, value = ERROR_INVALID_ARGS(SYNTAX_MULTI_EXPORT));
+    // import file specification must be single or omitted
+    VerifyOrExit(mContext.mImportFiles.size() < 2, value = ERROR_INVALID_ARGS(SYNTAX_MULTI_IMPORT));
 
+    if (mContext.mExportFiles.size() > 0)
+    {
+        supported = IsFeatureSupported(mExportSyntax, retExpr);
+        VerifyOrExit(supported, value = ERROR_INVALID_ARGS(SYNTAX_NOT_SUPPORTED, KEYWORD_EXPORT));
+        // export and import must not be specified simultaneously
+        VerifyOrExit(mContext.mImportFiles.size() == 0, value = ERROR_INVALID_ARGS(SYNTAX_EXP_IMP_MUTUAL));
+    }
+    else if (mContext.mImportFiles.size() > 0)
+    {
+        supported = IsFeatureSupported(mImportSyntax, retExpr);
+        VerifyOrExit(supported, value = ERROR_INVALID_ARGS(SYNTAX_NOT_SUPPORTED, KEYWORD_IMPORT));
+        // export and import must not be specified simultaneously
+        VerifyOrExit(mContext.mExportFiles.size() == 0, value = ERROR_INVALID_ARGS(SYNTAX_EXP_IMP_MUTUAL));
+        // let job manager take care of import data
+        mJobManager->SetImportFile(mContext.mImportFiles.front());
+    }
+
+    if (IsMultiNetworkSyntax(aExpr))
+    {
+        XpanIdArray nids;
+
+        SuccessOrExit(value = ValidateMultiNetworkSyntax(retExpr, nids));
+        if (IsMultiJob(retExpr)) // asynchronous processing required
+        {
+            SuccessOrExit(value = mJobManager->PrepareJobs(retExpr, nids, mContext.HasGroupAlias()));
+            mJobManager->RunJobs();
+            value = mJobManager->CollectJobsValue();
+        }
+        else // synchronous processing possible
+        {
+            // with multi-network syntax in effect an import semantics
+            // is allowed for job-based processing only (see mImportSyntax)
+            VerifyOrExit(mContext.mImportFiles.size() == 0,
+                         value = ERROR_INVALID_ARGS(
+                             "Import syntax is not supported in synchronous processing of multi-network command"));
+
+            value = evaluator->second(this, retExpr);
+        }
+    }
+    else
+    {
+        // handle single command using selected network
+        if (mContext.mImportFiles.size() > 0)
+        {
+            SuccessOrExit(value = mJobManager->AppendImport(0, retExpr));
+        }
+        value = evaluator->second(this, retExpr);
+    }
 exit:
+    // It is necessary to cleanup import file anyways
+    mJobManager->CleanupJobs();
     return value;
+}
+
+bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
+{
+    for (auto word : aExpr)
+    {
+        if (word == KEYWORD_NETWORK || word == KEYWORD_DOMAIN)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Interpreter::IsMultiJob(const Expression &aExpr)
+{
+    return IsFeatureSupported(mMultiJobExecution, aExpr);
+}
+
+bool Interpreter::IsInactiveCommissionerAllowed(const Expression &aExpr)
+{
+    return IsFeatureSupported(mInactiveCommissionerExecution, aExpr);
+}
+
+Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids)
+{
+    Error error;
+    bool  supported;
+
+    if (mContext.mNwkAliases.size() > 0)
+    {
+        // verify if respective syntax supported by the current command
+        supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
+        VerifyOrExit(supported, error = ERROR_INVALID_ARGS(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
+        // network and domain must not be specified simultaneously
+        VerifyOrExit(mContext.mDomAliases.size() == 0, error = ERROR_INVALID_ARGS(SYNTAX_NWK_DOM_MUTUAL));
+        // validate group alias usage; if used, it must be alone
+        for (auto alias : mContext.mNwkAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            {
+                VerifyOrExit(mContext.mNwkAliases.size() == 1, error = ERROR_INVALID_ARGS(SYNTAX_GROUP_ALIAS, alias));
+            }
+        }
+        StringArray    unresolved;
+        RegistryStatus status = mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, aNids, unresolved);
+        for (auto alias : unresolved)
+        {
+            PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+        }
+        VerifyOrExit(
+            status == RegistryStatus::REG_SUCCESS,
+            error = ERROR_IO_ERROR("Multi-network syntax violation: aliases failed to resolve with status={}", status));
+    }
+    else if (mContext.mDomAliases.size() > 0)
+    {
+        // verify if respective syntax supported by the current command
+        supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
+        VerifyOrExit(supported, error = ERROR_INVALID_ARGS(SYNTAX_NOT_SUPPORTED, KEYWORD_DOMAIN));
+        // network and domain must not be specified simultaneously
+        VerifyOrExit(mContext.mNwkAliases.size() == 0, error = ERROR_INVALID_ARGS(SYNTAX_NWK_DOM_MUTUAL));
+        // domain must be single
+        VerifyOrExit(mContext.mDomAliases.size() < 2, error = ERROR_INVALID_ARGS(SYNTAX_MULTI_DOMAIN));
+        RegistryStatus status = mRegistry->GetNetworkXpansInDomain(mContext.mDomAliases.front(), aNids);
+        VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+                     error = ERROR_IO_ERROR("domain '{}' failed to resolve with status={}",
+                                            mContext.mDomAliases.front(), status));
+    }
+    else
+    {
+        // as we came here to evaluate multi-network command, either
+        // network or domain list must have entries
+        VerifyOrExit(false,
+                     ERROR_INVALID_ARGS(
+                         "Either network or domain list must have entries for multi-network command")); // must not hit
+                                                                                                        // this, ever
+    }
+
+    VerifyOrExit(aNids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
+exit:
+    return error;
+}
+
+bool Interpreter::IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const
+{
+    for (auto commandCase : aArr)
+    {
+        if (commandCase.size() > aExpr.size())
+            continue;
+
+        bool matching = false;
+
+        for (size_t idx = 0; idx < commandCase.size(); idx++)
+        {
+            matching = CaseInsensitiveEqual(commandCase[idx], aExpr[idx]);
+            if (!matching)
+                break;
+        }
+        if (matching)
+            return true;
+    }
+    return false;
+}
+
+Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRetExpr)
+{
+    enum
+    {
+        ST_COMMAND,
+        ST_NETWORK,
+        ST_DOMAIN,
+        ST_EXPORT,
+        ST_IMPORT,
+        ST_CMD_KEYS
+    };
+    StringArray *arrays[] = {[ST_COMMAND]  = &aRetExpr,
+                             [ST_NETWORK]  = &mContext.mNwkAliases,
+                             [ST_DOMAIN]   = &mContext.mDomAliases,
+                             [ST_EXPORT]   = &mContext.mExportFiles,
+                             [ST_IMPORT]   = &mContext.mImportFiles,
+                             [ST_CMD_KEYS] = &mContext.mCommandKeys};
+    Error        error;
+
+    uint8_t     state = ST_COMMAND;
+    bool        inKey = false;
+    std::string lastKey;
+
+    for (auto word : aExpr)
+    {
+        std::string prefix = word.substr(0, 2);
+
+        /*
+         * Note: the syntax allows multiple specification of the same key
+         *
+         * Example: the cases below are parsed equivalently
+         *  --nwk nid1 nid2 nid3 --export path
+         *  --nwk nid1 --nwk nid2 nid3 --export path
+         *  --nwk nid1 --export path --nwk nid2 --nwk nid3
+         */
+
+        if (prefix == "--")
+        {
+            VerifyOrExit(!inKey, error = ERROR_INVALID_ARGS(SYNTAX_NO_PARAM, lastKey));
+            lastKey = word;
+            inKey   = true;
+            if (word == KEYWORD_NETWORK)
+                state = ST_NETWORK;
+            else if (word == KEYWORD_DOMAIN)
+                state = ST_DOMAIN;
+            else if (word == KEYWORD_EXPORT)
+                state = ST_EXPORT;
+            else if (word == KEYWORD_IMPORT)
+                state = ST_IMPORT;
+            else
+            {
+                // Some commands have command line parameters that are to be passed without any change including the
+                // key.
+                inKey = false;
+                state = ST_CMD_KEYS;
+                arrays[state]->push_back(word);
+            }
+        }
+        else
+        {
+            inKey = false;
+            // Note: avoid accidental conversion of the PSKd to lower case (see TS 8.2, Joining Device Credential
+            // in the table 8.2
+            arrays[state]->push_back(word);
+        }
+    }
+    if (inKey) // test if we exit for() with trailing keyword
+    {
+        error = ERROR_INVALID_ARGS(SYNTAX_NO_PARAM, lastKey);
+    }
+exit:
+    return error;
 }
 
 void Interpreter::Print(const Value &aValue)
 {
+    Error       error  = {ErrorCode::kUnknown, ""};
     std::string output = aValue.ToString();
 
+    if (aValue.HasNoError() && mContext.mExportFiles.size() > 0)
+    {
+        for (auto path : mContext.mExportFiles)
+        {
+            std::string filePath = path;
+
+            // Make sure folder path exists, if it's not creatable, print error and output to console instead
+            error = RestoreFilePath(path);
+            if (error != ERROR_NONE)
+            {
+                mConsole.Write(error.GetMessage(), Console::Color::kRed);
+                break;
+            }
+#if 0
+            error = PathExists(filePath);
+            while (error != ERROR_NONE)
+            {
+                // TODO: suggest new file name by incrementing suffix
+                //       file-name[-suffix].ext
+                error = PathExists(filePath);
+            }
+#endif
+            error = WriteFile(aValue.ToString(), filePath);
+            if (error != ERROR_NONE)
+            {
+                std::string out = fmt::format(FMT_STRING("failed to write to '{}'\n"), filePath);
+                mConsole.Write(out, Console::Color::kRed);
+                break;
+            }
+        }
+    }
+    if (error == ERROR_NONE)
+    {
+        // value is written to file, no console output expected other than
+        // [done]/[failed]
+        output.clear();
+    }
     if (!output.empty())
     {
         output += "\n";
@@ -245,6 +706,19 @@ void Interpreter::Print(const Value &aValue)
     auto color = aValue.HasNoError() ? Console::Color::kGreen : Console::Color::kRed;
 
     mConsole.Write(output, color);
+}
+
+void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
+{
+    std::string nidHex = xpan_id(aNid);
+    PrintNetworkMessage(nidHex, aMessage, aColor);
+}
+
+void Interpreter::PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor)
+{
+    mConsole.Write(alias.append(": "));
+    mConsole.Write(aMessage, aColor);
+    mConsole.Write("\n");
 }
 
 std::string Interpreter::Value::ToString() const
@@ -307,38 +781,115 @@ Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral
 
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+    Expression         expr         = aExpr;
+    BorderRouter       br;
+
+    switch (aExpr.size())
+    {
+    case 1:
+    {
+        // starting currently selected network
+        uint64_t       nid;
+        RegistryStatus status = mRegistry->GetCurrentNetworkXpan(nid);
+        VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("getting selected network failed"));
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        SuccessOrExit(value = mJobManager->MakeBorderRouterChoice(nid, br));
+        expr.push_back(br.agent.mAddr);
+        expr.push_back(std::to_string(br.agent.mPort));
+        break;
+    }
+    case 2:
+    {
+        // starting newtork by br raw id (experimental, for dev tests only)
+        persistent_storage::border_router_id rawid;
+
+        SuccessOrExit(value = ParseInteger(rawid.id, expr[1]));
+        VerifyOrExit(mRegistry->GetBorderRouter(rawid, br) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND("br[{}] not found", rawid.id));
+        VerifyOrExit(mRegistry->SetCurrentNetwork(br) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND("network selection failed for nwk[{}]", br.nwk_id.id));
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        expr.pop_back();
+        expr.push_back(br.agent.mAddr);
+        expr.push_back(std::to_string(br.agent.mPort));
+        break;
+    }
+    case 3:
+    {
+        // starting network with explicit br_addr and br_port
+        VerifyOrExit(mRegistry->ForgetCurrentNetwork() == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_IO_ERROR("failed to drop network selection"));
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        break;
+    }
+    default:
+        ExitNow(value = ERROR_INVALID_COMMAND("not a valid command syntax"));
+    }
+
+    value = ProcessStartJob(commissioner, expr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
     Error       error;
     uint16_t    port;
     std::string existingCommissionerId;
 
     VerifyOrExit(aExpr.size() >= 3, error = ERROR_INVALID_ARGS("too few arguments"));
     SuccessOrExit(error = ParseInteger(port, aExpr[2]));
-    SuccessOrExit(error = mCommissioner->Start(existingCommissionerId, aExpr[1], port));
+    SuccessOrExit(error = aCommissioner->Start(existingCommissionerId, aExpr[1], port));
 
 exit:
     if (!existingCommissionerId.empty())
     {
-        ASSERT(error != ErrorCode::kNone);
         error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }
     return error;
 }
 
-Interpreter::Value Interpreter::ProcessStop(const Expression &)
+Interpreter::Value Interpreter::ProcessStop(const Expression &aExpr)
 {
-    mCommissioner->Stop();
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessStopJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &)
+{
+    aCommissioner->Stop();
     return ERROR_NONE;
 }
 
-Interpreter::Value Interpreter::ProcessActive(const Expression &)
+Interpreter::Value Interpreter::ProcessActive(const Expression &aExpr)
 {
-    return std::string{mCommissioner->IsActive() ? "true" : "false"};
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessActiveJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessActiveJob(CommissionerAppPtr &aCommissioner, const Expression &)
+{
+    return std::string{aCommissioner->IsActive() ? "true" : "false"};
 }
 
 Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
 {
-    Value value;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "request"))
@@ -346,11 +897,11 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
         uint16_t port;
         VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ParseInteger(port, aExpr[3]));
-        SuccessOrExit(value = mCommissioner->RequestToken(aExpr[2], port));
+        SuccessOrExit(value = commissioner->RequestToken(aExpr[2], port));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "print"))
     {
-        auto signedToken = mCommissioner->GetToken();
+        auto signedToken = commissioner->GetToken();
         VerifyOrExit(!signedToken.empty(), value = ERROR_NOT_FOUND("no valid Commissioner Token found"));
         value = utils::Hex(signedToken);
     }
@@ -360,7 +911,464 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ReadHexStringFile(signedToken, aExpr[2]));
 
-        SuccessOrExit(value = mCommissioner->SetToken(signedToken));
+        SuccessOrExit(value = commissioner->SetToken(signedToken));
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
+    }
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
+{
+    using namespace ot::commissioner::persistent_storage;
+
+    Value value;
+
+    VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
+    if (CaseInsensitiveEqual(aExpr[1], "list"))
+    {
+        nlohmann::json             json;
+        std::vector<border_router> routers;
+        std::vector<network>       networks;
+        RegistryStatus             status;
+
+        VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
+        if (mContext.mDomAliases.size() > 0)
+        {
+            for (auto dom : mContext.mDomAliases)
+            {
+                std::vector<network> domNetworks;
+                status = mRegistry->GetNetworksInDomain(dom, domNetworks);
+                if (status != RegistryStatus::REG_SUCCESS)
+                {
+                    PrintNetworkMessage(dom, "unrecognized domain", COLOR_ALIAS_FAILED);
+                }
+                else
+                {
+                    networks.insert(networks.end(), domNetworks.begin(), domNetworks.end());
+                }
+            }
+        }
+        else if (mContext.mNwkAliases.size() > 0)
+        {
+            StringArray unresolved;
+            status = mRegistry->GetNetworksByAliases(mContext.mNwkAliases, networks, unresolved);
+            for (auto alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "network alias unknown", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        else
+        {
+            status = mRegistry->GetAllBorderRouters(routers);
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        if (networks.size() > 0)
+        {
+            for (auto nwk : networks)
+            {
+                std::vector<border_router> nwkRouters;
+                status = mRegistry->GetBorderRoutersInNetwork(nwk.xpan, nwkRouters);
+                if (status == RegistryStatus::REG_SUCCESS)
+                {
+                    routers.insert(routers.end(), nwkRouters.begin(), nwkRouters.end());
+                }
+                else
+                {
+                    PrintNetworkMessage(nwk.xpan.value, "lookup failed", COLOR_ALIAS_FAILED);
+                }
+            }
+        }
+        if (routers.size() > 0)
+        {
+            json  = routers;
+            value = json.dump(JSON_INDENT_DEFAULT);
+        }
+        else
+        {
+            value = ERROR_NOT_FOUND("no border routers found");
+        }
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "add"))
+    {
+        Error                    error;
+        std::string              jsonStr;
+        nlohmann::json           json;
+        std::vector<BorderAgent> agents;
+
+        VerifyOrExit((error = JsonFromFile(jsonStr, aExpr[2])) == ERROR_NONE, value = Value(error));
+        // TODO [MP]: handle possible failures - will result in exception
+        json = nlohmann::json::parse(jsonStr);
+
+        // Can be either single BorderAgent or an array of them.
+        if (!json.is_array())
+        {
+            // Parse single BorderAgent
+            BorderAgent ba;
+            BorderAgentFromJson(ba, json);
+            agents.push_back(ba);
+        }
+        else
+        {
+            for (auto iter = json.begin(); iter != json.end(); ++iter)
+            {
+                BorderAgent ba;
+                BorderAgentFromJson(ba, *iter);
+                agents.push_back(ba);
+            }
+        }
+        // Sanity check of BorderAgent records
+        for (auto iter = agents.begin(); iter != agents.end(); ++iter)
+        {
+            // Check mandatory fields present
+            // By Thread 1.1.1 spec table 8-4
+            constexpr const uint32_t kMandatoryFieldsBits =
+                (BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kThreadVersionBit |
+                 BorderAgent::kStateBit | BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
+            if ((iter->mPresentFlags & kMandatoryFieldsBits) != kMandatoryFieldsBits)
+            {
+                value = Value(ERROR_REJECTED("Missing mandatory border agent fields"));
+                goto exit;
+            }
+
+            // Check local network information sanity
+            constexpr const uint32_t kNetworkInfoBits =
+                (BorderAgent::kExtendedPanIdBit | BorderAgent::kNetworkNameBit | BorderAgent::kDomainNameBit);
+            if (((iter->mPresentFlags & kNetworkInfoBits) != 0) &&
+                (((iter->mPresentFlags & BorderAgent::kExtendedPanIdBit) == 0) || (iter->mExtendedPanId == 0)))
+            {
+                value = ERROR_REJECTED("XPAN required but not provided for border agent host:port {}:{}", iter->mAddr,
+                                       iter->mPort);
+                goto exit;
+            }
+
+            // Sanity check across inbound data
+            if (iter->mPresentFlags & BorderAgent::kExtendedPanIdBit)
+            {
+                struct
+                {
+                    bool addr : 1;
+                    bool name : 1;
+                    bool domain : 1;
+                } flags = {false, false, false};
+
+                // Network: (XPAN, PAN) combination must be same everywhere
+                std::vector<BorderAgent>::iterator found =
+                    std::find_if(agents.begin(), iter, [=, &flags](BorderAgent a) {
+                        flags.addr = (iter->mAddr == a.mAddr && iter->mPort == a.mPort);
+                        if (flags.addr)
+                        {
+                            return true;
+                        }
+
+#define CHECK_PRESENT_FLAG(record, flag) ((record).mPresentFlags & BorderAgent::k##flag##Bit)
+                        if (CHECK_PRESENT_FLAG(a, ExtendedPanId) == 0)
+                        {
+                            return false;
+                        }
+                        flags.name = (CHECK_PRESENT_FLAG(a, NetworkName) != CHECK_PRESENT_FLAG(*iter, NetworkName)) ||
+                                     ((CHECK_PRESENT_FLAG(*iter, NetworkName) != 0) &&
+                                      iter->mExtendedPanId == a.mExtendedPanId && iter->mNetworkName != a.mNetworkName);
+                        flags.domain = (CHECK_PRESENT_FLAG(a, DomainName) != CHECK_PRESENT_FLAG(*iter, DomainName)) ||
+                                       ((CHECK_PRESENT_FLAG(*iter, DomainName) != 0) &&
+                                        iter->mExtendedPanId == a.mExtendedPanId && iter->mDomainName != a.mDomainName);
+                        return flags.name || flags.domain;
+#undef CHECK_PRESENT_FLAG
+                    });
+                if (found != iter)
+                {
+                    if (flags.addr)
+                    {
+                        value = Value(
+                            ERROR_REJECTED("Address {} and port {} combination is not unique for inbound border agents",
+                                           iter->mAddr, iter->mPort));
+                    }
+                    else if (flags.name)
+                    {
+                        value =
+                            Value(ERROR_REJECTED("Two inbound border agents have same XPAN '{}', but different network "
+                                                 "names ('{}' and '{}')",
+                                                 iter->mExtendedPanId, iter->mNetworkName, found->mNetworkName));
+                    }
+                    else if (flags.domain)
+                    {
+                        value = ERROR_REJECTED(
+                            "Two inbound border agents have same XPAN '{}', but different domain names ('{}' and '{}')",
+                            iter->mExtendedPanId, iter->mDomainName, found->mDomainName);
+                    }
+                    goto exit;
+                }
+            }
+        }
+
+        for (auto agent : agents)
+        {
+            auto status = mRegistry->Add(agent);
+            if (status != RegistryStatus::REG_SUCCESS)
+            {
+                value = ERROR_IO_ERROR("Registry insert failure with border agent address {} and port {}", agent.mAddr,
+                                       agent.mPort);
+                goto exit;
+            }
+        }
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "delete"))
+    {
+        if (aExpr.size() > 3 || (aExpr.size() == 3 && !(mContext.mNwkAliases.empty() && mContext.mDomAliases.empty())))
+        {
+            value = Error(ErrorCode::kInvalidArgs, "Too many arguments for `br delete` command`");
+            goto exit;
+        }
+        else if (aExpr.size() == 3)
+        {
+            // Attempt to remove border agent by border_router_id
+            border_router_id brId;
+            try
+            {
+                brId = border_router_id(std::stoi(aExpr[2]));
+            } catch (...)
+            {
+                value = ERROR_INVALID_ARGS("Failed to evaluate border router ID '{}'", aExpr[2]);
+                goto exit;
+            }
+            auto status = mRegistry->DeleteBorderRouterById(brId);
+            if (status == RegistryStatus::REG_RESTRICTED)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border router ID {}: last router in the current network",
+                                       aExpr[2]);
+            }
+            else if (status != RegistryStatus::REG_SUCCESS)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border router ID {}", aExpr[2]);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS);
+        }
+        else if (mContext.mNwkAliases.size() > 0)
+        {
+            StringArray unresolved;
+            // Remove all border agents in the networks
+            auto status = mRegistry->DeleteBorderRoutersInNetworks(mContext.mNwkAliases, unresolved);
+            if (status == RegistryStatus::REG_RESTRICTED)
+            {
+                value = ERROR_IO_ERROR("Can't delete all border routers from the current network");
+            }
+            else if (status != RegistryStatus::REG_SUCCESS)
+            {
+                value = Error(ErrorCode ::kIOError, "Failed to delete border routers");
+            }
+            // Report unresolved aliases
+            for (auto &&alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS);
+        }
+        else if (mContext.mDomAliases.size() > 0)
+        {
+            StringArray undeleted;
+            // Remove all border agents in the domain
+            auto status = mRegistry->DeleteBorderRoutersInDomain(mContext.mDomAliases[0]);
+            if (status == RegistryStatus::REG_RESTRICTED)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}' of the current network",
+                                       mContext.mDomAliases[0]);
+            }
+            else if (status != RegistryStatus::REG_SUCCESS)
+            {
+                value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}'", mContext.mDomAliases[0]);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS);
+        }
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "scan"))
+    {
+        constexpr const mdns_record_type_t kMdnsQueryType  = MDNS_RECORDTYPE_PTR;
+        constexpr const uint32_t           kMdnsBufferSize = 16 * 1024;
+        const std::string                  kServiceName    = "_meshcop._udp.local";
+
+        uint32_t                                  scanTimeout = 10000;
+        int                                       mdnsSocket  = -1;
+        FDGuard                                   fdgMdnsSocket;
+        std::thread                               selectThread;
+        event_base *                              base;
+        timeval                                   tvTimeout;
+        std::unique_ptr<event, void (*)(event *)> mdnsEvent(nullptr, event_free);
+        std::unique_ptr<event, void (*)(event *)> cancelEvent(nullptr, event_free);
+        std::vector<BorderAgentOrErrorMsg>        borderAgents;
+        nlohmann::json                            baJson;
+        char                                      mdnsSendBuffer[kMdnsBufferSize];
+
+        if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--timeout")
+        {
+            try
+            {
+                scanTimeout = stol(mContext.mCommandKeys[1]);
+            } catch (...)
+            {
+                ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", aExpr[3]));
+            }
+        }
+
+        // Open IPv4 mDNS socket
+        mdnsSocket = mdns_socket_open_ipv4();
+        VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
+        fdgMdnsSocket.mFD = mdnsSocket;
+
+        //  Initialize event library
+        base = event_base_new();
+
+        // Instantly register timeout event to stop the event loop
+        evutil_timerclear(&tvTimeout);
+        tvTimeout.tv_sec  = scanTimeout / 1000;
+        tvTimeout.tv_usec = (scanTimeout % 1000) * 1000;
+        event_base_loopexit(base, &tvTimeout);
+
+        // Register event for inbound events on mdnsSocket
+        // The mdnsSocket is already non-blocking (as we need for the event library)
+        auto mdnsReaderParser = [](evutil_socket_t aSocket, short aWhat, void *aArg) {
+            (void)aWhat;
+
+            BorderAgentOrErrorMsg               agent;
+            char                                buf[1024 * 16];
+            std::vector<BorderAgentOrErrorMsg> &agents = *static_cast<std::vector<BorderAgentOrErrorMsg> *>(aArg);
+
+            mdns_query_recv(aSocket, buf, sizeof(buf), HandleRecord, &agent, 1);
+            agents.push_back(agent);
+
+            return;
+        };
+        mdnsEvent = std::unique_ptr<event, void (*)(event *)>(
+            event_new(base, mdnsSocket, EV_READ | EV_PERSIST, mdnsReaderParser, &borderAgents), event_free);
+        event_add(mdnsEvent.get(), nullptr);
+
+        // Stop event queue on data in the mCancelPipe
+        auto mdnsCancelEventQueue = [](evutil_socket_t aSocket, short aWhat, void *aArg) {
+            (void)aSocket;
+            (void)aWhat;
+            event_base *ev_base = (event_base *)aArg;
+            event_base_loopbreak(ev_base);
+        };
+        cancelEvent = std::unique_ptr<event, void (*)(event *)>(
+            event_new(base, mCancelPipe[0], EV_READ | EV_PERSIST, mdnsCancelEventQueue, base), event_free);
+        event_add(cancelEvent.get(), nullptr);
+
+        // Start event loop thread
+        selectThread = std::thread([](event_base *aBase) { event_base_dispatch(aBase); }, base);
+
+        // Send mDNS query
+        if (mdns_query_send(mdnsSocket, kMdnsQueryType, kServiceName.c_str(), kServiceName.length(), mdnsSendBuffer,
+                            sizeof(mdnsSendBuffer)) != 0)
+        {
+            // Stop event thread
+            event_base_loopbreak(base);
+            selectThread.join();
+            ExitNow(value = ERROR_IO_ERROR("Sending mDNS query failed"));
+        }
+        // Join the waiting (event loop) thread
+        selectThread.join();
+
+        if (mCancelCommand)
+        {
+            int cancelData;
+            while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
+                ;
+            ExitNow(value = ERROR_CANCELLED("Scan cancelled by user"));
+        }
+
+        XpanIdArray xpans;
+        StringArray unresolved;
+        if (!mContext.mNwkAliases.empty())
+        {
+            VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, xpans, unresolved) ==
+                             RegistryStatus::REG_SUCCESS,
+                         value = ERROR_IO_ERROR("Failed to convert network aliases to XPAN IDs"));
+            for (auto alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(!xpans.empty(),
+                         value = ERROR_IO_ERROR(
+                             "No known extended PAN ID discovered for network aliases. Please make complete rescan."));
+        }
+
+        // Serialize BorderAgents to JSON into value
+        for (auto agentOrError : borderAgents)
+        {
+            if (agentOrError.mError != ErrorCode::kNone)
+            {
+                mConsole.Write(agentOrError.mError.GetMessage(), Console::Color::kRed);
+            }
+            else
+            {
+                nlohmann::json ba;
+                BorderAgentToJson(agentOrError.mBorderAgent, ba);
+                if ((mContext.mNwkAliases.empty() && mContext.mDomAliases.empty()) ||
+                    (!mContext.mDomAliases.empty() &&
+                     (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kDomainNameBit) &&
+                     (agentOrError.mBorderAgent.mDomainName == mContext.mDomAliases[0])) ||
+                    (!mContext.mNwkAliases.empty() &&
+                     (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kExtendedPanIdBit) &&
+                     (std::find(xpans.begin(), xpans.end(), xpan_id(agentOrError.mBorderAgent.mExtendedPanId)) !=
+                      xpans.end())))
+                {
+                    baJson.push_back(ba);
+                }
+            }
+        }
+        value = baJson.dump(JSON_INDENT_DEFAULT);
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
+    }
+
+exit:
+    return value;
+} // namespace commissioner
+
+Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
+{
+    using namespace ot::commissioner::persistent_storage;
+
+    Value value;
+
+    VerifyOrExit(aExpr.size() > 1, value = ERROR_INVALID_ARGS("too few arguments"));
+    VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
+    if (CaseInsensitiveEqual(aExpr[1], "list"))
+    {
+        RegistryStatus      status;
+        nlohmann::json      json;
+        std::vector<domain> domains;
+
+        for (auto alias : mContext.mDomAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+            {
+                ExitNow(value = ERROR_INVALID_ARGS("alias '{}' not supported by the command", alias));
+            }
+        }
+        if (mContext.mDomAliases.size() != 0)
+        {
+            StringArray unresolved;
+            status = mRegistry->GetDomainsByAliases(mContext.mDomAliases, domains, unresolved);
+            for (auto alias : unresolved)
+            {
+                PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            }
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        else
+        {
+            status = mRegistry->GetAllDomains(domains);
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+        }
+        json  = domains;
+        value = json.dump(JSON_INDENT_DEFAULT);
     }
     else
     {
@@ -373,18 +1381,77 @@ exit:
 
 Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
 {
-    Value value;
+    using namespace ot::commissioner::persistent_storage;
+
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "save"))
     {
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
-        SuccessOrExit(value = mCommissioner->SaveNetworkData(aExpr[2]));
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        SuccessOrExit(value = commissioner->SaveNetworkData(aExpr[2]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "sync"))
     {
-        SuccessOrExit(value = mCommissioner->SyncNetworkData());
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+        SuccessOrExit(value = commissioner->SyncNetworkData());
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "list"))
+    {
+        SuccessOrExit(value = ProcessNetworkList(aExpr));
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "select"))
+    {
+        ::nlohmann::json json;
+
+        VerifyOrExit(aExpr.size() == 3, value = ERROR_INVALID_ARGS("too many arguments"));
+        if (CaseInsensitiveEqual(aExpr[2], "none"))
+        {
+            RegistryStatus status = mRegistry->ForgetCurrentNetwork();
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("network select failed"));
+        }
+        else
+        {
+            StringArray aliases = {aExpr[2]};
+            XpanIdArray xpans;
+            StringArray unresolved;
+            VerifyOrExit(mRegistry->GetNetworkXpansByAliases(aliases, xpans, unresolved) == RegistryStatus::REG_SUCCESS,
+                         value = ERROR_IO_ERROR("Failed to resolve extended PAN Id for network {}", aExpr[2]));
+            VerifyOrExit(xpans.size() == 1, value = ERROR_IO_ERROR("Detected {} networks instead of 1 for alias '{}'",
+                                                                   xpans.size(), aExpr[2]));
+            VerifyOrExit(mRegistry->SetCurrentNetwork(xpans[0]) == RegistryStatus::REG_SUCCESS,
+                         value = ERROR_IO_ERROR("network set failed"));
+        }
+        value = std::string("done");
+    }
+    else if (CaseInsensitiveEqual(aExpr[1], "identify"))
+    {
+        ::nlohmann::json json;
+        network          nwk;
+        std::string      nwkData;
+
+        VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
+        VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+        if (nwk.id.id == EMPTY_ID)
+        {
+            value = std::string("none");
+        }
+        else
+        {
+            if (nwk.dom_id.id != EMPTY_ID)
+            {
+                VerifyOrExit(mRegistry->GetDomainNameByXpan(nwk.xpan, nwkData) == RegistryStatus::REG_SUCCESS,
+                             value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
+                nwkData += '/';
+            }
+            nwkData += nwk.name;
+            json[nwk.xpan.str()] = nwkData;
+            value                = json.dump(JSON_INDENT_DEFAULT);
+        }
     }
     else
     {
@@ -395,13 +1462,78 @@ exit:
     return value;
 }
 
-Interpreter::Value Interpreter::ProcessSessionId(const Expression &)
+Interpreter::Value Interpreter::ProcessSessionId(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessSessionIdJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessSessionIdJob(CommissionerAppPtr &aCommissioner, const Expression &)
 {
     Value    value;
     uint16_t sessionId;
 
-    SuccessOrExit(value = mCommissioner->GetSessionId(sessionId));
+    SuccessOrExit(value = aCommissioner->GetSessionId(sessionId));
     value = std::to_string(sessionId);
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
+{
+    using namespace ot::commissioner::persistent_storage;
+
+    Interpreter::Value   value;
+    Expression           retExpr;
+    network              nwk{};
+    std::vector<network> networks;
+    ::nlohmann::json     json;
+
+    SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
+    // export file specification must be single or omitted
+    VerifyOrExit(mContext.mExportFiles.size() < 2, value = ERROR_INVALID_ARGS(SYNTAX_MULTI_EXPORT));
+    // import file specification must be single or omitted
+    VerifyOrExit(mContext.mImportFiles.size() < 2, value = ERROR_INVALID_ARGS(SYNTAX_MULTI_IMPORT));
+    // network and domain must not be specified simultaneously
+    VerifyOrExit(mContext.mNwkAliases.size() == 0 || mContext.mDomAliases.size() == 0,
+                 value = ERROR_INVALID_ARGS(SYNTAX_NWK_DOM_MUTUAL));
+
+    if (mContext.mDomAliases.size() > 0)
+    {
+        VerifyOrExit(mRegistry->GetNetworksInDomain(mContext.mDomAliases[0], networks) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND("failed to find networks in domain '{}'", mContext.mDomAliases[0]));
+    }
+    else if (mContext.mNwkAliases.size() == 0)
+    {
+        VerifyOrExit(mRegistry->GetAllNetworks(networks) == RegistryStatus::REG_SUCCESS,
+                     value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+    }
+    else
+    {
+        // Quickly check group aliases
+        for (auto alias : mContext.mNwkAliases)
+        {
+            if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
+                VerifyOrExit(mContext.mNwkAliases.size() == 1, value = ERROR_INVALID_ARGS(SYNTAX_GROUP_ALIAS, alias));
+        }
+
+        StringArray    unresolved;
+        RegistryStatus status = mRegistry->GetNetworksByAliases(mContext.mNwkAliases, networks, unresolved);
+        for (auto alias : unresolved)
+        {
+            PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+        }
+        VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+    }
+
+    json  = networks;
+    value = json.dump(JSON_INDENT_DEFAULT);
 
 exit:
     return value;
@@ -426,13 +1558,26 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
+        CommissionerAppPtr commissioner = nullptr;
+
+        SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
 
         if (CaseInsensitiveEqual(aExpr[2], "locator"))
         {
             uint16_t locator;
-            SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
+            SuccessOrExit(value = commissioner->GetBorderAgentLocator(locator));
             value = ToHex(locator);
+        }
+        else if (CaseInsensitiveEqual(aExpr[2], "meshlocaladdr"))
+        {
+            uint16_t    locator;
+            std::string meshLocalPrefix;
+            std::string meshLocalAddr;
+            SuccessOrExit(value = commissioner->GetBorderAgentLocator(locator));
+            SuccessOrExit(value = commissioner->GetMeshLocalPrefix(meshLocalPrefix));
+            SuccessOrExit(value = commissioner->GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
+            value = meshLocalAddr;
         }
         else
         {
@@ -450,11 +1595,13 @@ exit:
 
 Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
 {
-    Value      value;
-    JoinerType type;
+    Value              value;
+    JoinerType         type;
+    CommissionerAppPtr commissioner = nullptr;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
     SuccessOrExit(value = GetJoinerType(type, aExpr[2]));
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
 
     if (CaseInsensitiveEqual(aExpr[1], "enable"))
     {
@@ -474,7 +1621,7 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
             }
         }
 
-        SuccessOrExit(value = mCommissioner->EnableJoiner(type, eui64, pskd, provisioningUrl));
+        SuccessOrExit(value = commissioner->EnableJoiner(type, eui64, pskd, provisioningUrl));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "enableall"))
     {
@@ -490,23 +1637,23 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
             }
         }
 
-        SuccessOrExit(value = mCommissioner->EnableAllJoiners(type, pskd, provisioningUrl));
+        SuccessOrExit(value = commissioner->EnableAllJoiners(type, pskd, provisioningUrl));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "disable"))
     {
         uint64_t eui64;
         VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ParseInteger(eui64, aExpr[3]));
-        SuccessOrExit(value = mCommissioner->DisableJoiner(type, eui64));
+        SuccessOrExit(value = commissioner->DisableJoiner(type, eui64));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "disableall"))
     {
-        SuccessOrExit(value = mCommissioner->DisableAllJoiners(type));
+        SuccessOrExit(value = commissioner->DisableAllJoiners(type));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "getport"))
     {
         uint16_t port;
-        SuccessOrExit(value = mCommissioner->GetJoinerUdpPort(port, type));
+        SuccessOrExit(value = commissioner->GetJoinerUdpPort(port, type));
         value = std::to_string(port);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "setport"))
@@ -514,7 +1661,7 @@ Interpreter::Value Interpreter::ProcessJoiner(const Expression &aExpr)
         uint16_t port;
         VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ParseInteger(port, aExpr[3]));
-        SuccessOrExit(value = mCommissioner->SetJoinerUdpPort(type, port));
+        SuccessOrExit(value = commissioner->SetJoinerUdpPort(type, port));
     }
     else
     {
@@ -527,6 +1674,17 @@ exit:
 
 Interpreter::Value Interpreter::ProcessCommDataset(const Expression &aExpr)
 {
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessCommDatasetJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
     Value value;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
@@ -534,7 +1692,7 @@ Interpreter::Value Interpreter::ProcessCommDataset(const Expression &aExpr)
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
         CommissionerDataset dataset;
-        SuccessOrExit(value = mCommissioner->GetCommissionerDataset(dataset, 0xFFFF));
+        SuccessOrExit(value = aCommissioner->GetCommissionerDataset(dataset, 0xFFFF));
         value = CommissionerDatasetToJson(dataset);
     }
     else if (CaseInsensitiveEqual(aExpr[1], "set"))
@@ -542,7 +1700,7 @@ Interpreter::Value Interpreter::ProcessCommDataset(const Expression &aExpr)
         CommissionerDataset dataset;
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = CommissionerDatasetFromJson(dataset, aExpr[2]));
-        SuccessOrExit(value = mCommissioner->SetCommissionerDataset(dataset));
+        SuccessOrExit(value = aCommissioner->SetCommissionerDataset(dataset));
     }
     else
     {
@@ -554,6 +1712,17 @@ exit:
 }
 
 Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessOpDatasetJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
     Value value;
     bool  isSet;
@@ -576,7 +1745,7 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
     {
         Timestamp activeTimestamp;
         VerifyOrExit(!isSet, value = ERROR_INVALID_ARGS("cannot set activetimestamp"));
-        SuccessOrExit(value = mCommissioner->GetActiveTimestamp(activeTimestamp));
+        SuccessOrExit(value = aCommissioner->GetActiveTimestamp(activeTimestamp));
         value = ToString(activeTimestamp);
     }
     else if (CaseInsensitiveEqual(aExpr[2], "channel"))
@@ -589,11 +1758,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
             SuccessOrExit(value = ParseInteger(channel.mPage, aExpr[3]));
             SuccessOrExit(value = ParseInteger(channel.mNumber, aExpr[4]));
             SuccessOrExit(value = ParseInteger(delay, aExpr[5]));
-            SuccessOrExit(value = mCommissioner->SetChannel(channel, CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetChannel(channel, CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetChannel(channel));
+            SuccessOrExit(value = aCommissioner->GetChannel(channel));
             value = ToString(channel);
         }
     }
@@ -603,11 +1772,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         if (isSet)
         {
             SuccessOrExit(value = ParseChannelMask(channelMask, aExpr, 3));
-            SuccessOrExit(value = mCommissioner->SetChannelMask(channelMask));
+            SuccessOrExit(value = aCommissioner->SetChannelMask(channelMask));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetChannelMask(channelMask));
+            SuccessOrExit(value = aCommissioner->GetChannelMask(channelMask));
             value = ToString(channelMask);
         }
     }
@@ -618,11 +1787,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = utils::Hex(xpanid, aExpr[3]));
-            SuccessOrExit(value = mCommissioner->SetExtendedPanId(xpanid));
+            SuccessOrExit(value = aCommissioner->SetExtendedPanId(xpanid));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetExtendedPanId(xpanid));
+            SuccessOrExit(value = aCommissioner->GetExtendedPanId(xpanid));
             value = utils::Hex(xpanid);
         }
     }
@@ -634,11 +1803,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
-            SuccessOrExit(value = mCommissioner->SetMeshLocalPrefix(aExpr[3], CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetMeshLocalPrefix(aExpr[3], CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetMeshLocalPrefix(prefix));
+            SuccessOrExit(value = aCommissioner->GetMeshLocalPrefix(prefix));
             value = prefix;
         }
     }
@@ -651,11 +1820,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = utils::Hex(masterKey, aExpr[3]));
             SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
-            SuccessOrExit(value = mCommissioner->SetNetworkMasterKey(masterKey, CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetNetworkMasterKey(masterKey, CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetNetworkMasterKey(masterKey));
+            SuccessOrExit(value = aCommissioner->GetNetworkMasterKey(masterKey));
             value = utils::Hex(masterKey);
         }
     }
@@ -665,28 +1834,28 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
-            SuccessOrExit(value = mCommissioner->SetNetworkName(aExpr[3]));
+            SuccessOrExit(value = aCommissioner->SetNetworkName(aExpr[3]));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetNetworkName(networkName));
+            SuccessOrExit(value = aCommissioner->GetNetworkName(networkName));
             value = networkName;
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "panid"))
     {
-        uint16_t panid;
+        PanId panid;
         if (isSet)
         {
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = ParseInteger(panid, aExpr[3]));
             SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
-            SuccessOrExit(value = mCommissioner->SetPanId(panid, CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetPanId(panid, CommissionerApp::MilliSeconds(delay)));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetPanId(panid));
+            SuccessOrExit(value = aCommissioner->GetPanId(panid));
             value = std::to_string(panid);
         }
     }
@@ -697,11 +1866,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = utils::Hex(pskc, aExpr[3]));
-            SuccessOrExit(value = mCommissioner->SetPSKc(pskc));
+            SuccessOrExit(value = aCommissioner->SetPSKc(pskc));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetPSKc(pskc));
+            SuccessOrExit(value = aCommissioner->GetPSKc(pskc));
             value = utils::Hex(pskc);
         }
     }
@@ -713,28 +1882,113 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = ParseInteger(policy.mRotationTime, aExpr[3]));
             SuccessOrExit(value = utils::Hex(policy.mFlags, aExpr[4]));
-            SuccessOrExit(value = mCommissioner->SetSecurityPolicy(policy));
+            SuccessOrExit(value = aCommissioner->SetSecurityPolicy(policy));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetSecurityPolicy(policy));
+            SuccessOrExit(value = aCommissioner->GetSecurityPolicy(policy));
             value = ToString(policy);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "active"))
     {
         ActiveOperationalDataset dataset;
+        StringArray              nwkAliases;
+        StringArray              unresolved;
+        XpanIdArray              xpans;
+
         if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = ActiveDatasetFromJson(dataset, aExpr[3]));
-            SuccessOrExit(value = mCommissioner->SetActiveDataset(dataset));
+            SuccessOrExit(value = aCommissioner->SetActiveDataset(dataset));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetActiveDataset(dataset, 0xFFFF));
+            SuccessOrExit(value = aCommissioner->GetActiveDataset(dataset, 0xFFFF));
             value = ActiveDatasetToJson(dataset);
         }
+        // Update network from active opdataset (no error there, log messages only)
+        do
+        {
+            persistent_storage::network nwk;
+            // Get network object for the opdataset object
+            if ((dataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit) != 0)
+            {
+                xpans.push_back(dataset.mExtendedPanId);
+            }
+            else
+            {
+                if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) != 0)
+                {
+                    std::ostringstream panIdStream;
+                    panIdStream << "0x" << std::hex << std::setfill('0') << std::setw(4) << std::uppercase
+                                << dataset.mPanId;
+                    nwkAliases.push_back(panIdStream.str());
+                }
+                else if ((dataset.mPresentFlags & ActiveOperationalDataset::kNetworkNameBit) != 0)
+                {
+                    nwkAliases.push_back(dataset.mNetworkName);
+                }
+                else
+                {
+                    mConsole.Write("Dataset contains no network identification data", Console::Color::kYellow);
+                    break;
+                }
+                if (mRegistry->GetNetworkXpansByAliases(nwkAliases, xpans, unresolved) != RegistryStatus::REG_SUCCESS ||
+                    xpans.size() != 1)
+                {
+                    mConsole.Write(fmt::format(FMT_STRING("Failed to load network XPAN by alias '{}': got {} XPANs"),
+                                               nwkAliases[0], xpans.size()),
+                                   Console::Color::kYellow);
+                    break;
+                }
+            }
+            if (mRegistry->GetNetworkByXpan(xpans[0], nwk) != RegistryStatus::REG_SUCCESS)
+            {
+                mConsole.Write(fmt::format(FMT_STRING("Failed to load network by XPAN '{}'"), xpans[0].str()),
+                               Console::Color::kYellow);
+                break;
+            }
+
+// Update network object
+#define AODS_FIELD_IF_IS_SET(field, defaultValue) \
+    (((dataset.mPresentFlags & ActiveOperationalDataset::k##field##Bit) == 0) ? (defaultValue) : (dataset.m##field))
+
+            nwk.name    = AODS_FIELD_IF_IS_SET(NetworkName, "");
+            nwk.xpan    = AODS_FIELD_IF_IS_SET(ExtendedPanId, xpan_id{0});
+            nwk.channel = AODS_FIELD_IF_IS_SET(Channel, (Channel{0, 0})).mNumber;
+            nwk.pan     = AODS_FIELD_IF_IS_SET(PanId, PanId{0});
+            if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0)
+            {
+                nwk.pan = "";
+            }
+            else
+            {
+                std::ostringstream value;
+                value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0')
+                      << dataset.mPanId.mValue;
+                nwk.pan = value.str();
+            }
+
+            if ((dataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0)
+            {
+                nwk.mlp = "";
+            }
+            else
+            {
+                nwk.mlp = Ipv6PrefixToString(dataset.mMeshLocalPrefix);
+            }
+            // Magic constant originates from the Spec pt. 8.10.1.15
+            // The flag set indicates 'CCM **not** supported' state
+            nwk.ccm =
+                (((AODS_FIELD_IF_IS_SET(SecurityPolicy, (SecurityPolicy{0, ByteArray{0, 0}})).mFlags[0] & 0x04) == 0)
+                     ? 1
+                     : 0);
+#undef AODS_FIELD_IF_IS_SET
+            // Store network object in the registry
+            mRegistry->Update(nwk);
+        } while (false);
     }
     else if (CaseInsensitiveEqual(aExpr[2], "pending"))
     {
@@ -743,11 +1997,11 @@ Interpreter::Value Interpreter::ProcessOpDataset(const Expression &aExpr)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
             SuccessOrExit(value = PendingDatasetFromJson(dataset, aExpr[3]));
-            SuccessOrExit(value = mCommissioner->SetPendingDataset(dataset));
+            SuccessOrExit(value = aCommissioner->SetPendingDataset(dataset));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetPendingDataset(dataset, 0xFFFF));
+            SuccessOrExit(value = aCommissioner->GetPendingDataset(dataset, 0xFFFF));
             value = PendingDatasetToJson(dataset);
         }
     }
@@ -761,6 +2015,17 @@ exit:
 }
 
 Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessBbrDatasetJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
     Value value;
     bool  isSet;
@@ -782,7 +2047,7 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
     if (aExpr.size() == 2 && !isSet)
     {
         BbrDataset dataset;
-        SuccessOrExit(value = mCommissioner->GetBbrDataset(dataset, 0xFFFF));
+        SuccessOrExit(value = aCommissioner->GetBbrDataset(dataset, 0xFFFF));
         ExitNow(value = BbrDatasetToJson(dataset));
     }
 
@@ -794,11 +2059,11 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
         if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
-            SuccessOrExit(value = mCommissioner->SetTriHostname(aExpr[3]));
+            SuccessOrExit(value = aCommissioner->SetTriHostname(aExpr[3]));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetTriHostname(triHostname));
+            SuccessOrExit(value = aCommissioner->GetTriHostname(triHostname));
             value = triHostname;
         }
     }
@@ -808,11 +2073,11 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
         if (isSet)
         {
             VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("too few arguments"));
-            SuccessOrExit(value = mCommissioner->SetRegistrarHostname(aExpr[3]));
+            SuccessOrExit(value = aCommissioner->SetRegistrarHostname(aExpr[3]));
         }
         else
         {
-            SuccessOrExit(value = mCommissioner->GetRegistrarHostname(regHostname));
+            SuccessOrExit(value = aCommissioner->GetRegistrarHostname(regHostname));
             value = regHostname;
         }
     }
@@ -820,7 +2085,7 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
     {
         std::string regAddr;
         VerifyOrExit(!isSet, value = ERROR_INVALID_ARGS("cannot set  read-only Registrar Address"));
-        SuccessOrExit(value = mCommissioner->GetRegistrarIpv6Addr(regAddr));
+        SuccessOrExit(value = aCommissioner->GetRegistrarIpv6Addr(regAddr));
         value = regAddr;
     }
     else
@@ -829,7 +2094,7 @@ Interpreter::Value Interpreter::ProcessBbrDataset(const Expression &aExpr)
         {
             BbrDataset dataset;
             SuccessOrExit(value = BbrDatasetFromJson(dataset, aExpr[2]));
-            SuccessOrExit(value = mCommissioner->SetBbrDataset(dataset));
+            SuccessOrExit(value = aCommissioner->SetBbrDataset(dataset));
         }
         else
         {
@@ -843,21 +2108,24 @@ exit:
 
 Interpreter::Value Interpreter::ProcessReenroll(const Expression &aExpr)
 {
-    Value value;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
-    SuccessOrExit(value = mCommissioner->Reenroll(aExpr[1]));
-
+    SuccessOrExit(value = commissioner->Reenroll(aExpr[1]));
 exit:
     return value;
 }
 
 Interpreter::Value Interpreter::ProcessDomainReset(const Expression &aExpr)
 {
-    Value value;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
-    SuccessOrExit(value = mCommissioner->DomainReset(aExpr[1]));
+    SuccessOrExit(value = commissioner->DomainReset(aExpr[1]));
 
 exit:
     return value;
@@ -865,53 +2133,56 @@ exit:
 
 Interpreter::Value Interpreter::ProcessMigrate(const Expression &aExpr)
 {
-    Value value;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
-    SuccessOrExit(value = mCommissioner->Migrate(aExpr[1], aExpr[2]));
-
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    SuccessOrExit(value = commissioner->Migrate(aExpr[1], aExpr[2]));
 exit:
     return value;
 }
 
 Interpreter::Value Interpreter::ProcessMlr(const Expression &aExpr)
 {
-    Value value;
-
-    uint32_t timeout;
+    uint32_t           timeout;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     SuccessOrExit(value = ParseInteger(timeout, aExpr.back()));
-    SuccessOrExit(value = mCommissioner->RegisterMulticastListener({aExpr.begin() + 1, aExpr.end() - 1},
-                                                                   CommissionerApp::Seconds(timeout)));
-
+    SuccessOrExit(value = commissioner->RegisterMulticastListener({aExpr.begin() + 1, aExpr.end() - 1},
+                                                                  CommissionerApp::Seconds(timeout)));
 exit:
     return value;
 }
 
 Interpreter::Value Interpreter::ProcessAnnounce(const Expression &aExpr)
 {
-    Value value;
-
-    uint32_t channelMask;
-    uint8_t  count;
-    uint16_t period;
+    uint32_t           channelMask;
+    uint8_t            count;
+    uint16_t           period;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
     VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     SuccessOrExit(value = ParseInteger(channelMask, aExpr[1]));
     SuccessOrExit(value = ParseInteger(count, aExpr[2]));
     SuccessOrExit(value = ParseInteger(period, aExpr[3]));
-    SuccessOrExit(
-        value = mCommissioner->AnnounceBegin(channelMask, count, CommissionerApp::MilliSeconds(period), aExpr[4]));
-
+    SuccessOrExit(value =
+                      commissioner->AnnounceBegin(channelMask, count, CommissionerApp::MilliSeconds(period), aExpr[4]));
 exit:
     return value;
 }
 
 Interpreter::Value Interpreter::ProcessPanId(const Expression &aExpr)
 {
-    Value value;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "query"))
@@ -921,7 +2192,7 @@ Interpreter::Value Interpreter::ProcessPanId(const Expression &aExpr)
         VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ParseInteger(channelMask, aExpr[2]));
         SuccessOrExit(value = ParseInteger(panId, aExpr[3]));
-        SuccessOrExit(value = mCommissioner->PanIdQuery(channelMask, panId, aExpr[4]));
+        SuccessOrExit(value = commissioner->PanIdQuery(channelMask, panId, aExpr[4]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "conflict"))
     {
@@ -929,7 +2200,7 @@ Interpreter::Value Interpreter::ProcessPanId(const Expression &aExpr)
         bool     conflict;
         VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("too few arguments"));
         SuccessOrExit(value = ParseInteger(panId, aExpr[2]));
-        conflict = mCommissioner->HasPanIdConflict(panId);
+        conflict = commissioner->HasPanIdConflict(panId);
         value    = std::to_string(conflict);
     }
     else
@@ -943,8 +2214,10 @@ exit:
 
 Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
 {
-    Value value;
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
 
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
 
     if (CaseInsensitiveEqual(aExpr[1], "scan"))
@@ -958,7 +2231,7 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
         SuccessOrExit(value = ParseInteger(count, aExpr[3]));
         SuccessOrExit(value = ParseInteger(period, aExpr[4]));
         SuccessOrExit(value = ParseInteger(scanDuration, aExpr[5]));
-        SuccessOrExit(value = mCommissioner->EnergyScan(channelMask, count, period, scanDuration, aExpr[6]));
+        SuccessOrExit(value = commissioner->EnergyScan(channelMask, count, period, scanDuration, aExpr[6]));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "report"))
     {
@@ -967,12 +2240,12 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
             const EnergyReport *report = nullptr;
             Address             dstAddr;
             SuccessOrExit(value = dstAddr.Set(aExpr[2]));
-            report = mCommissioner->GetEnergyReport(dstAddr);
+            report = commissioner->GetEnergyReport(dstAddr);
             value  = report == nullptr ? "null" : EnergyReportToJson(*report);
         }
         else
         {
-            auto reports = mCommissioner->GetAllEnergyReports();
+            auto reports = commissioner->GetAllEnergyReports();
             value        = reports.empty() ? "null" : EnergyReportMapToJson(reports);
         }
     }
@@ -987,7 +2260,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
 {
-    mCommissioner->Stop();
+    mJobManager->StopCommissionerPool();
 
     mShouldExit = true;
 

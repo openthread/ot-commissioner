@@ -35,8 +35,12 @@
 
 #include <signal.h>
 
+#include <getopt.h>
+
 #include "app/cli/interpreter.hpp"
 #include "common/utils.hpp"
+
+#include "app/ps/registry.hpp"
 
 #ifndef OT_COMM_VERSION
 #error "OT_COMM_VERSION not defined"
@@ -66,8 +70,17 @@ static const std::string kLogo =
 static void PrintUsage(const std::string &aProgram)
 {
     static const std::string usage = "usage: \n"
-                                     "    " +
-                                     aProgram + " <config-file>";
+                                     "help digest:\n    " +
+                                     aProgram +
+                                     "-h|--help\n"
+                                     "version:\n    " +
+                                     aProgram +
+                                     "-v|--version\n"
+                                     "common options\n    " +
+                                     aProgram +
+                                     "[-r|--registry <registryFileName>] -c|--config <configFileName>\n"
+                                     "or\n    " +
+                                     aProgram + " [-r|--registry <registryFileName>] <configFileName>";
 
     Console::Write(usage, Console::Color::kWhite);
 }
@@ -91,20 +104,70 @@ static void HandleSignalInterrupt()
     }
 }
 
+static option commissioner_cli_options[] = {{"help", no_argument, nullptr, 'h'},
+                                            {"version", no_argument, nullptr, 'v'},
+                                            {"registry", required_argument, nullptr, 'r'},
+                                            {"config", required_argument, nullptr, 'c'},
+                                            {nullptr, 0, nullptr, 0}};
+
 int main(int argc, const char *argv[])
 {
-    Error  error;
-    Config config;
+    using namespace ::ot::commissioner::utils;
 
-    if (argc < 2 || ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
+    Error error;
+
+    std::string progName = argv[0];
+    std::string registryFileName;
+    std::string configFileName;
+
+    int  ch;
+    bool parse_params = true;
+
+    if (argc < 2)
     {
         PrintUsage(argv[0]);
         ExitNow();
     }
-    else if (ToLower(argv[1]) == "-v" || ToLower(argv[1]) == "--version")
+
+    while (parse_params)
     {
-        PrintVersion();
-        ExitNow();
+        ch = getopt_long(argc, (char *const *)argv, "h:v:c:r:", commissioner_cli_options, nullptr);
+        switch (ch)
+        {
+        case 'h':
+            PrintUsage(argv[0]);
+            ExitNow();
+            break;
+        case 'v':
+            PrintVersion();
+            ExitNow();
+            break;
+        case 'r':
+            registryFileName = optarg;
+            break;
+        case 'c':
+            configFileName = optarg;
+            break;
+        default:
+            parse_params = false;
+            break;
+        };
+    }
+    argc -= optind;
+    argv += optind;
+
+    if (configFileName.empty())
+    {
+        if (argc == 0)
+        {
+            Console::Write("No configuration JSON provided!", Console::Color::kRed);
+            PrintUsage(progName);
+            ExitNow();
+        }
+        else
+        {
+            configFileName = argv[0];
+        }
     }
 
     // Block signals in this thread and subsequently spawned threads.
@@ -116,7 +179,7 @@ int main(int argc, const char *argv[])
 
     Console::Write(kLogo, Console::Color::kBlue);
 
-    SuccessOrExit(error = gInterpreter.Init(argv[1]));
+    SuccessOrExit(error = gInterpreter.Init(configFileName, registryFileName));
 
     gInterpreter.Run();
 

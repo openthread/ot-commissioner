@@ -26,6 +26,8 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+add_definitions(-D_XOPEN_SOURCE)
+
 add_library(commissioner-app
     commissioner_app.cpp
     commissioner_app.hpp
@@ -37,6 +39,8 @@ add_library(commissioner-app
     file_util.hpp
     json.cpp
     json.hpp
+    mdns_handler.hpp
+    mdns_handler.cpp
 )
 
 target_link_libraries(commissioner-app
@@ -70,6 +74,7 @@ if (OT_COMM_TEST)
     add_library(commissioner-app-test OBJECT
         commissioner_app.hpp
         commissioner_app_test.cpp
+		file_util_test.cpp
         json.hpp
         json_test.cpp
     )
@@ -79,7 +84,9 @@ if (OT_COMM_TEST)
             ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )
 endif()
 
 add_subdirectory(cli)
+add_subdirectory(ps)

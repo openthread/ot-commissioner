@@ -162,6 +162,7 @@ if (OT_COMM_TEST)
         token_manager_test.cpp
         $<$<BOOL:${OT_COMM_APP}>:$<TARGET_OBJECTS:commissioner-app-test>>
         $<TARGET_OBJECTS:commissioner-common-test>
+        $<TARGET_OBJECTS:commissioner-ps-test>
     )
 
     target_link_libraries(commissioner-test
@@ -178,6 +179,7 @@ if (OT_COMM_TEST)
             commissioner
             $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
             commissioner-common
+			persistent-storage
     )
 
     target_compile_definitions(commissioner-test

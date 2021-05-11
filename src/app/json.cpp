@@ -37,8 +37,6 @@
 #include <exception>
 #include <iostream>
 
-#include <nlohmann/json.hpp>
-
 #include "app/commissioner_app.hpp"
 #include "app/file_logger.hpp"
 #include "app/file_util.hpp"
@@ -101,6 +99,7 @@ template <> struct adl_serializer<ot::commissioner::ByteArray>
         SuccessOrThrow(::ot::commissioner::utils::Hex(aBuf, aJson.get<std::string>()));
     }
 };
+
 } // namespace nlohmann
 
 namespace ot {
@@ -240,6 +239,16 @@ static void from_json(const Json &aJson, Config &aConfig)
     if (aJson.contains("TrustAnchorFile"))
     {
         SuccessOrThrow(ReadPemFile(aConfig.mTrustAnchor, aJson["TrustAnchorFile"]));
+    }
+
+    if (aJson.contains("ComTokFile"))
+    {
+        SuccessOrThrow(ReadHexStringFile(aConfig.mCommissionerToken, aJson["ComTokFile"]));
+    }
+
+    if (aJson.contains("ThreadSMRoot"))
+    {
+        aConfig.mThreadSMRoot = aJson["ThreadSMRoot"];
     }
 }
 
@@ -397,6 +406,20 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 #undef SET
 }
 
+static void to_json(Json &aJson, const ot::commissioner::PanId &aPanId)
+{
+    std::ostringstream value;
+    value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0') << aPanId.mValue;
+    aJson = value.str();
+}
+
+static void from_json(const Json &aJson, ot::commissioner::PanId &aPanId)
+{
+    std::string panIdStr;
+    panIdStr = aJson.get<std::string>();
+    aPanId   = PanId(panIdStr);
+}
+
 static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
 {
 #define SET_IF_PRESENT(name)                                             \
@@ -422,6 +445,11 @@ static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
     SET_IF_PRESENT(SecurityPolicy);
 
 #undef SET_IF_PRESENT
+}
+
+static void from_json(const Json &aJson, xpan_id &aXpanId)
+{
+    aXpanId = aJson.get<std::string>();
 }
 
 static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
@@ -547,7 +575,7 @@ Error NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson)
 std::string NetworkDataToJson(const NetworkData &aNetworkData)
 {
     Json json = aNetworkData;
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::string &aJson)
@@ -571,7 +599,7 @@ Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::stri
 std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset)
 {
     Json json = aDataset;
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
@@ -595,7 +623,7 @@ Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
 std::string BbrDatasetToJson(const BbrDataset &aDataset)
 {
     Json json = aDataset;
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::string &aJson)
@@ -619,7 +647,7 @@ Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::strin
 std::string ActiveDatasetToJson(const ActiveOperationalDataset &aDataset)
 {
     Json json = aDataset;
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::string &aJson)
@@ -643,7 +671,7 @@ Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::str
 std::string PendingDatasetToJson(const PendingOperationalDataset &aDataset)
 {
     Json json = aDataset;
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 Error ConfigFromJson(Config &aConfig, const std::string &aJson)
@@ -667,7 +695,7 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson)
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport)
 {
     Json json = aEnergyReport;
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
@@ -684,7 +712,108 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
         VerifyOrDie(deviceAddr.IsValid());
         json[deviceAddr.ToString()] = report;
     }
-    return json.dump(/* indent */ 4);
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+Error JsonFromFile(std::string &aJson, const std::string &aPath)
+{
+    Error       error;
+    std::string jsonStr;
+
+    SuccessOrExit(error = ReadFile(jsonStr, aPath));
+    try
+    {
+        Json json = Json::parse(StripComments(jsonStr));
+        aJson     = json.dump(JSON_INDENT_DEFAULT);
+    } catch (JsonException &e)
+    {
+        error = {ErrorCode::kBadFormat, e.GetError().GetMessage()};
+    } catch (std::exception &e)
+    {
+        error = {ErrorCode::kBadFormat, e.what()};
+    }
+exit:
+    return error;
+}
+
+static void from_json(const nlohmann::json &aJson, BorderAgent::State &aState)
+{
+    uint32_t stateVal = aJson.get<uint32_t>();
+    aState            = BorderAgent::State(stateVal);
+}
+
+void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson)
+{
+    BorderAgent agent;
+
+#define SET_IF_PRESENT(field)                                                  \
+    do                                                                         \
+    {                                                                          \
+        if (aJson.contains(#field))                                            \
+        {                                                                      \
+            agent.mPresentFlags |= BorderAgent::k##field##Bit;                 \
+            agent.m##field = aJson.at(#field).get<decltype(agent.m##field)>(); \
+        }                                                                      \
+    } while (false)
+
+    SET_IF_PRESENT(Addr);
+    SET_IF_PRESENT(Port);
+    SET_IF_PRESENT(ThreadVersion);
+    SET_IF_PRESENT(State);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(ModelName);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(PartitionId);
+    SET_IF_PRESENT(VendorData);
+    SET_IF_PRESENT(VendorOui);
+    SET_IF_PRESENT(DomainName);
+    SET_IF_PRESENT(BbrSeqNumber);
+    SET_IF_PRESENT(BbrPort);
+    SET_IF_PRESENT(ServiceName);
+
+#undef SET_IF_PRESENT
+
+    aAgent = agent;
+}
+
+static void to_json(nlohmann::json &aJson, const BorderAgent::State &aState)
+{
+    aJson = static_cast<uint32_t>(aState);
+}
+
+void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson)
+{
+    BorderAgent agent;
+
+#define SET_IF_PRESENT(field)                                  \
+    do                                                         \
+    {                                                          \
+        if (aAgent.mPresentFlags & BorderAgent::k##field##Bit) \
+        {                                                      \
+            aJson[#field] = aAgent.m##field;                   \
+        }                                                      \
+    } while (false)
+
+    SET_IF_PRESENT(Addr);
+    SET_IF_PRESENT(Port);
+    SET_IF_PRESENT(ThreadVersion);
+    SET_IF_PRESENT(State);
+    SET_IF_PRESENT(NetworkName);
+    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(ModelName);
+    SET_IF_PRESENT(ActiveTimestamp);
+    SET_IF_PRESENT(PartitionId);
+    SET_IF_PRESENT(VendorData);
+    SET_IF_PRESENT(VendorOui);
+    SET_IF_PRESENT(DomainName);
+    SET_IF_PRESENT(BbrSeqNumber);
+    SET_IF_PRESENT(BbrPort);
+    SET_IF_PRESENT(ServiceName);
+
+#undef SET_IF_PRESENT
 }
 
 } // namespace commissioner

@@ -42,6 +42,8 @@
 #include "library/openthread/sha256.hpp"
 #include "library/uri.hpp"
 
+#include "common/utils.hpp"
+
 #define CCM_NOT_IMPLEMENTED "CCM features not implemented"
 
 namespace ot {
@@ -1460,7 +1462,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto extendedPanId = tlvSet[tlv::Type::kExtendedPanId])
     {
-        dataset.mExtendedPanId = extendedPanId->GetValue();
+        dataset.mExtendedPanId = utils::Hex(extendedPanId->GetValue());
         dataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
     }
 
@@ -1599,7 +1601,9 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &          
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, aDataset.mExtendedPanId}));
+        ByteArray buf;
+        utils::Hex(buf, aDataset.mExtendedPanId.str()).IgnoreError();
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, buf}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit)
@@ -1619,7 +1623,7 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &          
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kPanId, aDataset.mPanId}));
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kPanId, aDataset.mPanId.mValue}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kPSKcBit)

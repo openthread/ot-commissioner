@@ -34,29 +34,44 @@
 #ifndef OT_COMM_APP_CLI_INTERPRETER_HPP_
 #define OT_COMM_APP_CLI_INTERPRETER_HPP_
 
+#include <atomic>
 #include <map>
 
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
 #include "app/commissioner_app.hpp"
+#include "app/ps/registry.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
+typedef std::shared_ptr<CommissionerApp> CommissionerAppPtr;
+
+class JobManager;
+
 class Interpreter
 {
+    friend class InterpreterTestSuite;
+
 public:
+    using Expression     = std::vector<std::string>;
+    using StringArray    = std::vector<std::string>;
+    using Registry       = ot::commissioner::persistent_storage::Registry;
+    using RegistryStatus = Registry::Status;
+
     Interpreter()  = default;
     ~Interpreter() = default;
 
-    Error Init(const std::string &aConfigFile);
+    Error Init(const std::string &aConfigFile, const std::string &aRegistry);
 
     void Run();
 
     void CancelCommand();
 
 private:
+    friend class Job;
+    friend class JobManager;
     /**
      * The result value of an Expression processed by the Interpreter.
      * Specifically, it is an union of Error and std::string.
@@ -90,22 +105,49 @@ private:
         std::string mData;
     };
 
-    using Expression = std::vector<std::string>;
-    using Evaluator  = std::function<Value(Interpreter *, const Expression &)>;
+    using Evaluator    = std::function<Value(Interpreter *, const Expression &)>;
+    using JobEvaluator = std::function<Value(Interpreter *, CommissionerAppPtr &, const Expression &)>;
 
+    /**
+     * Multi-network command context.
+     *
+     * Filled in by ReParseMultiNetworkSyntax(). After that the
+     * context is validated by ValidateMultiNetworkSyntax().
+     */
+    struct MultiNetCommandContext
+    {
+        StringArray mNwkAliases;
+        StringArray mDomAliases;
+        StringArray mExportFiles;
+        StringArray mImportFiles;
+        StringArray mCommandKeys;
+
+        void Cleanup();
+        bool HasGroupAlias();
+    } mContext;
+
+private:
     Expression Read();
-
-    Value Eval(const Expression &aExpr);
-
-    void Print(const Value &aValue);
-
+    Value      Eval(const Expression &aExpr);
+    void       Print(const Value &aValue);
+    void       PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor);
+    void       PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor);
     Expression ParseExpression(const std::string &aLiteral);
+    bool       IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
+    bool       IsMultiNetworkSyntax(const Expression &aExpr);
+    bool       IsMultiJob(const Expression &aExpr);
+    bool       IsInactiveCommissionerAllowed(const Expression &aExpr);
+    Value      ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
+    Error      ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
 
     Value ProcessStart(const Expression &aExpr);
     Value ProcessStop(const Expression &aExpr);
     Value ProcessActive(const Expression &aExpr);
     Value ProcessToken(const Expression &aExpr);
+    Value ProcessBr(const Expression &aExpr);
+    Value ProcessDomain(const Expression &aExpr);
     Value ProcessNetwork(const Expression &aExpr);
+    Value ProcessNetworkList(const Expression &aExpr);
     Value ProcessSessionId(const Expression &aExpr);
     Value ProcessBorderAgent(const Expression &aExpr);
     Value ProcessJoiner(const Expression &aExpr);
@@ -121,6 +163,14 @@ private:
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
+
+    Value ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessActiveJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessSessionIdJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 
@@ -139,17 +189,24 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    Config                           mConfig;
-    std::shared_ptr<CommissionerApp> mCommissioner = nullptr;
-    Console                          mConsole;
+    Console                     mConsole;
+    std::shared_ptr<JobManager> mJobManager = nullptr;
+    std::shared_ptr<Registry>   mRegistry   = nullptr;
 
     bool mShouldExit = false;
 
-    static const std::map<std::string, std::string> &mUsageMap;
-    static const std::map<std::string, Evaluator> &  mEvaluatorMap;
-};
+    std::atomic_bool mCancelCommand;
+    int              mCancelPipe[2] = {-1, -1};
 
-std::string ToLower(const std::string &aStr);
+    static const std::map<std::string, std::string> & mUsageMap;
+    static const std::map<std::string, Evaluator> &   mEvaluatorMap;
+    static const std::vector<StringArray> &           mMultiNetworkSyntax;
+    static const std::vector<StringArray> &           mMultiJobExecution;
+    static const std::vector<StringArray> &           mInactiveCommissionerExecution;
+    static const std::vector<StringArray> &           mExportSyntax;
+    static const std::vector<StringArray> &           mImportSyntax;
+    static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;
+};
 
 } // namespace commissioner
 

@@ -31,17 +31,31 @@ add_executable(commissioner-cli
     console.hpp
     interpreter.cpp
     interpreter.hpp
+    job.cpp
+    job.hpp
+    job_manager.cpp
+    job_manager.hpp
+    security_materials.cpp
+    security_materials.hpp
     main.cpp
 )
 
 target_include_directories(commissioner-cli
     PRIVATE
         ${PROJECT_SOURCE_DIR}/src
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include>
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
 )
 
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app
+        commissioner-common
+        event_core
+        event_pthreads
+        mdns
+        persistent-storage
         pthread
         readline
 )
