@@ -51,7 +51,7 @@
         }                              \
     } while (false)
 
-#define STR_SAFE(aCString) ((aCString) != nullptr ? (aCString) : "")
+#define SafeStr(aCString) ((aCString) != nullptr ? (aCString) : "")
 
 #define SuccessOrDie(aError)                       \
     do                                             \
