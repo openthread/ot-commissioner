@@ -15,10 +15,10 @@
 #include "commissioner_app_mock.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/file_util.hpp"
 #include "app/ps/persistent_storage_json.hpp"
 #include "app/ps/registry.hpp"
 #include "app/ps/registry_entries.hpp"
-#include "common/file_util.hpp"
 
 using namespace ot::commissioner;
 using namespace ot::commissioner::persistent_storage;

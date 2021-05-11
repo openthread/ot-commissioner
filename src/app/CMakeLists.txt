@@ -35,6 +35,8 @@ add_library(commissioner-app
     border_agent.hpp
     file_logger.cpp
     file_logger.hpp
+    file_util.cpp
+    file_util.hpp
     json.cpp
     json.hpp
     logger_util.hpp
@@ -75,6 +77,7 @@ if (OT_COMM_TEST)
     add_library(commissioner-app-test OBJECT
         commissioner_app.hpp
         commissioner_app_test.cpp
+		file_util_test.cpp
         json.hpp
         json_test.cpp
     )
