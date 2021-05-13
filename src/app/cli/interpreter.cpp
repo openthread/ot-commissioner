@@ -1035,16 +1035,37 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json           json;
         std::vector<BorderAgent> agents;
 
+        if (aExpr.size() < 3)
+        {
+            ExitNow(value = ERROR_INVALID_ARGS("input JSON file path required"));
+        }
+        else if (aExpr.size() > 3)
+        {
+            ExitNow(value = ERROR_INVALID_ARGS("too many arguments"));
+        }
+
         VerifyOrExit((error = JsonFromFile(jsonStr, aExpr[2])) == ERROR_NONE, value = Value(error));
-        // TODO [MP]: handle possible failures - will result in exception
-        json = nlohmann::json::parse(jsonStr);
+
+        try
+        {
+            json = nlohmann::json::parse(jsonStr);
+        } catch (std::exception &e)
+        {
+            ExitNow(value = ERROR_BAD_FORMAT("failed to parse JSON: {}", e.what()));
+        }
 
         // Can be either single BorderAgent or an array of them.
         if (!json.is_array())
         {
             // Parse single BorderAgent
             BorderAgent ba;
-            BorderAgentFromJson(ba, json);
+            try
+            {
+                BorderAgentFromJson(ba, json);
+            } catch (std::exception &e)
+            {
+                ExitNow(value = ERROR_BAD_FORMAT("incorrect border agent JSON format: {}", e.what()));
+            }
             agents.push_back(ba);
         }
         else
@@ -1052,7 +1073,13 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             for (auto iter = json.begin(); iter != json.end(); ++iter)
             {
                 BorderAgent ba;
-                BorderAgentFromJson(ba, *iter);
+                try
+                {
+                    BorderAgentFromJson(ba, *iter);
+                } catch (std::exception &e)
+                {
+                    ExitNow(value = ERROR_BAD_FORMAT("incorrect border agent JSON format: {}", e.what()));
+                }
                 agents.push_back(ba);
             }
         }
