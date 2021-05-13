@@ -207,13 +207,12 @@ Registry::Status Registry::Add(BorderAgent const &val)
                 throw Registry::Status::REG_ERROR;
             }
 
-            // TODO [MP] Fix: BorderAgent key is xpan + addr
             // Lookup border_router by address and port to decide to add() or update()
             // Assuming address and port are set (it should be so).
             border_router lookup_br{};
-            lookup_br.agent.mAddr         = val.mAddr;
-            lookup_br.agent.mPort         = val.mPort;
-            lookup_br.agent.mPresentFlags = BorderAgent::kAddrBit | BorderAgent::kPortBit;
+            lookup_br.agent.mAddr          = val.mAddr;
+            lookup_br.agent.mExtendedPanId = val.mExtendedPanId;
+            lookup_br.agent.mPresentFlags  = BorderAgent::kAddrBit | BorderAgent::kExtendedPanIdBit;
             std::vector<border_router> routers;
             status = MapStatus(storage->Lookup(lookup_br, routers));
             if (status == Registry::Status::REG_SUCCESS && routers.size() == 1)
