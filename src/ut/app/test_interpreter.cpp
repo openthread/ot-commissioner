@@ -2196,7 +2196,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
         \"DomainName\": \"dom1\"\n\
     },\n\
     {\n\
-        \"Addr\": \"1234::5679\",\n\
+        \"Addr\": \"1234::5670\",\n\
         \"Port\": 2000,\n\
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
@@ -2205,7 +2205,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
         \"DomainName\": \"dom1\"\n\
     },\n\
     {\n\
-        \"Addr\": \"1234::5678\",\n\
+        \"Addr\": \"1234::5671\",\n\
         \"Port\": 2001,\n\
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
