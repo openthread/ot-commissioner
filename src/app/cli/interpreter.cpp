@@ -966,7 +966,10 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         else
         {
             status = mRegistry->GetAllBorderRouters(routers);
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+            if (status != RegistryStatus::REG_SUCCESS && status != RegistryStatus::REG_NOT_FOUND)
+            {
+                ExitNow(value = ERROR_IO_ERROR("lookup failed"));
+            }
         }
         if (networks.size() > 0)
         {
@@ -991,7 +994,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         }
         else
         {
-            value = ERROR_NOT_FOUND("no border routers found");
+            value = Value("[]");
         }
     }
     else if (CaseInsensitiveEqual(aExpr[1], "add"))
@@ -1392,7 +1395,10 @@ Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
         else
         {
             status = mRegistry->GetAllDomains(domains);
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+            if (status != RegistryStatus::REG_SUCCESS && status != RegistryStatus::REG_NOT_FOUND)
+            {
+                ExitNow(value = ERROR_IO_ERROR("lookup failed"));
+            }
         }
         json  = domains;
         value = json.dump(JSON_INDENT_DEFAULT);
@@ -1538,8 +1544,11 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     }
     else if (mContext.mNwkAliases.size() == 0)
     {
-        VerifyOrExit(mRegistry->GetAllNetworks(networks) == RegistryStatus::REG_SUCCESS,
-                     value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+        RegistryStatus status = mRegistry->GetAllNetworks(networks);
+        if (status != RegistryStatus::REG_SUCCESS && status != RegistryStatus::REG_NOT_FOUND)
+        {
+            value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR);
+        }
     }
     else
     {

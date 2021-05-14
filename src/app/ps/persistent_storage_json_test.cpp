@@ -1,4 +1,35 @@
-// TODO copyright
+/*
+ *    Copyright (c) 2019, The OpenThread Commissioner Authors.
+ *    All rights reserved.
+ *
+ *    Redistribution and use in source and binary forms, with or without
+ *    modification, are permitted provided that the following conditions are met:
+ *    1. Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *    3. Neither the name of the copyright holder nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ *    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *    POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @file
+ *   The file implements unit tests for JSON-based persistent storage
+ */
 
 #include <catch2/catch.hpp>
 
@@ -315,27 +346,23 @@ TEST_CASE("Get network, not empty", "[ps_json]")
 
     network_id new_id;
 
-// TODO define domain processing
-#if 0
-    REQUIRE(psj.Add(network{EMPTY_ID, "nwk1", "dom1", "FFFFFFFFFFFFFFF1", 11, "FFF1", "2000:aaa1::0/8", 1}, new_id) ==
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1, 11, "FFF1", "2000:aaa1::0/8", 1}, new_id) ==
             PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(new_id.id == 3);
-    REQUIRE(psj.Add(network{EMPTY_ID, "nwk2", "dom2", "FFFFFFFFFFFFFFF2", 12, "FFF2", "2000:aaa2::0/8", 1}, new_id) ==
+    REQUIRE(new_id.id == 0);
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2, 12, "FFF2", "2000:aaa2::0/8", 1}, new_id) ==
             PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(new_id.id == 4);
-    REQUIRE(psj.Add(network{EMPTY_ID, "nwk3", "dom3", "FFFFFFFFFFFFFFF3", 13, "FFF3", "2000:aaa3::0/8", 1}, new_id) ==
+    REQUIRE(new_id.id == 1);
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3, 13, "FFF3", "2000:aaa3::0/8", 1}, new_id) ==
             PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(new_id.id == 5);
+    REQUIRE(new_id.id == 2);
 
     network ret_val;
 
-    REQUIRE(psj.Get(network_id(0), ret_val) == PersistentStorage::Status::PS_NOT_FOUND);
-    REQUIRE(psj.Get(network_id(5), ret_val) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(ret_val.id.id == 5);
-    REQUIRE(ret_val.name == "nwk3");
-    REQUIRE(ret_val.domain_name == "dom3");
-    REQUIRE(ret_val.channel == 13);
-#endif
+    REQUIRE(psj.Get(network_id(5), ret_val) == PersistentStorage::Status::PS_NOT_FOUND);
+    REQUIRE(psj.Get(network_id(0), ret_val) == PersistentStorage::Status::PS_SUCCESS);
+    REQUIRE(ret_val.id.id == 0);
+    REQUIRE(ret_val.name == "nwk1");
+    REQUIRE(ret_val.channel == 11);
 
     REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
@@ -453,26 +480,27 @@ TEST_CASE("Upd domain", "[ps_json]")
 
 TEST_CASE("Upd network", "[ps_json]")
 {
-    PersistentStorageJson psj("./test.tmp");
+    unlink("./tmp.json");
+    PersistentStorageJson psj("./tmp.json");
 
     REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
-// Add domain processing
-#if 0
-    network new_val{EMPTY_ID, "nwk_upd", "dom_upd", "FFFFFFFFFFFFFFFA", 18, "FFFA", "2000:aaa1::0/64", 0};
+    network nwk{EMPTY_ID, EMPTY_ID, "nwk", 0xFFFFFFFFFFFFFFFA, 17, "FFFA", "2000:aaa1::0/64", 0};
 
-    REQUIRE(psj.Update(new_val) == PersistentStorage::Status::PS_NOT_FOUND);
-    new_val.id = 5;
-    REQUIRE(psj.Update(new_val) == PersistentStorage::Status::PS_SUCCESS);
+    REQUIRE(psj.Update(nwk) == PersistentStorage::Status::PS_NOT_FOUND);
+    network_id nid;
+    REQUIRE(psj.Add(nwk, nid) == PersistentStorage::Status::PS_SUCCESS);
+    nwk.id      = nid;
+    nwk.channel = 18;
+    nwk.name    = "nwk_upd";
+    REQUIRE(psj.Update(nwk) == PersistentStorage::Status::PS_SUCCESS);
 
     network ret_val;
 
-    REQUIRE(psj.Get(network_id(5), ret_val) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(ret_val.id.id == 5);
+    REQUIRE(psj.Get(network_id(0), ret_val) == PersistentStorage::Status::PS_SUCCESS);
+    REQUIRE(ret_val.id.id == 0);
     REQUIRE(ret_val.name == "nwk_upd");
-    REQUIRE(ret_val.domain_name == "dom_upd");
     REQUIRE(ret_val.channel == 18);
-#endif
 
     REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
