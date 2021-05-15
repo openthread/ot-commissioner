@@ -1138,9 +1138,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                         flags.name = (CHECK_PRESENT_FLAG(a, NetworkName) != CHECK_PRESENT_FLAG(*iter, NetworkName)) ||
                                      ((CHECK_PRESENT_FLAG(*iter, NetworkName) != 0) &&
                                       iter->mExtendedPanId == a.mExtendedPanId && iter->mNetworkName != a.mNetworkName);
-                        flags.domain = (CHECK_PRESENT_FLAG(a, DomainName) != CHECK_PRESENT_FLAG(*iter, DomainName)) ||
-                                       ((CHECK_PRESENT_FLAG(*iter, DomainName) != 0) &&
-                                        iter->mExtendedPanId == a.mExtendedPanId && iter->mDomainName != a.mDomainName);
+                        flags.domain = (CHECK_PRESENT_FLAG(a, DomainName) && CHECK_PRESENT_FLAG(*iter, DomainName)) &&
+                                       (iter->mExtendedPanId == a.mExtendedPanId && iter->mDomainName != a.mDomainName);
                         return flags.name || flags.domain;
 #undef CHECK_PRESENT_FLAG
                     });
