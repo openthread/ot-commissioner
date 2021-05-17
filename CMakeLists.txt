@@ -57,16 +57,16 @@ execute_process(
 )
 
 if(OT_COMM_GIT_REVISION)
-    set(OT_COMM_VERSION "${PROJECT_VERSION}-${OT_COMM_GIT_REVISION}")
+    set(OT_COMM_VERSION "${PROJECT_VERSION}+${OT_COMM_GIT_REVISION}")
 else()
     set(OT_COMM_VERSION "${PROJECT_VERSION}")
 endif()
 
 message(STATUS "Version: ${OT_COMM_VERSION}")
 
-add_library(commissioner-version INTERFACE)
-target_compile_definitions(commissioner-version
-    INTERFACE OT_COMM_VERSION="${PROJECT_VERSION}"
+add_library(commissioner-config INTERFACE)
+target_compile_definitions(commissioner-config
+    INTERFACE OT_COMM_VERSION="${OT_COMM_VERSION}"
 )
 
 add_subdirectory(src)
