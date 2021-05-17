@@ -1137,7 +1137,7 @@ public:
     /**
      * @brief Return the commissioner version.
      *
-     * @return A version string in format of <MAJOR>.<MINOR>.<PATCH>[-<GIT_REVISION>].
+     * @return A version string in format of <MAJOR>.<MINOR>.<PATCH>[+<GIT_REVISION>].
      *         The GIT_REVISION is included only when the commissioner is built in a
      *         git repository.
      */
