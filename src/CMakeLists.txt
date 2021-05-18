@@ -48,8 +48,4 @@ if (OT_COMM_JAVA_BINDING)
     add_subdirectory(java)
 endif()
 
-if (OT_COMM_TEST)
-    add_subdirectory(ut)
-endif()
-
 add_subdirectory(library)

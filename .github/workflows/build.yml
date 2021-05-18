@@ -89,7 +89,6 @@ jobs:
           sudo ninja install
           commissioner-cli -v
           ./tests/commissioner-test
-          ./tests/ps-test
           ./tests/job-manager-test
           ./tests/interpreter-test
 
@@ -121,7 +120,6 @@ jobs:
           sudo ninja install
           commissioner-cli -v
           ./tests/commissioner-test
-          ./tests/ps-test
           ./tests/job-manager-test
           ./tests/interpreter-test
 
@@ -146,7 +144,6 @@ jobs:
           sudo make install
           commissioner-cli -v
           ./tests/commissioner-test
-          ./tests/ps-test
           ./tests/job-manager-test
           ./tests/interpreter-test
 
