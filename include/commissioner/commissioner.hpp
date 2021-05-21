@@ -1133,6 +1133,15 @@ public:
      * @param[in]      aJoinerId      A Joiner ID.
      */
     static void AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerId);
+
+    /**
+     * @brief Return the commissioner version.
+     *
+     * @return A version string in format of <MAJOR>.<MINOR>.<PATCH>[+<GIT_REVISION>].
+     *         The GIT_REVISION is included only when the commissioner is built in a
+     *         git repository.
+     */
+    static std::string GetVersion(void);
 };
 
 } // namespace commissioner

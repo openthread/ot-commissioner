@@ -117,6 +117,11 @@ void Commissioner::AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerI
     ComputeBloomFilter(aSteeringData, aJoinerId);
 }
 
+std::string Commissioner::GetVersion(void)
+{
+    return OT_COMM_VERSION;
+}
+
 CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase)
     : mState(State::kDisabled)
     , mSessionId(0)
