@@ -1,5 +1,6 @@
 #include "registry.hpp"
 #include "persistent_storage_json.hpp"
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
 #include <cassert>
@@ -34,21 +35,6 @@ Registry::Status MapStatus(PersistentStorage::Status ps_st)
         return Registry::Status::REG_NOT_FOUND;
     }
     return Registry::Status::REG_ERROR;
-}
-
-Registry::Status IsXpanString(std::string candidate)
-{
-    if (candidate.empty() || candidate.length() > 16)
-        return Registry::Status::REG_ERROR;
-    for (auto c : candidate)
-    {
-        if (!std::isxdigit(c))
-        {
-            return Registry::Status::REG_ERROR;
-        }
-    }
-
-    return Registry::Status::REG_SUCCESS;
 }
 
 const std::string ALIAS_THIS{"this"};
@@ -448,11 +434,13 @@ Registry::Status Registry::GetNetworksByAliases(const StringArray &aliases, Netw
         else
         {
             network nwk;
+            xpan_id xpid;
 
-            status = IsXpanString(alias);
+            status = (xpid.from_hex(alias) == ERROR_NONE) ? Registry::Status::REG_SUCCESS : Registry::Status::REG_ERROR;
+
             if (status == Registry::Status::REG_SUCCESS)
             {
-                status = GetNetworkByXpan(alias, nwk);
+                status = GetNetworkByXpan(xpid, nwk);
             }
             if (status != Registry::Status::REG_SUCCESS)
             {

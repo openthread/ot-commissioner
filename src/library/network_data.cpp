@@ -111,6 +111,29 @@ std::string Ipv6PrefixToString(ByteArray aPrefix)
     return addr.ToString() + "/" + std::to_string(prefixLength);
 }
 
+/**
+ * Converts hex string to the corresponding integer type.
+ * @attention Makes no validity checks.
+ */
+Error xpan_id::from_hex(const std::string &input)
+{
+    value = 0;
+
+    if (input.empty() || input.length() > 16)
+        return ERROR_BAD_FORMAT("wrong XPAN string length {}", input.length());
+    for (auto c : input)
+    {
+        if (!std::isxdigit(c))
+        {
+            return ERROR_BAD_FORMAT("not a hex string '{}'", input);
+        }
+    }
+
+    std::istringstream is(input);
+    is >> std::hex >> value;
+    return ERROR_NONE;
+}
+
 } // namespace commissioner
 
 } // namespace ot

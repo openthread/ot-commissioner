@@ -119,13 +119,13 @@ TEST_CASE("Add network", "[ps_json]")
 
     network_id new_id;
 
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{"FFFFFFFFFFFFFFF1"}, 11, "FFF1", "2000:aaa1::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk2", xpan_id{"FFFFFFFFFFFFFFF2"}, 11, "FFF2", "2000:aaa2::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk2", xpan_id{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk3", xpan_id{"FFFFFFFFFFFFFFF3"}, 11, "FFF3", "2000:aaa3::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk3", xpan_id{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 
@@ -200,7 +200,7 @@ TEST_CASE("Del network", "[ps_json]")
     REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     network_id new_id;
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{"FFFFFFFFFFFFFFF1"}, 11, "FFF1", "2000:aaa1::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
 
@@ -645,13 +645,13 @@ TEST_CASE("Lookup network", "[ps_json]")
 
     // Populate storage with initial data
     network_id new_id;
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{"FFFFFFFFFFFFFFF1"}, 11, "FFF1", "2000:aaa1::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk1", xpan_id{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 0);
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk2", xpan_id{"FFFFFFFFFFFFFFF2"}, 11, "FFF2", "2000:aaa2::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk2", xpan_id{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 1);
-    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk3", xpan_id{"FFFFFFFFFFFFFFF3"}, 11, "FFF3", "2000:aaa3::0/8", 1},
+    REQUIRE(psj.Add(network{EMPTY_ID, EMPTY_ID, "nwk3", xpan_id{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
                     new_id) == PersistentStorage::Status::PS_SUCCESS);
     REQUIRE(new_id.id == 2);
 

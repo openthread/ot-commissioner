@@ -527,7 +527,7 @@ Error CommissionerApp::SetExtendedPanId(const ByteArray &aExtendedPanId)
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
-    activeDataset.mExtendedPanId = std::string(aExtendedPanId.begin(), aExtendedPanId.end());
+    activeDataset.mExtendedPanId = utils::Decode<uint64_t>(aExtendedPanId);
     activeDataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
 
     SuccessOrExit(error = mCommissioner->SetActiveDataset(activeDataset));

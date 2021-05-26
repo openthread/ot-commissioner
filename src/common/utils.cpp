@@ -115,7 +115,7 @@ bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs)
     return ToLower(aLhs) == ToLower(aRhs);
 }
 
-} // namespace utils
+} // Namespace utils
 
 } // namespace commissioner
 
