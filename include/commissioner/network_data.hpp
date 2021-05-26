@@ -72,12 +72,6 @@ struct xpan_id
     {
     }
 
-    xpan_id(const std::string xpan_str)
-    {
-        std::istringstream input(xpan_str);
-        input >> std::hex >> value;
-    }
-
     std::string str() const { return *this; }
 
     bool operator==(const xpan_id &other) const { return value == other.value; }
@@ -94,6 +88,11 @@ struct xpan_id
     }
 
     operator uint64_t() const { return value; }
+
+    /**
+     * Decodes hexadecimal string.
+     */
+    Error from_hex(const std::string &input);
 };
 
 typedef std::vector<xpan_id> XpanIdArray;

@@ -10,6 +10,40 @@ namespace commissioner {
 
 namespace persistent_storage {
 
+namespace {
+/**
+ * This Exception class represents Network Data
+ * and Configuration conversion errors from JSON file.
+ *
+ * We need this because the nlohmann::json library uses
+ * exception exclusively.
+ *
+ */
+class JsonException : public std::invalid_argument
+{
+public:
+    explicit JsonException(Error aError)
+        : std::invalid_argument(aError.GetMessage())
+        , mError(aError)
+    {
+    }
+
+    Error GetError() const { return mError; }
+
+private:
+    Error mError;
+};
+} // namespace
+
+#define SuccessOrThrow(aError)                                                   \
+    do                                                                           \
+    {                                                                            \
+        if (aError != ::ot::commissioner::ErrorCode::kNone)                      \
+        {                                                                        \
+            throw ::ot::commissioner::persistent_storage::JsonException(aError); \
+        }                                                                        \
+    } while (false)
+
 void to_json(json &j, const registrar_id &opt)
 {
     j = opt.id;
@@ -92,9 +126,11 @@ void from_json(const json &j, network &p)
     j.at(JSON_DOM_REF).get_to(p.dom_id);
     j.at(JSON_NAME).get_to(p.name);
     j.at(JSON_PAN).get_to(p.pan);
+
     std::string xpan_str;
     j.at(JSON_XPAN).get_to(xpan_str);
-    p.xpan = xpan_str;
+    SuccessOrThrow(p.xpan.from_hex(xpan_str));
+
     j.at(JSON_CHANNEL).get_to(p.channel);
     j.at(JSON_MLP).get_to(p.mlp);
     j.at(JSON_CCM).get_to(p.ccm);

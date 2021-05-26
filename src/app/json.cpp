@@ -40,6 +40,7 @@
 #include "app/commissioner_app.hpp"
 #include "app/file_logger.hpp"
 #include "app/file_util.hpp"
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
@@ -449,7 +450,8 @@ static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
 
 static void from_json(const Json &aJson, xpan_id &aXpanId)
 {
-    aXpanId = aJson.get<std::string>();
+    std::string xpanStr = aJson.get<std::string>();
+    SuccessOrThrow(aXpanId.from_hex(xpanStr));
 }
 
 static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)

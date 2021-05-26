@@ -1462,7 +1462,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto extendedPanId = tlvSet[tlv::Type::kExtendedPanId])
     {
-        dataset.mExtendedPanId = utils::Hex(extendedPanId->GetValue());
+        dataset.mExtendedPanId = utils::Decode<uint64_t>(extendedPanId->GetValue());
         dataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
     }
 
