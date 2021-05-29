@@ -69,7 +69,7 @@ private:
     SysLogger() = default;
     void Init(LogLevel aLogLevel);
 
-    LogLevel   mLogLevel;
+    LogLevel mLogLevel;
 };
 
 } // namespace commissioner

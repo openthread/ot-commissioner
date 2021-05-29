@@ -55,10 +55,11 @@ def main():
     args = parser.parse_args()
 
     if args.action == 'init':
+        config = os.path.realpath(args.config) if args.config else ""
         message = {
             'type': 'control',
             'command': 'init',
-            'config': os.path.realpath(args.config),
+            'config': config,
         }
     elif args.action == 'exit':
         message = {

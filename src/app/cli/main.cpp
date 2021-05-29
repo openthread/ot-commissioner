@@ -63,7 +63,7 @@ static void PrintUsage(const std::string &aProgram)
 {
     static const std::string usage = "usage: \n"
                                      "    " +
-                                     aProgram + " <config-file>";
+                                     aProgram + " [<config-file>]";
 
     Console::Write(usage, Console::Color::kWhite);
 }
@@ -89,18 +89,25 @@ static void HandleSignalInterrupt()
 
 int main(int argc, const char *argv[])
 {
-    Error  error;
-    Config config;
+    Error       error;
+    std::string configFile;
 
-    if (argc < 2 || ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
+    if (argc >= 2)
     {
-        PrintUsage(argv[0]);
-        ExitNow();
-    }
-    else if (ToLower(argv[1]) == "-v" || ToLower(argv[1]) == "--version")
-    {
-        PrintVersion();
-        ExitNow();
+        if (ToLower(argv[1]) == "-h" || ToLower(argv[1]) == "--help")
+        {
+            PrintUsage(argv[0]);
+            ExitNow();
+        }
+        else if (ToLower(argv[1]) == "-v" || ToLower(argv[1]) == "--version")
+        {
+            PrintVersion();
+            ExitNow();
+        }
+        else
+        {
+            configFile = argv[1];
+        }
     }
 
     // Block signals in this thread and subsequently spawned threads.
@@ -112,7 +119,7 @@ int main(int argc, const char *argv[])
 
     Console::Write(kLogo, Console::Color::kBlue);
 
-    SuccessOrExit(error = gInterpreter.Init(argv[1]));
+    SuccessOrExit(error = gInterpreter.Init(configFile));
 
     gInterpreter.Run();
 
