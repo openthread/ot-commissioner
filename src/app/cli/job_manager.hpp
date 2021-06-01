@@ -71,6 +71,7 @@ public:
     void CancelCommand();
     void CleanupJobs();
     void SetImportFile(const std::string &importFile);
+    void SetImportNetworkXpan(xpan_id xpan);
     void StopCommissionerPool();
     /**
      * Collects values from job pool and aggregates those into a
@@ -107,7 +108,7 @@ public:
      * It is expected mImportFile contains a JSON object where the
      * imported part is a value of a map entry under aNid key.
      */
-    Error AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr);
+    Error AppendImport(Interpreter::Expression &aExpr);
     /**
      * Make a well-thought choice from border routers belonging to a
      * given network identified by aNid XPAN ID.
@@ -176,6 +177,7 @@ private:
     std::string        mImportFile;
     Interpreter &      mInterpreter;
     CommissionerAppPtr mDefaultCommissioner = nullptr;
+    xpan_id            mNid;
 };
 
 } // namespace commissioner

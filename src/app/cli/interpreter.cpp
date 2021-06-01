@@ -240,11 +240,15 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
         Interpreter::StringArray{"opdataset", "get", "active"},
         Interpreter::StringArray{"opdataset", "get", "pending"},
         Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
+        Interpreter::StringArray{"opdataset", "set", "active"},
+        Interpreter::StringArray{"opdataset", "set", "pending"},
     };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mInactiveCommissionerExecution =
-    *new std::vector<Interpreter::StringArray>{Interpreter::StringArray{"active"},
-                                               Interpreter::StringArray{"token", "request"}};
+    *new std::vector<Interpreter::StringArray>{
+        Interpreter::StringArray{"active"},
+        Interpreter::StringArray{"token", "request"},
+    };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new std::vector<Interpreter::StringArray>{
     Interpreter::StringArray{"bbrdataset", "get"},
@@ -448,9 +452,19 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         VerifyOrExit(mContext.mExportFiles.size() == 0, value = ERROR_INVALID_ARGS(SYNTAX_EXP_IMP_MUTUAL));
         // let job manager take care of import data
         mJobManager->SetImportFile(mContext.mImportFiles.front());
+        if (mContext.mNwkAliases.size() > 0)
+        {
+            XpanIdArray xpans;
+            StringArray unresolved;
+            auto        status = mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, xpans, unresolved);
+            VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+                         value =
+                             ERROR_INVALID_ARGS("Failed to resolve network '{}' for import", mContext.mNwkAliases[0]));
+            mJobManager->SetImportNetworkXpan(xpans[0]);
+        }
     }
 
-    if (IsMultiNetworkSyntax(aExpr))
+    if (mContext.mNwkAliases.size() > 0 || mContext.mDomAliases.size() > 0)
     {
         XpanIdArray nids;
 
@@ -477,7 +491,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         // handle single command using selected network
         if (mContext.mImportFiles.size() > 0)
         {
-            SuccessOrExit(value = mJobManager->AppendImport(0, retExpr));
+            SuccessOrExit(value = mJobManager->AppendImport(retExpr));
         }
         value = evaluator->second(this, retExpr);
     }
@@ -518,6 +532,9 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
     {
         // verify if respective syntax supported by the current command
         supported = IsFeatureSupported(mMultiNetworkSyntax, aExpr);
+        // MN-syntax is also supported for import from multi-entry JSON
+        supported |= mContext.mImportFiles.size() > 0 && mContext.mNwkAliases.size() == 1 &&
+                     mContext.mNwkAliases[0] != ALIAS_ALL && mContext.mNwkAliases[0] != ALIAS_OTHERS;
         VerifyOrExit(supported, error = ERROR_INVALID_ARGS(SYNTAX_NOT_SUPPORTED, KEYWORD_NETWORK));
         // network and domain must not be specified simultaneously
         VerifyOrExit(mContext.mDomAliases.size() == 0, error = ERROR_INVALID_ARGS(SYNTAX_NWK_DOM_MUTUAL));

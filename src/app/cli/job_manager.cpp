@@ -90,11 +90,17 @@ void JobManager::CleanupJobs()
     }
     mJobPool.clear();
     mImportFile.clear();
+    mNid = 0;
 }
 
 void JobManager::SetImportFile(const std::string &importFile)
 {
     mImportFile = importFile;
+}
+
+void JobManager::SetImportNetworkXpan(xpan_id xpan)
+{
+    mNid = xpan;
 }
 
 Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
@@ -152,7 +158,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanId
 
         if (!mImportFile.empty())
         {
-            Error importError = AppendImport(nid, jobExpr);
+            Error importError = AppendImport(jobExpr);
             if (importError != ERROR_NONE)
             {
                 ErrorMsg(nid, importError.GetMessage());
@@ -456,23 +462,22 @@ exit:
     return error;
 }
 
-Error JobManager::AppendImport(const uint64_t aNid, Interpreter::Expression &aExpr)
+Error JobManager::AppendImport(Interpreter::Expression &aExpr)
 {
     Error       error;
-    XpanId      xpan(aNid);
     std::string jsonStr;
     Json        jsonSrc;
     Json        json;
 
     SuccessOrExit(error = JsonFromFile(jsonStr, mImportFile));
     jsonSrc = Json::parse(jsonStr);
-    if (jsonSrc.count(xpan.str()) > 0)
-    {
-        json = jsonSrc[xpan.str()];
-    }
-    else if (aNid == 0) // must be single command
+    if (mNid == xpan_id()) // must be single command
     {
         json = jsonSrc;
+    }
+    else if (jsonSrc.count(mNid.str()) > 0)
+    {
+        json = jsonSrc[mNid.str()];
     }
     else
     {
