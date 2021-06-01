@@ -51,7 +51,7 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 execute_process(
-    COMMAND git describe --dirty --always 2>/dev/null
+    COMMAND git describe HEAD --always
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE OT_COMM_GIT_REVISION OUTPUT_STRIP_TRAILING_WHITESPACE
 )

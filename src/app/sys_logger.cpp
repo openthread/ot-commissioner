@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2021, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,12 @@
  *
  */
 
-#include "app/file_logger.hpp"
+#include "app/sys_logger.hpp"
 
 #include <sstream>
 
 #include <string.h>
+#include <syslog.h>
 
 #include "app/logger_util.hpp"
 #include "common/error_macros.hpp"
@@ -47,65 +48,63 @@ namespace ot {
 
 namespace commissioner {
 
-Error FileLogger::Create(std::shared_ptr<FileLogger> &aFileLogger, const std::string &aFilename, LogLevel aLogLevel)
+static int ToSysLogLevel(LogLevel aLevel)
 {
-    Error error;
-    auto  logger = std::shared_ptr<FileLogger>(new FileLogger);
+    int ret;
 
-    SuccessOrExit(error = logger->Init(aFilename, aLogLevel));
-    aFileLogger = logger;
-
-exit:
-    return error;
-}
-
-FileLogger::~FileLogger()
-{
-    if (mLogFile)
+    switch (aLevel)
     {
-        fclose(mLogFile);
-    }
-}
-
-Error FileLogger::Init(const std::string &aFilename, LogLevel aLogLevel)
-{
-    Error error;
-    FILE *logFile;
-
-    logFile = fopen(aFilename.c_str(), "w");
-    if (logFile == nullptr)
-    {
-        if (errno == ENOENT)
-        {
-            ExitNow(error = ERROR_NOT_FOUND("failed to init file logger '{}', {}", aFilename, strerror(errno)));
-        }
-        else
-        {
-            ExitNow(error = ERROR_IO_ERROR("failed to init file logger '{}', {}", aFilename, strerror(errno)));
-        }
+    case LogLevel::kOff:
+        ret = LOG_EMERG;
+        break;
+    case LogLevel::kCritical:
+        ret = LOG_CRIT;
+        break;
+    case LogLevel::kError:
+        ret = LOG_ERR;
+        break;
+    case LogLevel::kWarn:
+        ret = LOG_WARNING;
+        break;
+    case LogLevel::kInfo:
+        ret = LOG_INFO;
+        break;
+    case LogLevel::kDebug:
+        ret = LOG_DEBUG;
+        break;
+    default:
+        VerifyOrDie(false);
+        break;
     }
 
-    mLogFile  = logFile;
+    return ret;
+}
+
+std::shared_ptr<SysLogger> SysLogger::Create(LogLevel aLogLevel)
+{
+    auto logger = std::shared_ptr<SysLogger>(new SysLogger);
+
+    logger->Init(aLogLevel);
+    return logger;
+}
+
+SysLogger::~SysLogger()
+{
+    closelog();
+}
+
+void SysLogger::Init(LogLevel aLogLevel)
+{
+    openlog("ot-commissioner", LOG_CONS | LOG_PID, LOG_USER);
     mLogLevel = aLogLevel;
-
-exit:
-    return error;
 }
 
-void FileLogger::Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMsg)
+void SysLogger::Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMsg)
 {
-    std::lock_guard<std::mutex> _(mLogMutex);
-    std::stringstream           logStream;
-
-    VerifyOrExit(aLevel <= mLogLevel);
-    VerifyOrExit(mLogFile != nullptr);
-
-    logStream << "[ " << TimePointToString(Clock::now()) << " ] " << ToString(aLevel) << " [ " << aRegion << " ] "
-              << aMsg << std::endl;
-    fputs(logStream.str().c_str(), mLogFile);
-
-exit:
-    return;
+    if (aLevel <= mLogLevel)
+    {
+        syslog(ToSysLogLevel(aLevel), "%s [ %s ] %s", ToString(aLevel).c_str(), aRegion.c_str(), aMsg.c_str());
+    }
 }
 
 } // namespace commissioner

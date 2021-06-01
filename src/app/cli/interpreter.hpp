@@ -101,6 +101,7 @@ private:
 
     Expression ParseExpression(const std::string &aLiteral);
 
+    Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
     Value ProcessStop(const Expression &aExpr);
     Value ProcessActive(const Expression &aExpr);
@@ -121,6 +122,8 @@ private:
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
+
+    Error UpdateConfig(const ByteArray &aPSKc);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 
