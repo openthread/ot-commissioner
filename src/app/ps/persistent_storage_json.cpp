@@ -57,31 +57,31 @@ const std::string JSON_CURR_NWK = "curr_nwk";
 
 using nlohmann::json;
 
-PersistentStorageJson::PersistentStorageJson(std::string const &fname)
-    : file_name(fname)
-    , cache()
-    , storage_lock()
+PersistentStorageJson::PersistentStorageJson(std::string const &aFileName)
+    : mFileName(aFileName)
+    , mCache()
+    , mStorageLock()
 {
-    semaphore_open("thrcomm_json_storage", storage_lock);
+    SemaphoreOpen("thrcomm_json_storage", mStorageLock);
 }
 
 PersistentStorageJson::~PersistentStorageJson()
 {
     Close();
-    cache.clear();
-    semaphore_close(storage_lock);
+    mCache.clear();
+    SemaphoreClose(mStorageLock);
 }
 
 json PersistentStorageJson::JsonDefault()
 {
     return json{
-        {JSON_RGR_SEQ, registrar_id(0)},       {JSON_DOM_SEQ, domain_id(0)},
-        {JSON_NWK_SEQ, network_id(0)},         {JSON_BR_SEQ, border_router_id(0)},
+        {JSON_RGR_SEQ, RegistrarId(0)},       {JSON_DOM_SEQ, DomainId(0)},
+        {JSON_NWK_SEQ, NetworkId(0)},         {JSON_BR_SEQ, BorderRouterId(0)},
 
-        {JSON_RGR, std::vector<registrar>{}},  {JSON_DOM, std::vector<domain>{}},
-        {JSON_NWK, std::vector<network>{}},    {JSON_BR, std::vector<border_router>{}},
+        {JSON_RGR, std::vector<Registrar>{}}, {JSON_DOM, std::vector<Domain>{}},
+        {JSON_NWK, std::vector<Network>{}},   {JSON_BR, std::vector<BorderRouter>{}},
 
-        {JSON_CURR_NWK, network_id{EMPTY_ID}},
+        {JSON_CURR_NWK, NetworkId{EMPTY_ID}},
     };
 }
 
@@ -91,8 +91,8 @@ bool PersistentStorageJson::CacheStructValidation()
 
     for (auto &el : base.items())
     {
-        auto to_check = cache.find(el.key());
-        if (to_check == cache.end() || to_check->type_name() != el.value().type_name())
+        auto toCheck = mCache.find(el.key());
+        if (toCheck == mCache.end() || toCheck->type_name() != el.value().type_name())
         {
             return false;
         }
@@ -103,94 +103,94 @@ bool PersistentStorageJson::CacheStructValidation()
 
 PersistentStorage::Status PersistentStorageJson::CacheFromFile()
 {
-    if (file_name.empty())
+    if (mFileName.empty())
     {
         // No persistence, nothing to do
         return PersistentStorage::Status::PS_SUCCESS;
     }
 
-    if (semaphore_wait(storage_lock) != ot::os::sem::sem_status::SEM_SUCCESS)
+    if (SemaphoreWait(mStorageLock) != ot::os::sem::SemaphoreStatus::SEM_SUCCESS)
     {
         return PersistentStorage::Status::PS_ERROR;
     }
 
-    if (RestoreFilePath(file_name).GetCode() != ErrorCode::kNone)
+    if (RestoreFilePath(mFileName).GetCode() != ErrorCode::kNone)
     {
-        semaphore_post(storage_lock);
+        SemaphorePost(mStorageLock);
         return PersistentStorage::Status::PS_ERROR;
     }
 
     std::string fdata;
-    Error       error = ReadFile(fdata, file_name);
+    Error       error = ReadFile(fdata, mFileName);
     if (error.GetCode() != ErrorCode::kNone)
     {
-        semaphore_post(storage_lock);
+        SemaphorePost(mStorageLock);
         return PersistentStorage::Status::PS_ERROR;
     }
 
     if (fdata.size() == 0)
     {
-        cache = JsonDefault();
+        mCache = JsonDefault();
 
-        semaphore_post(storage_lock);
+        SemaphorePost(mStorageLock);
         return PersistentStorage::Status::PS_SUCCESS;
     }
 
     try
     {
-        cache = json::parse(fdata);
+        mCache = json::parse(fdata);
     } catch (json::parse_error const &)
     {
-        semaphore_post(storage_lock);
+        SemaphorePost(mStorageLock);
         return PersistentStorage::Status::PS_ERROR;
     }
 
-    if (cache.empty())
+    if (mCache.empty())
     {
-        cache = JsonDefault();
+        mCache = JsonDefault();
     }
 
     // base validation
     if (!CacheStructValidation())
     {
-        semaphore_post(storage_lock);
+        SemaphorePost(mStorageLock);
         return PersistentStorage::Status::PS_ERROR;
     }
 
-    semaphore_post(storage_lock);
+    SemaphorePost(mStorageLock);
     return PersistentStorage::Status::PS_SUCCESS;
 }
 
 PersistentStorage::Status PersistentStorageJson::CacheToFile()
 {
-    if (file_name.empty())
+    if (mFileName.empty())
     {
         // No persistence, nothing to do
         return PersistentStorage::Status::PS_SUCCESS;
     }
 
-    if (semaphore_wait(storage_lock) != ot::os::sem::sem_status::SEM_SUCCESS)
+    if (SemaphoreWait(mStorageLock) != ot::os::sem::SemaphoreStatus::SEM_SUCCESS)
     {
         return PersistentStorage::Status::PS_ERROR;
     }
 
-    Error error = WriteFile(cache.dump(4), file_name);
+    Error error = WriteFile(mCache.dump(4), mFileName);
     if (error.GetCode() != ErrorCode::kNone)
     {
-        semaphore_post(storage_lock);
+        SemaphorePost(mStorageLock);
         return PersistentStorage::Status::PS_ERROR;
     }
 
-    semaphore_post(storage_lock);
+    SemaphorePost(mStorageLock);
     return PersistentStorage::Status::PS_SUCCESS;
 }
 
 PersistentStorage::Status PersistentStorageJson::Open()
 {
-    if (file_name.empty())
+    if (mFileName.empty())
     {
         // No persistence, use default contents
-        cache = JsonDefault();
+        mCache = JsonDefault();
     }
     CacheFromFile();
     return CacheToFile();
@@ -201,308 +201,317 @@ PersistentStorage::Status PersistentStorageJson::Close()
     return CacheToFile();
 }
 
-PersistentStorage::Status PersistentStorageJson::Add(registrar const &val, registrar_id &ret_id)
+PersistentStorage::Status PersistentStorageJson::Add(Registrar const &aValue, RegistrarId &aRetId)
 {
-    return AddOne<registrar, registrar_id>(val, ret_id, JSON_RGR_SEQ, JSON_RGR);
+    return AddOne<Registrar, RegistrarId>(aValue, aRetId, JSON_RGR_SEQ, JSON_RGR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Add(domain const &val, domain_id &ret_id)
+PersistentStorage::Status PersistentStorageJson::Add(Domain const &aValue, DomainId &aRetId)
 {
-    return AddOne<domain, domain_id>(val, ret_id, JSON_DOM_SEQ, JSON_DOM);
+    return AddOne<Domain, DomainId>(aValue, aRetId, JSON_DOM_SEQ, JSON_DOM);
 }
 
-PersistentStorage::Status PersistentStorageJson::Add(network const &val, network_id &ret_id)
+PersistentStorage::Status PersistentStorageJson::Add(Network const &aValue, NetworkId &aRetId)
 {
-    return AddOne<network, network_id>(val, ret_id, JSON_NWK_SEQ, JSON_NWK);
+    return AddOne<Network, NetworkId>(aValue, aRetId, JSON_NWK_SEQ, JSON_NWK);
 }
 
-PersistentStorage::Status PersistentStorageJson::Add(border_router const &val, border_router_id &ret_id)
+PersistentStorage::Status PersistentStorageJson::Add(BorderRouter const &aValue, BorderRouterId &aRetId)
 {
-    return AddOne<border_router, border_router_id>(val, ret_id, JSON_BR_SEQ, JSON_BR);
+    return AddOne<BorderRouter, BorderRouterId>(aValue, aRetId, JSON_BR_SEQ, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Del(registrar_id const &id)
+PersistentStorage::Status PersistentStorageJson::Del(RegistrarId const &aId)
 {
-    return DelId<registrar, registrar_id>(id, JSON_RGR);
+    return DelId<Registrar, RegistrarId>(aId, JSON_RGR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Del(domain_id const &id)
+PersistentStorage::Status PersistentStorageJson::Del(DomainId const &aId)
 {
-    return DelId<domain, domain_id>(id, JSON_DOM);
+    return DelId<Domain, DomainId>(aId, JSON_DOM);
 }
 
-PersistentStorage::Status PersistentStorageJson::Del(network_id const &id)
+PersistentStorage::Status PersistentStorageJson::Del(NetworkId const &aId)
 {
-    return DelId<network, network_id>(id, JSON_NWK);
+    return DelId<Network, NetworkId>(aId, JSON_NWK);
 }
 
-PersistentStorage::Status PersistentStorageJson::Del(border_router_id const &id)
+PersistentStorage::Status PersistentStorageJson::Del(BorderRouterId const &aId)
 {
-    return DelId<border_router, border_router_id>(id, JSON_BR);
+    return DelId<BorderRouter, BorderRouterId>(aId, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Get(registrar_id const &id, registrar &ret_val)
+PersistentStorage::Status PersistentStorageJson::Get(RegistrarId const &aId, Registrar &aRetValue)
 {
-    return GetId<registrar, registrar_id>(id, ret_val, JSON_RGR);
+    return GetId<Registrar, RegistrarId>(aId, aRetValue, JSON_RGR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Get(domain_id const &id, domain &ret_val)
+PersistentStorage::Status PersistentStorageJson::Get(DomainId const &aId, Domain &aRetValue)
 {
-    return GetId<domain, domain_id>(id, ret_val, JSON_DOM);
+    return GetId<Domain, DomainId>(aId, aRetValue, JSON_DOM);
 }
 
-PersistentStorage::Status PersistentStorageJson::Get(network_id const &id, network &ret_val)
+PersistentStorage::Status PersistentStorageJson::Get(NetworkId const &aId, Network &aRetValue)
 {
-    return GetId<network, network_id>(id, ret_val, JSON_NWK);
+    return GetId<Network, NetworkId>(aId, aRetValue, JSON_NWK);
 }
 
-PersistentStorage::Status PersistentStorageJson::Get(border_router_id const &id, border_router &ret_val)
+PersistentStorage::Status PersistentStorageJson::Get(BorderRouterId const &aId, BorderRouter &aRetValue)
 {
-    return GetId<border_router, border_router_id>(id, ret_val, JSON_BR);
+    return GetId<BorderRouter, BorderRouterId>(aId, aRetValue, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Update(registrar const &val)
+PersistentStorage::Status PersistentStorageJson::Update(Registrar const &aValue)
 {
-    return UpdId<registrar>(val, JSON_RGR);
+    return UpdId<Registrar>(aValue, JSON_RGR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Update(domain const &val)
+PersistentStorage::Status PersistentStorageJson::Update(Domain const &aValue)
 {
-    return UpdId<domain>(val, JSON_DOM);
+    return UpdId<Domain>(aValue, JSON_DOM);
 }
 
-PersistentStorage::Status PersistentStorageJson::Update(network const &val)
+PersistentStorage::Status PersistentStorageJson::Update(Network const &aValue)
 {
-    return UpdId<network>(val, JSON_NWK);
+    return UpdId<Network>(aValue, JSON_NWK);
 }
 
-PersistentStorage::Status PersistentStorageJson::Update(border_router const &val)
+PersistentStorage::Status PersistentStorageJson::Update(BorderRouter const &aValue)
 {
-    return UpdId<border_router>(val, JSON_BR);
+    return UpdId<BorderRouter>(aValue, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Lookup(registrar const &val, std::vector<registrar> &ret)
+PersistentStorage::Status PersistentStorageJson::Lookup(Registrar const &aValue, std::vector<Registrar> &aRet)
 {
-    std::function<bool(registrar const &)> pred = [](registrar const &) { return true; };
+    std::function<bool(Registrar const &)> pred = [](Registrar const &) { return true; };
 
-    pred = [val](registrar const &el) {
-        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
-                   (val.addr.empty() || CaseInsensitiveEqual(val.addr, el.addr)) &&
-                   (val.port == 0 || (val.port == el.port));
+    pred = [aValue](Registrar const &el) {
+        bool aRet = (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
+                    (aValue.mAddr.empty() || CaseInsensitiveEqual(aValue.mAddr, el.mAddr)) &&
+                    (aValue.mPort == 0 || (aValue.mPort == el.mPort));
 
-        if (ret && !val.domains.empty())
+        if (aRet && !aValue.mDomains.empty())
         {
-            std::vector<std::string> el_tmp(el.domains);
-            std::vector<std::string> val_tmp(val.domains);
+            std::vector<std::string> el_tmp(el.mDomains);
+            std::vector<std::string> aValue_tmp(aValue.mDomains);
             std::sort(std::begin(el_tmp), std::end(el_tmp));
-            std::sort(std::begin(val_tmp), std::end(val_tmp));
-            ret = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
+            std::sort(std::begin(aValue_tmp), std::end(aValue_tmp));
+            aRet = std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(aValue_tmp), std::end(aValue_tmp));
         }
-        return ret;
+        return aRet;
     };
 
-    return LookupPred<registrar>(pred, ret, JSON_RGR);
+    return LookupPred<Registrar>(pred, aRet, JSON_RGR);
 }
 
-PersistentStorage::Status PersistentStorageJson::Lookup(domain const &val, std::vector<domain> &ret)
+PersistentStorage::Status PersistentStorageJson::Lookup(Domain const &aValue, std::vector<Domain> &aRet)
 {
-    std::function<bool(domain const &)> pred = [](domain const &) { return true; };
+    std::function<bool(Domain const &)> pred = [](Domain const &) { return true; };
 
-    pred = [val](domain const &el) {
-        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) && (val.name.empty() || (val.name == el.name));
-        return ret;
+    pred = [aValue](Domain const &el) {
+        bool aRet = (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
+                    (aValue.mName.empty() || (aValue.mName == el.mName));
+        return aRet;
     };
 
-    return LookupPred<domain>(pred, ret, JSON_DOM);
+    return LookupPred<Domain>(pred, aRet, JSON_DOM);
 }
 
-PersistentStorage::Status PersistentStorageJson::Lookup(network const &val, std::vector<network> &ret)
+PersistentStorage::Status PersistentStorageJson::Lookup(Network const &aValue, std::vector<Network> &aRet)
 {
-    std::function<bool(network const &)> pred = [](network const &) { return true; };
+    std::function<bool(Network const &)> pred = [](Network const &) { return true; };
 
-    pred = [val](network const &el) {
-        bool ret = (val.ccm < 0 || val.ccm == el.ccm) && (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
-                   (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) &&
-                   (val.name.empty() || (val.name == el.name)) && (val.xpan.value == 0 || val.xpan == el.xpan) &&
-                   (val.pan.empty() || CaseInsensitiveEqual(val.pan, el.pan)) &&
-                   (val.mlp.empty() || CaseInsensitiveEqual(val.mlp, el.mlp)) &&
-                   (val.channel == 0 || (val.channel == el.channel));
+    pred = [aValue](Network const &el) {
+        bool aRet = (aValue.mCcm < 0 || aValue.mCcm == el.mCcm) &&
+                    (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
+                    (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) &&
+                    (aValue.mName.empty() || (aValue.mName == el.mName)) &&
+                    (aValue.mXpan.mValue == 0 || aValue.mXpan == el.mXpan) &&
+                    (aValue.mPan.empty() || CaseInsensitiveEqual(aValue.mPan, el.mPan)) &&
+                    (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) &&
+                    (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));
 
-        return ret;
+        return aRet;
     };
 
-    return LookupPred<network>(pred, ret, JSON_NWK);
+    return LookupPred<Network>(pred, aRet, JSON_NWK);
 }
 
-PersistentStorage::Status PersistentStorageJson::Lookup(border_router const &val, std::vector<border_router> &ret)
+PersistentStorage::Status PersistentStorageJson::Lookup(BorderRouter const &aValue, std::vector<BorderRouter> &aRet)
 {
-    std::function<bool(border_router const &)> pred = [](border_router const &) { return true; };
+    std::function<bool(BorderRouter const &)> pred = [](BorderRouter const &) { return true; };
 
-    pred = [val](border_router const &el) {
-        bool ret =
-            (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) &&
-            (val.nwk_id.id == EMPTY_ID || (el.nwk_id.id == val.nwk_id.id)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kAddrBit) != 0 &&
-              CaseInsensitiveEqual(el.agent.mAddr, val.agent.mAddr))) &&
-            ((val.agent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kPortBit) != 0 && el.agent.mPort == val.agent.mPort)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
-              val.agent.mThreadVersion == el.agent.mThreadVersion)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kStateBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kStateBit) != 0 && el.agent.mState == val.agent.mState)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
-              CaseInsensitiveEqual(el.agent.mVendorName, val.agent.mVendorName))) &&
-            ((val.agent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
-              CaseInsensitiveEqual(el.agent.mModelName, val.agent.mModelName))) &&
-            ((val.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
-              el.agent.mActiveTimestamp.Encode() == val.agent.mActiveTimestamp.Encode())) &&
-            ((val.agent.mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 &&
-              el.agent.mPartitionId == val.agent.mPartitionId)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kVendorDataBit) != 0 &&
-              el.agent.mVendorData == val.agent.mVendorData)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 &&
-              el.agent.mVendorOui == val.agent.mVendorOui)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 &&
-              el.agent.mBbrSeqNumber == val.agent.mBbrSeqNumber)) &&
-            ((val.agent.mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kBbrPortBit) != 0 && el.agent.mBbrPort == val.agent.mBbrPort));
-        return ret;
+    pred = [aValue](BorderRouter const &el) {
+        bool aRet =
+            (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
+            (aValue.mNetworkId.mId == EMPTY_ID || (el.mNetworkId.mId == aValue.mNetworkId.mId)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kAddrBit) != 0 &&
+              CaseInsensitiveEqual(el.mAgent.mAddr, aValue.mAgent.mAddr))) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kPortBit) != 0 && el.mAgent.mPort == aValue.mAgent.mPort)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 &&
+              aValue.mAgent.mThreadVersion == el.mAgent.mThreadVersion)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kStateBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kStateBit) != 0 && el.mAgent.mState == aValue.mAgent.mState)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 &&
+              CaseInsensitiveEqual(el.mAgent.mVendorName, aValue.mAgent.mVendorName))) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kModelNameBit) != 0 &&
+              CaseInsensitiveEqual(el.mAgent.mModelName, aValue.mAgent.mModelName))) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 &&
+              el.mAgent.mActiveTimestamp.Encode() == aValue.mAgent.mActiveTimestamp.Encode())) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 &&
+              el.mAgent.mPartitionId == aValue.mAgent.mPartitionId)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kVendorDataBit) != 0 &&
+              el.mAgent.mVendorData == aValue.mAgent.mVendorData)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 &&
+              el.mAgent.mVendorOui == aValue.mAgent.mVendorOui)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 &&
+              el.mAgent.mBbrSeqNumber == aValue.mAgent.mBbrSeqNumber)) &&
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kBbrPortBit) != 0 &&
+              el.mAgent.mBbrPort == aValue.mAgent.mBbrPort));
+        return aRet;
     };
 
-    return LookupPred<border_router>(pred, ret, JSON_BR);
+    return LookupPred<BorderRouter>(pred, aRet, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::LookupAny(registrar const &val, std::vector<registrar> &ret)
+PersistentStorage::Status PersistentStorageJson::LookupAny(Registrar const &aValue, std::vector<Registrar> &aRet)
 {
-    std::function<bool(registrar const &)> pred = [](registrar const &) { return true; };
+    std::function<bool(Registrar const &)> pred = [](Registrar const &) { return true; };
 
-    pred = [val](registrar const &el) {
-        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
-                   (val.addr.empty() || CaseInsensitiveEqual(val.addr, el.addr)) ||
-                   (val.port == 0 || (val.port == el.port));
+    pred = [aValue](Registrar const &el) {
+        bool aRet = (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) ||
+                    (aValue.mAddr.empty() || CaseInsensitiveEqual(aValue.mAddr, el.mAddr)) ||
+                    (aValue.mPort == 0 || (aValue.mPort == el.mPort));
 
-        if (!val.domains.empty())
+        if (!aValue.mDomains.empty())
         {
-            std::vector<std::string> el_tmp(el.domains);
-            std::vector<std::string> val_tmp(val.domains);
-            std::sort(std::begin(el_tmp), std::end(el_tmp));
-            std::sort(std::begin(val_tmp), std::end(val_tmp));
-            ret = ret || std::includes(std::begin(el_tmp), std::end(el_tmp), std::begin(val_tmp), std::end(val_tmp));
+            std::vector<std::string> tmpElement(el.mDomains);
+            std::vector<std::string> tmpValue(aValue.mDomains);
+            std::sort(std::begin(tmpElement), std::end(tmpElement));
+            std::sort(std::begin(tmpValue), std::end(tmpValue));
+            aRet = aRet || std::includes(std::begin(tmpElement), std::end(tmpElement), std::begin(tmpValue),
+                                         std::end(tmpValue));
         }
-        return ret;
+        return aRet;
     };
 
-    return LookupPred<registrar>(pred, ret, JSON_RGR);
+    return LookupPred<Registrar>(pred, aRet, JSON_RGR);
 }
 
-PersistentStorage::Status PersistentStorageJson::LookupAny(domain const &val, std::vector<domain> &ret)
+PersistentStorage::Status PersistentStorageJson::LookupAny(Domain const &aValue, std::vector<Domain> &aRet)
 {
-    std::function<bool(domain const &)> pred = [](domain const &) { return true; };
+    std::function<bool(Domain const &)> pred = [](Domain const &) { return true; };
 
-    pred = [val](domain const &el) {
-        bool ret = (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) || (val.name.empty() || (val.name == el.name));
-        return ret;
+    pred = [aValue](Domain const &el) {
+        bool aRet = (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) ||
+                    (aValue.mName.empty() || (aValue.mName == el.mName));
+        return aRet;
     };
 
-    return LookupPred<domain>(pred, ret, JSON_DOM);
+    return LookupPred<Domain>(pred, aRet, JSON_DOM);
 }
 
-PersistentStorage::Status PersistentStorageJson::LookupAny(network const &val, std::vector<network> &ret)
+PersistentStorage::Status PersistentStorageJson::LookupAny(Network const &aValue, std::vector<Network> &aRet)
 {
-    std::function<bool(network const &)> pred = [](network const &) { return true; };
+    std::function<bool(Network const &)> pred = [](Network const &) { return true; };
 
-    pred = [val](network const &el) {
-        bool ret = (val.ccm < 0 || val.ccm == el.ccm) || (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
-                   (val.dom_id.id == EMPTY_ID || (el.dom_id.id == val.dom_id.id)) ||
-                   (val.name.empty() || (val.name == el.name)) || (val.xpan.value == 0 || val.xpan == el.xpan) ||
-                   (val.pan.empty() || CaseInsensitiveEqual(val.pan, el.pan)) ||
-                   (val.mlp.empty() || CaseInsensitiveEqual(val.mlp, el.mlp)) ||
-                   (val.channel == 0 || (val.channel == el.channel));
+    pred = [aValue](Network const &el) {
+        bool aRet = (aValue.mCcm < 0 || aValue.mCcm == el.mCcm) ||
+                    (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) ||
+                    (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) ||
+                    (aValue.mName.empty() || (aValue.mName == el.mName)) ||
+                    (aValue.mXpan.mValue == 0 || aValue.mXpan == el.mXpan) ||
+                    (aValue.mPan.empty() || CaseInsensitiveEqual(aValue.mPan, el.mPan)) ||
+                    (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) ||
+                    (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));
 
-        return ret;
+        return aRet;
     };
 
-    return LookupPred<network>(pred, ret, JSON_NWK);
+    return LookupPred<Network>(pred, aRet, JSON_NWK);
 }
 
-PersistentStorage::Status PersistentStorageJson::LookupAny(border_router const &val, std::vector<border_router> &ret)
+PersistentStorage::Status PersistentStorageJson::LookupAny(BorderRouter const &aValue, std::vector<BorderRouter> &aRet)
 {
-    std::function<bool(border_router const &)> pred = [](border_router const &) { return true; };
+    std::function<bool(BorderRouter const &)> pred = [](BorderRouter const &) { return true; };
 
-    pred = [val](border_router const &el) {
-        bool ret =
-            (val.id.id == EMPTY_ID || (el.id.id == val.id.id)) ||
-            (val.nwk_id.id == EMPTY_ID || (el.nwk_id.id == val.nwk_id.id)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kAddrBit) != 0 ||
-              CaseInsensitiveEqual(el.agent.mAddr, val.agent.mAddr))) ||
-            ((val.agent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kPortBit) != 0 || el.agent.mPort == val.agent.mPort)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 ||
-              val.agent.mThreadVersion == el.agent.mThreadVersion)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kStateBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kStateBit) != 0 || el.agent.mState == val.agent.mState)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 ||
-              CaseInsensitiveEqual(el.agent.mVendorName, val.agent.mVendorName))) ||
-            ((val.agent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kModelNameBit) != 0 ||
-              CaseInsensitiveEqual(el.agent.mModelName, val.agent.mModelName))) ||
-            ((val.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 ||
-              el.agent.mActiveTimestamp.Encode() == val.agent.mActiveTimestamp.Encode())) ||
-            ((val.agent.mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 ||
-              el.agent.mPartitionId == val.agent.mPartitionId)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kVendorDataBit) != 0 ||
-              el.agent.mVendorData == val.agent.mVendorData)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 ||
-              el.agent.mVendorOui == val.agent.mVendorOui)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 ||
-              el.agent.mBbrSeqNumber == val.agent.mBbrSeqNumber)) ||
-            ((val.agent.mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
-             ((el.agent.mPresentFlags & BorderAgent::kBbrPortBit) != 0 || el.agent.mBbrPort == val.agent.mBbrPort));
-        return ret;
+    pred = [aValue](BorderRouter const &el) {
+        bool aRet =
+            (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) ||
+            (aValue.mNetworkId.mId == EMPTY_ID || (el.mNetworkId.mId == aValue.mNetworkId.mId)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kAddrBit) != 0 ||
+              CaseInsensitiveEqual(el.mAgent.mAddr, aValue.mAgent.mAddr))) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kPortBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kPortBit) != 0 || el.mAgent.mPort == aValue.mAgent.mPort)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kThreadVersionBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kThreadVersionBit) != 0 ||
+              aValue.mAgent.mThreadVersion == el.mAgent.mThreadVersion)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kStateBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kStateBit) != 0 || el.mAgent.mState == aValue.mAgent.mState)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kVendorNameBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kVendorNameBit) != 0 ||
+              CaseInsensitiveEqual(el.mAgent.mVendorName, aValue.mAgent.mVendorName))) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kModelNameBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kModelNameBit) != 0 ||
+              CaseInsensitiveEqual(el.mAgent.mModelName, aValue.mAgent.mModelName))) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kActiveTimestampBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kActiveTimestampBit) != 0 ||
+              el.mAgent.mActiveTimestamp.Encode() == aValue.mAgent.mActiveTimestamp.Encode())) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kPartitionIdBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kPartitionIdBit) != 0 ||
+              el.mAgent.mPartitionId == aValue.mAgent.mPartitionId)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kVendorDataBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kVendorDataBit) != 0 ||
+              el.mAgent.mVendorData == aValue.mAgent.mVendorData)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kVendorOuiBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kVendorOuiBit) != 0 ||
+              el.mAgent.mVendorOui == aValue.mAgent.mVendorOui)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kBbrSeqNumberBit) != 0 ||
+              el.mAgent.mBbrSeqNumber == aValue.mAgent.mBbrSeqNumber)) ||
+            ((aValue.mAgent.mPresentFlags & BorderAgent::kBbrPortBit) == 0 ||
+             ((el.mAgent.mPresentFlags & BorderAgent::kBbrPortBit) != 0 ||
+              el.mAgent.mBbrPort == aValue.mAgent.mBbrPort));
+        return aRet;
     };
 
-    return LookupPred<border_router>(pred, ret, JSON_BR);
+    return LookupPred<BorderRouter>(pred, aRet, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::CurrentNetworkSet(const network_id &nwk_id)
+PersistentStorage::Status PersistentStorageJson::CurrentNetworkSet(const NetworkId &aNwkId)
 {
     if (CacheFromFile() != PersistentStorage::Status::PS_SUCCESS)
     {
         return PersistentStorage::Status::PS_ERROR;
     }
 
-    cache[JSON_CURR_NWK] = nwk_id;
+    mCache[JSON_CURR_NWK] = aNwkId;
 
     return CacheToFile();
 }
 
-PersistentStorage::Status PersistentStorageJson::CurrentNetworkGet(network_id &nwk_id)
+PersistentStorage::Status PersistentStorageJson::CurrentNetworkGet(NetworkId &aNwkId)
 {
-    if (!cache.contains(JSON_CURR_NWK))
+    if (!mCache.contains(JSON_CURR_NWK))
     {
-        nwk_id               = network_id{};
-        cache[JSON_CURR_NWK] = nwk_id;
+        aNwkId                = NetworkId{};
+        mCache[JSON_CURR_NWK] = aNwkId;
     }
     else
     {
-        nwk_id = cache[JSON_CURR_NWK];
+        aNwkId = mCache[JSON_CURR_NWK];
     }
     return PersistentStorage::Status::PS_SUCCESS;
 }

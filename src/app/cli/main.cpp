@@ -104,11 +104,11 @@ static void HandleSignalInterrupt()
     }
 }
 
-static option commissioner_cli_options[] = {{"help", no_argument, nullptr, 'h'},
-                                            {"version", no_argument, nullptr, 'v'},
-                                            {"registry", required_argument, nullptr, 'r'},
-                                            {"config", required_argument, nullptr, 'c'},
-                                            {nullptr, 0, nullptr, 0}};
+static option gCommissionerCliOptions[] = {{"help", no_argument, nullptr, 'h'},
+                                           {"version", no_argument, nullptr, 'v'},
+                                           {"registry", required_argument, nullptr, 'r'},
+                                           {"config", required_argument, nullptr, 'c'},
+                                           {nullptr, 0, nullptr, 0}};
 
 int main(int argc, const char *argv[])
 {
@@ -121,7 +121,7 @@ int main(int argc, const char *argv[])
     std::string configFileName;
 
     int  ch;
-    bool parse_params = true;
+    bool parseParams = true;
 
     if (argc < 2)
     {
@@ -129,9 +129,9 @@ int main(int argc, const char *argv[])
         ExitNow();
     }
 
-    while (parse_params)
+    while (parseParams)
     {
-        ch = getopt_long(argc, (char *const *)argv, "h:v:c:r:", commissioner_cli_options, nullptr);
+        ch = getopt_long(argc, (char *const *)argv, "h:v:c:r:", gCommissionerCliOptions, nullptr);
         switch (ch)
         {
         case 'h':
@@ -149,7 +149,7 @@ int main(int argc, const char *argv[])
             configFileName = optarg;
             break;
         default:
-            parse_params = false;
+            parseParams = false;
             break;
         };
     }

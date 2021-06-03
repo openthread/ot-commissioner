@@ -41,7 +41,7 @@ int HandleRecord(const struct sockaddr *from,
                  size_t                 size,
                  size_t                 offset,
                  size_t                 length,
-                 void *                 user_data);
+                 void *                 userData);
 
 } // namespace commissioner
 

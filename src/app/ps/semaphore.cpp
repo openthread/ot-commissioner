@@ -10,13 +10,13 @@ namespace os {
 namespace sem {
 
 #if defined(_WIN32) || defined(WIN32)
-sem_status semaphore_open(std::string const &name, semaphore &sem)
+SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem)
 {
-    std::string sem_name = "Global\\" + name;
-    sem.platform         = NULL;
+    std::string semName = "Global\\" + aName;
+    aSem.platform       = NULL;
 
-    sem.platform = CreateSemaphoreA(NULL, 1, 1, sem_name.c_str());
-    if (sem.platform == NULL)
+    aSem.platform = CreateSemaphoreA(NULL, 1, 1, semName.c_str());
+    if (aSem.platform == NULL)
     {
         return SEM_ERROR;
     }
@@ -24,25 +24,25 @@ sem_status semaphore_open(std::string const &name, semaphore &sem)
     return SEM_SUCCESS;
 }
 
-sem_status semaphore_close(semaphore &sem)
+SemaphoreStatus SemaphoreClose(Semaphore &aSem)
 {
-    CloseHandle(sem.platform);
-    sem.platform = NULL;
+    CloseHandle(aSem.platform);
+    aSem.platform = NULL;
     return SEM_SUCCESS;
 }
 
-sem_status semaphore_post(semaphore &sem)
+SemaphoreStatus SemaphorePost(Semaphore &aSem)
 {
-    if (ReleaseSemaphore(sem.platform, 1, NULL) == 0)
+    if (ReleaseSemaphore(aSem.platform, 1, NULL) == 0)
     {
         return SEM_ERROR;
     }
     return SEM_SUCCESS;
 }
 
-sem_status semaphore_wait(semaphore &sem)
+SemaphoreStatus SemaphoreWait(Semaphore &aSem)
 {
-    if (WaitForSingleObject(sem.platform, INFINITE) != WAIT_OBJECT_0)
+    if (WaitForSingleObject(aSem.platform, INFINITE) != WAIT_OBJECT_0)
     {
         return SEM_ERROR;
     }
@@ -51,13 +51,13 @@ sem_status semaphore_wait(semaphore &sem)
 
 #else
 
-sem_status semaphore_open(std::string const &name, semaphore &sem)
+SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem)
 {
-    std::string sem_name = "/" + name;
-    sem.platform         = NULL;
+    std::string semName = "/" + aName;
+    aSem.mPlatform      = NULL;
 
-    sem.platform = sem_open(sem_name.c_str(), O_CREAT, S_IWUSR | S_IRUSR, 1);
-    if (sem.platform == SEM_FAILED)
+    aSem.mPlatform = sem_open(semName.c_str(), O_CREAT, S_IWUSR | S_IRUSR, 1);
+    if (aSem.mPlatform == SEM_FAILED)
     {
         return SEM_ERROR;
     }
@@ -65,25 +65,25 @@ sem_status semaphore_open(std::string const &name, semaphore &sem)
     return SEM_SUCCESS;
 }
 
-sem_status semaphore_close(semaphore &sem)
+SemaphoreStatus SemaphoreClose(Semaphore &aSem)
 {
-    sem_close(sem.platform);
-    sem.platform = NULL;
+    sem_close(aSem.mPlatform);
+    aSem.mPlatform = NULL;
     return SEM_SUCCESS;
 }
 
-sem_status semaphore_post(semaphore &sem)
+SemaphoreStatus SemaphorePost(Semaphore &aSem)
 {
-    if (sem_post(sem.platform) == -1)
+    if (sem_post(aSem.mPlatform) == -1)
     {
         return SEM_ERROR;
     }
     return SEM_SUCCESS;
 }
 
-sem_status semaphore_wait(semaphore &sem)
+SemaphoreStatus SemaphoreWait(Semaphore &aSem)
 {
-    if (sem_wait(sem.platform) == -1)
+    if (sem_wait(aSem.mPlatform) == -1)
     {
         return SEM_ERROR;
     }

@@ -448,10 +448,10 @@ static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
 #undef SET_IF_PRESENT
 }
 
-static void from_json(const Json &aJson, xpan_id &aXpanId)
+static void from_json(const Json &aJson, XpanId &aXpanId)
 {
     std::string xpanStr = aJson.get<std::string>();
-    SuccessOrThrow(aXpanId.from_hex(xpanStr));
+    SuccessOrThrow(aXpanId.FromHex(xpanStr));
 }
 
 static void from_json(const Json &aJson, ActiveOperationalDataset &aDataset)
