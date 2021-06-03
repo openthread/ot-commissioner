@@ -47,8 +47,8 @@ namespace ot {
 
 namespace commissioner {
 
-using Json   = nlohmann::json;
-using XpanId = xpan_id;
+using Json = nlohmann::json;
+using persistent_storage::Network;
 
 Error JobManager::Init(const Config &aConf)
 {
@@ -98,7 +98,7 @@ void JobManager::SetImportFile(const std::string &importFile)
     mImportFile = importFile;
 }
 
-void JobManager::SetImportNetworkXpan(xpan_id xpan)
+void JobManager::SetImportNetworkXpan(XpanId xpan)
 {
     mNid = xpan;
 }
@@ -219,8 +219,8 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const X
 
             SuccessOrExit(error = MakeBorderRouterChoice(nid, br));
             auto expr = aExpr;
-            expr.push_back(br.agent.mAddr);
-            expr.push_back(std::to_string(br.agent.mPort));
+            expr.push_back(br.mAgent.mAddr);
+            expr.push_back(std::to_string(br.mAgent.mPort));
             ASSERT(expr.size() == 3); // 'start br_addr br_port'
             SuccessOrExit(error = CreateJob(entry->second, expr, nid));
         }
@@ -265,16 +265,16 @@ exit:
 
 Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
 {
-    Error                       error;
-    std::string                 domainName;
-    bool                        isCCM = false;
-    sm::SecurityMaterials       dtlsConfig;
-    RegistryStatus              status;
-    persistent_storage::network nwk;
+    Error                 error;
+    std::string           domainName;
+    bool                  isCCM = false;
+    sm::SecurityMaterials dtlsConfig;
+    RegistryStatus        status;
+    Network               nwk;
 
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
-    isCCM  = nwk.ccm > 0;
+    isCCM  = nwk.mCcm > 0;
     status = mInterpreter.mRegistry->GetDomainNameByXpan(aNid, domainName);
     if (status != RegistryStatus::REG_SUCCESS)
     {
@@ -296,7 +296,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         }
         else
         {
-            error = sm::GetDefaultDomainSM(nwk.xpan.str(), isCCM, dtlsConfig);
+            error = sm::GetDefaultDomainSM(nwk.mXpan.str(), isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 WarningMsg(aNid, error.GetMessage());
@@ -306,7 +306,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             {
                 goto update;
             }
-            error = sm::GetDefaultDomainSM(nwk.name, isCCM, dtlsConfig);
+            error = sm::GetDefaultDomainSM(nwk.mName, isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 WarningMsg(aNid, error.GetMessage());
@@ -318,7 +318,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     {
         goto update;
     }
-    error = sm::GetNetworkSM(nwk.xpan.str(), isCCM, dtlsConfig);
+    error = sm::GetNetworkSM(nwk.mXpan.str(), isCCM, dtlsConfig);
     if (ERROR_NONE != error)
     {
         WarningMsg(aNid, error.GetMessage());
@@ -328,7 +328,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     {
         goto update;
     }
-    error = sm::GetNetworkSM(nwk.name, isCCM, dtlsConfig);
+    error = sm::GetNetworkSM(nwk.mName, isCCM, dtlsConfig);
     if (ERROR_NONE != error)
     {
         WarningMsg(aNid, error.GetMessage());
@@ -374,8 +374,7 @@ exit:
 
 Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
 {
-    using BRArray = std::vector<persistent_storage::border_router>;
-    using Network = persistent_storage::network;
+    using BRArray = std::vector<persistent_storage::BorderRouter>;
 
     Error          error;
     BRArray        brs;
@@ -393,14 +392,14 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
     }
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_NOT_FOUND("network lookup failed"));
-    if (nwk.ccm > 0) // Dealing with domain network
+    if (nwk.mCcm > 0) // Dealing with domain network
     {
         // - try to find active and connectable Primary BBR
         for (auto item : brs)
         {
-            if (item.agent.mState.mBbrIsPrimary && item.agent.mState.mConnectionMode > 0)
+            if (item.mAgent.mState.mBbrIsPrimary && item.mAgent.mState.mConnectionMode > 0)
             {
-                if (item.agent.mState.mBbrIsActive)
+                if (item.mAgent.mState.mBbrIsActive)
                 {
                     br = item;
                     ExitNow();
@@ -410,7 +409,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
         // - go on with other active and connectable BBRs
         for (auto item : brs)
         {
-            if (item.agent.mState.mBbrIsActive && item.agent.mState.mConnectionMode > 0)
+            if (item.mAgent.mState.mBbrIsActive && item.mAgent.mState.mConnectionMode > 0)
             {
                 choice.push_back(item);
             }
@@ -421,7 +420,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
         // go on with connectable BRs
         for (auto item : brs)
         {
-            if (item.agent.mState.mConnectionMode > 0)
+            if (item.mAgent.mState.mConnectionMode > 0)
             {
                 choice.push_back(item);
             }
@@ -433,7 +432,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
     // - prefer br with high-availability
     for (auto item : choice)
     {
-        if (item.agent.mState.mThreadIfStatus > 1 && item.agent.mState.mAvailability > 0)
+        if (item.mAgent.mState.mThreadIfStatus > 1 && item.mAgent.mState.mAvailability > 0)
         {
             br = item;
             ExitNow();
@@ -442,7 +441,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
     // - prefer br with Thread Interface actively participating in communication
     for (auto item : choice)
     {
-        if (item.agent.mState.mThreadIfStatus > 1)
+        if (item.mAgent.mState.mThreadIfStatus > 1)
         {
             br = item;
             ExitNow();
@@ -451,7 +450,7 @@ Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
     // - try to find br with Thread Interface at least enabled
     for (auto item : choice)
     {
-        if (item.agent.mState.mThreadIfStatus > 0)
+        if (item.mAgent.mState.mThreadIfStatus > 0)
         {
             br = item;
             ExitNow();
@@ -471,7 +470,7 @@ Error JobManager::AppendImport(Interpreter::Expression &aExpr)
 
     SuccessOrExit(error = JsonFromFile(jsonStr, mImportFile));
     jsonSrc = Json::parse(jsonStr);
-    if (mNid == xpan_id()) // must be single command
+    if (mNid == XpanId()) // must be single command
     {
         json = jsonSrc;
     }
@@ -579,7 +578,7 @@ Interpreter::Value JobManager::CollectJobsValue()
 {
     Interpreter::Value value;
     nlohmann::json     json;
-    xpan_id            xpan;
+    XpanId             xpan;
 
     for (auto job : mJobPool)
     {
@@ -603,7 +602,7 @@ Interpreter::Value JobManager::CollectJobsValue()
                 json[xpan.str()] = nlohmann::json::parse(valueStr);
             } catch (std::exception &e)
             {
-                ErrorMsg(xpan.value, e.what());
+                ErrorMsg(xpan.mValue, e.what());
             }
         }
         else // produce error messages immediately before printing value
@@ -631,7 +630,7 @@ void JobManager::StopCommissionerPool()
 Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
 {
     Error          error = ERROR_NONE;
-    uint64_t       nid   = 0;
+    XpanId         nid;
     RegistryStatus status;
 
     status = mInterpreter.mRegistry->GetCurrentNetworkXpan(nid);

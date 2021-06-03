@@ -92,6 +92,8 @@ namespace ot {
 
 namespace commissioner {
 
+using ot::commissioner::persistent_storage::Network;
+
 namespace {
 
 struct FDGuard
@@ -734,7 +736,7 @@ void Interpreter::Print(const Value &aValue)
 
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
 {
-    std::string nidHex = xpan_id(aNid);
+    std::string nidHex = XpanId(aNid);
     PrintNetworkMessage(nidHex, aMessage, aColor);
 }
 
@@ -842,29 +844,29 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     case 1:
     {
         // starting currently selected network
-        uint64_t       nid;
+        XpanId         nid;
         RegistryStatus status = mRegistry->GetCurrentNetworkXpan(nid);
         VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("getting selected network failed"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         SuccessOrExit(value = mJobManager->MakeBorderRouterChoice(nid, br));
-        expr.push_back(br.agent.mAddr);
-        expr.push_back(std::to_string(br.agent.mPort));
+        expr.push_back(br.mAgent.mAddr);
+        expr.push_back(std::to_string(br.mAgent.mPort));
         break;
     }
     case 2:
     {
         // starting newtork by br raw id (experimental, for dev tests only)
-        persistent_storage::border_router_id rawid;
+        persistent_storage::BorderRouterId rawid;
 
-        SuccessOrExit(value = ParseInteger(rawid.id, expr[1]));
+        SuccessOrExit(value = ParseInteger(rawid.mId, expr[1]));
         VerifyOrExit(mRegistry->GetBorderRouter(rawid, br) == RegistryStatus::REG_SUCCESS,
-                     value = ERROR_NOT_FOUND("br[{}] not found", rawid.id));
+                     value = ERROR_NOT_FOUND("br[{}] not found", rawid.mId));
         VerifyOrExit(mRegistry->SetCurrentNetwork(br) == RegistryStatus::REG_SUCCESS,
-                     value = ERROR_NOT_FOUND("network selection failed for nwk[{}]", br.nwk_id.id));
+                     value = ERROR_NOT_FOUND("network selection failed for nwk[{}]", br.mNetworkId.mId));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         expr.pop_back();
-        expr.push_back(br.agent.mAddr);
-        expr.push_back(std::to_string(br.agent.mPort));
+        expr.push_back(br.mAgent.mAddr);
+        expr.push_back(std::to_string(br.mAgent.mPort));
         break;
     }
     case 3:
@@ -982,17 +984,17 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS("too few arguments"));
     if (CaseInsensitiveEqual(aExpr[1], "list"))
     {
-        nlohmann::json             json;
-        std::vector<border_router> routers;
-        std::vector<network>       networks;
-        RegistryStatus             status;
+        nlohmann::json            json;
+        std::vector<BorderRouter> routers;
+        std::vector<Network>      networks;
+        RegistryStatus            status;
 
         VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
         if (mContext.mDomAliases.size() > 0)
         {
             for (auto dom : mContext.mDomAliases)
             {
-                std::vector<network> domNetworks;
+                std::vector<Network> domNetworks;
                 status = mRegistry->GetNetworksInDomain(dom, domNetworks);
                 if (status != RegistryStatus::REG_SUCCESS)
                 {
@@ -1026,15 +1028,15 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         {
             for (auto nwk : networks)
             {
-                std::vector<border_router> nwkRouters;
-                status = mRegistry->GetBorderRoutersInNetwork(nwk.xpan, nwkRouters);
+                std::vector<BorderRouter> nwkRouters;
+                status = mRegistry->GetBorderRoutersInNetwork(nwk.mXpan, nwkRouters);
                 if (status == RegistryStatus::REG_SUCCESS)
                 {
                     routers.insert(routers.end(), nwkRouters.begin(), nwkRouters.end());
                 }
                 else
                 {
-                    PrintNetworkMessage(nwk.xpan.value, "lookup failed", COLOR_ALIAS_FAILED);
+                    PrintNetworkMessage(nwk.mXpan.mValue, "lookup failed", COLOR_ALIAS_FAILED);
                 }
             }
         }
@@ -1206,11 +1208,11 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         }
         else if (aExpr.size() == 3)
         {
-            // Attempt to remove border agent by border_router_id
-            border_router_id brId;
+            // Attempt to remove border agent by BorderRouterId
+            BorderRouterId brId;
             try
             {
-                brId = border_router_id(std::stoi(aExpr[2]));
+                brId = BorderRouterId(std::stoi(aExpr[2]));
             } catch (...)
             {
                 value = ERROR_INVALID_ARGS("Failed to evaluate border router ID '{}'", aExpr[2]);
@@ -1393,7 +1395,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                      (agentOrError.mBorderAgent.mDomainName == mContext.mDomAliases[0])) ||
                     (!mContext.mNwkAliases.empty() &&
                      (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kExtendedPanIdBit) &&
-                     (std::find(xpans.begin(), xpans.end(), xpan_id(agentOrError.mBorderAgent.mExtendedPanId)) !=
+                     (std::find(xpans.begin(), xpans.end(), XpanId(agentOrError.mBorderAgent.mExtendedPanId)) !=
                       xpans.end())))
                 {
                     baJson.push_back(ba);
@@ -1423,7 +1425,7 @@ Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
     {
         RegistryStatus      status;
         nlohmann::json      json;
-        std::vector<domain> domains;
+        std::vector<Domain> domains;
 
         for (auto alias : mContext.mDomAliases)
         {
@@ -1513,27 +1515,27 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
     else if (CaseInsensitiveEqual(aExpr[1], "identify"))
     {
         ::nlohmann::json json;
-        network          nwk;
+        Network          nwk;
         std::string      nwkData;
 
         VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
         VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == RegistryStatus::REG_SUCCESS,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
-        if (nwk.id.id == EMPTY_ID)
+        if (nwk.mId.mId == EMPTY_ID)
         {
             value = std::string("none");
         }
         else
         {
-            if (nwk.dom_id.id != EMPTY_ID)
+            if (nwk.mDomainId.mId != EMPTY_ID)
             {
-                VerifyOrExit(mRegistry->GetDomainNameByXpan(nwk.xpan, nwkData) == RegistryStatus::REG_SUCCESS,
+                VerifyOrExit(mRegistry->GetDomainNameByXpan(nwk.mXpan, nwkData) == RegistryStatus::REG_SUCCESS,
                              value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
                 nwkData += '/';
             }
-            nwkData += nwk.name;
-            json[nwk.xpan.str()] = nwkData;
-            value                = json.dump(JSON_INDENT_DEFAULT);
+            nwkData += nwk.mName;
+            json[nwk.mXpan.str()] = nwkData;
+            value                 = json.dump(JSON_INDENT_DEFAULT);
         }
     }
     else
@@ -1574,8 +1576,8 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
 
     Interpreter::Value   value;
     Expression           retExpr;
-    network              nwk{};
-    std::vector<network> networks;
+    Network              nwk{};
+    std::vector<Network> networks;
     ::nlohmann::json     json;
 
     SuccessOrExit(value = ReParseMultiNetworkSyntax(aExpr, retExpr));
@@ -1987,7 +1989,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
         // Update network from active opdataset (no error there, log messages only)
         do
         {
-            persistent_storage::network nwk;
+            Network nwk;
             // Get network object for the opdataset object
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit) != 0)
             {
@@ -2031,33 +2033,33 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
 #define AODS_FIELD_IF_IS_SET(field, defaultValue) \
     (((dataset.mPresentFlags & ActiveOperationalDataset::k##field##Bit) == 0) ? (defaultValue) : (dataset.m##field))
 
-            nwk.name    = AODS_FIELD_IF_IS_SET(NetworkName, "");
-            nwk.xpan    = AODS_FIELD_IF_IS_SET(ExtendedPanId, xpan_id{0});
-            nwk.channel = AODS_FIELD_IF_IS_SET(Channel, (Channel{0, 0})).mNumber;
-            nwk.pan     = AODS_FIELD_IF_IS_SET(PanId, PanId{0});
+            nwk.mName    = AODS_FIELD_IF_IS_SET(NetworkName, "");
+            nwk.mXpan    = AODS_FIELD_IF_IS_SET(ExtendedPanId, XpanId{0});
+            nwk.mChannel = AODS_FIELD_IF_IS_SET(Channel, (Channel{0, 0})).mNumber;
+            nwk.mPan     = AODS_FIELD_IF_IS_SET(PanId, PanId{0});
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0)
             {
-                nwk.pan = "";
+                nwk.mPan = "";
             }
             else
             {
                 std::ostringstream value;
                 value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0')
                       << dataset.mPanId.mValue;
-                nwk.pan = value.str();
+                nwk.mPan = value.str();
             }
 
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0)
             {
-                nwk.mlp = "";
+                nwk.mMlp = "";
             }
             else
             {
-                nwk.mlp = Ipv6PrefixToString(dataset.mMeshLocalPrefix);
+                nwk.mMlp = Ipv6PrefixToString(dataset.mMeshLocalPrefix);
             }
             // Magic constant originates from the Spec pt. 8.10.1.15
             // The flag set indicates 'CCM **not** supported' state
-            nwk.ccm =
+            nwk.mCcm =
                 (((AODS_FIELD_IF_IS_SET(SecurityPolicy, (SecurityPolicy{0, ByteArray{0, 0}})).mFlags[0] & 0x04) == 0)
                      ? 1
                      : 0);

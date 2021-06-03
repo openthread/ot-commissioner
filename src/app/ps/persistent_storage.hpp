@@ -79,106 +79,106 @@ public:
     /**
      * Adds value to store
      *
-     * @param[in] val value to be added
-     * @param[out] ret_id unique id of the inserted value
+     * @param[in] aValue value to be added
+     * @param[out] aReturnId unique id of the inserted value
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Add(registrar const &val, registrar_id &ret_id)         = 0;
-    virtual Status Add(domain const &val, domain_id &ret_id)               = 0;
-    virtual Status Add(network const &val, network_id &ret_id)             = 0;
-    virtual Status Add(border_router const &val, border_router_id &ret_id) = 0;
+    virtual Status Add(Registrar const &aValue, RegistrarId &aReturnId)       = 0;
+    virtual Status Add(Domain const &aValue, DomainId &aReturnId)             = 0;
+    virtual Status Add(Network const &aValue, NetworkId &aReturnId)           = 0;
+    virtual Status Add(BorderRouter const &aValue, BorderRouterId &aReturnId) = 0;
 
     /**
      * Deletes value by unique id from store
      *
-     * @param[in] id value's id to be deleted
+     * @param[in] aId value's id to be deleted
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Del(registrar_id const &id)     = 0;
-    virtual Status Del(domain_id const &id)        = 0;
-    virtual Status Del(network_id const &id)       = 0;
-    virtual Status Del(border_router_id const &id) = 0;
+    virtual Status Del(RegistrarId const &aId)    = 0;
+    virtual Status Del(DomainId const &aId)       = 0;
+    virtual Status Del(NetworkId const &aId)      = 0;
+    virtual Status Del(BorderRouterId const &aId) = 0;
 
     /**
      * Gets value by unique id from store
      *
-     * @param[in] id value's unique id
-     * @param[out] ret_val value from registry
+     * @param[in] aId value's unique id
+     * @param[out] aRetValue value from registry
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Get(registrar_id const &id, registrar &ret_val)         = 0;
-    virtual Status Get(domain_id const &id, domain &ret_val)               = 0;
-    virtual Status Get(network_id const &id, network &ret_val)             = 0;
-    virtual Status Get(border_router_id const &id, border_router &ret_val) = 0;
+    virtual Status Get(RegistrarId const &aId, Registrar &aRetValue)       = 0;
+    virtual Status Get(DomainId const &aId, Domain &aRetValue)             = 0;
+    virtual Status Get(NetworkId const &aId, Network &aRetValue)           = 0;
+    virtual Status Get(BorderRouterId const &aId, BorderRouter &aRetValue) = 0;
 
     /**
      * Updates value in store
      *
-     * Updated value is identified by val's id.
-     * If value was found it is replaced with val. Old value is lost.
+     * Updated value is identified by aValue's id.
+     * If value was found it is replaced with aValue. Old value is lost.
      *
-     * @param[in] val new value
+     * @param[in] aValue new value
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Update(registrar const &val)     = 0;
-    virtual Status Update(domain const &val)        = 0;
-    virtual Status Update(network const &val)       = 0;
-    virtual Status Update(border_router const &val) = 0;
+    virtual Status Update(Registrar const &aValue)    = 0;
+    virtual Status Update(Domain const &aValue)       = 0;
+    virtual Status Update(Network const &aValue)      = 0;
+    virtual Status Update(BorderRouter const &aValue) = 0;
 
     /**
      * Looks for a matching values in store
      *
-     * Only non-empty val's fields are compared and combined with AND.
+     * Only non-empty aValue's fields are compared and combined with AND.
      * Provide empty to get all the values.
      * Resulting vector is not cleared. Results are appended to the end.
      *
-     * @param[in] val value's fields to compare with.
-     * @param[out] ret values matched val condition.
+     * @param[in] aValue value's fields to compare with.
+     * @param[out] aRetValue values matched aValue condition.
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Lookup(registrar const &val, std::vector<registrar> &ret)         = 0;
-    virtual Status Lookup(domain const &val, std::vector<domain> &ret)               = 0;
-    virtual Status Lookup(network const &val, std::vector<network> &ret)             = 0;
-    virtual Status Lookup(border_router const &val, std::vector<border_router> &ret) = 0;
+    virtual Status Lookup(Registrar const &aValue, std::vector<Registrar> &aRetValue)       = 0;
+    virtual Status Lookup(Domain const &aValue, std::vector<Domain> &aRetValue)             = 0;
+    virtual Status Lookup(Network const &aValue, std::vector<Network> &aRetValue)           = 0;
+    virtual Status Lookup(BorderRouter const &aValue, std::vector<BorderRouter> &aRetValue) = 0;
 
     /**
      * Looks for a matching values in store
      *
-     * Only non-empty val's fields are compared and combined with OR.
+     * Only non-empty aValue's fields are compared and combined with OR.
      * Provide empty entity to get all the values.
      * Resulting vector is not cleared. Results are appended to the end.
      *
-     * @param[in] val value's fields to compare with.
-     * @param[out] ret values matched val condition.
+     * @param[in] aValue value's fields to compare with.
+     * @param[out] aRetValue values matched aValue condition.
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status LookupAny(registrar const &val, std::vector<registrar> &ret)         = 0;
-    virtual Status LookupAny(domain const &val, std::vector<domain> &ret)               = 0;
-    virtual Status LookupAny(network const &val, std::vector<network> &ret)             = 0;
-    virtual Status LookupAny(border_router const &val, std::vector<border_router> &ret) = 0;
+    virtual Status LookupAny(Registrar const &aValue, std::vector<Registrar> &aRetValue)       = 0;
+    virtual Status LookupAny(Domain const &aValue, std::vector<Domain> &aRetValue)             = 0;
+    virtual Status LookupAny(Network const &aValue, std::vector<Network> &aRetValue)           = 0;
+    virtual Status LookupAny(BorderRouter const &aValue, std::vector<BorderRouter> &aRetValue) = 0;
 
     /**
-     * Set current network.
+     * Set current Network.
      */
-    virtual Status CurrentNetworkSet(const network_id &nwk_id) = 0;
+    virtual Status CurrentNetworkSet(const NetworkId &aNetworkId) = 0;
     /**
-     * Get current network
+     * Get current Network
      *
-     * @param nwk_id[out] current network identifier
+     * @param aNetworkId[out] current Network identifier
      */
-    virtual Status CurrentNetworkGet(network_id &nwk_id) = 0;
+    virtual Status CurrentNetworkGet(NetworkId &aNetworkId) = 0;
 };
 
 } // namespace persistent_storage

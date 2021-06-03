@@ -49,7 +49,7 @@ namespace commissioner {
 namespace persistent_storage {
 
 /**
- * Implements persistent_storage interface based on single json file
+ * Implements PersistentStorage interface based on single json file
  *
  * Default persistent storage implemetaion used by Registry
  * @see registry.hpp
@@ -62,9 +62,9 @@ public:
     /**
      * Constructor
      *
-     * @param[in] name file name to be used as storage
+     * @param[in] aFileName file name to be used as storage
      */
-    PersistentStorageJson(std::string const &fname);
+    PersistentStorageJson(std::string const &aFileName);
 
     /**
      * Destructor
@@ -90,119 +90,119 @@ public:
     /**
      * Adds value to store
      *
-     * @param[in] val value to be added
-     * @param[out] ret_id unique id of the inserted value
+     * @param[in] aValue value to be added
+     * @param[out] aRetId unique id of the inserted value
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Add(registrar const &val, registrar_id &ret_id) override;
-    virtual Status Add(domain const &val, domain_id &ret_id) override;
-    virtual Status Add(network const &val, network_id &ret_id) override;
-    virtual Status Add(border_router const &val, border_router_id &ret_id) override;
+    virtual Status Add(Registrar const &aValue, RegistrarId &aRetId) override;
+    virtual Status Add(Domain const &aValue, DomainId &aRetId) override;
+    virtual Status Add(Network const &aValue, NetworkId &aRetId) override;
+    virtual Status Add(BorderRouter const &aValue, BorderRouterId &aRetId) override;
 
     /**
      * Deletes value by unique id from store
      *
-     * @param[in] id value's id to be deleted
+     * @param[in] aId value's id to be deleted
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Del(registrar_id const &id) override;
-    virtual Status Del(domain_id const &id) override;
-    virtual Status Del(network_id const &id) override;
-    virtual Status Del(border_router_id const &id) override;
+    virtual Status Del(RegistrarId const &aId) override;
+    virtual Status Del(DomainId const &aId) override;
+    virtual Status Del(NetworkId const &aId) override;
+    virtual Status Del(BorderRouterId const &aId) override;
 
     /**
      * Gets value by unique id from store
      *
-     * @param[in] id value's unique id
-     * @param[out] ret_val value from registry
+     * @param[in] aId value's unique id
+     * @param[out] aValue value from registry
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Get(registrar_id const &id, registrar &ret_val) override;
-    virtual Status Get(domain_id const &id, domain &ret_val) override;
-    virtual Status Get(network_id const &id, network &ret_val) override;
-    virtual Status Get(border_router_id const &id, border_router &ret_val) override;
+    virtual Status Get(RegistrarId const &aId, Registrar &aValue) override;
+    virtual Status Get(DomainId const &aId, Domain &aValue) override;
+    virtual Status Get(NetworkId const &aId, Network &aValue) override;
+    virtual Status Get(BorderRouterId const &aId, BorderRouter &aValue) override;
 
     /**
      * Updates value in store
      *
-     * Updated value is identified by val's id.
-     * If value was found it is replaced with val. Old value is lost.
+     * Updated value is identified by aValue's id.
+     * If value was found it is replaced with aValue. Old value is lost.
      *
-     * @param[in] val new value
+     * @param[in] aValue new value
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Update(registrar const &val) override;
-    virtual Status Update(domain const &val) override;
-    virtual Status Update(network const &val) override;
-    virtual Status Update(border_router const &val) override;
+    virtual Status Update(Registrar const &aValue) override;
+    virtual Status Update(Domain const &aValue) override;
+    virtual Status Update(Network const &aValue) override;
+    virtual Status Update(BorderRouter const &aValue) override;
 
     /**
      * Looks for a matching values in store
      *
-     * Only non-empty val's fields are compared and combined with AND.
+     * Only non-empty aValue's fields are compared and combined with AND.
      * Provide empty entity to get all the values.
      * Resulting vector is not cleared. Results are appended to the end.
      *
-     * @param[in] val value's fields to compare with.
-     * @param[out] ret values matched val condition.
+     * @param[in] aValue value's fields to compare with.
+     * @param[out] aRet values matched aValue condition.
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Lookup(registrar const &val, std::vector<registrar> &ret) override;
-    virtual Status Lookup(domain const &val, std::vector<domain> &ret) override;
-    virtual Status Lookup(network const &val, std::vector<network> &ret) override;
-    virtual Status Lookup(border_router const &val, std::vector<border_router> &ret) override;
+    virtual Status Lookup(Registrar const &aValue, std::vector<Registrar> &aRet) override;
+    virtual Status Lookup(Domain const &aValue, std::vector<Domain> &aRet) override;
+    virtual Status Lookup(Network const &aValue, std::vector<Network> &aRet) override;
+    virtual Status Lookup(BorderRouter const &aValue, std::vector<BorderRouter> &aRet) override;
 
     /**
      * Looks for a matching values in store
      *
-     * Only non-empty val's fields are compared and combined with OR.
+     * Only non-empty aValue's fields are compared and combined with OR.
      * Provide empty entity to get all the values.
      * Resulting vector is not cleared. Results are appended to the end.
      *
-     * @param[in] val value's fields to compare with.
-     * @param[out] ret values matched val condition.
+     * @param[in] aValue value's fields to compare with.
+     * @param[out] aRet values matched aValue condition.
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status LookupAny(registrar const &val, std::vector<registrar> &ret) override;
-    virtual Status LookupAny(domain const &val, std::vector<domain> &ret) override;
-    virtual Status LookupAny(network const &val, std::vector<network> &ret) override;
-    virtual Status LookupAny(border_router const &val, std::vector<border_router> &ret) override;
+    virtual Status LookupAny(Registrar const &aValue, std::vector<Registrar> &aRet) override;
+    virtual Status LookupAny(Domain const &aValue, std::vector<Domain> &aRet) override;
+    virtual Status LookupAny(Network const &aValue, std::vector<Network> &aRet) override;
+    virtual Status LookupAny(BorderRouter const &aValue, std::vector<BorderRouter> &aRet) override;
 
     /**
-     * Set current network.
+     * Set current Network.
      */
-    virtual Status CurrentNetworkSet(const network_id &nwk_id) override;
+    virtual Status CurrentNetworkSet(const NetworkId &aNwkId) override;
     /**
-     * Get current network
+     * Get current Network
      *
-     * @param nwk_id[out] current network identifier
+     * @param aNwkId[out] current Network identifier
      */
-    virtual Status CurrentNetworkGet(network_id &nwk_id) override;
+    virtual Status CurrentNetworkGet(NetworkId &aNwkId) override;
 
 private:
-    std::string            file_name;    /**< name of the file */
-    nlohmann::json         cache;        /**< internal chache */
-    ot::os::sem::semaphore storage_lock; /**< lock to sync file access */
+    std::string            mFileName;    /**< name of the file */
+    nlohmann::json         mCache;       /**< internal chache */
+    ot::os::sem::Semaphore mStorageLock; /**< lock to sync file access */
 
     /**
-     * Reads data from file to cache
+     * Reads data from file to mCache
      */
     Status CacheFromFile();
 
     /**
-     * Writes cache to file
+     * Writes mCache to file
      */
     Status CacheToFile();
 
@@ -222,20 +222,21 @@ private:
     /**
      * Adds all types of values to store
      */
-    template <typename V, typename I> Status AddOne(V const &val, I &ret_id, std::string seq_name, std::string arr_name)
+    template <typename V, typename I>
+    Status AddOne(V const &aValue, I &aRetId, std::string aSeqName, std::string aArrName)
     {
         if (CacheFromFile() != Status::PS_SUCCESS)
         {
             return Status::PS_ERROR;
         }
 
-        V ins_val = val;
-        cache.at(seq_name).get_to(ret_id);
-        cache[seq_name] = ret_id.id + 1;
+        V insValue = aValue;
+        mCache.at(aSeqName).get_to(aRetId);
+        mCache[aSeqName] = aRetId.mId + 1;
 
-        ins_val.id = ret_id;
+        insValue.mId = aRetId;
 
-        cache[arr_name].push_back(ins_val);
+        mCache[aArrName].push_back(insValue);
 
         return CacheToFile();
     }
@@ -243,11 +244,11 @@ private:
     /**
      * Deletes all types of values from store
      */
-    template <typename V, typename I> Status DelId(I const &id, std::string arr_name)
+    template <typename V, typename I> Status DelId(I const &aId, std::string aArrName)
     {
-        auto it_end = std::remove_if(std::begin(cache[arr_name]), std::end(cache[arr_name]),
-                                     [&id](const V &el) { return el.id.id == id.id; });
-        cache[arr_name].erase(it_end, std::end(cache[arr_name]));
+        auto itEnd = std::remove_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]),
+                                    [&aId](const V &el) { return el.mId.mId == aId.mId; });
+        mCache[aArrName].erase(itEnd, std::end(mCache[aArrName]));
 
         return CacheToFile();
     }
@@ -255,16 +256,16 @@ private:
     /**
      * Gets all types of values from store
      */
-    template <typename V, typename I> Status GetId(I const &id, V &ret, std::string arr_name)
+    template <typename V, typename I> Status GetId(I const &aId, V &aRet, std::string aArrName)
     {
-        auto it_val = std::find_if(std::begin(cache[arr_name]), std::end(cache[arr_name]),
-                                   [&id](V const &el) { return el.id.id == id.id; });
-        if (it_val == std::end(cache[arr_name]))
+        auto itValue = std::find_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]),
+                                    [&aId](V const &el) { return el.mId.mId == aId.mId; });
+        if (itValue == std::end(mCache[aArrName]))
         {
             return Status::PS_NOT_FOUND;
         }
 
-        ret = *it_val;
+        aRet = *itValue;
 
         return Status::PS_SUCCESS;
     }
@@ -272,16 +273,16 @@ private:
     /**
      * Updates all types of values in store
      */
-    template <typename V> Status UpdId(V const &new_val, std::string arr_name)
+    template <typename V> Status UpdId(V const &aNewValue, std::string aArrName)
     {
-        auto it_val = std::find_if(std::begin(cache[arr_name]), std::end(cache[arr_name]),
-                                   [&new_val](const V &el) { return el.id.id == new_val.id.id; });
-        if (it_val == std::end(cache[arr_name]))
+        auto itValue = std::find_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]),
+                                    [&aNewValue](const V &el) { return el.mId.mId == aNewValue.mId.mId; });
+        if (itValue == std::end(mCache[aArrName]))
         {
             return Status::PS_NOT_FOUND;
         }
 
-        *it_val = new_val;
+        *itValue = aNewValue;
 
         return CacheToFile();
     }
@@ -290,12 +291,12 @@ private:
      * Looks for a value of any type
      */
     template <typename V>
-    Status LookupPred(std::function<bool(V const &)> pred, std::vector<V> &ret, std::string arr_name)
+    Status LookupPred(std::function<bool(V const &)> aPred, std::vector<V> &aRet, std::string aArrName)
     {
-        size_t prev_s = ret.size();
-        std::copy_if(std::begin(cache[arr_name]), std::end(cache[arr_name]), std::back_inserter(ret), pred);
+        size_t prevSize = aRet.size();
+        std::copy_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]), std::back_inserter(aRet), aPred);
 
-        if (ret.size() > prev_s)
+        if (aRet.size() > prevSize)
         {
             return Status::PS_SUCCESS;
         }

@@ -111,26 +111,65 @@ std::string Ipv6PrefixToString(ByteArray aPrefix)
     return addr.ToString() + "/" + std::to_string(prefixLength);
 }
 
+XpanId::XpanId(uint64_t val)
+    : mValue(val)
+{
+}
+
+XpanId::XpanId()
+    : XpanId(0)
+{
+}
+
+std::string XpanId::str() const
+{
+    return *this;
+}
+
+bool XpanId::operator==(const XpanId &aOther) const
+{
+    return mValue == aOther.mValue;
+}
+
+bool XpanId::operator==(const uint64_t aOther) const
+{
+    return mValue == aOther;
+}
+
+XpanId::operator std::string() const
+{
+    std::ostringstream stream;
+    stream << std::setfill('0') << std::setw(sizeof(mValue) * 2) << std::hex << mValue;
+    std::string out = stream.str();
+    std::for_each(out.begin(), out.end(), [](char &c) { c = std::toupper(c); });
+    return out;
+}
+
+XpanId::operator uint64_t() const
+{
+    return mValue;
+}
+
 /**
  * Converts hex string to the corresponding integer type.
  * @attention Makes no validity checks.
  */
-Error xpan_id::from_hex(const std::string &input)
+Error XpanId::FromHex(const std::string &aInput)
 {
-    value = 0;
+    mValue = 0;
 
-    if (input.empty() || input.length() > 16)
-        return ERROR_BAD_FORMAT("wrong XPAN string length {}", input.length());
-    for (auto c : input)
+    if (aInput.empty() || aInput.length() > 16)
+        return ERROR_BAD_FORMAT("wrong XPAN string length {}", aInput.length());
+    for (auto c : aInput)
     {
         if (!std::isxdigit(c))
         {
-            return ERROR_BAD_FORMAT("not a hex string '{}'", input);
+            return ERROR_BAD_FORMAT("not a hex string '{}'", aInput);
         }
     }
 
-    std::istringstream is(input);
-    is >> std::hex >> value;
+    std::istringstream is(aInput);
+    is >> std::hex >> mValue;
     return ERROR_NONE;
 }
 

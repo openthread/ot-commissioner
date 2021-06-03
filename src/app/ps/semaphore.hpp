@@ -51,7 +51,7 @@ namespace sem {
 /**
  * Semaphore operation status
  */
-enum sem_status
+enum SemaphoreStatus
 {
     SEM_SUCCESS, /**< operation succeeded */
     SEM_ERROR    /**< operation failed */
@@ -63,44 +63,44 @@ enum sem_status
  * Name of the semaphore should not contain any suffixes or prefixes
  * and will be converted to system specific format.
  *
- * @param[in] name semaphore name
- * @param[out] sem created semaphore
- * @see semaphore
- * @return sem_status
- * @see sem_status
+ * @param[in] aName semaphore name
+ * @param[out] aSem created semaphore
+ * @see Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
  */
-sem_status semaphore_open(std::string const &name, semaphore &sem);
+SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem);
 
 /**
  * Close semaphore previously created by open
- * @see semaphore_open
+ * @see SemaphoreOpen
  *
- * @param[in] sem semaphore
- * @see semaphore
- * @return sem_status
- * @see sem_status
+ * @param[in] aSem semaphore
+ * @see Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
  */
-sem_status semaphore_close(semaphore &sem);
+SemaphoreStatus SemaphoreClose(Semaphore &aSem);
 
 /**
  * Posts semaphore
  *
- * @param[in] sem semaphore
- * @see semaphore
- * @return sem_status
- * @see sem_status
+ * @param[in] aSem semaphore
+ * @see Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
  */
-sem_status semaphore_post(semaphore &sem);
+SemaphoreStatus SemaphorePost(Semaphore &aSem);
 
 /**
  * Blocks until semaphore can be obtained
  *
- * @param[in] sem semaphore
- * @see semaphore
- * @return sem_status
- * @see sem_status
+ * @param[in] aSem semaphore
+ * @See Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
  */
-sem_status semaphore_wait(semaphore &sem);
+SemaphoreStatus SemaphoreWait(Semaphore &aSem);
 
 } // namespace sem
 

@@ -44,14 +44,13 @@ namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
 using RegistryStatus     = ot::commissioner::persistent_storage::Registry::Status;
-using BorderRouter       = ot::commissioner::persistent_storage::border_router;
+using ot::commissioner::XpanId;
+using ot::commissioner::persistent_storage::BorderRouter;
 
 class Job;
 
 class JobManager
 {
-    using XpanId = ot::commissioner::xpan_id;
-
 public:
     explicit JobManager(Interpreter &aInterpreter)
         : mInterpreter(aInterpreter)
@@ -71,7 +70,7 @@ public:
     void CancelCommand();
     void CleanupJobs();
     void SetImportFile(const std::string &importFile);
-    void SetImportNetworkXpan(xpan_id xpan);
+    void SetImportNetworkXpan(XpanId xpan);
     void StopCommissionerPool();
     /**
      * Collects values from job pool and aggregates those into a
@@ -177,7 +176,7 @@ private:
     std::string        mImportFile;
     Interpreter &      mInterpreter;
     CommissionerAppPtr mDefaultCommissioner = nullptr;
-    xpan_id            mNid;
+    XpanId             mNid;
 };
 
 } // namespace commissioner

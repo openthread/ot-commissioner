@@ -58,44 +58,31 @@ static constexpr uint8_t kMlrStatusFailure     = 6;
 /**
  * Extended PAN Id wrapper
  */
-struct xpan_id
+struct XpanId
 {
-    uint64_t value;
+    uint64_t mValue;
 
-    xpan_id(uint64_t val)
-        : value(val)
-    {
-    }
+    XpanId(uint64_t val);
 
-    xpan_id()
-        : xpan_id(0)
-    {
-    }
+    XpanId();
 
-    std::string str() const { return *this; }
+    std::string str() const;
 
-    bool operator==(const xpan_id &other) const { return value == other.value; }
+    bool operator==(const XpanId &aOther) const;
 
-    bool operator==(const uint64_t other) const { return value == other; }
+    bool operator==(const uint64_t aOther) const;
 
-    operator std::string() const
-    {
-        std::ostringstream stream;
-        stream << std::setfill('0') << std::setw(sizeof(value) * 2) << std::hex << value;
-        std::string out = stream.str();
-        std::for_each(out.begin(), out.end(), [](char &c) { c = std::toupper(c); });
-        return out;
-    }
+    operator std::string() const;
 
-    operator uint64_t() const { return value; }
+    operator uint64_t() const;
 
     /**
      * Decodes hexadecimal string.
      */
-    Error from_hex(const std::string &input);
+    Error FromHex(const std::string &aInput);
 };
 
-typedef std::vector<xpan_id> XpanIdArray;
+typedef std::vector<XpanId> XpanIdArray;
 
 /**
  * @brief The Commissioner Dataset of the Thread Network Data.
@@ -280,7 +267,7 @@ struct ActiveOperationalDataset
     Timestamp      mActiveTimestamp;
     Channel        mChannel;
     ChannelMask    mChannelMask;
-    xpan_id        mExtendedPanId;
+    XpanId         mExtendedPanId;
     ByteArray      mMeshLocalPrefix;
     ByteArray      mNetworkMasterKey;
     std::string    mNetworkName;

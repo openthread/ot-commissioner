@@ -57,16 +57,16 @@ const unsigned int EMPTY_ID = (unsigned int)-1;
 /**
  * Registrar entity id
  */
-struct registrar_id
+struct RegistrarId
 {
-    unsigned int id;
+    unsigned int mId;
 
-    registrar_id(unsigned int val)
-        : id(val)
+    RegistrarId(unsigned int aValue)
+        : mId(aValue)
     {
     }
-    registrar_id()
-        : registrar_id(EMPTY_ID)
+    RegistrarId()
+        : RegistrarId(EMPTY_ID)
     {
     }
 };
@@ -74,16 +74,16 @@ struct registrar_id
 /**
  * Domain entity id
  */
-struct domain_id
+struct DomainId
 {
-    unsigned int id;
+    unsigned int mId;
 
-    domain_id(unsigned int val)
-        : id(val)
+    DomainId(unsigned int aValue)
+        : mId(aValue)
     {
     }
-    domain_id()
-        : domain_id(EMPTY_ID)
+    DomainId()
+        : DomainId(EMPTY_ID)
     {
     }
 };
@@ -91,33 +91,33 @@ struct domain_id
 /**
  * Network entity id
  */
-struct network_id
+struct NetworkId
 {
-    unsigned int id;
+    unsigned int mId;
 
-    network_id(unsigned int val)
-        : id(val)
+    NetworkId(unsigned int aValue)
+        : mId(aValue)
     {
     }
-    network_id()
-        : network_id(EMPTY_ID)
+    NetworkId()
+        : NetworkId(EMPTY_ID)
     {
     }
 };
 
 /**
- * Border router entity id
+ * Border router entity mId
  */
-struct border_router_id
+struct BorderRouterId
 {
-    unsigned int id;
+    unsigned int mId;
 
-    border_router_id(unsigned int val)
-        : id(val)
+    BorderRouterId(unsigned int aValue)
+        : mId(aValue)
     {
     }
-    border_router_id()
-        : border_router_id(EMPTY_ID)
+    BorderRouterId()
+        : BorderRouterId(EMPTY_ID)
     {
     }
 };
@@ -125,25 +125,25 @@ struct border_router_id
 /**
  * Registrar entity
  */
-struct registrar
+struct Registrar
 {
-    registrar_id             id;      /**< unique id in registry */
-    std::string              addr;    /**< registrar address */
-    unsigned int             port;    /**< registrar port */
-    std::vector<std::string> domains; /**< domains supplied by registrar */
+    RegistrarId              mId;      /**< unique mId in registry */
+    std::string              mAddr;    /**< registrar address */
+    unsigned int             mPort;    /**< registrar port */
+    std::vector<std::string> mDomains; /**< domains supplied by registrar */
 
-    registrar(registrar_id const &            rid,
-              std::string const &             raddr,
-              unsigned int const              rport,
-              std::vector<std::string> const &rdomains)
-        : id(rid)
-        , addr(raddr)
-        , port(rport)
-        , domains(rdomains)
+    Registrar(RegistrarId const &             aId,
+              std::string const &             aAddr,
+              unsigned int const              aPort,
+              std::vector<std::string> const &aDomains)
+        : mId(aId)
+        , mAddr(aAddr)
+        , mPort(aPort)
+        , mDomains(aDomains)
     {
     }
-    registrar()
-        : registrar(EMPTY_ID, "", 0, {})
+    Registrar()
+        : Registrar(EMPTY_ID, "", 0, {})
     {
     }
 };
@@ -151,92 +151,92 @@ struct registrar
 /**
  * Domain entity
  */
-struct domain
+struct Domain
 {
-    domain_id   id;   /**< unique id in registry */
-    std::string name; /**< domain name */
+    DomainId    mId;   /**< unique mId in registry */
+    std::string mName; /**< domain name */
 
-    domain(domain_id const &did, std::string const &dname)
-        : id(did)
-        , name(dname)
+    Domain(DomainId const &aId, std::string const &aName)
+        : mId(aId)
+        , mName(aName)
     {
     }
-    domain()
-        : domain(EMPTY_ID, "")
+    Domain()
+        : Domain(EMPTY_ID, "")
     {
     }
 };
 
-typedef std::vector<domain> DomainArray;
+typedef std::vector<Domain> DomainArray;
 
 /**
  * Network entity
  */
-struct network
+struct Network
 {
-    network_id   id;      /**< unique id in registry */
-    domain_id    dom_id;  /**< reference to the domain the network belongs to */
-    std::string  name;    /**< network name */
-    xpan_id      xpan;    /**< Extended PAN_ID */
-    unsigned int channel; /**< network channel */
-    std::string  pan;     /**< PAN_ID */
-    std::string  mlp;     /**< Mesh-local prefix */
-    int          ccm;     /**< Commercial commissioning mode;<0 not set,
-                           * 0 false, >0 true */
+    NetworkId    mId;       /**< unique mId in registry */
+    DomainId     mDomainId; /**< reference to the domain the network belongs to */
+    std::string  mName;     /**< network name */
+    XpanId       mXpan;     /**< Extended PAN_ID */
+    unsigned int mChannel;  /**< network channel */
+    std::string  mPan;      /**< PAN_ID */
+    std::string  mMlp;      /**< Mesh-local prefix */
+    int          mCcm;      /**< Commercial commissioning mode;<0 not set,
+                             * 0 false, >0 true */
 
-    network(network_id const & nid,
-            domain_id const &  did,
-            std::string const &nname,
-            xpan_id const &    nxpan,
-            unsigned int const nchannel,
-            std::string const &npan,
-            std::string const &nmlp,
-            int const          nccm)
-        : id(nid)
-        , dom_id(did)
-        , name(nname)
-        , xpan(nxpan)
-        , channel(nchannel)
-        , pan(npan)
-        , mlp(nmlp)
-        , ccm(nccm)
+    Network(NetworkId const &  aId,
+            DomainId const &   aDomainId,
+            std::string const &aName,
+            XpanId const &     aXpan,
+            unsigned int const aChannel,
+            std::string const &aPan,
+            std::string const &aMlp,
+            int const          aCcm)
+        : mId(aId)
+        , mDomainId(aDomainId)
+        , mName(aName)
+        , mXpan(aXpan)
+        , mChannel(aChannel)
+        , mPan(aPan)
+        , mMlp(aMlp)
+        , mCcm(aCcm)
     {
     }
-    network()
-        : network(EMPTY_ID, EMPTY_ID, "", xpan_id{}, 0, "", "", -1)
+    Network()
+        : Network(EMPTY_ID, EMPTY_ID, "", XpanId{}, 0, "", "", -1)
     {
     }
 };
 
-typedef std::vector<network> NetworkArray;
+typedef std::vector<Network> NetworkArray;
 
 /**
  * Border router entity
  */
-struct border_router
+struct BorderRouter
 {
-    border_router_id id;     /**< unique id in registry */
-    network_id       nwk_id; /**< network data reference */
-    BorderAgent      agent;  /**< border agent descriptive data */
+    BorderRouterId mId;        /**< unique mId in registry */
+    NetworkId      mNetworkId; /**< network data reference */
+    BorderAgent    mAgent;     /**< border agent descriptive data */
 
-    border_router()
-        : border_router(EMPTY_ID, EMPTY_ID, {})
+    BorderRouter()
+        : BorderRouter(EMPTY_ID, EMPTY_ID, {})
     {
     }
 
-    border_router(border_router_id const &bid, network_id const &nid, BorderAgent const &ba)
-        : id{bid}
-        , nwk_id{nid}
-        , agent{ba}
+    BorderRouter(BorderRouterId const &aId, NetworkId const &aNetworkId, BorderAgent const &aAgent)
+        : mId{aId}
+        , mNetworkId{aNetworkId}
+        , mAgent{aAgent}
     {
     }
     /**
      * Minimum polymorphic requirements.
      */
-    virtual ~border_router() {}
+    virtual ~BorderRouter() {}
 };
 
-typedef std::vector<border_router> BorderRouterArray;
+typedef std::vector<BorderRouter> BorderRouterArray;
 
 /**
  * API to support conversion to/from JSON
@@ -269,29 +269,29 @@ const std::string JSON_DOM_REF          = "dom_ref";
 const std::string JSON_SERVICE_NAME     = "service_name";
 const std::string JSON_UPDATE_TIMESTAMP = "update_timestamp";
 
-void to_json(nlohmann::json &j, const registrar_id &opt);
-void from_json(const nlohmann::json &j, registrar_id &opt);
+void to_json(nlohmann::json &aJson, const RegistrarId &aValue);
+void from_json(const nlohmann::json &aJson, RegistrarId &aValue);
 
-void to_json(nlohmann::json &j, const domain_id &opt);
-void from_json(const nlohmann::json &j, domain_id &opt);
+void to_json(nlohmann::json &aJson, const DomainId &aValue);
+void from_json(const nlohmann::json &aJson, DomainId &aValue);
 
-void to_json(nlohmann::json &j, const network_id &opt);
-void from_json(const nlohmann::json &j, network_id &opt);
+void to_json(nlohmann::json &aJson, const NetworkId &aValue);
+void from_json(const nlohmann::json &aJson, NetworkId &aValue);
 
-void to_json(nlohmann::json &j, const border_router_id &opt);
-void from_json(const nlohmann::json &j, border_router_id &opt);
+void to_json(nlohmann::json &aJson, const BorderRouterId &aValue);
+void from_json(const nlohmann::json &aJson, BorderRouterId &aValue);
 
-void to_json(nlohmann::json &j, const registrar &p);
-void from_json(const nlohmann::json &j, registrar &p);
+void to_json(nlohmann::json &aJson, const Registrar &aValue);
+void from_json(const nlohmann::json &aJson, Registrar &aValue);
 
-void to_json(nlohmann::json &j, const domain &p);
-void from_json(const nlohmann::json &j, domain &p);
+void to_json(nlohmann::json &aJson, const Domain &aValue);
+void from_json(const nlohmann::json &aJson, Domain &aValue);
 
-void to_json(nlohmann::json &j, const network &p);
-void from_json(const nlohmann::json &j, network &p);
+void to_json(nlohmann::json &aJson, const Network &aValue);
+void from_json(const nlohmann::json &aJson, Network &aValue);
 
-void to_json(nlohmann::json &j, const border_router &p);
-void from_json(const nlohmann::json &j, border_router &p);
+void to_json(nlohmann::json &aJson, const BorderRouter &aValue);
+void from_json(const nlohmann::json &aJson, BorderRouter &aValue);
 
 } // namespace persistent_storage
 

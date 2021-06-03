@@ -52,7 +52,7 @@ void Job::Wait()
     mJobThread.join();
     if (!mValue.HasNoError())
     {
-        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", xpan_id(mXpanId).str(), GetCommandString(),
+        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", XpanId(mXpanId).str(), GetCommandString(),
                   mValue.ToString());
     }
 }

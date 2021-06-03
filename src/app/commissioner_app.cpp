@@ -514,7 +514,7 @@ Error CommissionerApp::GetExtendedPanId(ByteArray &aExtendedPanId) const
 
     VerifyOrExit(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit,
                  error = ERROR_NOT_FOUND("cannot find valid Extended PAN ID in Active Operational Dataset"));
-    aExtendedPanId = utils::Encode(mActiveDataset.mExtendedPanId.value);
+    aExtendedPanId = utils::Encode(mActiveDataset.mExtendedPanId.mValue);
 
 exit:
     return error;

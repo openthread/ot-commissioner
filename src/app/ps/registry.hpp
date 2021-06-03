@@ -54,8 +54,6 @@ typedef std::vector<std::string> StringArray;
 class Registry
 {
 public:
-    using xpan_id = ot::commissioner::xpan_id;
-
     /**
      * Registry operation status
      */
@@ -74,20 +72,20 @@ public:
     };
 
     /**
-     * Registry constructor with provided persistent_storage
-     * @see persistent_storage
+     * Registry constructor with provided PersistentStorage
+     * @see PersistentStorage
      *
-     * @param[in] strg persistent storage to be used
+     * @param[in] aStorage persistent storage to be used
      */
-    Registry(PersistentStorage *strg);
+    Registry(PersistentStorage *aStorage);
 
     /**
      * Registry constructor with default PersistentStorage impl
-     * @see PersistentStorage_json
+     * @see PersistentStorageJson
      *
-     * @param[in] name PersistentStorage_json file name
+     * @param[in] aName PersistentStorageJson file name
      */
-    Registry(std::string const &name);
+    Registry(std::string const &aName);
 
     /**
      * Registry destructor
@@ -107,21 +105,21 @@ public:
     /**
      *  Adds necessary values to the registry.
      *
-     * Will create @ref border_router entity for the argument and put it into
+     * Will create @ref BorderRouter entity for the argument and put it into
      * registry. Will @ref lookup() @ref network
      * and @ref domain entities and even create and add the if necessary.
      *
-     * @param[in] val value to be added
+     * @param[in] aValue value to be added
      * @return @ref Status
      * @see registry_entries.hpp
      */
-    Status Add(BorderAgent const &val);
+    Status Add(BorderAgent const &aValue);
 
     /**
      * Get list of all border routers
-     * @param[out] ret vector of all border routers
+     * @param[out] aRetValue vector of all border routers
      */
-    Status GetAllBorderRouters(BorderRouterArray &ret);
+    Status GetAllBorderRouters(BorderRouterArray &aRetValue);
 
     /**
      * Get border router record by raw id.
@@ -129,80 +127,80 @@ public:
      * It is expected that user becomes aware of the border router raw id from
      * 'br list' results.
      */
-    Status GetBorderRouter(const border_router_id rawid, border_router &br);
+    Status GetBorderRouter(const BorderRouterId aRawId, BorderRouter &aBr);
 
     /**
      * Get border routers belonging to the specified network.
      *
-     * @param[in] xpan network's XPAN ID
-     * @param[out] ret resultant array of @ref border_router records
+     * @param[in] aXpan network's XPAN ID
+     * @param[out] aRetValue resultant array of @ref BorderRouter records
      */
-    Status GetBorderRoutersInNetwork(const xpan_id xpan, BorderRouterArray &ret);
+    Status GetBorderRoutersInNetwork(const XpanId aXpan, BorderRouterArray &aRetValue);
 
     /**
      * Get networks of the domain
      *
-     * @param[in] dom_name domain name
-     * @param[out] ret vector of networks belonging to the domain
+     * @param[in] aDomainName domain name
+     * @param[out] aRetValue vector of networks belonging to the domain
      * @note Network records will be appended to the end of the output network vector
      */
-    Status GetNetworksInDomain(const std::string &dom_name, NetworkArray &ret);
+    Status GetNetworksInDomain(const std::string &aDomainName, NetworkArray &aRetValue);
 
     /**
      * Get network XPAN IDs of the domain
      *
-     * @param[in] dom_name domain name
-     * @param[out] ret vector of network XPAN IDs belonging to the domain
+     * @param[in] aDomainName domain name
+     * @param[out] aRetValue vector of network XPAN IDs belonging to the domain
      * @note Network XPAN IDs will be appended to the end of the output vector
      */
-    Status GetNetworkXpansInDomain(const std::string &dom_name, XpanIdArray &ret);
+    Status GetNetworkXpansInDomain(const std::string &aDomainName, XpanIdArray &aRetValue);
 
     /**
      * Get list of all domains
-     * @param[out] ret vector of all domains
+     * @param[out] aRetValue vector of all domains
      */
-    Status GetAllDomains(DomainArray &ret);
+    Status GetAllDomains(DomainArray &aRetValue);
 
     /**
      * Get list of domains by list of aliases.
-     * @param[out] ret vector of all domains
-     * @param[out] unresolved list of aliases failed to resolve
+     * @param[out] aRetValue vector of all domains
+     * @param[out] aUnresolved list of aliases failed to resolve
      */
-    Status GetDomainsByAliases(const StringArray &aliases, DomainArray &ret, StringArray &unresolved);
+    Status GetDomainsByAliases(const StringArray &aAliases, DomainArray &aRetValue, StringArray &aUnresolved);
 
     /**
      * Get list of all networks
-     * @param[out] ret vector of all networks
+     * @param[out] aRetValue vector of all networks
      */
-    Status GetAllNetworks(NetworkArray &ret);
+    Status GetAllNetworks(NetworkArray &aRetValue);
 
     /**
      * Get list of networks by alias
      *
-     * @param[in] alieses list of network aliases
-     * @param[out] ret list of networks
-     * @param[out] unresolved list of aliases failed to resolve
+     * @param[in] aAliases list of network aliases
+     * @param[out] aRetValue list of networks
+     * @param[out] aUnresolved list of aliases failed to resolve
      */
-    Status GetNetworksByAliases(const StringArray &aliases, NetworkArray &ret, StringArray &unresolved);
+    Status GetNetworksByAliases(const StringArray &aAliases, NetworkArray &aRetValue, StringArray &aUnresolved);
 
     /**
      * Get list of network XPAN IDs by alias
      *
-     * @param[in] alieses list of network aliases
-     * @param[out] ret list of network XPAN IDs
-     * @param[out] unresolved list of aliases failed to resolve
+     * @param[in] aAliases list of network aliases
+     * @param[out] aRetValue list of network XPAN IDs
+     * @param[out] aUnresolved list of aliases failed to resolve
      */
-    Status GetNetworkXpansByAliases(const StringArray &aliases, XpanIdArray &ret, StringArray &unresolved);
+    Status GetNetworkXpansByAliases(const StringArray &aAliases, XpanIdArray &aRetValue, StringArray &aUnresolved);
 
     /**
      * Set current network.
      */
-    Status SetCurrentNetwork(const xpan_id xpan);
+    Status SetCurrentNetwork(const XpanId aXpan);
 
     /**
      * Set current network by border router specified.
      */
-    Status SetCurrentNetwork(const border_router &br);
+    Status SetCurrentNetwork(const BorderRouter &aBr);
 
     /**
      * Forget current network
@@ -211,79 +209,79 @@ public:
     /**
      * Get current network
      *
-     * @param [out] ret current network data
+     * @param [out] aRetValue current network data
      */
-    Status GetCurrentNetwork(network &ret);
+    Status GetCurrentNetwork(Network &aRetValue);
 
     /**
      * Get current network XPAN ID
      *
-     * @param [out] ret current network XPAN ID
+     * @param [out] aRetValue current network XPAN ID
      */
-    Status GetCurrentNetworkXpan(uint64_t &ret);
+    Status GetCurrentNetworkXpan(XpanId &aRetValue);
 
     /**
      * Get network with specified extended PAN id
      *
-     * @param[in] xpan extended PAN id to lookup
-     * @param[out] ret resulting network record
+     * @param[in] aXpan extended PAN id to lookup
+     * @param[out] aRetValue resulting network record
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetNetworkByXpan(const xpan_id xpan, network &ret);
+    Status GetNetworkByXpan(const XpanId aXpan, Network &aRetValue);
 
     /**
      * Get network with specified name
      *
-     * @param[in] name network name
-     * @param[out] ret resulting network record
+     * @param[in] aName network name
+     * @param[out] aRetValue resulting network record
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
      * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetNetworkByName(const std::string &name, network &ret);
+    Status GetNetworkByName(const std::string &aName, Network &aRetValue);
 
     /**
      * Get network with specified PAN id
      *
-     * @param[in] pan PAN id to lookup
-     * @param[out] ret resulting network record
+     * @param[in] aPan PAN id to lookup
+     * @param[out] aRetValue resulting network record
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetNetworkByPan(const std::string &pan, network &ret);
+    Status GetNetworkByPan(const std::string &aPan, Network &aRetValue);
 
     /**
      * Get domain name for the network identified by XPAN ID
      *
-     * @param[in] xpan XPAN ID to lookup by
-     * @param[out] name resulting domain name
+     * @param[in] aXpan XPAN ID to lookup by
+     * @param[out] aName resulting domain name
      * @return
-     * @li @ref RET_SUCCESS if name is found
+     * @li @ref REG_SUCCESS if name is found
      * @li @ref REG_NOT_FOUND if no network was found
      * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetDomainNameByXpan(const xpan_id xpan, std::string &name);
+    Status GetDomainNameByXpan(const XpanId aXpan, std::string &aName);
 
     /**
      * Remove border router record.
      *
      * Prevents removing the last router in the selected network.
      *
-     * @param [in] router_id ID of the border router record to delete
+     * @param [in] aRouterId ID of the border router record to delete
      * @return
      * @li @ref REG_SUCCESS if successfully deleted record
      */
-    Status DeleteBorderRouterById(const border_router_id router_id);
+    Status DeleteBorderRouterById(const BorderRouterId aRouterId);
 
     /**
      * Remove border router records corresponding to the network aliases list along with the corresponding networks.
@@ -294,44 +292,44 @@ public:
      * @return
      * @li @ref REG_SUCCESS if all networks were deleted with border routers belonging to them.
      */
-    Status DeleteBorderRoutersInNetworks(const StringArray &aliases, StringArray &unresolved);
+    Status DeleteBorderRoutersInNetworks(const StringArray &aAliases, StringArray &aUnresolved);
 
-    Status DeleteBorderRoutersInDomain(const std::string &domain_name);
+    Status DeleteBorderRoutersInDomain(const std::string &aDomainName);
 
     /**
      * Update existing network record.
      *
-     * @param[in] network record with identifier set.
+     * @param[in] aNetwork network record with identifier set.
      *
      * @return
      * @li @ref REG_SUCCESS if update succeeds
      */
-    Status Update(const network &nwk);
+    Status Update(const Network &aNetwork);
 
 protected:
     /**
      * Lookup the network
      *
-     * @param[in] pred network instance with reference values set
-     * @param[out] ret resulting network record
+     * @param[in] aPred network instance with reference values set
+     * @param[out] aRetValue resulting network record
      * @return
      * @li @ref REG_SUCCESS if precisely one network found (resulting network updated)
      * @li @ref REG_NOT_FOUND if no network was found
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status LookupOne(const network &pred, network &ret);
+    Status LookupOne(const Network &aPred, Network &aRetValue);
 
     /**
      * Set current network.
      */
-    Status SetCurrentNetwork(const network_id &nwk_id);
+    Status SetCurrentNetwork(const NetworkId &aNetworkId);
 
-    Status DropDomainIfEmpty(const domain_id &dom_id);
+    Status DropDomainIfEmpty(const DomainId &aDomainId);
 
 private:
-    bool               manage_storage = false;   /**< flag that storage was create outside*/
-    PersistentStorage *storage        = nullptr; /**< persistent storage */
+    bool               mManageStorage = false;   /**< flag that storage was create outside*/
+    PersistentStorage *mStorage       = nullptr; /**< persistent storage */
 };
 
 Registry *CreateRegistry(const std::string &aFile);

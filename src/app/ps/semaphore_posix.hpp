@@ -48,9 +48,9 @@ namespace sem {
 /**
  * OS dependent semaphore impl
  */
-struct semaphore
+struct Semaphore
 {
-    sem_t *platform; /**< posix semaphore type */
+    sem_t *mPlatform; /**< posix semaphore type */
 };
 
 } // namespace sem

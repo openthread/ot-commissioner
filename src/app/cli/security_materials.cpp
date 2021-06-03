@@ -46,10 +46,10 @@ namespace sm {
 
 using SMPair = std::pair<std::string, ByteArray *>;
 
-static Error GetNetworkSM_impl(const std::string  aNwkFolder, // a folder to start from
-                               const std::string  aAlias,     // network id or network name
-                               bool               aCCM,
-                               SecurityMaterials &aSM);
+static Error GetNetworkSMImpl(const std::string  aNwkFolder, // a folder to start from
+                              const std::string  aAlias,     // network id or network name
+                              bool               aCCM,
+                              SecurityMaterials &aSM);
 
 static class SMRoot
 {
@@ -128,18 +128,15 @@ exit:
 
 Error GetDefaultDomainSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
 {
-    return GetNetworkSM_impl("/dom/DefaultDomain/", aAlias, aCCM, aSM);
+    return GetNetworkSMImpl("/dom/DefaultDomain/", aAlias, aCCM, aSM);
 }
 
 Error GetNetworkSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
 {
-    return GetNetworkSM_impl("/nwk/", aAlias, aCCM, aSM);
+    return GetNetworkSMImpl("/nwk/", aAlias, aCCM, aSM);
 }
 
-static Error GetNetworkSM_impl(const std::string  aNwkFolder,
-                               const std::string  aAlias,
-                               bool               aCCM,
-                               SecurityMaterials &aSM)
+static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
 {
     Error       error;
     std::string nwkPath;
