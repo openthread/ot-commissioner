@@ -26,7 +26,7 @@ Build the `mini_commissioner` app:
 
 ```c++
 cd ~/ot-commissioner/example
-clang++ -std=c++11 -Wall -g mini_commissioner.cpp -o mini_commissioner -lcommissioner -lcommissioner-common
+clang++ -std=c++11 -Wall -g mini_commissioner.cpp -o mini-commissioner -lcommissioner -lcommissioner-common
 ```
 
-The `mini_commissioner` binary will be generated in current directory.
+The `mini-commissioner` binary will be generated in current directory.

@@ -14,18 +14,18 @@ See the [codelab](https://openthread.io/codelabs/openthread-simulation-posix).
 
 ### Start the Mini Commissioner
 
-After a successful build, we should get a `mini_commissioner` binary which can be started with four arguments:
+After a successful build, we should get a `mini-commissioner` binary which can be started with four arguments:
 
 ```shell
-./mini_commissioner ::1 49191 00112233445566778899aabbccddeeff ABCDEF
+./mini-commissioner ::1 49191 00112233445566778899aabbccddeeff ABCDEF
 ```
 
-You can get the usage by starting `mini_commissioner` with no arguments:
+You can get the usage by starting `mini-commissioner` with no arguments:
 
 ```shell
 ./minim_commissioner
 usage:
-    mini_commissioner <br-addr> <br-port> <pskc-hex> <pskd>
+    mini-commissioner <br-addr> <br-port> <pskc-hex> <pskd>
 ```
 
 > Note: the WiFi/ethernet interface address of the BR should be used but not the Thread interface address.
@@ -33,7 +33,7 @@ usage:
 If everything go smooth, we will get outputs like below:
 
 ```shell
-./mini_commissioner ::1 49191 ca117352886a861cce8a91021e65dd1c ABCDEF
+./mini-commissioner ::1 49191 ca117352886a861cce8a91021e65dd1c ABCDEF
 ===================================================
 [Border Router address] : ::1
 [Border Router port]    : 49191
