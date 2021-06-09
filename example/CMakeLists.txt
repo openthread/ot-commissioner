@@ -39,7 +39,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/..
 
 add_executable(mini-commissioner mini_commissioner.cpp)
 
-target_link_libraries(mini-commissioner PRIVATE commissioner)
+target_link_libraries(mini-commissioner
+PRIVATE
+    commissioner
+    commissioner-common
+)
 
 install(TARGETS mini-commissioner
         RUNTIME DESTINATION bin
