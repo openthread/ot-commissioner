@@ -2550,3 +2550,375 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteDomain)
     EXPECT_EQ(ctx.mRegistry->GetAllBorderRouters(bra), RegistryStatus::REG_SUCCESS);
     EXPECT_EQ(bra.size(), 1);
 }
+
+TEST_F(InterpreterTestSuite, MNI_ImportAllNetworksFail)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .Times(0);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("opdataset set active --nwk all --import absent.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, MNI_ImportOtherNetworksFail)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.3", 20003, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+
+    BorderRouter br;
+    br.mNetworkId = 0;
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
+
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _)).Times(0);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("opdataset set active --nwk other --import absent.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, MNI_ImportDomainFail)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _)).Times(0);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("opdataset set active --dom domain1 --import absent.json");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_FALSE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, MNI_MultiEntryImportExplicitNetworkPass)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    const std::string multiEntryPendingDataset = "\n\
+{\n\
+  \"1122334455667788\":\n\
+  {\n\
+    \"DelayTimer\": 60000, // in milliseconds\n\
+    \"PendingTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ActiveTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ExtendedPanId\": \"1122334455667788\",\n\
+    \"NetworkName\": \"net1\",\n\
+    \"SecurityPolicy\": {\n\
+        \"Flags\": \"ff\",\n\
+        \"RotationTime\": 673\n\
+    }\n\
+  },\n\
+  \"99AABBCCDDEEFF00\":\n\
+  {\n\
+    \"DelayTimer\": 60000, // in milliseconds\n\
+    \"PendingTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ActiveTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ExtendedPanId\": \"99AABBCCDDEEFF00\",\n\
+    \"NetworkName\": \"net9\",\n\
+    \"SecurityPolicy\": {\n\
+        \"Flags\": \"ff\",\n\
+        \"RotationTime\": 673\n\
+    }\n\
+  }\n\
+}";
+    const std::string mepdsFileName            = "./mepds.json";
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 0x1122334455667788ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain1", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 0x99AABBCCDDEEFF00ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain2", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+
+    CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(
+            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
+    EXPECT_CALL(*commissionerAppMock, IsActive()).WillOnce(Return(false)).WillOnce(Return(true));
+    EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr = ctx.mInterpreter.ParseExpression("start --nwk net1");
+    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+
+    expr  = ctx.mInterpreter.ParseExpression(std::string("opdataset set active --nwk net1 --import ") + mepdsFileName);
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    unlink(mepdsFileName.c_str());
+}
+
+TEST_F(InterpreterTestSuite, MNI_MultiEntryImportImplicitNetworkPass)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    const std::string multiEntryPendingDataset = "\n\
+{\n\
+  \"1122334455667788\":\n\
+  {\n\
+    \"DelayTimer\": 60000, // in milliseconds\n\
+    \"PendingTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ActiveTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ExtendedPanId\": \"1122334455667788\",\n\
+    \"NetworkName\": \"net1\",\n\
+    \"SecurityPolicy\": {\n\
+        \"Flags\": \"ff\",\n\
+        \"RotationTime\": 673\n\
+    }\n\
+  },\n\
+  \"99AABBCCDDEEFF00\":\n\
+  {\n\
+    \"DelayTimer\": 60000, // in milliseconds\n\
+    \"PendingTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ActiveTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ExtendedPanId\": \"99AABBCCDDEEFF00\",\n\
+    \"NetworkName\": \"net9\",\n\
+    \"SecurityPolicy\": {\n\
+        \"Flags\": \"ff\",\n\
+        \"RotationTime\": 673\n\
+    }\n\
+  }\n\
+}";
+    const std::string mepdsFileName            = "./mepds.json";
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 0x1122334455667788ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain1", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 0x99AABBCCDDEEFF00ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain2", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    BorderRouter br;
+    br.mNetworkId = 0;
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
+
+    CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(
+            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
+    EXPECT_CALL(*commissionerAppMock, IsActive()).WillOnce(Return(false)).WillOnce(Return(true));
+    EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr = ctx.mInterpreter.ParseExpression("start");
+    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+
+    expr  = ctx.mInterpreter.ParseExpression(std::string("opdataset set active --import ") + mepdsFileName);
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    unlink(mepdsFileName.c_str());
+}
+
+TEST_F(InterpreterTestSuite, MNI_SingleEntryImportExplicitNetworkPass)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    const std::string multiEntryPendingDataset = "\n\
+{\n\
+    \"DelayTimer\": 60000, // in milliseconds\n\
+    \"PendingTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ActiveTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ExtendedPanId\": \"1122334455667788\",\n\
+    \"NetworkName\": \"net1\",\n\
+    \"SecurityPolicy\": {\n\
+        \"Flags\": \"ff\",\n\
+        \"RotationTime\": 673\n\
+    }\n\
+}";
+    const std::string mepdsFileName            = "./mepds.json";
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 0x1122334455667788ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain1", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 0x99AABBCCDDEEFF00ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain2", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+
+    CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(
+            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
+    EXPECT_CALL(*commissionerAppMock, IsActive()).WillOnce(Return(false)).WillOnce(Return(true));
+    EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr = ctx.mInterpreter.ParseExpression("start --nwk net1");
+    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+
+    expr  = ctx.mInterpreter.ParseExpression(std::string("opdataset set active --nwk net1 --import ") + mepdsFileName);
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    unlink(mepdsFileName.c_str());
+}
+
+TEST_F(InterpreterTestSuite, MNI_SingleEntryImportImplicitNetworkPass)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    const std::string multiEntryPendingDataset = "\n\
+{\n\
+    \"DelayTimer\": 60000, // in milliseconds\n\
+    \"PendingTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ActiveTimestamp\": {\n\
+        \"Seconds\": 58, // 48 bits\n\
+        \"Ticks\": 48, // 15 bits\n\
+        \"U\": 0 // 1 bit\n\
+    },\n\
+    \"ExtendedPanId\": \"1122334455667788\",\n\
+    \"NetworkName\": \"net1\",\n\
+    \"SecurityPolicy\": {\n\
+        \"Flags\": \"ff\",\n\
+        \"RotationTime\": 673\n\
+    }\n\
+}";
+    const std::string mepdsFileName            = "./mepds.json";
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 0x1122334455667788ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain1", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 0x99AABBCCDDEEFF00ul, "", "", Timestamp{0, 0, 0}, 0, "",
+                                             ByteArray{}, "domain2", 0, 0, "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::REG_SUCCESS);
+    BorderRouter br;
+    br.mNetworkId = 0;
+    ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::REG_SUCCESS);
+
+    CommissionerAppMockPtr commissionerAppMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(
+            DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
+    EXPECT_CALL(*commissionerAppMock, IsActive()).WillOnce(Return(false)).WillOnce(Return(true));
+    EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr = ctx.mInterpreter.ParseExpression("start");
+    EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
+    ctx.mInterpreter.mContext.Cleanup();
+    ctx.mInterpreter.mJobManager->CleanupJobs();
+
+    expr  = ctx.mInterpreter.ParseExpression(std::string("opdataset set active --import ") + mepdsFileName);
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    unlink(mepdsFileName.c_str());
+}
