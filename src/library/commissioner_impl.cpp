@@ -950,6 +950,11 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         uint8_t     status;
 
         SuccessOrExit(error = aError);
+
+#if OT_COMM_CONFIG_REFERENCE_DEVICE_ENABLE
+        LOG_INFO(LOG_REGION_THCI, "received MLR.rsp: {}", utils::Hex(aResponse->GetPayload()));
+#endif
+
         SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         statusTlv = GetTlv(tlv::Type::kThreadStatus, *aResponse, tlv::Scope::kThread);
