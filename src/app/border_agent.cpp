@@ -88,6 +88,11 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
         {
             aBorderAgentHandler(nullptr, curBorderAgentOrErrorMsg.mError);
         }
+        else if ((curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
+                 (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags & BorderAgent::kPortBit) == 0)
+        {
+            aBorderAgentHandler(nullptr, ERROR_BAD_FORMAT("incomplete MeshCoP service"));
+        }
         else if (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags != 0)
         {
             aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, ERROR_NONE);
@@ -172,7 +177,6 @@ static int HandleRecord(const struct sockaddr *from,
     {
         struct sockaddr_storage addrStorage;
         struct sockaddr_in      addr;
-        std::string             addrStr;
 
         mdns_record_parse_a(data, size, offset, length, &addr);
 
@@ -182,32 +186,7 @@ static int HandleRecord(const struct sockaddr *from,
             ExitNow(error = ERROR_BAD_FORMAT("invalid IPv4 address in A record"));
         }
 
-        addrStr = fromAddr.ToString();
-
-        // We prefer AAAA (IPv6) address than A (IPv4) address.
-        if (!(borderAgent.mPresentFlags & BorderAgent::kAddrBit))
-        {
-            borderAgent.mAddr = addrStr;
-            borderAgent.mPresentFlags |= BorderAgent::kAddrBit;
-        }
-    }
-    else if (type == MDNS_RECORDTYPE_AAAA)
-    {
-        struct sockaddr_storage addrStorage;
-        struct sockaddr_in6     addr;
-        std::string             addrStr;
-
-        mdns_record_parse_aaaa(data, size, offset, length, &addr);
-
-        *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
-        if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
-        {
-            ExitNow(error = ERROR_BAD_FORMAT("invalid IPv6 address in AAAA record"));
-        }
-
-        addrStr = fromAddr.ToString();
-
-        borderAgent.mAddr = addrStr;
+        borderAgent.mAddr = fromAddr.ToString();
         borderAgent.mPresentFlags |= BorderAgent::kAddrBit;
     }
     else if (type == MDNS_RECORDTYPE_TXT)

@@ -45,35 +45,6 @@ namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("mesh-local-address-basic", "[mesh-local-addr]")
-{
-    std::string meshLocalAddr;
-    REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/64", 0xBBCC) == ErrorCode::kNone);
-    REQUIRE(meshLocalAddr == "fd00::ff:fe00:bbcc");
-}
-
-TEST_CASE("mesh-local-address-invalid-args", "[mesh-local-addr]")
-{
-    std::string meshLocalAddr;
-
-    SECTION("invalid prefix length")
-    {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/63", 0xBBCC).GetCode() ==
-                ErrorCode::kInvalidArgs);
-    }
-
-    SECTION("prefix length is not 8 bytes")
-    {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::/48", 0xBBCC).GetCode() ==
-                ErrorCode::kInvalidArgs);
-    }
-
-    SECTION("invalid prefix format")
-    {
-        REQUIRE(Commissioner::GetMeshLocalAddr(meshLocalAddr, "fd00::48", 0xBBCC) == ErrorCode::kInvalidArgs);
-    }
-}
-
 // This teat case is from section 8.4.1.2.2 of the Thread 1.2.0 specification.
 TEST_CASE("pskc-test-vector-from-thread-1.2.0-spec", "[pskc]")
 {
@@ -157,15 +128,14 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     PendingOperationalDataset pendingDataset;
     REQUIRE(commImpl.GetPendingDataset(pendingDataset, 0xFFFF) == ErrorCode::kUnimplemented);
     REQUIRE(commImpl.SetPendingDataset({}) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetSecurePendingDataset(kDstAddr, 30, {}) == ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.SetSecurePendingDataset(30, {}) == ErrorCode::kUnimplemented);
 
     REQUIRE(commImpl.CommandReenroll(kDstAddr) == ErrorCode::kUnimplemented);
     REQUIRE(commImpl.CommandDomainReset(kDstAddr) == ErrorCode::kUnimplemented);
     REQUIRE(commImpl.CommandMigrate(kDstAddr, "designated-net") == ErrorCode::kUnimplemented);
 
     uint8_t mlrStatus;
-    REQUIRE(commImpl.RegisterMulticastListener(mlrStatus, kDstAddr, {"ff02::9"}, 300).GetCode() ==
-            ErrorCode::kUnimplemented);
+    REQUIRE(commImpl.RegisterMulticastListener(mlrStatus, {"ff02::9"}, 300).GetCode() == ErrorCode::kUnimplemented);
 
     REQUIRE(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr) == ErrorCode::kUnimplemented);
     REQUIRE(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr) == ErrorCode::kUnimplemented);

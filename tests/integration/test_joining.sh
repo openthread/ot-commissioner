@@ -34,7 +34,27 @@ test_joining() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
+    send_command_to_commissioner "active"
+
+    ## enable all MeshCoP joiners
+    send_command_to_commissioner "joiner enable meshcop ${JOINER_EUI64} ${JOINER_CREDENTIAL}"
+
+    start_joiner "meshcop"
+
+    stop_commissioner
+
+    stop_daemon
+}
+
+test_joining_default_config() {
+    start_daemon
+    form_network "${PSKC}"
+
+    # Start the commissioner with default config.
+    start_commissioner ""
+    send_command_to_commissioner "config set pskc ${PSKC}"
+    petition_commissioner
     send_command_to_commissioner "active"
 
     ## enable all MeshCoP joiners
@@ -52,7 +72,7 @@ test_joining_fail() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "active"
 
     ## meshcop joiners not enabled, it should fail.

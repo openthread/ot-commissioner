@@ -44,6 +44,7 @@
 . "$(dirname "$0")"/test_discover.sh
 . "$(dirname "$0")"/test_energy_scan.sh
 . "$(dirname "$0")"/test_joining.sh
+. "$(dirname "$0")"/test_native_commissioner.sh
 . "$(dirname "$0")"/test_operational_dataset.sh
 . "$(dirname "$0")"/test_pan_id_query.sh
 . "$(dirname "$0")"/test_petition.sh
@@ -74,19 +75,23 @@ run_test_case() {
         echo "state: fail"
 
         echo "------ test output begin ------"
-        cat "${output_file}"
+        cat "${output_file}" || true
         echo "------ test output end ------"
 
         echo "------ ot-daemon log begin ------"
-        cat "${OT_DAEMON_LOG}"
+        cat "${OT_DAEMON_LOG}" || true
         echo "------ ot-daemon log end ------"
 
+        echo "------ syslog log begin ------"
+        grep ot-daemon /var/log/syslog || true
+        echo "------ syslog log end ------"
+
         echo "------ commissioner daemon log begin ------"
-        cat "${COMMISSIONER_DAEMON_LOG}"
+        cat "${COMMISSIONER_DAEMON_LOG}" || true
         echo "------ commissioner daemon log end ------"
 
         echo "------ commissioner library log begin ------"
-        cat "${COMMISSIONER_LOG}"
+        cat "${COMMISSIONER_LOG}" || true
         echo "------ commissioner library log end ------"
     fi
 

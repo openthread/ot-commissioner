@@ -42,14 +42,8 @@ target_include_directories(commissioner-cli
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app
-        ncurses
         pthread
         readline
-)
-
-target_compile_definitions(commissioner-cli
-    PUBLIC
-        OT_COMM_VERSION="${PROJECT_VERSION}"
 )
 
 install(TARGETS commissioner-cli

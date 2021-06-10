@@ -34,7 +34,7 @@ test_energy_scan() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "active"
     send_command_to_commissioner "energy scan 0xffffffff 2 10 30 ff02::2"
     sleep 1

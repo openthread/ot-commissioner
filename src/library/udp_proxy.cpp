@@ -41,6 +41,15 @@ namespace ot {
 
 namespace commissioner {
 
+static constexpr size_t kMeshLocalPrefixLength = 8;
+
+ProxyClient::ProxyClient(CommissionerImpl &aCommissioner, coap::CoapSecure &aBrClient)
+    : mCommissioner(aCommissioner)
+    , mEndpoint(aBrClient)
+    , mCoap(aCommissioner.GetEventBase(), mEndpoint)
+{
+}
+
 /**
  * Encapsulate the request and send it as a UDP_TX.ntf message.
  */
@@ -73,6 +82,30 @@ exit:
         error = Error{error.GetCode(), "sending UDP_TX.ntf message failed, " + error.GetMessage()};
     }
     return error;
+}
+
+void ProxyClient::SendRequest(const coap::Request & aRequest,
+                              coap::ResponseHandler aHandler,
+                              uint16_t              aPeerAloc16,
+                              uint16_t              aPeerPort)
+{
+    if (mMeshLocalPrefix.empty())
+    {
+        FetchMeshLocalPrefix([=](Error aError) {
+            if (aError == ErrorCode::kNone)
+            {
+                SendRequest(aRequest, aHandler, GetAnycastLocator(aPeerAloc16), aPeerPort);
+            }
+            else
+            {
+                aHandler(nullptr, aError);
+            }
+        });
+    }
+    else
+    {
+        SendRequest(aRequest, aHandler, GetAnycastLocator(aPeerAloc16), aPeerPort);
+    }
 }
 
 void ProxyClient::SendRequest(const coap::Request & aRequest,
@@ -127,6 +160,61 @@ exit:
                  error.ToString());
     }
     return;
+}
+
+void ProxyClient::FetchMeshLocalPrefix(Commissioner::ErrorHandler aHandler)
+{
+    auto onResponse = [=](const ActiveOperationalDataset *aActiveDataset, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        ASSERT(aActiveDataset != nullptr);
+
+        VerifyOrExit(aActiveDataset->mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit,
+                     error = ERROR_BAD_FORMAT("Mesh-Local prefix not included in response"));
+        SuccessOrExit(error = SetMeshLocalPrefix(aActiveDataset->mMeshLocalPrefix));
+
+    exit:
+        aHandler(aError);
+    };
+
+    mCommissioner.GetActiveDataset(onResponse, ActiveOperationalDataset::kMeshLocalPrefixBit);
+}
+
+Error ProxyClient::SetMeshLocalPrefix(const ByteArray &aMeshLocalPrefix)
+{
+    constexpr uint8_t meshLocalPrefix[] = {0xfd};
+    Error             error;
+
+    VerifyOrExit(aMeshLocalPrefix.size() == kMeshLocalPrefixLength,
+                 error = ERROR_INVALID_ARGS("Thread Mesh-Local Prefix length must be {}", kMeshLocalPrefixLength));
+    VerifyOrExit(
+        std::equal(aMeshLocalPrefix.begin(), aMeshLocalPrefix.begin() + sizeof(meshLocalPrefix), meshLocalPrefix),
+        error = ERROR_INVALID_ARGS("Thread Mesh-Local Prefix must start with fd00::/8"));
+
+    mMeshLocalPrefix = aMeshLocalPrefix;
+
+exit:
+    return error;
+}
+
+Address ProxyClient::GetAnycastLocator(uint16_t aAloc16) const
+{
+    ASSERT(!mMeshLocalPrefix.empty());
+
+    Address   ret;
+    Error     error;
+    ByteArray alocAddr = mMeshLocalPrefix;
+
+    utils::Encode<uint16_t>(alocAddr, 0x0000);
+    utils::Encode<uint16_t>(alocAddr, 0x00FF);
+    utils::Encode<uint16_t>(alocAddr, 0xFE00);
+    utils::Encode<uint16_t>(alocAddr, aAloc16);
+
+    error = ret.Set(alocAddr);
+    ASSERT(error == ErrorCode::kNone);
+
+    return ret;
 }
 
 } // namespace commissioner

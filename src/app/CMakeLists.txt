@@ -37,6 +37,9 @@ add_library(commissioner-app
     file_util.hpp
     json.cpp
     json.hpp
+    logger_util.hpp
+    sys_logger.cpp
+    sys_logger.hpp
 )
 
 target_link_libraries(commissioner-app

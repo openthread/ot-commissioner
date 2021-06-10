@@ -48,6 +48,9 @@ namespace ot {
 
 namespace commissioner {
 
+static constexpr uint16_t kLeaderAloc16     = 0xFC00;
+static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
+
 static constexpr uint16_t kDefaultMmPort = 61631;
 
 static constexpr uint32_t kMinKeepAliveInterval = 30;
@@ -114,30 +117,9 @@ void Commissioner::AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerI
     ComputeBloomFilter(aSteeringData, aJoinerId);
 }
 
-Error Commissioner::GetMeshLocalAddr(std::string &      aMeshLocalAddr,
-                                     const std::string &aMeshLocalPrefix,
-                                     uint16_t           aLocator16)
+std::string Commissioner::GetVersion(void)
 {
-    static const size_t kThreadMeshLocalPrefixLength = 8;
-    Error               error;
-    ByteArray           rawAddr;
-    Address             addr;
-
-    SuccessOrExit(error = Ipv6PrefixFromString(rawAddr, aMeshLocalPrefix));
-    VerifyOrExit(rawAddr.size() == kThreadMeshLocalPrefixLength,
-                 error = ERROR_INVALID_ARGS("Thread Mesh local prefix length={} != {}", rawAddr.size(),
-                                            kThreadMeshLocalPrefixLength));
-
-    utils::Encode<uint16_t>(rawAddr, 0x0000);
-    utils::Encode<uint16_t>(rawAddr, 0x00FF);
-    utils::Encode<uint16_t>(rawAddr, 0xFE00);
-    utils::Encode<uint16_t>(rawAddr, aLocator16);
-
-    SuccessOrExit(addr.Set(rawAddr));
-    aMeshLocalAddr = addr.ToString();
-
-exit:
-    return error;
+    return OT_COMM_VERSION;
 }
 
 CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase)
@@ -150,7 +132,7 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mJoinerSessionTimer(mEventBase, [this](Timer &aTimer) { HandleJoinerSessionTimer(aTimer); })
     , mResourceUdpRx(uri::kUdpRx, [this](const coap::Request &aRequest) { mProxyClient.HandleUdpRx(aRequest); })
     , mResourceRlyRx(uri::kRelayRx, [this](const coap::Request &aRequest) { HandleRlyRx(aRequest); })
-    , mProxyClient(mEventBase, mBrClient)
+    , mProxyClient(*this, mBrClient)
 #if OT_COMM_CONFIG_CCM_ENABLE
     , mTokenManager(mEventBase)
 #endif
@@ -271,9 +253,7 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
         }
     };
 
-    LOG_DEBUG(LOG_REGION_MESHCOP, "starting petition: border agent = ({}, {})", aAddr, aPort);
     VerifyOrExit(!IsActive(), error = ERROR_INVALID_STATE("cannot petition when the commissioner is running"));
-
     LOG_DEBUG(LOG_REGION_MESHCOP, "starting petition: border agent = ({}, {})", aAddr, aPort);
 
     if (mBrClient.IsConnected())
@@ -318,6 +298,7 @@ void CommissionerImpl::Connect(ErrorHandler aHandler, const std::string &aAddr, 
 void CommissionerImpl::Disconnect()
 {
     mBrClient.Disconnect(ERROR_CANCELLED("the CoAPs client was disconnected"));
+    mProxyClient.ClearMeshLocalPrefix();
     mState = State::kDisabled;
 }
 
@@ -370,10 +351,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         CommissionerDataset dataset;
 
         SuccessOrExit(error = aError);
-        ASSERT(aResponse != nullptr);
-
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_COMM_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = DecodeCommissionerDataset(dataset, *aResponse));
 
@@ -394,7 +372,7 @@ void CommissionerImpl::GetCommissionerDataset(Handler<CommissionerDataset> aHand
         SuccessOrExit(AppendTlv(request, {tlv::Type::kGet, tlvTypes}));
     }
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_GET.req");
 
@@ -434,7 +412,7 @@ void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const Commi
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_COMMISSIONER_SET.req");
 
@@ -453,8 +431,6 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
 
         SuccessOrExit(error = aError);
         SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, *aRawDataset));
-        VerifyOrExit(dataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit,
-                     error = ERROR_BAD_FORMAT("Active Timestamp is not included in MGMT_ACTIVE_GET.rsp"));
 
         aHandler(&dataset, error);
     exit:
@@ -477,8 +453,7 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_ACTIVE_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         aHandler(&aResponse->GetPayload(), error);
 
@@ -489,6 +464,7 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
         }
     };
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtActiveGet));
     if (!datasetList.empty())
     {
@@ -502,6 +478,9 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
     }
 #endif
 
+    // Send MGMT_ACTIVE_GET.req to the Border Agent but not the Leader,
+    // because we don't possess the Mesh-Local Prefix before getting the
+    // Active Operational Dataset.
     mBrClient.SendRequest(request, onResponse);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_GET.req");
@@ -533,12 +512,13 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
                  error = ERROR_INVALID_ARGS("PAN ID cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
     VerifyOrExit((aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0,
-                 error = ERROR_INVALID_ARGS("Mesh-local Prefix cannot be set with Active Operational Dataset, "
+                 error = ERROR_INVALID_ARGS("Mesh-Local Prefix cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
     VerifyOrExit((aDataset.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit) == 0,
                  error = ERROR_INVALID_ARGS("Network Master Key cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtActiveSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodeActiveOperationalDataset(request, aDataset));
@@ -550,7 +530,7 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_ACTIVE_SET.req");
 
@@ -572,16 +552,14 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         PendingOperationalDataset dataset;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_PENDING_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = DecodePendingOperationalDataset(dataset, *aResponse));
-        VerifyOrExit(dataset.mPresentFlags | PendingOperationalDataset::kActiveTimestampBit,
-                     error = ERROR_BAD_FORMAT("Active Timestamp is not included in MGMT_PENDING_GET.rsp"));
-        VerifyOrExit(dataset.mPresentFlags | PendingOperationalDataset::kPendingTimestampBit,
-                     error = ERROR_BAD_FORMAT("Pending Timestamp is not included in MGMT_PENDING_GET.rsp"));
-        VerifyOrExit(dataset.mPresentFlags | PendingOperationalDataset::kDelayTimerBit,
-                     error = ERROR_BAD_FORMAT("Delay Timer is not included in MGMT_PENDING_GET.rsp"));
+        if (dataset.mPresentFlags != 0)
+        {
+            VerifyOrExit(dataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
+                         error = ERROR_BAD_FORMAT("Delay Timer is not included in MGMT_PENDING_GET.rsp"));
+        }
 
         aHandler(&dataset, error);
 
@@ -592,6 +570,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         }
     };
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPendingGet));
     if (!datasetList.empty())
     {
@@ -605,7 +584,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_GET.req");
 
@@ -633,6 +612,7 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
                  error = ERROR_INVALID_ARGS("Delay Timer is mandatory for a Pending Operational Dataset"));
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPendingSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = EncodePendingOperationalDataset(request, aDataset));
@@ -644,7 +624,7 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_SET.req");
 
@@ -680,7 +660,7 @@ void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aD
         SuccessOrExit(error = SignRequest(request));
     }
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_SET.req");
 
@@ -703,8 +683,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
         BbrDataset dataset;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect CoAP::CHANGED for MGMT_BBR_GET.rsp message"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = DecodeBbrDataset(dataset, *aResponse));
 
@@ -727,7 +706,7 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
         SuccessOrExit(error = AppendTlv(request, {tlv::Type::kGet, datasetList}));
     }
 
-    mBrClient.SendRequest(request, onResponse);
+    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_BBR_GET.req");
 
@@ -739,31 +718,49 @@ exit:
 }
 
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)
 {
     Error         error;
-    Address       dstAddr;
+    Address       pbbrAddr;
     ByteArray     secureDissemination;
-    std::string   uri = "coaps://[" + aPbbrAddr + "]" + uri::kMgmtPendingGet;
+    std::string   uri;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         aHandler(HandleStateResponse(aResponse, aError));
     };
 
-    VerifyOrExit(IsCcmMode(),
-                 error = ERROR_INVALID_STATE("sending MGMT_SEC_PENDING_SET.req is only valid in CCM mode"));
+    auto onMeshLocalPrefixResponse = [=](Error aError) {
+        if (aError == ErrorCode::kNone)
+        {
+            SetSecurePendingDataset(aHandler, aMaxRetrievalTimer, aDataset);
+        }
+        else
+        {
+            aHandler(aError);
+        }
+    };
 
     // Delay timer is mandatory.
     VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
                  error = ERROR_INVALID_ARGS("Delay Timer is mandatory for a Secure Pending Operational Dataset"));
 
-    SuccessOrExit(error = dstAddr.Set(aPbbrAddr));
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsCcmMode(),
+                 error = ERROR_INVALID_STATE("sending MGMT_SEC_PENDING_SET.req is only valid in CCM mode"));
+
+    if (mProxyClient.GetMeshLocalPrefix().empty())
+    {
+        mProxyClient.FetchMeshLocalPrefix(onMeshLocalPrefixResponse);
+        ExitNow();
+    }
 
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtSecPendingSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
+
+    pbbrAddr = mProxyClient.GetAnycastLocator(kPrimaryBbrAloc16);
+    uri      = "coaps://[" + pbbrAddr.ToString() + "]" + uri::kMgmtPendingGet;
 
     utils::Encode(secureDissemination, aDataset.mPendingTimestamp.Encode());
     utils::Encode(secureDissemination, aMaxRetrievalTimer);
@@ -777,7 +774,7 @@ void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     
         SuccessOrExit(error = SignRequest(request));
     }
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    mProxyClient.SendRequest(request, onResponse, pbbrAddr, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_SEC_PENDING_SET.req");
 
@@ -894,11 +891,9 @@ void CommissionerImpl::GetBbrDataset(Handler<BbrDataset> aHandler, uint16_t aDat
 }
 
 void CommissionerImpl::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                               const std::string &              aPbbrAddr,
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)
 {
-    (void)aPbbrAddr;
     (void)aMaxRetrievalTimer;
     (void)aDataset;
     aHandler(ERROR_UNIMPLEMENTED(CCM_NOT_IMPLEMENTED));
@@ -940,12 +935,10 @@ Error CommissionerImpl::SetToken(const ByteArray &aSignedToken)
 #endif // OT_COMM_CONFIG_CCM_ENABLE
 
 void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                                 const std::string &             aPbbrAddr,
                                                  const std::vector<std::string> &aMulticastAddrList,
                                                  uint32_t                        aTimeout)
 {
     Error     error;
-    Address   dstAddr;
     Address   multicastAddr;
     ByteArray rawAddresses;
 
@@ -962,10 +955,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         LOG_INFO(LOG_REGION_THCI, "received MLR.rsp: {}", utils::Hex(aResponse->GetPayload()));
 #endif
 
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         statusTlv = GetTlv(tlv::Type::kThreadStatus, *aResponse, tlv::Scope::kThread);
         VerifyOrExit(statusTlv != nullptr, error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
@@ -980,7 +970,6 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         }
     };
 
-    SuccessOrExit(error = dstAddr.Set(aPbbrAddr));
     VerifyOrExit(!aMulticastAddrList.empty(), error = ERROR_INVALID_ARGS("Multicast Address List cannot be empty"));
 
     for (const auto &addr : aMulticastAddrList)
@@ -991,6 +980,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
         rawAddresses.insert(rawAddresses.end(), multicastAddr.GetRaw().begin(), multicastAddr.GetRaw().end());
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMlr));
     SuccessOrExit(
         error = AppendTlv(request, {tlv::Type::kThreadCommissionerSessionId, GetSessionId(), tlv::Scope::kThread}));
@@ -1004,7 +994,7 @@ void CommissionerImpl::RegisterMulticastListener(Handler<uint8_t>               
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    mProxyClient.SendRequest(request, onResponse, kPrimaryBbrAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MLR.req");
 
@@ -1030,10 +1020,7 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
     exit:
         aHandler(error);
@@ -1046,6 +1033,7 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
         request.SetType(coap::Type::kNonConfirmable);
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtAnnounceBegin));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = MakeChannelMask(channelMask, aChannelMask));
@@ -1083,10 +1071,7 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
     exit:
         aHandler(error);
@@ -1099,6 +1084,7 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
         request.SetType(coap::Type::kNonConfirmable);
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPanidQuery));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = MakeChannelMask(channelMask, aChannelMask));
@@ -1137,10 +1123,7 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
         Error error;
 
         SuccessOrExit(error = aError);
-        VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                     error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
     exit:
         aHandler(error);
@@ -1153,6 +1136,7 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
         request.SetType(coap::Type::kNonConfirmable);
     }
 
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtEdScan));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
     SuccessOrExit(error = MakeChannelMask(channelMask, aChannelMask));
@@ -1191,9 +1175,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         std::string existingCommissionerId;
 
         SuccessOrExit(error = aError);
-
-        VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                     error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
         SuccessOrExit(error = GetTlvSet(tlvSet, *aResponse));
 
@@ -1228,9 +1210,7 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         aHandler(existingCommissionerId.empty() ? nullptr : &existingCommissionerId, error);
     };
 
-    VerifyOrExit(mState == State::kDisabled,
-                 error = ERROR_INVALID_STATE("cannot petition when the commissioner is running"));
-
+    VerifyOrExit(mState == State::kDisabled, error = ERROR_INVALID_STATE("the commissioner is petitioning or active"));
     SuccessOrExit(error = request.SetUriPath(uri::kPetitioning));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerId, mConfig.mId}));
 
@@ -1353,16 +1333,26 @@ tlv::TlvPtr GetTlv(tlv::Type aTlvType, const coap::Message &aMessage, tlv::Scope
     return tlv::GetTlv(aTlvType, aMessage.GetPayload(), aScope);
 }
 
+Error CommissionerImpl::CheckCoapResponseCode(const coap::Response &aResponse)
+{
+    Error error = ERROR_NONE;
+
+    VerifyOrExit(aResponse.GetCode() == coap::Code::kChanged,
+                 error = ERROR_COAP_ERROR("request for {} failed: {}", aResponse.GetRequestUri(),
+                                          coap::CodeToString(aResponse.GetCode())));
+
+exit:
+    return error;
+}
+
 Error CommissionerImpl::HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory)
 {
     Error       error;
     tlv::TlvPtr stateTlv = nullptr;
 
     SuccessOrExit(error = aError);
-    VerifyOrExit(aResponse->GetCode() != coap::Code::kUnauthorized,
-                 error = ERROR_SECURITY("response code is CoAP::UNAUTHORIZED"));
-    VerifyOrExit(aResponse->GetCode() == coap::Code::kChanged,
-                 error = ERROR_BAD_FORMAT("expect response code as CoAP::CHANGED"));
+    SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
     stateTlv = GetTlv(tlv::Type::kState, *aResponse);
     VerifyOrExit((stateTlv != nullptr || !aStateTlvIsMandatory),
                  error = ERROR_BAD_FORMAT("no valid State TLV found in response"));
@@ -1977,6 +1967,11 @@ void CommissionerImpl::HandleDatasetChanged(const coap::Request &aRequest)
 
     mProxyClient.SendEmptyChanged(aRequest);
 
+    // Clear the cached Mesh-Local prefix so that the UDP Proxy client
+    // will request for the new Mesh-Local prefix before sending next
+    // UDP_TX.ntf message.
+    mProxyClient.ClearMeshLocalPrefix();
+
     mCommissionerHandler.OnDatasetChanged();
 }
 
@@ -2108,13 +2103,6 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
     LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}",
               utils::Hex(joinerId), joinerRouterLocator, dtlsRecords.size());
 
-    joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
-    if (joinerPSKd.empty())
-    {
-        LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
-        ExitNow(error = ERROR_REJECTED("joiner(ID={}) is disabled", utils::Hex(joinerId)));
-    }
-
     {
         auto it = mJoinerSessions.find(joinerId);
         if (it != mJoinerSessions.end() && it->second.Disabled())
@@ -2126,6 +2114,13 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
         if (it == mJoinerSessions.end())
         {
             Address localAddr;
+
+            joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
+            if (joinerPSKd.empty())
+            {
+                LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
+                ExitNow(error = ERROR_REJECTED("joiner(ID={}) is disabled", utils::Hex(joinerId)));
+            }
 
             SuccessOrExit(error = mBrClient.GetLocalAddr(localAddr));
             it = mJoinerSessions

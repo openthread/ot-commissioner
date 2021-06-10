@@ -1,5 +1,6 @@
+#!/bin/bash
 #
-#  Copyright (c) 2020, The OpenThread Commissioner Authors.
+#  Copyright (c) 2021, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,47 +27,63 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-name: Tests
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-on: [push, pull_request]
+LEADER_OUTPUT=${RUNTIME_DIR}/leader-output
 
-jobs:
-  integration-tests:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Bootstrap
-        run: |
-          script/bootstrap.sh
-      - name: Build
-        run: |
-          mkdir build && cd build
-          cmake -GNinja                           \
-                -DCMAKE_CXX_STANDARD=11           \
-                -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
-                -DCMAKE_BUILD_TYPE=Release        \
-                -DCMAKE_INSTALL_PREFIX=/usr/local \
-                -DOT_COMM_COVERAGE=ON             \
-                -DOT_COMM_REFERENCE_DEVICE=ON     \
-                -DOT_COMM_CCM=OFF                 \
-                -DOT_COMM_WARNING_AS_ERROR=ON     \
-                ..
-          ninja
-          sudo ninja install
-      - name: Test CLI options
-        run: |
-          commissioner-cli -v
-          commissioner-cli -h
-      - name: Run unittests
-        run: |
-          ./build/tests/commissioner-test
-      - name: Run integration tests
-        run: |
-          cd tests/integration
-          ./bootstrap.sh
-          ./run_tests.sh
-      - name: Upload coverage to Codecov
-        run: |
-          lcov --directory build/ --capture --output-file coverage.info
-          lcov --list coverage.info
-          bash <(curl -s https://codecov.io/bash) -f coverage.info
+start_leader() {
+    expect <<EOF | tee "${LEADER_OUTPUT}" &
+spawn ${NON_CCM_CLI} 9
+send "factoryreset\r\n"
+sleep 1
+send "panid 0xface\r\n"
+expect "Done"
+send "ifconfig up\r\n"
+expect "Done"
+send "pskc ${PSKC}\r\n"
+expect "Done"
+send "thread start\r\n"
+expect "Done"
+sleep 3
+send "state\r\n"
+expect "leader"
+expect "Done"
+sleep 1
+send "ipaddr linklocal\r\n"
+expect "Done"
+send "ba port\r\n"
+expect "Done"
+set timeout -1
+wait eof
+EOF
+}
+
+stop_leader() {
+    killall expect
+    killall "${NON_CCM_CLI}"
+}
+
+test_native_commissioner() {
+    set -x
+    start_leader
+    sleep 6
+
+    ba_lla=$(grep -A+1 'ipaddr linklocal' "${LEADER_OUTPUT}" | tail -n1 | tr -d '\r\n')
+    ba_port=$(grep -A+1 'ba port' "${LEADER_OUTPUT}" | tail -n1 | tr -d '\r\n')
+
+    # Thread of the daemon node is disabled so that the daemon transmits un-secure
+    # 15.4 frames to the Border Agent node on behalf of the commissioner.
+    start_daemon
+    ot_ctl ifconfig up
+    ot_ctl panid 0xface
+
+    start_commissioner "${NON_CCM_CONFIG}"
+
+    send_command_to_commissioner "start ${ba_lla}%wpan0 ${ba_port}"
+
+    send_command_to_commissioner "active"
+    stop_commissioner
+
+    stop_daemon
+    stop_leader
+}

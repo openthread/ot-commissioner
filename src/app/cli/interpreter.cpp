@@ -37,6 +37,7 @@
 
 #include "app/file_util.hpp"
 #include "app/json.hpp"
+#include "app/sys_logger.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -45,29 +46,22 @@ namespace ot {
 namespace commissioner {
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
-    {"start", &Interpreter::ProcessStart},
-    {"stop", &Interpreter::ProcessStop},
-    {"active", &Interpreter::ProcessActive},
-    {"token", &Interpreter::ProcessToken},
-    {"network", &Interpreter::ProcessNetwork},
-    {"sessionid", &Interpreter::ProcessSessionId},
-    {"borderagent", &Interpreter::ProcessBorderAgent},
-    {"joiner", &Interpreter::ProcessJoiner},
-    {"commdataset", &Interpreter::ProcessCommDataset},
-    {"opdataset", &Interpreter::ProcessOpDataset},
-    {"bbrdataset", &Interpreter::ProcessBbrDataset},
-    {"reenroll", &Interpreter::ProcessReenroll},
-    {"domainreset", &Interpreter::ProcessDomainReset},
-    {"migrate", &Interpreter::ProcessMigrate},
-    {"mlr", &Interpreter::ProcessMlr},
-    {"announce", &Interpreter::ProcessAnnounce},
-    {"panid", &Interpreter::ProcessPanId},
-    {"energy", &Interpreter::ProcessEnergy},
-    {"exit", &Interpreter::ProcessExit},
+    {"config", &Interpreter::ProcessConfig},       {"start", &Interpreter::ProcessStart},
+    {"stop", &Interpreter::ProcessStop},           {"active", &Interpreter::ProcessActive},
+    {"token", &Interpreter::ProcessToken},         {"network", &Interpreter::ProcessNetwork},
+    {"sessionid", &Interpreter::ProcessSessionId}, {"borderagent", &Interpreter::ProcessBorderAgent},
+    {"joiner", &Interpreter::ProcessJoiner},       {"commdataset", &Interpreter::ProcessCommDataset},
+    {"opdataset", &Interpreter::ProcessOpDataset}, {"bbrdataset", &Interpreter::ProcessBbrDataset},
+    {"reenroll", &Interpreter::ProcessReenroll},   {"domainreset", &Interpreter::ProcessDomainReset},
+    {"migrate", &Interpreter::ProcessMigrate},     {"mlr", &Interpreter::ProcessMlr},
+    {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
+    {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"help", &Interpreter::ProcessHelp},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
+    {"config", "config get pskc\n"
+               "config set pskc <pskc-hex-string>"},
     {"start", "start <border-agent-addr> <border-agent-port>"},
     {"stop", "stop"},
     {"active", "active"},
@@ -78,8 +72,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                 "network sync"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
-                    "borderagent get locator\n"
-                    "borderagent get meshlocaladdr"},
+                    "borderagent get locator"},
     {"joiner", "joiner enable (meshcop|ae|nmkp) <joiner-eui64> [<joiner-password>] [<provisioning-url>]\n"
                "joiner enableall (meshcop|ae|nmkp) [<joiner-password>] [<provisioning-url>]\n"
                "joiner disable (meshcop|ae|nmkp) <joiner-eui64>\n"
@@ -172,11 +165,20 @@ Error Interpreter::Init(const std::string &aConfigFile)
     Error error;
 
     std::string configJson;
-    Config      config;
 
-    SuccessOrExit(error = ReadFile(configJson, aConfigFile));
-    SuccessOrExit(error = ConfigFromJson(config, configJson));
-    SuccessOrExit(error = CommissionerApp::Create(mCommissioner, config));
+    if (!aConfigFile.empty())
+    {
+        SuccessOrExit(error = ReadFile(configJson, aConfigFile));
+        SuccessOrExit(error = ConfigFromJson(mConfig, configJson));
+    }
+    else
+    {
+        // Default to Non-CCM mode if no configuration file is provided.
+        mConfig.mEnableCcm = false;
+        mConfig.mPSKc.assign(kMaxPSKcLength, 0xff);
+        mConfig.mLogger = SysLogger::Create(LogLevel::kDebug);
+    }
+    SuccessOrExit(error = CommissionerApp::Create(mCommissioner, mConfig));
 
 exit:
     return error;
@@ -304,6 +306,48 @@ Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral
     }
 
     return expr;
+}
+
+Interpreter::Value Interpreter::ProcessConfig(const Expression &aExpr)
+{
+    Value value;
+
+    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("two few arguments"));
+    VerifyOrExit(aExpr[2] == "pskc", value = ERROR_INVALID_ARGS("{} is not a valid property", aExpr[2]));
+    if (aExpr[1] == "get")
+    {
+        value = utils::Hex(mConfig.mPSKc);
+    }
+    else if (aExpr[1] == "set")
+    {
+        ByteArray pskc;
+
+        VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS("two few arguments"));
+        SuccessOrExit(value = utils::Hex(pskc, aExpr[3]));
+        SuccessOrExit(value = UpdateConfig(pskc));
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND("{} is not a valid sub-command", aExpr[1]));
+    }
+
+exit:
+    return value;
+}
+
+Error Interpreter::UpdateConfig(const ByteArray &aPSKc)
+{
+    Error error;
+
+    VerifyOrExit(aPSKc.size() <= kMaxPSKcLength, error = ERROR_INVALID_ARGS("invalid PSKc length"));
+    VerifyOrExit(!mCommissioner->IsActive(),
+                 error = ERROR_INVALID_STATE("cannot set PSKc when the commissioner is active"));
+
+    mConfig.mPSKc = aPSKc;
+    CommissionerApp::Create(mCommissioner, mConfig).IgnoreError();
+
+exit:
+    return error;
 }
 
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
@@ -434,16 +478,6 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
             uint16_t locator;
             SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
             value = ToHex(locator);
-        }
-        else if (CaseInsensitiveEqual(aExpr[2], "meshlocaladdr"))
-        {
-            uint16_t    locator;
-            std::string meshLocalPrefix;
-            std::string meshLocalAddr;
-            SuccessOrExit(value = mCommissioner->GetBorderAgentLocator(locator));
-            SuccessOrExit(value = mCommissioner->GetMeshLocalPrefix(meshLocalPrefix));
-            SuccessOrExit(value = Commissioner::GetMeshLocalAddr(meshLocalAddr, meshLocalPrefix, locator));
-            value = meshLocalAddr;
         }
         else
         {

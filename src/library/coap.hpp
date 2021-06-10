@@ -127,6 +127,8 @@ enum class Code : uint8_t
 
 #undef OT_COAP_CODE
 
+std::string CodeToString(Code aCode);
+
 /**
  * CoAP Option Numbers
  */
@@ -508,6 +510,9 @@ public:
 
     static Error NormalizeUriPath(std::string &uriPath);
 
+    void        SetRequestUri(const std::string &aUri);
+    std::string GetRequestUri(void) const;
+
 protected:
     Error        Serialize(const Header &aHeader, ByteArray &aBuf) const;
     static Error Deserialize(Header &aHeader, const ByteArray &aBuf, size_t &aOffset);
@@ -544,6 +549,10 @@ protected:
     Header                            mHeader;
     std::map<OptionType, OptionValue> mOptions;
     ByteArray                         mPayload;
+
+    // The URI of the request to which this response messages
+    // is associated. Should only be set/get by a response message.
+    std::string mRequestUri;
 
     MessageSubType mSubType;
 
@@ -746,7 +755,7 @@ private:
     void HandleRequest(const Request &aRequest);
 
     // Handle empty and response message
-    void HandleResponse(const Response &aResponse);
+    void HandleResponse(Response &aResponse);
 
     Error SendEmptyMessage(Type aType, const Request &aRequest);
 

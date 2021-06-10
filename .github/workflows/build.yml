@@ -33,7 +33,7 @@ on: [push, pull_request]
 jobs:
 
   cancel-previous-runs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: rokroskar/workflow-run-cleanup-action@master
         env:
@@ -55,10 +55,10 @@ jobs:
 
   gcc-build:
     name: gcc-${{ matrix.gcc_ver }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        gcc_ver: [5, 6, 7, 8, 9]
+        gcc_ver: [5, 6, 7, 8, 9, 10]
     steps:
       - uses: actions/checkout@v2
       - name: Install CMake 3.10.1
@@ -83,6 +83,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           ninja
           sudo ninja install
@@ -91,10 +92,10 @@ jobs:
 
   clang-build:
     name: clang-${{ matrix.clang_ver }}-${{ matrix.build_type }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        clang_ver: [5, 6, 7, 8, 9]
+        clang_ver: [5, 6, 7, 8, 9, 10, 11]
         build_type: ["Debug", "Release"]
     steps:
       - uses: actions/checkout@v2
@@ -111,6 +112,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON            \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                 -DCMAKE_INSTALL_PREFIX=/usr/local           \
+                -DOT_COMM_WARNING_AS_ERROR=ON               \
                 ..
           ninja
           sudo ninja install
@@ -132,6 +134,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           make -j2
           sudo make install
@@ -139,7 +142,7 @@ jobs:
           ./tests/commissioner-test
 
   android-ndk:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -160,6 +163,7 @@ jobs:
                 -DOT_COMM_ANDROID=ON                                                                \
                 -DOT_COMM_APP=OFF                                                                   \
                 -DOT_COMM_TEST=OFF                                                                  \
+                -DOT_COMM_WARNING_AS_ERROR=ON                                                       \
                 ..
           ninja
 
@@ -179,11 +183,12 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON \
                 -DCMAKE_BUILD_TYPE=Release       \
                 -DOT_COMM_JAVA_BINDING=ON        \
+                -DOT_COMM_WARNING_AS_ERROR=ON    \
                 ..
           ninja
 
   fmt-format-check:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -198,5 +203,6 @@ jobs:
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
                 -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
                 ..
           ninja

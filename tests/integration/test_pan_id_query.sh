@@ -34,7 +34,7 @@ test_pan_id_query() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "active"
     send_command_to_commissioner "panid query 0xffffffff 0xaabb ff02::2"
     sleep 1

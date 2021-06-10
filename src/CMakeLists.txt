@@ -33,7 +33,10 @@ endif()
 
 ## We don't use target-based functions for enforcing any targets
 ## under this directory be compiled with the options.
-add_compile_options(-Wall -Wextra -Werror -Wfatal-errors -Wno-missing-braces)
+add_compile_options(-Wall -Wextra -Wno-missing-braces)
+if (OT_COMM_WARNING_AS_ERROR)
+    add_compile_options(-Werror -Wfatal-errors)
+endif()
 
 if (OT_COMM_APP)
     add_subdirectory(app)

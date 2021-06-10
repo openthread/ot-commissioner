@@ -34,7 +34,7 @@ test_active_dataset_set_network_name() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "active"
     send_command_to_commissioner "opdataset set networkname test-network"
 
@@ -50,7 +50,7 @@ test_pending_dataset_set_channel() {
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "active"
     send_command_to_commissioner "opdataset set channel 0 17 60"
 

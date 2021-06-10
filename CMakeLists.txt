@@ -27,7 +27,7 @@
 #
 
 cmake_minimum_required(VERSION 3.10.1)
-project(ot-commissioner VERSION 0.1.0)
+project(ot-commissioner VERSION 0.2.0)
 
 option(OT_COMM_ANDROID           "Build with Android NDK" OFF)
 option(OT_COMM_APP               "Build the CLI App" ON)
@@ -37,6 +37,7 @@ option(OT_COMM_COVERAGE          "Enable coverage reporting" OFF)
 option(OT_COMM_JAVA_BINDING      "Build Java binding" OFF)
 set(OT_COMM_JAVA_BINDING_OUTDIR  "" CACHE STRING "Specify output directory of generated Java source files")
 option(OT_COMM_TEST              "Build tests" ON)
+option(OT_COMM_WARNING_AS_ERROR  "Treat warning as error" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -48,6 +49,25 @@ if(NOT "${CMAKE_CXX_STANDARD}")
 endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+execute_process(
+    COMMAND git describe HEAD --always
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE OT_COMM_GIT_REVISION OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(OT_COMM_GIT_REVISION)
+    set(OT_COMM_VERSION "${PROJECT_VERSION}+${OT_COMM_GIT_REVISION}")
+else()
+    set(OT_COMM_VERSION "${PROJECT_VERSION}")
+endif()
+
+message(STATUS "Version: ${OT_COMM_VERSION}")
+
+add_library(commissioner-config INTERFACE)
+target_compile_definitions(commissioner-config
+    INTERFACE OT_COMM_VERSION="${OT_COMM_VERSION}"
+)
 
 add_subdirectory(src)
 add_subdirectory(tools)

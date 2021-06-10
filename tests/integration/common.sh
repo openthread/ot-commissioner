@@ -86,7 +86,7 @@ start_daemon() {
     fi
 
     sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
-    sudo "${OT_DAEMON}" "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
+    sudo "${OT_DAEMON}" -Iwpan0 -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
 
     sleep 10
 }
@@ -207,22 +207,32 @@ expect {
 EOF
 }
 
+ot_ctl() {
+    sudo timeout -k 5 10 "${OT_CTL}" "$@"
+}
+
 ## Form a Thread network with border agent as the leader.
 ## Args: $1: PSKc.
 form_network() {
     local pskc=$1
 
-    sudo "${OT_CTL}" channel "${CHANNEL}"
-    sudo "${OT_CTL}" panid "${PANID}"
-    sudo "${OT_CTL}" extpanid "${XPANID}"
-    sudo "${OT_CTL}" pskc "${pskc}"
-    sudo "${OT_CTL}" masterkey "${MASTERKEY}"
-    sudo "${OT_CTL}" ifconfig up
-    sudo "${OT_CTL}" thread start
+    ot_ctl channel "${CHANNEL}"
+    ot_ctl panid "${PANID}"
+    ot_ctl extpanid "${XPANID}"
+    ot_ctl pskc "${pskc}"
+    ot_ctl masterkey "${MASTERKEY}"
+    ot_ctl ifconfig up
+    ot_ctl thread start
 
     sleep 3
 
-    sudo "${OT_CTL}" state
+    ot_ctl state
+}
+
+petition_commissioner() {
+    local ba_port
+    ba_port="$(sudo "${OT_CTL}" ba port | grep -o '[0-9]\+')"
+    send_command_to_commissioner "start :: ${ba_port}"
 }
 
 start_border_agent_mdns_service() {

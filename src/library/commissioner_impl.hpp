@@ -130,10 +130,9 @@ public:
     Error SetPendingDataset(const PendingOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
 
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                    const std::string &             aPbbrAddr,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;
-    Error RegisterMulticastListener(uint8_t &, const std::string &, const std::vector<std::string> &, uint32_t) override
+    Error RegisterMulticastListener(uint8_t &, const std::vector<std::string> &, uint32_t) override
     {
         return ERROR_UNIMPLEMENTED("");
     }
@@ -165,10 +164,9 @@ public:
     // Commercial Commissioning features.
 
     void  SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                  const std::string &              aPbbrAddr,
                                   uint32_t                         aMaxRetrievalTimer,
                                   const PendingOperationalDataset &aDataset) override;
-    Error SetSecurePendingDataset(const std::string &, uint32_t, const PendingOperationalDataset &) override
+    Error SetSecurePendingDataset(uint32_t, const PendingOperationalDataset &) override
     {
         return ERROR_UNIMPLEMENTED("");
     }
@@ -197,6 +195,7 @@ private:
     static Error ValidateConfig(const Config &aConfig);
     void         LoggingConfig();
 
+    static Error CheckCoapResponseCode(const coap::Response &aResponse);
     static Error HandleStateResponse(const coap::Response *aResponse, Error aError, bool aStateTlvIsMandatory = true);
 
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);

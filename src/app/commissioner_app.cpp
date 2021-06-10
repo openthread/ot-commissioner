@@ -91,7 +91,7 @@ Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
     SuccessOrExit(error = SyncNetworkData());
 
 exit:
-    if (error != ErrorCode::kNone && !IsActive())
+    if (error != ErrorCode::kNone && IsActive())
     {
         Stop();
     }
@@ -150,17 +150,12 @@ Error CommissionerApp::SyncNetworkData(void)
     PendingOperationalDataset pendingDataset;
     BbrDataset                bbrDataset;
 
+    SuccessOrExit(error = mCommissioner->GetActiveDataset(activeDataset, 0xFFFF));
+    SuccessOrExit(error = mCommissioner->GetPendingDataset(pendingDataset, 0xFFFF));
     SuccessOrExit(error = mCommissioner->SetCommissionerDataset(mCommDataset));
     if (IsCcmMode())
     {
         SuccessOrExit(error = mCommissioner->GetBbrDataset(bbrDataset, 0xFFFF));
-    }
-
-    SuccessOrExit(error = mCommissioner->GetActiveDataset(activeDataset, 0xFFFF));
-    SuccessOrExit(error = mCommissioner->GetPendingDataset(pendingDataset, 0xFFFF));
-
-    if (IsCcmMode())
-    {
         mBbrDataset = bbrDataset;
     }
     mActiveDataset  = activeDataset;
@@ -539,7 +534,7 @@ Error CommissionerApp::GetMeshLocalPrefix(std::string &aPrefix)
     SuccessOrExit(error = mCommissioner->GetActiveDataset(mActiveDataset, 0xFFFF));
 
     VerifyOrExit(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit,
-                 error = ERROR_NOT_FOUND("cannot find valid Mesh-local Prefix in Active Operational Dataset"));
+                 error = ERROR_NOT_FOUND("cannot find valid Mesh-Local Prefix in Active Operational Dataset"));
     aPrefix = Ipv6PrefixToString(mActiveDataset.mMeshLocalPrefix);
 
 exit:
@@ -894,15 +889,12 @@ Error CommissionerApp::Migrate(const std::string &aDstAddr, const std::string &a
 
 Error CommissionerApp::RegisterMulticastListener(const std::vector<std::string> &aMulticastAddrList, Seconds aTimeout)
 {
-    Error       error;
-    std::string pbbrAddr;
-    uint8_t     status;
+    Error   error;
+    uint8_t status;
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
-    SuccessOrExit(error = GetPrimaryBbrAddr(pbbrAddr));
-    SuccessOrExit(error =
-                      mCommissioner->RegisterMulticastListener(status, pbbrAddr, aMulticastAddrList, aTimeout.count()));
+    SuccessOrExit(error = mCommissioner->RegisterMulticastListener(status, aMulticastAddrList, aTimeout.count()));
     VerifyOrExit(status == kMlrStatusSuccess,
                  error = ERROR_REJECTED("request was rejected with statusCode={}", status));
 
@@ -976,18 +968,6 @@ const EnergyReportMap &CommissionerApp::GetAllEnergyReports() const
 const std::string &CommissionerApp::GetDomainName() const
 {
     return mCommissioner->GetDomainName();
-}
-
-Error CommissionerApp::GetPrimaryBbrAddr(std::string &aAddr)
-{
-    Error       error;
-    std::string meshLocalPrefix;
-
-    SuccessOrExit(error = GetMeshLocalPrefix(meshLocalPrefix));
-    SuccessOrExit(error = Commissioner::GetMeshLocalAddr(aAddr, meshLocalPrefix, kPrimaryBbrAloc16));
-
-exit:
-    return error;
 }
 
 const ByteArray &CommissionerApp::GetToken() const

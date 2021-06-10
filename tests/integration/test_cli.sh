@@ -35,7 +35,7 @@ test_network_sync()
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "network sync"
     stop_commissioner
 
@@ -48,7 +48,7 @@ test_get_commissioner_dataset()
     form_network "${PSKC}"
 
     start_commissioner "${NON_CCM_CONFIG}"
-    send_command_to_commissioner "start :: 49191"
+    petition_commissioner
     send_command_to_commissioner "commdataset get"
     stop_commissioner
 

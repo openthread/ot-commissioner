@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2021, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,86 +28,57 @@
 
 /**
  * @file
- *  This file implements file logger.
+ *  This file defines utility functions for loggers.
  *
  */
 
-#include "app/file_logger.hpp"
+#ifndef OT_COMM_APP_LOGGER_UTIL_HPP_
+#define OT_COMM_APP_LOGGER_UTIL_HPP_
 
-#include <sstream>
+#include <string>
 
-#include <string.h>
+#include <commissioner/commissioner.hpp>
 
-#include "app/logger_util.hpp"
-#include "common/error_macros.hpp"
-#include "common/time.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-Error FileLogger::Create(std::shared_ptr<FileLogger> &aFileLogger, const std::string &aFilename, LogLevel aLogLevel)
+static std::string ToString(LogLevel aLevel)
 {
-    Error error;
-    auto  logger = std::shared_ptr<FileLogger>(new FileLogger);
+    std::string ret;
 
-    SuccessOrExit(error = logger->Init(aFilename, aLogLevel));
-    aFileLogger = logger;
-
-exit:
-    return error;
-}
-
-FileLogger::~FileLogger()
-{
-    if (mLogFile)
+    switch (aLevel)
     {
-        fclose(mLogFile);
-    }
-}
-
-Error FileLogger::Init(const std::string &aFilename, LogLevel aLogLevel)
-{
-    Error error;
-    FILE *logFile;
-
-    logFile = fopen(aFilename.c_str(), "w");
-    if (logFile == nullptr)
-    {
-        if (errno == ENOENT)
-        {
-            ExitNow(error = ERROR_NOT_FOUND("failed to init file logger '{}', {}", aFilename, strerror(errno)));
-        }
-        else
-        {
-            ExitNow(error = ERROR_IO_ERROR("failed to init file logger '{}', {}", aFilename, strerror(errno)));
-        }
+    case LogLevel::kOff:
+        ret = "[ off   ]";
+        break;
+    case LogLevel::kCritical:
+        ret = "[ crit  ]";
+        break;
+    case LogLevel::kError:
+        ret = "[ error ]";
+        break;
+    case LogLevel::kWarn:
+        ret = "[ warn  ]";
+        break;
+    case LogLevel::kInfo:
+        ret = "[ info  ]";
+        break;
+    case LogLevel::kDebug:
+        ret = "[ debug ]";
+        break;
+    default:
+        VerifyOrDie(false);
+        break;
     }
 
-    mLogFile  = logFile;
-    mLogLevel = aLogLevel;
-
-exit:
-    return error;
-}
-
-void FileLogger::Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMsg)
-{
-    std::lock_guard<std::mutex> _(mLogMutex);
-    std::stringstream           logStream;
-
-    VerifyOrExit(aLevel <= mLogLevel);
-    VerifyOrExit(mLogFile != nullptr);
-
-    logStream << "[ " << TimePointToString(Clock::now()) << " ] " << ToString(aLevel) << " [ " << aRegion << " ] "
-              << aMsg << std::endl;
-    fputs(logStream.str().c_str(), mLogFile);
-
-exit:
-    return;
+    return ret;
 }
 
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_APP_LOGGER_UTIL_HPP_
