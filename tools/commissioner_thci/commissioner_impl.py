@@ -34,12 +34,10 @@ from future.utils import raise_
 
 import serial
 import time
-import socket
 import re
 import uuid
 import json
 import base64
-import logging
 import binascii
 import sys
 
@@ -155,20 +153,6 @@ class OTCommissioner(ICommissioner):
             raise commissioner.Error('Failed to init, error:\n{}'.format(
                 '\n'.join(response)))
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            self._command('{} exit'.format(COMMISSIONER_CTL))
-        except Exception as e:
-            logging.exception(e)
-
-        if isinstance(self._handler, serial.Serial):
-            self._write_line('logout')
-        else:
-            self._handler.terminate(force=True)
-
     @staticmethod
     def makeLocalCommissioner(config, simulator):
         import pexpect
@@ -192,9 +176,9 @@ class OTCommissioner(ICommissioner):
 
     def isActive(self):
         response = self._execute_and_check('active')
-        if response[0].startswith('true'):
+        if 'true' in response[0]:
             return True
-        elif response[0].startswith('false'):
+        elif 'false' in response[0]:
             return False
         else:
             raise commissioner.Error('Unrecognized result "{}"'.format(
@@ -316,7 +300,8 @@ class OTCommissioner(ICommissioner):
         self._execute_and_check('mlr {} {}'.format(
             ' '.join(multicastAddrs),
             timeout,
-        ))
+        ),
+                                check=False)
 
     def MGMT_ANNOUNCE_BEGIN(self, channelMask, count, period, dstAddr):
         self._execute_and_check('announce {} {} {} {}'.format(
@@ -426,109 +411,23 @@ class OTCommissioner(ICommissioner):
     def _getThciLogs(self):
         return self._command("grep \"\\[ thci \\]\" {}".format(self.log_file))
 
-    def _execute_and_check(self, command):
+    def _execute_and_check(self, command, check=True):
         # Escape quotes for bash
         command = command.replace('"', r'"\""')
+        response = self._command('{} execute "{}"'.format(
+            COMMISSIONER_CTL, command))
+        if check:
+            response = OTCommissioner._check_response(response)
+        return response
 
-        return OTCommissioner._check_response(
-            self._command('{} execute "{}"'.format(COMMISSIONER_CTL, command)))
-
-    def _expect(self, expected, timeout=10):
-        logging.info('Expecting [{}]'.format(expected))
-
-        while timeout > 0:
-            line = self._read_line()
-            logging.info('Got line [{}]'.format(line))
-
-            if line == expected:
-                logging.info('Expected [{}]'.format(expected))
-                return
-            elif line is None:
-                self._sleep(0.1)
-                timeout -= 0.1
-
-        raise commissioner.Error(
-            'Failed to find expected string [{}]'.format(expected))
-
-    def _sleep(self, seconds):
-        if isinstance(self._handler, serial.Serial):
-            time.sleep(seconds)
-        else:
-            while seconds > 0:
-                self._simulator.go(0)
-                seconds -= 0.1
-
-    def _read_line(self):
-        logging.debug('Reading line')
-        if len(self._lines) > 1:
-            return CONTROL_SEQUENCE.sub('', self._lines.pop(0))
-
-        tail = ''
-        if len(self._lines):
-            tail = self._lines.pop()
-
-        try:
-            tail += self._read()
-        except socket.error:
-            logging.debug('No new data')
-
-        self._lines += NEW_LINE.split(tail)
-
-        if len(self._lines) > 1:
-            return CONTROL_SEQUENCE.sub('', self._lines.pop(0))
-
-    def _read(self, size=512):
-        if isinstance(self._handler, serial.Serial):
-            return self._handler.read(size).decode()
-        else:
-            try:
-                return self._handler.read_nonblocking(size, timeout=0)
-            except pexpect.TIMEOUT as e:
-                return ""
-
-    def _write_line(self, line):
-        logging.debug('Writing line')
-        self._lines = []
-        try:
-            self._read()
-        except socket.error:
-            logging.debug('Nothing cleared')
-
-        logging.info('Writing [{}]'.format(line))
-        self._write(line + '\r\n')
-        self._lines = []
-        self._sleep(0.1)
-
-    def _write(self, data):
-        if isinstance(self._handler, serial.Serial):
-            self._handler.write(data.encode())
-        else:
-            self._handler.send(data)
+    def _sleep(self, duration):
+        time.sleep(duration)
 
     def _command(self, cmd, timeout=10):
-        if len(cmd) + len(COMMISSIONER_PROMPT) >= TTY_COLS:
-            raise commissioner.Error('Command too long: "{}"'.format(cmd))
-
-        self._write_line(cmd)
-        self._expect(cmd, timeout)
-        response = []
-
-        while timeout > 0:
-            line = self._read_line()
-            logging.info('Read line: [{}]'.format(line))
-            if line:
-                if re.match(COMMISSIONER_PROMPT, line):
-                    break
-                response.append(line)
-            else:
-                self._sleep(0.1)
-                timeout -= 0.1
-
-        if timeout <= 0:
-            raise Exception('Failed to find end of response'.format(self._port))
-
-        logging.info('Send command[{}] done!'.format(cmd))
-        return response
+        lines = self._handler.bash(cmd, timeout=timeout)
+        lines = [re.sub(r'\x1b\[\d+m', '', l) for l in lines]
+        lines = [l for l in lines if l]
+        return lines
 
     def _write_config(self, config_path, config):
         data = {
@@ -567,8 +466,7 @@ class OTCommissioner(ICommissioner):
     @staticmethod
     def _check_response(response):
         if response[-1] != '[done]':
-            raise commissioner.Error('Error message:\n{}'.format(
-                '\n'.join(response)))
+            raise commissioner.Error('Error message:\n{!r}'.format(response))
         return response
 
     @staticmethod
