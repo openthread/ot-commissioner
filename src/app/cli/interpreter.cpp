@@ -67,7 +67,7 @@
 #define ALIAS_THIS "this"
 #define ALIAS_NONE "none"
 #define ALIAS_ALL "all"
-#define ALIAS_OTHERS "others"
+#define ALIAS_OTHERS "other"
 
 #define SYNTAX_NO_PARAM "keyword {} used with no parameter"
 #define SYNTAX_UNKNOWN_KEY "unknown keyword {} encountered"
@@ -454,16 +454,6 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         VerifyOrExit(mContext.mExportFiles.size() == 0, value = ERROR_INVALID_ARGS(SYNTAX_EXP_IMP_MUTUAL));
         // let job manager take care of import data
         mJobManager->SetImportFile(mContext.mImportFiles.front());
-        if (mContext.mNwkAliases.size() > 0)
-        {
-            XpanIdArray xpans;
-            StringArray unresolved;
-            auto        status = mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, xpans, unresolved);
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
-                         value =
-                             ERROR_INVALID_ARGS("Failed to resolve network '{}' for import", mContext.mNwkAliases[0]));
-            mJobManager->SetImportNetworkXpan(xpans[0]);
-        }
     }
 
     if (mContext.mNwkAliases.size() > 0 || mContext.mDomAliases.size() > 0)
@@ -493,7 +483,25 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         // handle single command using selected network
         if (mContext.mImportFiles.size() > 0)
         {
-            SuccessOrExit(value = mJobManager->AppendImport(retExpr));
+            XpanId xpan = XpanId();
+            if (mContext.mNwkAliases.empty())
+            {
+                auto result = mRegistry->GetCurrentNetworkXpan(xpan);
+                if (result != Registry::Status::REG_SUCCESS)
+                {
+                    xpan = XpanId();
+                }
+            }
+            else
+            {
+                XpanIdArray nwks;
+                StringArray unresolved;
+                VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, nwks, unresolved) ==
+                                 Registry::Status::REG_SUCCESS,
+                             value = ERROR_INVALID_ARGS("Failed to resolve network alias for import"));
+                xpan = nwks[0];
+            }
+            SuccessOrExit(value = mJobManager->AppendImport(xpan, retExpr));
         }
         value = evaluator->second(this, retExpr);
     }

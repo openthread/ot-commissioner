@@ -90,17 +90,11 @@ void JobManager::CleanupJobs()
     }
     mJobPool.clear();
     mImportFile.clear();
-    mNid = 0;
 }
 
 void JobManager::SetImportFile(const std::string &importFile)
 {
     mImportFile = importFile;
-}
-
-void JobManager::SetImportNetworkXpan(XpanId xpan)
-{
-    mNid = xpan;
 }
 
 Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
@@ -158,7 +152,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanId
 
         if (!mImportFile.empty())
         {
-            Error importError = AppendImport(jobExpr);
+            Error importError = AppendImport(nid, jobExpr);
             if (importError != ERROR_NONE)
             {
                 ErrorMsg(nid, importError.GetMessage());
@@ -461,7 +455,7 @@ exit:
     return error;
 }
 
-Error JobManager::AppendImport(Interpreter::Expression &aExpr)
+Error JobManager::AppendImport(XpanId aXpanId, Interpreter::Expression &aExpr)
 {
     Error       error;
     std::string jsonStr;
@@ -470,17 +464,13 @@ Error JobManager::AppendImport(Interpreter::Expression &aExpr)
 
     SuccessOrExit(error = JsonFromFile(jsonStr, mImportFile));
     jsonSrc = Json::parse(jsonStr);
-    if (mNid == XpanId()) // must be single command
+    if (aXpanId == XpanId()) // must be single command
     {
         json = jsonSrc;
     }
-    else if (jsonSrc.count(mNid.str()) > 0)
+    else if (jsonSrc.count(aXpanId.str()) > 0)
     {
-        json = jsonSrc[mNid.str()];
-    }
-    else
-    {
-        ExitNow(error = ERROR_NOT_FOUND("import entry not found"));
+        json = jsonSrc[aXpanId.str()];
     }
     jsonStr = json.dump(JSON_INDENT_DEFAULT);
     if (utils::ToLower(aExpr[0]) == "opdataset")
@@ -490,13 +480,23 @@ Error JobManager::AppendImport(Interpreter::Expression &aExpr)
         if (utils::ToLower(aExpr[2]) == "active")
         {
             ActiveOperationalDataset dataset;
-            SuccessOrExit(error = ActiveDatasetFromJson(dataset, jsonStr));
+            error = ActiveDatasetFromJson(dataset, jsonStr);
+            if (error != ERROR_NONE)
+            {
+                jsonStr = jsonSrc.dump(JSON_INDENT_DEFAULT);
+                SuccessOrExit(error = ActiveDatasetFromJson(dataset, jsonStr));
+            }
             // TODO: try importing wrong format
         }
         else if (utils::ToLower(aExpr[2]) == "pending")
         {
             PendingOperationalDataset dataset;
-            SuccessOrExit(error = PendingDatasetFromJson(dataset, jsonStr));
+            error = PendingDatasetFromJson(dataset, jsonStr);
+            if (error != ERROR_NONE)
+            {
+                jsonStr = jsonSrc.dump(JSON_INDENT_DEFAULT);
+                SuccessOrExit(error = PendingDatasetFromJson(dataset, jsonStr));
+            }
             // TODO: try importing wrong format
         }
         else
@@ -509,7 +509,12 @@ Error JobManager::AppendImport(Interpreter::Expression &aExpr)
         BbrDataset dataset;
         VerifyOrExit(aExpr.size() == 2 && utils::ToLower(aExpr[1]) == "set",
                      error = ERROR_INVALID_ARGS(SYNTAX_IMPORT_UNSUPPORTED));
-        SuccessOrExit(error = BbrDatasetFromJson(dataset, jsonStr));
+        error = BbrDatasetFromJson(dataset, jsonStr);
+        if (error != ERROR_NONE)
+        {
+            jsonStr = jsonSrc.dump(JSON_INDENT_DEFAULT);
+            SuccessOrExit(error = BbrDatasetFromJson(dataset, jsonStr));
+        }
         // TODO: try importing wrong format
     }
     else if (utils::ToLower(aExpr[0]) == "commdataset")
@@ -517,7 +522,12 @@ Error JobManager::AppendImport(Interpreter::Expression &aExpr)
         CommissionerDataset dataset;
         VerifyOrExit(aExpr.size() == 2 && utils::ToLower(aExpr[1]) == "set",
                      error = ERROR_INVALID_ARGS(SYNTAX_IMPORT_UNSUPPORTED));
-        SuccessOrExit(error = CommissionerDatasetFromJson(dataset, jsonStr));
+        error = CommissionerDatasetFromJson(dataset, jsonStr);
+        if (error != ERROR_NONE)
+        {
+            jsonStr = jsonSrc.dump(JSON_INDENT_DEFAULT);
+            SuccessOrExit(error = CommissionerDatasetFromJson(dataset, jsonStr));
+        }
         // TODO: try importing wrong format
     }
     else
