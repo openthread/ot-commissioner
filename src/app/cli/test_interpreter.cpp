@@ -597,7 +597,7 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
 
     // Create CommissionerAppMock for the network
     Interpreter::Expression expr;
-    expr = ctx.mInterpreter.ParseExpression("start --nwk 1");
+    expr = ctx.mInterpreter.ParseExpression("start --nwk net1");
     EXPECT_TRUE(ctx.mInterpreter.Eval(expr).HasNoError());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
@@ -2584,8 +2584,7 @@ TEST_F(InterpreterTestSuite, MNI_ImportAllNetworksFail)
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               RegistryStatus::REG_SUCCESS);
 
-    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
-        .Times(0);
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _)).Times(0);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2803,7 +2802,6 @@ TEST_F(InterpreterTestSuite, MNI_MultiEntryImportImplicitNetworkPass)
     EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
         .WillOnce(
             DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
-    EXPECT_CALL(*commissionerAppMock, IsActive()).WillOnce(Return(false)).WillOnce(Return(true));
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
     Interpreter::Expression expr;
     Interpreter::Value      value;
@@ -2924,7 +2922,6 @@ TEST_F(InterpreterTestSuite, MNI_SingleEntryImportImplicitNetworkPass)
     EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
         .WillOnce(
             DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = commissionerAppMock; }), Return(Error{})));
-    EXPECT_CALL(*commissionerAppMock, IsActive()).WillOnce(Return(false)).WillOnce(Return(true));
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
     Interpreter::Expression expr;
     Interpreter::Value      value;

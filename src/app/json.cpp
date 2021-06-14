@@ -584,9 +584,19 @@ Error CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::stri
 {
     Error error;
 
+    aDataset = CommissionerDataset{};
+
     try
     {
-        aDataset = Json::parse(StripComments(aJson));
+        Json json = Json::parse(StripComments(aJson));
+        if (json.is_null())
+        {
+            error = ERROR_NOT_FOUND("Empty commissioner dataset JSON");
+        }
+        else
+        {
+            aDataset = json;
+        }
     } catch (JsonException &e)
     {
         error = e.GetError();
@@ -608,9 +618,19 @@ Error BbrDatasetFromJson(BbrDataset &aDataset, const std::string &aJson)
 {
     Error error;
 
+    aDataset = BbrDataset{};
+
     try
     {
-        aDataset = Json::parse(StripComments(aJson));
+        Json json = Json::parse(StripComments(aJson));
+        if (json.is_null())
+        {
+            error = ERROR_NOT_FOUND("Empty BBR dataset from JSON");
+        }
+        else
+        {
+            aDataset = json;
+        }
     } catch (JsonException &e)
     {
         error = e.GetError();
@@ -632,9 +652,20 @@ Error ActiveDatasetFromJson(ActiveOperationalDataset &aDataset, const std::strin
 {
     Error error;
 
+    aDataset = ActiveOperationalDataset{};
+
     try
     {
-        aDataset = Json::parse(StripComments(aJson));
+        Json json = Json::parse(StripComments(aJson));
+        if (json.is_null())
+        {
+            error = ERROR_NOT_FOUND("Empty active operational dataset JSON");
+        }
+        else
+        {
+            aDataset = json;
+        }
+
     } catch (JsonException &e)
     {
         error = e.GetError();
@@ -656,9 +687,19 @@ Error PendingDatasetFromJson(PendingOperationalDataset &aDataset, const std::str
 {
     Error error;
 
+    aDataset = PendingOperationalDataset{};
+
     try
     {
-        aDataset = Json::parse(StripComments(aJson));
+        Json json = Json::parse(StripComments(aJson));
+        if (json.is_null())
+        {
+            error = ERROR_NOT_FOUND("Empty pending operational dataset from JSON");
+        }
+        else
+        {
+            aDataset = json;
+        }
     } catch (JsonException &e)
     {
         error = e.GetError();
