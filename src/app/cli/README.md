@@ -115,15 +115,41 @@ The command `exit` exits the CLI session.
 
 ### Border Agent
 
-The command `borderagent` provides access to Border Agent information:
+The command `borderagent` provides access to Border Agent information and scans for Border Agent services.
 
 ```shell
 > help borderagent
 usage:
+borderagent discover [<timeout-in-milliseconds>]
 borderagent get locator
-borderagent get meshlocaladdr
 [done]
 >
+```
+
+Discover Border Agent services:
+
+```shell
+> borderagent discover
+Addr=172.23.57.126
+Port=49152
+Discriminator=76db7e6dcb420b1c
+ThreadVersion=1.2.0
+State.ConnectionMode=1(PSKc)
+State.ThreadIfStatus=2(active)
+State.Availability=1(high)
+State.BbrIsActive=1
+State.BbrIsPrimary=1
+NetworkName=OpenThread
+ExtendedPanId=0xdead00beef00cafe
+[done]
+```
+
+Get Border Agent locator:
+
+```shell
+> borderagent get locator
+0x5000
+[done]
 ```
 
 ### Backbone Router dataset
