@@ -55,35 +55,12 @@ namespace commissioner {
 struct UnixTime
 {
     std::time_t mTime;
-    UnixTime(std::time_t aTime)
-        : mTime(aTime)
-    {
-    }
-    UnixTime()
-        : UnixTime(0)
-    {
-    }
+    UnixTime(std::time_t aTime);
+    UnixTime();
     // Requires date format "%Y%m%dT%H%M%S"
-    UnixTime(const std::string &aTimeStr)
-        : UnixTime()
-    {
-        std::tm lTm;
-        char *  result = strptime(aTimeStr.c_str(), "%Y%m%dT%H%M%S", &lTm);
-        if (result != nullptr && *result == '\000')
-        {
-            mTime = std::mktime(&lTm);
-        }
-    }
-    bool operator==(const UnixTime &other) const { return mTime == other.mTime; }
-         operator std::string() const
-    {
-        std::tm lTm;
-        gmtime_r(&mTime, &lTm);
-
-        char lTimeStr[16];
-        std::strftime(lTimeStr, sizeof(lTimeStr), "%Y%m%dT%H%M%S", &lTm);
-        return lTimeStr;
-    }
+    UnixTime(const std::string &aTimeStr);
+    bool operator==(const UnixTime &other) const;
+         operator std::string() const;
 };
 
 /**
@@ -141,33 +118,10 @@ struct BorderAgent
               uint32_t aThreadIfStatus,
               uint32_t aAvailability,
               uint32_t aBbrIsActive,
-              uint32_t aBbrIsPrimary)
-            : mConnectionMode(aConnectionMode)
-            , mThreadIfStatus(aThreadIfStatus)
-            , mAvailability(aAvailability)
-            , mBbrIsActive(aBbrIsActive)
-            , mBbrIsPrimary(aBbrIsPrimary)
-        {
-        }
-        State(uint32_t aState)
-            : State((aState & kConnectionModeMask) >> kConnectionModeOffset,
-                    (aState & kThreadIfStatusMask) >> kThreadIfStatusOffset,
-                    (aState & kAvailabilityMask) >> kAvailabilityOffset,
-                    (aState & kBbrIsActiveMask) >> kBbrIsActiveOffset,
-                    (aState & kBbrIsPrimaryMask) >> kBbrIsPrimaryOffset)
-        {
-        }
-        State()
-            : State(0)
-        {
-        }
-        operator uint32_t() const
-        {
-            return ((mConnectionMode << kConnectionModeOffset) & kConnectionModeMask) |
-                   ((mThreadIfStatus << kThreadIfStatusOffset) & kThreadIfStatusMask) |
-                   ((mAvailability << kAvailabilityOffset) & kAvailabilityMask) |
-                   ((mBbrIsActive << kBbrIsActiveOffset) & kBbrIsActiveMask) | (mBbrIsPrimary & kBbrIsPrimaryMask);
-        }
+              uint32_t aBbrIsPrimary);
+        State(uint32_t aState);
+        State();
+        operator uint32_t() const;
     } mState;
 
     /**
@@ -259,13 +213,7 @@ struct BorderAgent
     static constexpr uint32_t kServiceNameBit     = 1 << 16;
     static constexpr uint32_t kUpdateTimestampBit = 1 << 17;
 
-    BorderAgent()
-        : BorderAgent{"", 0,  ByteArray{}, "", State{0, 0, 0, 0, 0},
-                      "", 0,  "",          "", Timestamp{0, 0, 0},
-                      0,  "", ByteArray{}, "", 0,
-                      0,  "", 0,           0}
-    {
-    }
+    BorderAgent();
 
     BorderAgent(std::string const &aAddr,
                 uint16_t           aPort,
@@ -285,32 +233,11 @@ struct BorderAgent
                 uint16_t           aBbrPort,
                 std::string const &aServiceName,
                 UnixTime           aUpdateTimestamp,
-                uint32_t           aPresentFlags)
-        : mAddr(aAddr)
-        , mPort(aPort)
-        , mDiscriminator(aDiscriminator)
-        , mThreadVersion(aThreadVersion)
-        , mState{aState}
-        , mNetworkName(aNetworkName)
-        , mExtendedPanId(aExtendedPanId)
-        , mVendorName(aVendorName)
-        , mModelName(aModelName)
-        , mActiveTimestamp{aActiveTimestamp}
-        , mPartitionId(aPartitionId)
-        , mVendorData(aVendorData)
-        , mVendorOui(aVendorOui)
-        , mDomainName(aDomainName)
-        , mBbrSeqNumber(aBbrSeqNumber)
-        , mBbrPort(aBbrPort)
-        , mServiceName(aServiceName)
-        , mUpdateTimestamp(aUpdateTimestamp)
-        , mPresentFlags(aPresentFlags)
-    {
-    }
+                uint32_t           aPresentFlags);
     /**
      * Virtual destructor for polymorph storage comunications
      */
-    virtual ~BorderAgent() {}
+    virtual ~BorderAgent();
 };
 
 struct BorderAgentOrErrorMsg
@@ -318,26 +245,6 @@ struct BorderAgentOrErrorMsg
     BorderAgent mBorderAgent;
     Error       mError;
 };
-
-/**
- * This function is the callback of a discovered Border Agent.
- *
- * @param[in] aBorderAgent   The discovered Border Agent. Not null
- *                           only when aError== ErrorCode::kNone is true.
- * @param[in] aError         The error;
- *
- */
-using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const Error &aError)>;
-
-/**
- * Discovery Border Agent in local network with mDNS.
- *
- * @param[in] aBorderAgentHandler  The handler of found Border Agent.
- *                                 called once for each Border Agent.
- * @param[in] aTimeout             The time waiting for mDNS responses.
- *
- */
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);
 
 } // namespace commissioner
 

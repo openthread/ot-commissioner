@@ -26,6 +26,9 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef OT_COMM_MDNS_HANDLER_HPP
+#define OT_COMM_MDNS_HANDLER_HPP
+
 #include <mdns/mdns.h>
 
 namespace ot {
@@ -46,3 +49,5 @@ int HandleRecord(const struct sockaddr *from,
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_MDNS_HANDLER_HPP

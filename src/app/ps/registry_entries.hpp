@@ -61,14 +61,8 @@ struct RegistrarId
 {
     unsigned int mId;
 
-    RegistrarId(unsigned int aValue)
-        : mId(aValue)
-    {
-    }
-    RegistrarId()
-        : RegistrarId(EMPTY_ID)
-    {
-    }
+    RegistrarId(unsigned int aValue);
+    RegistrarId();
 };
 
 /**
@@ -78,14 +72,8 @@ struct DomainId
 {
     unsigned int mId;
 
-    DomainId(unsigned int aValue)
-        : mId(aValue)
-    {
-    }
-    DomainId()
-        : DomainId(EMPTY_ID)
-    {
-    }
+    DomainId(unsigned int aValue);
+    DomainId();
 };
 
 /**
@@ -95,14 +83,8 @@ struct NetworkId
 {
     unsigned int mId;
 
-    NetworkId(unsigned int aValue)
-        : mId(aValue)
-    {
-    }
-    NetworkId()
-        : NetworkId(EMPTY_ID)
-    {
-    }
+    NetworkId(unsigned int aValue);
+    NetworkId();
 };
 
 /**
@@ -112,14 +94,8 @@ struct BorderRouterId
 {
     unsigned int mId;
 
-    BorderRouterId(unsigned int aValue)
-        : mId(aValue)
-    {
-    }
-    BorderRouterId()
-        : BorderRouterId(EMPTY_ID)
-    {
-    }
+    BorderRouterId(unsigned int aValue);
+    BorderRouterId();
 };
 
 /**
@@ -135,17 +111,8 @@ struct Registrar
     Registrar(RegistrarId const &             aId,
               std::string const &             aAddr,
               unsigned int const              aPort,
-              std::vector<std::string> const &aDomains)
-        : mId(aId)
-        , mAddr(aAddr)
-        , mPort(aPort)
-        , mDomains(aDomains)
-    {
-    }
-    Registrar()
-        : Registrar(EMPTY_ID, "", 0, {})
-    {
-    }
+              std::vector<std::string> const &aDomains);
+    Registrar();
 };
 
 /**
@@ -156,15 +123,8 @@ struct Domain
     DomainId    mId;   /**< unique mId in registry */
     std::string mName; /**< domain name */
 
-    Domain(DomainId const &aId, std::string const &aName)
-        : mId(aId)
-        , mName(aName)
-    {
-    }
-    Domain()
-        : Domain(EMPTY_ID, "")
-    {
-    }
+    Domain(DomainId const &aId, std::string const &aName);
+    Domain();
 };
 
 typedef std::vector<Domain> DomainArray;
@@ -191,21 +151,8 @@ struct Network
             unsigned int const aChannel,
             std::string const &aPan,
             std::string const &aMlp,
-            int const          aCcm)
-        : mId(aId)
-        , mDomainId(aDomainId)
-        , mName(aName)
-        , mXpan(aXpan)
-        , mChannel(aChannel)
-        , mPan(aPan)
-        , mMlp(aMlp)
-        , mCcm(aCcm)
-    {
-    }
-    Network()
-        : Network(EMPTY_ID, EMPTY_ID, "", XpanId{}, 0, "", "", -1)
-    {
-    }
+            int const          aCcm);
+    Network();
 };
 
 typedef std::vector<Network> NetworkArray;
@@ -219,21 +166,12 @@ struct BorderRouter
     NetworkId      mNetworkId; /**< network data reference */
     BorderAgent    mAgent;     /**< border agent descriptive data */
 
-    BorderRouter()
-        : BorderRouter(EMPTY_ID, EMPTY_ID, {})
-    {
-    }
-
-    BorderRouter(BorderRouterId const &aId, NetworkId const &aNetworkId, BorderAgent const &aAgent)
-        : mId{aId}
-        , mNetworkId{aNetworkId}
-        , mAgent{aAgent}
-    {
-    }
+    BorderRouter();
+    BorderRouter(BorderRouterId const &aId, NetworkId const &aNetworkId, BorderAgent const &aAgent);
     /**
      * Minimum polymorphic requirements.
      */
-    virtual ~BorderRouter() {}
+    virtual ~BorderRouter();
 };
 
 typedef std::vector<BorderRouter> BorderRouterArray;

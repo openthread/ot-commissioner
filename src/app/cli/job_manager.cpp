@@ -672,6 +672,31 @@ exit:
     return error;
 }
 
+JobManager::JobManager(Interpreter &aInterpreter)
+    : mInterpreter(aInterpreter)
+{
+}
+
+bool JobManager::IsClean()
+{
+    return mJobPool.size() == 0 && mImportFile.size() == 0;
+}
+
+void JobManager::ErrorMsg(uint64_t aNid, std::string aMessage)
+{
+    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
+}
+
+void JobManager::WarningMsg(uint64_t aNid, std::string aMessage)
+{
+    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
+}
+
+void JobManager::InfoMsg(uint64_t aNid, std::string aMessage)
+{
+    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
+}
+
 } // namespace commissioner
 
 } // namespace ot

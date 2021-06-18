@@ -49,6 +49,7 @@
 #include <event2/util.h>
 #include <mdns/mdns.h>
 
+#include "app/br_discover.hpp"
 #include "app/cli/job_manager.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
@@ -2578,6 +2579,26 @@ std::string Interpreter::BaAvailabilityToString(uint32_t aAvailability)
     default:
         return "reserved";
     }
+}
+
+Interpreter::Value::Value(std::string aData)
+    : mData(aData)
+{
+}
+
+Interpreter::Value::Value(Error aError)
+    : mError(aError)
+{
+}
+
+bool Interpreter::Value::operator==(const ErrorCode &aErrorCode) const
+{
+    return mError.GetCode() == aErrorCode;
+}
+
+bool Interpreter::Value::operator!=(const ErrorCode &aErrorCode) const
+{
+    return !(*this == aErrorCode);
 }
 
 } // namespace commissioner

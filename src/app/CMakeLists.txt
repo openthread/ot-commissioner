@@ -33,6 +33,8 @@ add_library(commissioner-app
     commissioner_app.hpp
     border_agent.cpp
     border_agent.hpp
+	br_discover.cpp
+	br_discover.hpp
     file_logger.cpp
     file_logger.hpp
     file_util.cpp

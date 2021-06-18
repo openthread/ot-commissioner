@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2021, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -26,81 +26,42 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file
- *   The file implements command job.
- */
+#ifndef OT_COMM_BR_DISCOVER_HPP
+#define OT_COMM_BR_DISCOVER_HPP
 
-#include "app/cli/job.hpp"
-#include "app/ps/registry.hpp"
-#include "common/utils.hpp"
-#include "library/logging.hpp"
+#include <functional>
+
+#include "commissioner/error.hpp"
+
+#include "border_agent.hpp"
+#include "mdns_handler.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-void Job::Run()
-{
-    ASSERT(!mJobThread.joinable());
-    mJobThread = std::thread([this] { mValue = mEval(&mInterpreter, mCommissioner, mExpr); });
-}
+/**
+ * This function is the callback of a discovered Border Agent.
+ *
+ * @param[in] aBorderAgent   The discovered Border Agent. Not null
+ *                           only when aError== ErrorCode::kNone is true.
+ * @param[in] aError         The error;
+ *
+ */
+using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const Error &aError)>;
 
-void Job::Wait()
-{
-    ASSERT(mJobThread.joinable());
-    mJobThread.join();
-    if (!mValue.HasNoError())
-    {
-        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", XpanId(mXpanId).str(), GetCommandString(),
-                  mValue.ToString());
-    }
-}
-
-void Job::Cancel()
-{
-    mCommissioner->CancelRequests();
-}
-
-std::string Job::GetCommandString()
-{
-    std::ostringstream command;
-    std::string        out;
-
-    for_each(mExpr.begin(), mExpr.end() - 1, [&command](std::string &item) { command << item << " "; });
-    out = command.str();
-    out.pop_back(); // get rid of trailing space
-    return out;
-}
-
-Job::Job(Interpreter &             aInterpreter,
-         CommissionerAppPtr &      aCommApp,
-         Interpreter::Expression   aExpr,
-         Interpreter::JobEvaluator aEval,
-         uint64_t                  aXpanId)
-    : mInterpreter(aInterpreter)
-    , mCommissioner(aCommApp)
-    , mExpr(aExpr)
-    , mEval(aEval)
-    , mXpanId(aXpanId)
-{
-}
-
-bool Job::IsStopped()
-{
-    return !mJobThread.joinable();
-}
-
-uint64_t Job::GetXpanId() const
-{
-    return mXpanId;
-}
-
-Interpreter::Value Job::GetValue() const
-{
-    return mValue;
-}
+/**
+ * Discovery Border Agent in local network with mDNS.
+ *
+ * @param[in] aBorderAgentHandler  The handler of found Border Agent.
+ *                                 called once for each Border Agent.
+ * @param[in] aTimeout             The time waiting for mDNS responses.
+ *
+ */
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);
 
 } // namespace commissioner
 
 } // namespace ot
+
+#endif // OT_COMM_BR_DISCOVER_HPP

@@ -52,10 +52,7 @@ class Job;
 class JobManager
 {
 public:
-    explicit JobManager(Interpreter &aInterpreter)
-        : mInterpreter(aInterpreter)
-    {
-    }
+    explicit JobManager(Interpreter &aInterpreter);
     ~JobManager() = default;
 
     Error Init(const Config &aConf);
@@ -90,7 +87,7 @@ public:
     /**
      * Asserts if the execution context is blank and ready for the next run.
      */
-    bool IsClean() { return mJobPool.size() == 0 && mImportFile.size() == 0; }
+    bool IsClean();
     /**
      * Apply new PSKc bytes and re-create @ref
      * JobManager::mDefaultCommissioner instance
@@ -156,18 +153,9 @@ private:
     Error PrepareDtlsConfig(const XpanId aNid, Config &aConfig);
     Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId);
 
-    void ErrorMsg(uint64_t aNid, std::string aMessage)
-    {
-        mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
-    }
-    void WarningMsg(uint64_t aNid, std::string aMessage)
-    {
-        mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
-    }
-    void InfoMsg(uint64_t aNid, std::string aMessage)
-    {
-        mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
-    }
+    void ErrorMsg(uint64_t aNid, std::string aMessage);
+    void WarningMsg(uint64_t aNid, std::string aMessage);
+    void InfoMsg(uint64_t aNid, std::string aMessage);
 
     JobPool            mJobPool;
     CommissionerPool   mCommissionerPool;

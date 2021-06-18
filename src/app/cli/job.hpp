@@ -49,23 +49,16 @@ public:
         CommissionerAppPtr &      aCommApp,
         Interpreter::Expression   aExpr,
         Interpreter::JobEvaluator aEval,
-        uint64_t                  aXpanId)
-        : mInterpreter(aInterpreter)
-        , mCommissioner(aCommApp)
-        , mExpr(aExpr)
-        , mEval(aEval)
-        , mXpanId(aXpanId)
-    {
-    }
+        uint64_t                  aXpanId);
     ~Job() = default;
 
     void Run();
     void Wait();
     void Cancel();
-    bool IsStopped() { return !mJobThread.joinable(); }
+    bool IsStopped();
 
-    uint64_t           GetXpanId() const { return mXpanId; }
-    Interpreter::Value GetValue() const { return mValue; }
+    uint64_t           GetXpanId() const;
+    Interpreter::Value GetValue() const;
     std::string        GetCommandString();
 
 private:

@@ -83,19 +83,13 @@ private:
         Value() = default;
 
         // Allow implicit conversion from std::string to Value.
-        Value(std::string aData)
-            : mData(aData)
-        {
-        }
+        Value(std::string aData);
 
         // Allow implicit conversion from Error to Value.
-        Value(Error aError)
-            : mError(aError)
-        {
-        }
+        Value(Error aError);
 
-        bool operator==(const ErrorCode &aErrorCode) const { return mError.GetCode() == aErrorCode; }
-        bool operator!=(const ErrorCode &aErrorCode) const { return !(*this == aErrorCode); }
+        bool operator==(const ErrorCode &aErrorCode) const;
+        bool operator!=(const ErrorCode &aErrorCode) const;
 
         std::string ToString() const;
         bool        HasNoError() const;

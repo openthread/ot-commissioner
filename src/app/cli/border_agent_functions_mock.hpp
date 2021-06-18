@@ -35,6 +35,7 @@
 #include "gmock/gmock.h"
 
 #include "app/border_agent.hpp"
+#include "app/br_discover.hpp"
 
 namespace ot {
 namespace commissioner {

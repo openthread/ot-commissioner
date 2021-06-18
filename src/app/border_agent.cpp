@@ -28,9 +28,6 @@
 
 #include "border_agent.hpp"
 
-#include <chrono>
-#include <thread>
-
 #include <fmt/format.h>
 
 #include "mdns_handler.hpp"
@@ -42,55 +39,127 @@ namespace ot {
 
 namespace commissioner {
 
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout)
+UnixTime::UnixTime(std::time_t aTime)
+    : mTime(aTime)
 {
-    static constexpr size_t             kDefaultBufferSize = 1024 * 16;
-    static constexpr mdns_record_type_t kMdnsQueryType     = MDNS_RECORDTYPE_PTR;
-    static const char *                 kServiceName       = "_meshcop._udp.local";
+}
 
-    Error   error;
-    uint8_t buf[kDefaultBufferSize];
+UnixTime::UnixTime()
+    : UnixTime(0)
+{
+}
 
-    auto begin = std::chrono::system_clock::now();
-
-    int socket = mdns_socket_open_ipv4();
-    VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
-
-    if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
+UnixTime::UnixTime(const std::string &aTimeStr)
+    : UnixTime()
+{
+    std::tm lTm;
+    char *  result = strptime(aTimeStr.c_str(), "%Y%m%dT%H%M%S", &lTm);
+    if (result != nullptr && *result == '\000')
     {
-        ExitNow(error = ERROR_IO_ERROR("failed to send mDNS query"));
+        mTime = std::mktime(&lTm);
     }
+}
 
-    while (begin + std::chrono::milliseconds(aTimeout) >= std::chrono::system_clock::now())
-    {
-        BorderAgentOrErrorMsg curBorderAgentOrErrorMsg;
+bool UnixTime::operator==(const UnixTime &other) const
+{
+    return mTime == other.mTime;
+}
 
-        mdns_query_recv(socket, buf, sizeof(buf), HandleRecord, &curBorderAgentOrErrorMsg, 1);
+UnixTime::operator std::string() const
+{
+    std::tm lTm;
+    gmtime_r(&mTime, &lTm);
 
-        if (curBorderAgentOrErrorMsg.mError != ErrorCode::kNone)
-        {
-            aBorderAgentHandler(nullptr, curBorderAgentOrErrorMsg.mError);
-        }
-        else if ((curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags & BorderAgent::kAddrBit) == 0 ||
-                 (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags & BorderAgent::kPortBit) == 0)
-        {
-            aBorderAgentHandler(nullptr, ERROR_BAD_FORMAT("incomplete MeshCoP service"));
-        }
-        else if (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags != 0)
-        {
-            aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, ERROR_NONE);
-        }
+    char lTimeStr[16];
+    std::strftime(lTimeStr, sizeof(lTimeStr), "%Y%m%dT%H%M%S", &lTm);
+    return lTimeStr;
+}
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+BorderAgent::State::State(uint32_t aConnectionMode,
+                          uint32_t aThreadIfStatus,
+                          uint32_t aAvailability,
+                          uint32_t aBbrIsActive,
+                          uint32_t aBbrIsPrimary)
+    : mConnectionMode(aConnectionMode)
+    , mThreadIfStatus(aThreadIfStatus)
+    , mAvailability(aAvailability)
+    , mBbrIsActive(aBbrIsActive)
+    , mBbrIsPrimary(aBbrIsPrimary)
+{
+}
 
-exit:
-    if (socket >= 0)
-    {
-        mdns_socket_close(socket);
-    }
+BorderAgent::State::State(uint32_t aState)
+    : State((aState & kConnectionModeMask) >> kConnectionModeOffset,
+            (aState & kThreadIfStatusMask) >> kThreadIfStatusOffset,
+            (aState & kAvailabilityMask) >> kAvailabilityOffset,
+            (aState & kBbrIsActiveMask) >> kBbrIsActiveOffset,
+            (aState & kBbrIsPrimaryMask) >> kBbrIsPrimaryOffset)
+{
+}
 
-    return error;
+BorderAgent::State::State()
+    : State(0)
+{
+}
+
+BorderAgent::State::operator uint32_t() const
+{
+    return ((mConnectionMode << kConnectionModeOffset) & kConnectionModeMask) |
+           ((mThreadIfStatus << kThreadIfStatusOffset) & kThreadIfStatusMask) |
+           ((mAvailability << kAvailabilityOffset) & kAvailabilityMask) |
+           ((mBbrIsActive << kBbrIsActiveOffset) & kBbrIsActiveMask) | (mBbrIsPrimary & kBbrIsPrimaryMask);
+}
+
+BorderAgent::BorderAgent()
+    : BorderAgent{
+          "", 0,  ByteArray{}, "", State{0, 0, 0, 0, 0}, "", 0, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0,
+          0,  "", 0,           0}
+{
+}
+
+BorderAgent::BorderAgent(std::string const &aAddr,
+                         uint16_t           aPort,
+                         ByteArray const &  aDiscriminator,
+                         std::string const &aThreadVersion,
+                         BorderAgent::State aState,
+                         std::string const &aNetworkName,
+                         uint64_t           aExtendedPanId,
+                         std::string const &aVendorName,
+                         std::string const &aModelName,
+                         Timestamp          aActiveTimestamp,
+                         uint32_t           aPartitionId,
+                         std::string const &aVendorData,
+                         ByteArray const &  aVendorOui,
+                         std::string const &aDomainName,
+                         uint8_t            aBbrSeqNumber,
+                         uint16_t           aBbrPort,
+                         std::string const &aServiceName,
+                         UnixTime           aUpdateTimestamp,
+                         uint32_t           aPresentFlags)
+    : mAddr(aAddr)
+    , mPort(aPort)
+    , mDiscriminator(aDiscriminator)
+    , mThreadVersion(aThreadVersion)
+    , mState{aState}
+    , mNetworkName(aNetworkName)
+    , mExtendedPanId(aExtendedPanId)
+    , mVendorName(aVendorName)
+    , mModelName(aModelName)
+    , mActiveTimestamp{aActiveTimestamp}
+    , mPartitionId(aPartitionId)
+    , mVendorData(aVendorData)
+    , mVendorOui(aVendorOui)
+    , mDomainName(aDomainName)
+    , mBbrSeqNumber(aBbrSeqNumber)
+    , mBbrPort(aBbrPort)
+    , mServiceName(aServiceName)
+    , mUpdateTimestamp(aUpdateTimestamp)
+    , mPresentFlags(aPresentFlags)
+{
+}
+
+BorderAgent::~BorderAgent()
+{
 }
 
 } // namespace commissioner

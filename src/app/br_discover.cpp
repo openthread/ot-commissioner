@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2021, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -26,79 +26,62 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @file
- *   The file implements command job.
- */
+#include "br_discover.hpp"
 
-#include "app/cli/job.hpp"
-#include "app/ps/registry.hpp"
+#include <chrono>
+#include <thread>
+
+#include "common/error_macros.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-void Job::Run()
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout)
 {
-    ASSERT(!mJobThread.joinable());
-    mJobThread = std::thread([this] { mValue = mEval(&mInterpreter, mCommissioner, mExpr); });
-}
+    static constexpr size_t             kDefaultBufferSize = 1024 * 16;
+    static constexpr mdns_record_type_t kMdnsQueryType     = MDNS_RECORDTYPE_PTR;
+    static const char *                 kServiceName       = "_meshcop._udp.local";
 
-void Job::Wait()
-{
-    ASSERT(mJobThread.joinable());
-    mJobThread.join();
-    if (!mValue.HasNoError())
+    Error   error;
+    uint8_t buf[kDefaultBufferSize];
+
+    auto begin = std::chrono::system_clock::now();
+
+    int socket = mdns_socket_open_ipv4();
+    VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
+
+    if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
     {
-        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", XpanId(mXpanId).str(), GetCommandString(),
-                  mValue.ToString());
+        ExitNow(error = ERROR_IO_ERROR("failed to send mDNS query"));
     }
-}
 
-void Job::Cancel()
-{
-    mCommissioner->CancelRequests();
-}
+    while (begin + std::chrono::milliseconds(aTimeout) >= std::chrono::system_clock::now())
+    {
+        BorderAgentOrErrorMsg curBorderAgentOrErrorMsg;
 
-std::string Job::GetCommandString()
-{
-    std::ostringstream command;
-    std::string        out;
+        mdns_query_recv(socket, buf, sizeof(buf), HandleRecord, &curBorderAgentOrErrorMsg, 1);
 
-    for_each(mExpr.begin(), mExpr.end() - 1, [&command](std::string &item) { command << item << " "; });
-    out = command.str();
-    out.pop_back(); // get rid of trailing space
-    return out;
-}
+        if (curBorderAgentOrErrorMsg.mError != ErrorCode::kNone)
+        {
+            aBorderAgentHandler(nullptr, curBorderAgentOrErrorMsg.mError);
+        }
+        else if (curBorderAgentOrErrorMsg.mBorderAgent.mPresentFlags != 0)
+        {
+            aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, ERROR_NONE);
+        }
 
-Job::Job(Interpreter &             aInterpreter,
-         CommissionerAppPtr &      aCommApp,
-         Interpreter::Expression   aExpr,
-         Interpreter::JobEvaluator aEval,
-         uint64_t                  aXpanId)
-    : mInterpreter(aInterpreter)
-    , mCommissioner(aCommApp)
-    , mExpr(aExpr)
-    , mEval(aEval)
-    , mXpanId(aXpanId)
-{
-}
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 
-bool Job::IsStopped()
-{
-    return !mJobThread.joinable();
-}
+exit:
+    if (socket >= 0)
+    {
+        mdns_socket_close(socket);
+    }
 
-uint64_t Job::GetXpanId() const
-{
-    return mXpanId;
-}
-
-Interpreter::Value Job::GetValue() const
-{
-    return mValue;
+    return error;
 }
 
 } // namespace commissioner

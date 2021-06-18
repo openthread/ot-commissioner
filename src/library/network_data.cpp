@@ -173,6 +173,44 @@ Error XpanId::FromHex(const std::string &aInput)
     return ERROR_NONE;
 }
 
+PanId::PanId(uint16_t aValue)
+    : mValue(aValue)
+{
+}
+
+PanId::PanId()
+    : PanId(0)
+{
+}
+
+PanId::PanId(std::string aValue)
+{
+    mValue = strtol(aValue.c_str(), nullptr, 0);
+}
+
+PanId &PanId::operator=(uint16_t aValue)
+{
+    mValue = aValue;
+    return *this;
+}
+
+PanId::operator uint16_t() const
+{
+    return mValue;
+}
+
+ActiveOperationalDataset::ActiveOperationalDataset()
+    : mActiveTimestamp(Timestamp::Cur())
+    , mPresentFlags(kActiveTimestampBit)
+{
+}
+
+PendingOperationalDataset::PendingOperationalDataset()
+    : mPendingTimestamp(mActiveTimestamp)
+{
+    mPresentFlags |= kPendingTimestampBit;
+}
+
 } // namespace commissioner
 
 } // namespace ot
