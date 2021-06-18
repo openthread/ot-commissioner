@@ -295,6 +295,113 @@ void from_json(const json &aJson, BorderRouter &aValue)
     }
 }
 
+RegistrarId::RegistrarId(unsigned int aValue)
+    : mId(aValue)
+{
+}
+
+RegistrarId::RegistrarId()
+    : RegistrarId(EMPTY_ID)
+{
+}
+
+DomainId::DomainId(unsigned int aValue)
+    : mId(aValue)
+{
+}
+
+DomainId::DomainId()
+    : DomainId(EMPTY_ID)
+{
+}
+
+NetworkId::NetworkId(unsigned int aValue)
+    : mId(aValue)
+{
+}
+
+NetworkId::NetworkId()
+    : NetworkId(EMPTY_ID)
+{
+}
+
+BorderRouterId::BorderRouterId(unsigned int aValue)
+    : mId(aValue)
+{
+}
+
+BorderRouterId::BorderRouterId()
+    : BorderRouterId(EMPTY_ID)
+{
+}
+
+Registrar::Registrar(RegistrarId const &             aId,
+                     std::string const &             aAddr,
+                     unsigned int const              aPort,
+                     std::vector<std::string> const &aDomains)
+    : mId(aId)
+    , mAddr(aAddr)
+    , mPort(aPort)
+    , mDomains(aDomains)
+{
+}
+
+Registrar::Registrar()
+    : Registrar(EMPTY_ID, "", 0, {})
+{
+}
+
+Domain::Domain(DomainId const &aId, std::string const &aName)
+    : mId(aId)
+    , mName(aName)
+{
+}
+
+Domain::Domain()
+    : Domain(EMPTY_ID, "")
+{
+}
+
+Network::Network(NetworkId const &  aId,
+                 DomainId const &   aDomainId,
+                 std::string const &aName,
+                 XpanId const &     aXpan,
+                 unsigned int const aChannel,
+                 std::string const &aPan,
+                 std::string const &aMlp,
+                 int const          aCcm)
+    : mId(aId)
+    , mDomainId(aDomainId)
+    , mName(aName)
+    , mXpan(aXpan)
+    , mChannel(aChannel)
+    , mPan(aPan)
+    , mMlp(aMlp)
+    , mCcm(aCcm)
+{
+}
+
+Network::Network()
+    : Network(EMPTY_ID, EMPTY_ID, "", XpanId{}, 0, "", "", -1)
+{
+}
+
+BorderRouter::BorderRouter()
+    : BorderRouter(EMPTY_ID, EMPTY_ID, {})
+{
+}
+
+BorderRouter::BorderRouter(BorderRouterId const &aId, NetworkId const &aNetworkId, BorderAgent const &aAgent)
+    : mId{aId}
+    , mNetworkId{aNetworkId}
+    , mAgent{aAgent}
+{
+}
+
+BorderRouter::~BorderRouter()
+{
+}
+
 } // namespace persistent_storage
 
 } // namespace commissioner

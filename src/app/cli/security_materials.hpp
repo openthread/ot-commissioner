@@ -60,11 +60,7 @@ struct SecurityMaterials
     // Optional for CCM Thread network.
     ByteArray mCommissionerToken; ///< COM_TOK
 
-    bool IsEmpty(bool isCCM)
-    {
-        return (isCCM ? (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)
-                      : (mPSKc.size() == 0));
-    }
+    bool IsEmpty(bool isCCM);
 };
 
 Error Init(const Config &aDefaultConfig);

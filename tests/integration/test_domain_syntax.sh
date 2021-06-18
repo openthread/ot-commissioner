@@ -153,8 +153,7 @@ test_start_stop_mn_all() {
 	send_command_to_commissioner "sessionid --nwk all" 'DEAD00BEEF00CAFE": \d*'
 	send_command_to_commissioner "opdataset get active --nwk all" 'DEAD00BEEF00CAFE": {'
 	send_command_to_commissioner "commdataset get --nwk all" 'DEAD00BEEF00CAFE": {'
-# TODO issue #29
-#	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk all"
+	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk all"
 	send_command_to_commissioner "opdataset get pending --nwk all"
 	send_command_to_commissioner "stop --nwk all"
 
@@ -184,8 +183,7 @@ test_start_stop_mn_other() {
 	send_command_to_commissioner "sessionid --nwk other" 'DEAD00BEEF00CAFE": \d*'
 	send_command_to_commissioner "opdataset get active --nwk other" 'DEAD00BEEF00CAFE": {'
 	send_command_to_commissioner "commdataset get --nwk other" 'DEAD00BEEF00CAFE": {'
-# TODO issue #29
-#	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk other"
+	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk other"
 	send_command_to_commissioner "opdataset get pending --nwk other"
 	send_command_to_commissioner "stop --nwk other"
 	send_command_to_commissioner "network select none"
@@ -216,8 +214,7 @@ test_start_stop_mn_dom() {
 	send_command_to_commissioner "sessionid --dom TestDomainName" 'DEAD00BEEF00CAFE": \d*'
 	send_command_to_commissioner "opdataset get active --dom TestDomainName" 'DEAD00BEEF00CAFE": {'
 	send_command_to_commissioner "commdataset get --dom TestDomainName" 'DEAD00BEEF00CAFE": {'
-# TODO issue #29
-#	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --dom TestDomainName"
+	send_command_to_commissioner "opdataset set securitypolicy 1000 ff --dom TestDomainName"
 	send_command_to_commissioner "opdataset get pending --dom TestDomainName"
 	send_command_to_commissioner "stop --dom TestDomainName"
 

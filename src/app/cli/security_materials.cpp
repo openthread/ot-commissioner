@@ -197,6 +197,12 @@ exit:
     return error;
 }
 
+bool SecurityMaterials::IsEmpty(bool isCCM)
+{
+    return (isCCM ? (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)
+                  : (mPSKc.size() == 0));
+}
+
 } // namespace sm
 
 } // namespace commissioner

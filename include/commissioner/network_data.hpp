@@ -234,21 +234,11 @@ struct SecurityPolicy
 struct PanId
 {
     uint16_t mValue;
-    PanId(uint16_t aValue)
-        : mValue(aValue)
-    {
-    }
-    PanId()
-        : PanId(0)
-    {
-    }
-    PanId(std::string aValue) { mValue = strtol(aValue.c_str(), nullptr, 0); }
-    PanId &operator=(uint16_t aValue)
-    {
-        mValue = aValue;
-        return *this;
-    }
-    operator uint16_t() const { return mValue; }
+    PanId(uint16_t aValue);
+    PanId();
+    PanId(std::string aValue);
+    PanId &operator=(uint16_t aValue);
+           operator uint16_t() const;
 };
 
 /**
@@ -291,11 +281,7 @@ struct ActiveOperationalDataset
     static constexpr uint16_t kPSKcBit             = (1 << 7);
     static constexpr uint16_t kSecurityPolicyBit   = (1 << 6);
 
-    ActiveOperationalDataset()
-        : mActiveTimestamp(Timestamp::Cur())
-        , mPresentFlags(kActiveTimestampBit)
-    {
-    }
+    ActiveOperationalDataset();
 };
 
 /**
@@ -313,11 +299,7 @@ struct PendingOperationalDataset : ActiveOperationalDataset
     static constexpr uint16_t kDelayTimerBit       = (1 << 5);
     static constexpr uint16_t kPendingTimestampBit = (1 << 4);
 
-    PendingOperationalDataset()
-        : mPendingTimestamp(mActiveTimestamp)
-    {
-        mPresentFlags |= kPendingTimestampBit;
-    }
+    PendingOperationalDataset();
 };
 
 /**
