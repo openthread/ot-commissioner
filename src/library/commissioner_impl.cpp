@@ -386,24 +386,23 @@ exit:
 void CommissionerImpl::SetCommissionerDataset(ErrorHandler aHandler, const CommissionerDataset &aDataset)
 {
     Error         error;
+    auto          dataset = aDataset;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
 
     auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         aHandler(HandleStateResponse(aResponse, aError));
     };
 
-    VerifyOrExit(aDataset.mPresentFlags != 0, error = ERROR_INVALID_ARGS("empty Commissioner Dataset"));
-    VerifyOrExit((aDataset.mPresentFlags & CommissionerDataset::kSessionIdBit) == 0,
-                 error = ERROR_INVALID_ARGS("trying to set Commissioner Session ID which is read-only"));
-    VerifyOrExit((aDataset.mPresentFlags & CommissionerDataset::kBorderAgentLocatorBit) == 0,
-                 error = ERROR_INVALID_ARGS("trying to set Border Agent Locator which is read-only"));
+    dataset.mPresentFlags &= ~CommissionerDataset::kSessionIdBit;
+    dataset.mPresentFlags &= ~CommissionerDataset::kBorderAgentLocatorBit;
+    VerifyOrExit(dataset.mPresentFlags != 0, error = ERROR_INVALID_ARGS("empty Commissioner Dataset"));
 
     // TODO(wgtdkp): verify if every joiner UDP port differs from each other (required by Thread).
     //               Otherwise, this request may fail.
 
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtCommissionerSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
-    SuccessOrExit(error = EncodeCommissionerDataset(request, aDataset));
+    SuccessOrExit(error = EncodeCommissionerDataset(request, dataset));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
