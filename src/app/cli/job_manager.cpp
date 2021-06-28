@@ -77,7 +77,7 @@ void JobManager::SetImportFile(const std::string &importFile)
     mImportFile = importFile;
 }
 
-Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
+Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, XpanId aXpanId)
 {
     Interpreter::JobEvaluator eval;
     auto                      mapItem = Interpreter::mJobEvaluatorMap.find(utils::ToLower(aExpr[0]));
@@ -346,7 +346,7 @@ exit:
     return error;
 }
 
-Error JobManager::MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br)
+Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
 {
     using BRArray = std::vector<persistent_storage::BorderRouter>;
 
@@ -662,17 +662,17 @@ bool JobManager::IsClean()
     return mJobPool.size() == 0 && mImportFile.size() == 0;
 }
 
-void JobManager::ErrorMsg(uint64_t aNid, std::string aMessage)
+void JobManager::ErrorMsg(XpanId aNid, std::string aMessage)
 {
     mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
 }
 
-void JobManager::WarningMsg(uint64_t aNid, std::string aMessage)
+void JobManager::WarningMsg(XpanId aNid, std::string aMessage)
 {
     mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
 }
 
-void JobManager::InfoMsg(uint64_t aNid, std::string aMessage)
+void JobManager::InfoMsg(XpanId aNid, std::string aMessage)
 {
     mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
 }

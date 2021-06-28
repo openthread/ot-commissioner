@@ -131,9 +131,14 @@ bool XpanId::operator==(const XpanId &aOther) const
     return mValue == aOther.mValue;
 }
 
-bool XpanId::operator==(const uint64_t aOther) const
+bool XpanId::operator!=(const uint64_t aOther) const
 {
-    return mValue == aOther;
+    return !operator==(aOther);
+}
+
+bool XpanId::operator<(const XpanId aOther) const
+{
+    return mValue < aOther.mValue;
 }
 
 XpanId::operator std::string() const
@@ -145,11 +150,6 @@ XpanId::operator std::string() const
     return out;
 }
 
-XpanId::operator uint64_t() const
-{
-    return mValue;
-}
-
 /**
  * Converts hex string to the corresponding integer type.
  * @attention Makes no validity checks.
@@ -158,17 +158,22 @@ Error XpanId::FromHex(const std::string &aInput)
 {
     mValue = 0;
 
-    if (aInput.empty() || aInput.length() > 16)
-        return ERROR_BAD_FORMAT("wrong XPAN string length {}", aInput.length());
-    for (auto c : aInput)
+    std::string input = aInput;
+    if (input.substr(0, 2) == "0x")
+    {
+        input = input.substr(2);
+    }
+    if (input.empty() || input.length() > 16)
+        return ERROR_BAD_FORMAT("wrong XPAN string length {}", input.length());
+    for (auto c : input)
     {
         if (!std::isxdigit(c))
         {
-            return ERROR_BAD_FORMAT("not a hex string '{}'", aInput);
+            return ERROR_BAD_FORMAT("not a hex string '{}'", input);
         }
     }
 
-    std::istringstream is(aInput);
+    std::istringstream is(input);
     is >> std::hex >> mValue;
     return ERROR_NONE;
 }
@@ -183,11 +188,6 @@ PanId::PanId()
 {
 }
 
-PanId::PanId(std::string aValue)
-{
-    mValue = strtol(aValue.c_str(), nullptr, 0);
-}
-
 PanId &PanId::operator=(uint16_t aValue)
 {
     mValue = aValue;
@@ -197,6 +197,30 @@ PanId &PanId::operator=(uint16_t aValue)
 PanId::operator uint16_t() const
 {
     return mValue;
+}
+
+Error PanId::FromHex(const std::string &aInput)
+{
+    mValue = 0;
+
+    std::string input = aInput;
+    if (input.substr(0, 2) == "0x")
+    {
+        input = input.substr(2);
+    }
+    if (input.empty() || input.length() > 4)
+        return ERROR_BAD_FORMAT("wrong XPAN string length {}", input.length());
+    for (auto c : input)
+    {
+        if (!std::isxdigit(c))
+        {
+            return ERROR_BAD_FORMAT("not a hex string '{}'", input);
+        }
+    }
+
+    std::istringstream is(input);
+    is >> std::hex >> mValue;
+    return ERROR_NONE;
 }
 
 ActiveOperationalDataset::ActiveOperationalDataset()

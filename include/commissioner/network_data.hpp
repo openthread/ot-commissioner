@@ -70,11 +70,10 @@ struct XpanId
 
     bool operator==(const XpanId &aOther) const;
 
-    bool operator==(const uint64_t aOther) const;
+    bool operator!=(const uint64_t aOther) const;
+    bool operator<(const XpanId aOther) const;
 
     operator std::string() const;
-
-    operator uint64_t() const;
 
     /**
      * Decodes hexadecimal string.
@@ -236,9 +235,11 @@ struct PanId
     uint16_t mValue;
     PanId(uint16_t aValue);
     PanId();
-    PanId(std::string aValue);
+
     PanId &operator=(uint16_t aValue);
            operator uint16_t() const;
+
+    Error FromHex(const std::string &aInput);
 };
 
 /**
