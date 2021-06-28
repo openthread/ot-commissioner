@@ -418,7 +418,7 @@ static void from_json(const Json &aJson, ot::commissioner::PanId &aPanId)
 {
     std::string panIdStr;
     panIdStr = aJson.get<std::string>();
-    aPanId   = PanId(panIdStr);
+    SuccessOrThrow(aPanId.FromHex(panIdStr));
 }
 
 static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)

@@ -114,12 +114,12 @@ public:
      * If in non-CCM mode, a BR with most highly avaliable and Thread-active
      * interface becomes the choice.
      */
-    Error MakeBorderRouterChoice(const uint64_t aNid, BorderRouter &br);
+    Error MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br);
 
 private:
     friend class JobManagerTestSuite;
 
-    using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
+    using CommissionerPool = std::map<XpanId, CommissionerAppPtr>;
     using JobPool          = std::vector<Job *>;
     /**
      * Wait for all job threads to join.
@@ -151,11 +151,11 @@ private:
      *        found not empty, the search is stopped.
      */
     Error PrepareDtlsConfig(const XpanId aNid, Config &aConfig);
-    Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId);
+    Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, XpanId aXpanId);
 
-    void ErrorMsg(uint64_t aNid, std::string aMessage);
-    void WarningMsg(uint64_t aNid, std::string aMessage);
-    void InfoMsg(uint64_t aNid, std::string aMessage);
+    void ErrorMsg(XpanId aNid, std::string aMessage);
+    void WarningMsg(XpanId aNid, std::string aMessage);
+    void InfoMsg(XpanId aNid, std::string aMessage);
 
     JobPool            mJobPool;
     CommissionerPool   mCommissionerPool;

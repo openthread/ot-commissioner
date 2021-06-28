@@ -77,12 +77,12 @@ Job::Job(Interpreter &             aInterpreter,
          CommissionerAppPtr &      aCommApp,
          Interpreter::Expression   aExpr,
          Interpreter::JobEvaluator aEval,
-         uint64_t                  aXpanId)
+         XpanId                    aXpanId)
     : mInterpreter(aInterpreter)
     , mCommissioner(aCommApp)
     , mExpr(aExpr)
     , mEval(aEval)
-    , mXpanId(aXpanId)
+    , mXpanId(aXpanId.mValue)
 {
 }
 
