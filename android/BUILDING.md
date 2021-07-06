@@ -7,6 +7,12 @@ This document describes how to build the OT Commissioner Android App.
 - macOS or Linux computer.
 - Install latest Android Studio from [here](https://developer.android.com/studio).
 
+## Bootstrap
+
+```shell
+../script/bootstrap.sh
+```
+
 ## Build shared library
 
 The Commissioner Android App is built on top of the native OT Commissioner library. Run the `build-commissioner-libs.sh` script in this directory to build the required libraries:
