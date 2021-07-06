@@ -70,3 +70,30 @@ jobs:
           lcov --directory build/ --capture --output-file coverage.info
           lcov --list coverage.info
           bash <(curl -s https://codecov.io/bash) -f coverage.info
+
+  mini-commissioner:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Bootstrap
+        run: |
+          script/bootstrap.sh
+      - name: Build
+        run: |
+          cd example && mkdir build && cd build
+          cmake -GNinja                           \
+                -DCMAKE_CXX_STANDARD=11           \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
+                -DCMAKE_BUILD_TYPE=Release        \
+                -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DOT_COMM_REFERENCE_DEVICE=ON     \
+                -DOT_COMM_CCM=OFF                 \
+                -DOT_COMM_WARNING_AS_ERROR=ON     \
+                ..
+          ninja
+          sudo ninja install
+      - name: Run mini-commissioner tests
+        run: |
+          cd tests/integration
+          ./bootstrap.sh
+          ./mini_commissioner/test_mini_commissioner.sh
