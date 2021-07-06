@@ -90,7 +90,7 @@ if [ "$(uname)" = "Linux" ]; then
                          ninja-build \
                          swig \
                          lcov \
-						 jsonlint
+                         jsonlint
 
     sudo apt-get --no-install-recommends install -y clang-format-9 || echo 'WARNING: could not install clang-format-9, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
     python3 -m pip install yapf==0.29.0 || echo 'WARNING: could not install yapf, which is useful if you plan to contribute python code to the OpenThread project.'
