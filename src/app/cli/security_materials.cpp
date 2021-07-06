@@ -37,6 +37,10 @@
 #include "app/file_util.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "library/logging.hpp"
+
+#define SM_ERROR_MESSAGE_NO_ROOT_AVAILABLE "ThreadSMRoot value is not available"
+#define SM_ERROR_MESSAGE_PEM_READ_FAILED   "Failed to read security data from file {}"
 
 namespace ot {
 
@@ -69,7 +73,14 @@ Error Init(const Config &aDefaultConfig)
         root = SafeStr(getenv("THREAD_SM_ROOT"));
         if (root.empty())
         {
-            Console::Write("ThreadSMRoot value is not available", Console::Color::kYellow);
+            if (gVerbose)
+            {
+                Console::Write(SM_ERROR_MESSAGE_NO_ROOT_AVAILABLE, Console::Color::kYellow);
+            }
+            else
+            {
+                LOG_DEBUG(LOG_REGION_SECURITY_MATERIALS, SM_ERROR_MESSAGE_NO_ROOT_AVAILABLE);
+            }
         }
     }
     smRoot.Set(root);
@@ -99,8 +110,15 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
         error = ReadPemFile(bytes, path);
         if (error != ERROR_NONE)
         {
-            std::string out = fmt::format(FMT_STRING("Failed to read security data from file {}"), path);
-            Console::Write(out, Console::Color::kRed);
+            if (gVerbose)
+            {
+                std::string out = fmt::format(FMT_STRING(SM_ERROR_MESSAGE_PEM_READ_FAILED), path);
+                Console::Write(out, Console::Color::kRed);
+            }
+            else
+            {
+                LOG_ERROR(LOG_REGION_SECURITY_MATERIALS, SM_ERROR_MESSAGE_PEM_READ_FAILED, path);
+            }
         }
         else
         {
@@ -162,8 +180,15 @@ static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aA
             error = ReadPemFile(bytes, path);
             if (error != ERROR_NONE)
             {
-                std::string out = fmt::format(FMT_STRING("Failed to read security data from file {}"), path);
-                Console::Write(out, Console::Color::kRed);
+                if (gVerbose)
+                {
+                    std::string out = fmt::format(FMT_STRING(SM_ERROR_MESSAGE_PEM_READ_FAILED), path);
+                    Console::Write(out, Console::Color::kRed);
+                }
+                else
+                {
+                    LOG_ERROR(LOG_REGION_SECURITY_MATERIALS, SM_ERROR_MESSAGE_PEM_READ_FAILED, path);
+                }
             }
             else
             {
