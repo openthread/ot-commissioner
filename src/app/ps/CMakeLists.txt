@@ -53,7 +53,7 @@ target_link_libraries(persistent-storage
     PUBLIC
     commissioner-common
     commissioner
-	commissioner-app
+    commissioner-app
 )
 
 if (BUILD_SHARED_LIBS)

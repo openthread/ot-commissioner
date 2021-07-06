@@ -179,7 +179,7 @@ if (OT_COMM_TEST)
             commissioner
             $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
             commissioner-common
-			persistent-storage
+            persistent-storage
     )
 
     target_compile_definitions(commissioner-test
