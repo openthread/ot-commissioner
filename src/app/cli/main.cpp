@@ -68,13 +68,13 @@ static void PrintUsage(const std::string &aProgram)
     static const std::string usage = "usage: \n"
                                      "help digest:\n    " +
                                      aProgram +
-                                     "-h|--help\n"
+                                     " -h|--help\n"
                                      "version:\n    " +
                                      aProgram +
-                                     "-v|--version\n"
+                                     " -v|--version\n"
                                      "common options\n    " +
                                      aProgram +
-                                     "[-r|--registry <registryFileName>] [-c|--config <configFileName>]\n"
+                                     " [-r|--registry <registryFileName>] [-c|--config <configFileName>]\n"
                                      "or\n    " +
                                      aProgram + " [-r|--registry <registryFileName>] [configFileName]";
 
