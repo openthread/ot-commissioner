@@ -57,12 +57,10 @@ case "$1" in
         echo ""
         echo "  $0 clean"
         echo "  $0 all --clean-first"
+        echo "  $0 --target interpreter-test"
         echo ""
         ;;
-    clean)
-        code_make $@
-        ;;
-    all)
+    all|clean)
         code_make $@
         ;;
     *)
