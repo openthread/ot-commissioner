@@ -4,4 +4,4 @@ The OpenThread (OT) Commissioner Android App commissions a new Thread 1.1 Device
 
 ## Build
 
-See [BUILDING.md](./BUILDING.md).
+Follow [BUILDING.md](./BUILDING.md) to build the Android App.
