@@ -66,6 +66,13 @@ public:
     static void Write(const std::string &aLine, Color aColor = Color::kDefault);
 };
 
+/**
+ * Indicates if console is running verbose mode. If verbose, debug
+ * messages appear printed to console, and if not, go to log file
+ * instead.
+ */
+extern bool gVerbose;
+
 } // namespace commissioner
 
 } // namespace ot

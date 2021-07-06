@@ -337,6 +337,7 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
 {
     Error error;
 
+    std::string verboseEnv = ToLower(SafeStr(getenv("VERBOSE")));
     std::string configJson;
     Config      config;
 
@@ -371,6 +372,8 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
     fcntl(mCancelPipe[0], F_SETFL, flags | O_NONBLOCK);
     flags = fcntl(mCancelPipe[1], F_GETFL, 0);
     fcntl(mCancelPipe[1], F_SETFL, flags | O_NONBLOCK);
+    // set up console verbosity
+    gVerbose = verboseEnv == "1" || verboseEnv == "yes" || verboseEnv == "true";
 
 exit:
     return error;

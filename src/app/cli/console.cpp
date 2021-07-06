@@ -42,6 +42,8 @@ namespace ot {
 
 namespace commissioner {
 
+bool gVerbose = false;
+
 std::string Console::Read()
 {
     const char *line = "";
