@@ -90,7 +90,7 @@ start_daemon() {
 
     sleep 10
 
-	pidof ot-daemon || die "Failed to start ot-daemon"
+    pidof ot-daemon || die "Failed to start ot-daemon"
 }
 
 stop_daemon() {
@@ -219,7 +219,7 @@ form_network() {
     local pskc=$1
 
     sudo "${OT_CTL}" channel "${CHANNEL}"
-	sudo "${OT_CTL}" networkname "${NETWORK_NAME}"
+    sudo "${OT_CTL}" networkname "${NETWORK_NAME}"
     sudo "${OT_CTL}" panid "${PANID}"
     sudo "${OT_CTL}" extpanid "${XPANID}"
     sudo "${OT_CTL}" pskc "${pskc}"
@@ -239,20 +239,20 @@ petition_commissioner() {
 }
 
 install_borderagent_mdns_data() {
-	local ba_mdns_data_dir=$1
+    local ba_mdns_data_dir=$1
 
-	[[ -d "${ba_mdns_data_dir}" ]] || {
-		echo "'${ba_mdns_data_dir}' is not a directory"
-		exit 1
-	}
+    [[ -d "${ba_mdns_data_dir}" ]] || {
+        echo "'${ba_mdns_data_dir}' is not a directory"
+        exit 1
+    }
 
-	sudo rm -f /etc/avahi/services/*.service
-	sudo cp "${ba_mdns_data_dir}"/* /etc/avahi/services/
-	sleep 3
+    sudo rm -f /etc/avahi/services/*.service
+    sudo cp "${ba_mdns_data_dir}"/* /etc/avahi/services/
+    sleep 3
 }
 
 uninstall_borderagent_mdns_data() {
-	sudo rm -f /etc/avahi/services/*.service
+    sudo rm -f /etc/avahi/services/*.service
 }
 
 start_border_agent_mdns_service() {
@@ -271,44 +271,44 @@ stop_border_agent_mdns_service() {
 declare -a jobids
 
 mdns_hosts_map_addresses() {
-	local last_addr
-	local last_br
+    local last_addr
+    local last_br
 
-	for i in $(seq 0 3)
-	do
-		last_br=$(($i + 1))
-		last_addr=$(($i + 2))
-		avahi-publish-service -a ba$last_br.local ::$last_addr &
-		jobids[$i]=$!
-	done
+    for i in $(seq 0 3)
+    do
+        last_br=$(($i + 1))
+        last_addr=$(($i + 2))
+        avahi-publish-service -a ba$last_br.local ::$last_addr &
+        jobids[$i]=$!
+    done
 
-	sleep 3
+    sleep 3
 }
 
 mdns_hosts_unmap_addresses() {
-	for i in ${!jobids[*]}
-	do
-		if [ ${jobids[$i]} -ne 0 ]
-		then
-			kill ${jobids[$i]}
-			jobids[$i]=0
-		fi
-	done
+    for i in ${!jobids[*]}
+    do
+        if [ ${jobids[$i]} -ne 0 ]
+        then
+            kill ${jobids[$i]}
+            jobids[$i]=0
+        fi
+    done
 }
 
 commissioner_mdns_scan_import() {
-	set -e
-	local src_dir=$1
+    set -e
+    local src_dir=$1
 
-	sudo rm -f /etc/avahi/services/*.service
-	rm -f /tmp/nwk.json
-	for i in $(ls -1 $src_dir)
-	do
-		sudo cp $src_dir/$i /etc/avahi/services/
-		sleep 3
-		send_command_to_commissioner "br scan --timeout 1000 --export /tmp/nwk.json"
-		send_command_to_commissioner "br add /tmp/nwk.json"
-		rm -f /tmp/nwk.json
-		sudo rm -f /etc/avahi/services/$i
-	done
+    sudo rm -f /etc/avahi/services/*.service
+    rm -f /tmp/nwk.json
+    for i in $(ls -1 $src_dir)
+    do
+        sudo cp $src_dir/$i /etc/avahi/services/
+        sleep 3
+        send_command_to_commissioner "br scan --timeout 1000 --export /tmp/nwk.json"
+        send_command_to_commissioner "br add /tmp/nwk.json"
+        rm -f /tmp/nwk.json
+        sudo rm -f /etc/avahi/services/$i
+    done
 }

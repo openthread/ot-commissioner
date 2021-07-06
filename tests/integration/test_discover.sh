@@ -32,7 +32,7 @@
 test_discover() {
     set -e
 
-	install_borderagent_mdns_data "${CUR_DIR}/../etc/avahi/services"
+    install_borderagent_mdns_data "${CUR_DIR}/../etc/avahi/services"
 
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
