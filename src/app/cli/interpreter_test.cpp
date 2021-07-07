@@ -37,9 +37,9 @@
 #define private public
 
 #include "app/border_agent_functions_mock.hpp"
-#include "app/commissioner_app_mock.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/commissioner_app_mock.hpp"
 #include "app/file_util.hpp"
 #include "app/ps/persistent_storage_json.hpp"
 #include "app/ps/registry.hpp"
