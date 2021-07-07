@@ -64,6 +64,15 @@
 #define LOG_ERROR(aRegion, aFmt, ...) LOG(LogLevel::kError, aRegion, aFmt, ##__VA_ARGS__)
 #define LOG_CRIT(aRegion, aFmt, ...) LOG(LogLevel::kCritical, aRegion, aFmt, ##__VA_ARGS__)
 
+/**
+ * Log macro for pure string objects implementing all the required
+ * formatting by themselves.
+ *
+ * Log levels must be {DEBUG, INFO, WARN, ERROR, CRIT}, i.e. the ones
+ * that turn the macro into one of the above. E.g. DEBUG => LOG_DEBUG
+ */
+#define LOG_STR(aLogLevel, aRegion, aStr) LOG_##aLogLevel(aRegion, "{}", aStr)
+
 namespace ot {
 
 namespace commissioner {

@@ -284,7 +284,11 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             error = sm::GetDomainSM(domainName, dtlsConfig);
             if (ERROR_NONE != error)
             {
-                WarningMsg(aNid, error.GetMessage());
+                LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
+                if (ErrorCode::kNotFound != error.GetCode())
+                {
+                    WarningMsg(aNid, error.GetMessage());
+                }
                 error = ERROR_NONE;
             }
         }
@@ -293,6 +297,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             error = sm::GetDefaultDomainSM(nwk.mXpan.str(), isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
+                LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
                 if (ErrorCode::kNotFound != error.GetCode())
                 {
                     WarningMsg(aNid, error.GetMessage());
@@ -307,6 +312,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             error = sm::GetDefaultDomainSM(nwk.mName, isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
+                LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
                 if (ErrorCode::kNotFound != error.GetCode())
                 {
                     WarningMsg(aNid, error.GetMessage());
@@ -323,7 +329,12 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     error = sm::GetNetworkSM(nwk.mXpan.str(), isCCM, dtlsConfig);
     if (ERROR_NONE != error)
     {
-        WarningMsg(aNid, error.GetMessage());
+        LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
+        if (ErrorCode::kNotFound != error.GetCode())
+        {
+            WarningMsg(aNid, error.GetMessage());
+        }
+        // else we try a chance with nwk.mName later
         error = ERROR_NONE;
     }
     if (!dtlsConfig.IsEmpty(isCCM))
@@ -333,7 +344,12 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     error = sm::GetNetworkSM(nwk.mName, isCCM, dtlsConfig);
     if (ERROR_NONE != error)
     {
-        WarningMsg(aNid, error.GetMessage());
+        LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
+        if (ErrorCode::kNotFound != error.GetCode())
+        {
+            WarningMsg(aNid, error.GetMessage());
+        }
+        // else we try a chance with nwk.mName later
         error = ERROR_NONE;
     }
 update:
