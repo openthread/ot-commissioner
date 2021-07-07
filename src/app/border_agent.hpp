@@ -50,7 +50,7 @@ namespace commissioner {
 /**
  * Unix time
  *
- * @note C++ supports std::chrono parsing starting from C++20, so using low-lelel C API.
+ * @note C++ supports std::chrono parsing starting from C++20, so using low-level C API.
  */
 struct UnixTime
 {
