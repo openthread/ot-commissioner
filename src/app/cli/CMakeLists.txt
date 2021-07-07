@@ -74,18 +74,17 @@ target_include_directories(ut-main
 
 add_executable(job-manager-test
     gmock_main.cpp
-    test_job_manager.cpp
-    commissioner_app_replace.cpp
+    job_manager_test.cpp
     interpreter.cpp
     ${PROJECT_SOURCE_DIR}/src/app/ps/registry.cpp
     ${PROJECT_SOURCE_DIR}/src/app/ps/persistent_storage_json.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_util.cpp
     ${PROJECT_SOURCE_DIR}/src/app/json.cpp
     ${PROJECT_SOURCE_DIR}/src/app/mdns_handler.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/border_agent_functions_mock.cpp
     console.cpp
     ${PROJECT_SOURCE_DIR}/src/common/utils.cpp
     ${PROJECT_SOURCE_DIR}/src/common/error.cpp
-    border_agent_functions_mock.cpp
     ${PROJECT_SOURCE_DIR}/src/common/address.cpp
     job_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
@@ -93,7 +92,8 @@ add_executable(job-manager-test
     job.cpp
     ${PROJECT_SOURCE_DIR}/src/common/time.cpp
     ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
-    commissioner_app_mock.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_replace.cpp
     )
 
 target_include_directories(job-manager-test
@@ -126,18 +126,17 @@ target_link_libraries(job-manager-test
 
 add_executable(interpreter-test
     $<TARGET_OBJECTS:ut-main>
-    test_interpreter.cpp
-    commissioner_app_replace.cpp
+    interpreter_test.cpp
     interpreter.cpp
     ${PROJECT_SOURCE_DIR}/src/app/ps/registry.cpp
     ${PROJECT_SOURCE_DIR}/src/app/ps/persistent_storage_json.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_util.cpp
     ${PROJECT_SOURCE_DIR}/src/app/json.cpp
     ${PROJECT_SOURCE_DIR}/src/app/mdns_handler.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/border_agent_functions_mock.cpp
     console.cpp
     ${PROJECT_SOURCE_DIR}/src/common/utils.cpp
     ${PROJECT_SOURCE_DIR}/src/common/error.cpp
-    border_agent_functions_mock.cpp
     ${PROJECT_SOURCE_DIR}/src/common/address.cpp
     job_manager.cpp
     security_materials.cpp
@@ -145,7 +144,8 @@ add_executable(interpreter-test
     ${PROJECT_SOURCE_DIR}/src/common/time.cpp
     ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
-    commissioner_app_mock.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_replace.cpp
     )
 
 target_include_directories(interpreter-test

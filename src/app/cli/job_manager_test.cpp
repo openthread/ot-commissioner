@@ -34,7 +34,7 @@
 
 #define private public
 
-#include "commissioner_app_mock.hpp"
+#include "app/commissioner_app_mock.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
 #include "app/cli/job_manager.hpp"

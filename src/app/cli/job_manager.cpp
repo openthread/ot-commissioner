@@ -293,7 +293,11 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             error = sm::GetDefaultDomainSM(nwk.mXpan.str(), isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
-                WarningMsg(aNid, error.GetMessage());
+                if (ErrorCode::kNotFound != error.GetCode())
+                {
+                    WarningMsg(aNid, error.GetMessage());
+                }
+                // else we try a chance with network name later
                 error = ERROR_NONE;
             }
             if (!dtlsConfig.IsEmpty(isCCM))
@@ -303,7 +307,11 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             error = sm::GetDefaultDomainSM(nwk.mName, isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
-                WarningMsg(aNid, error.GetMessage());
+                if (ErrorCode::kNotFound != error.GetCode())
+                {
+                    WarningMsg(aNid, error.GetMessage());
+                }
+                // else we try a chance with folder under nwk later
                 error = ERROR_NONE;
             }
         }

@@ -40,7 +40,7 @@
 #include "library/logging.hpp"
 
 #define SM_ERROR_MESSAGE_NO_ROOT_AVAILABLE "ThreadSMRoot value is not available"
-#define SM_ERROR_MESSAGE_PEM_READ_FAILED   "Failed to read security data from file {}"
+#define SM_ERROR_MESSAGE_PEM_READ_FAILED "Failed to read security data from file {}"
 
 namespace ot {
 
@@ -60,7 +60,14 @@ static class SMRoot
     std::string mRootPath;
 
 public:
-    void        Set(const std::string aRoot) { mRootPath = aRoot; }
+    void Set(const std::string aRoot)
+    {
+        mRootPath = aRoot;
+        if (mRootPath.length() > 0 && mRootPath.back() != '/')
+        {
+            mRootPath += "/";
+        }
+    }
     std::string Get() const { return mRootPath; }
 } smRoot;
 
@@ -97,7 +104,7 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
     // If SM root is unset, do nothing
     VerifyOrExit(!smRoot.Get().empty());
 
-    domPath = smRoot.Get().append("/dom/").append(aDid).append("/");
+    domPath = smRoot.Get().append("dom/").append(aDid).append("/");
     SuccessOrExit(error = PathExists(domPath));
     for (auto element : smElements)
     {
@@ -146,12 +153,12 @@ exit:
 
 Error GetDefaultDomainSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
 {
-    return GetNetworkSMImpl("/dom/DefaultDomain/", aAlias, aCCM, aSM);
+    return GetNetworkSMImpl("dom/DefaultDomain/", aAlias, aCCM, aSM);
 }
 
 Error GetNetworkSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
 {
-    return GetNetworkSMImpl("/nwk/", aAlias, aCCM, aSM);
+    return GetNetworkSMImpl("nwk/", aAlias, aCCM, aSM);
 }
 
 static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
