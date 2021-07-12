@@ -39,18 +39,18 @@
     // If not specified, logs will be print to stdout.
     "LogFile" : "./commissioner.log",
 
-	// Thread security materials root directory.
-	"ThreadSMRoot" : "/usr/local/etc/commissioner",
+    // Thread security materials root directory.
+    "ThreadSMRoot" : "/usr/local/etc/commissioner",
 
     // The pre-shared key used to connect to the border agent in non-CCM networks
-	// if no other data provided with security materials storage.
+    // if no other data provided with security materials storage.
     // The maximum length is 16 bytes.
     // Must be provided if 'EnableCcm' == false.
     "PSKc" : "3aa55f91ca47d1e4e71a08cb35e91591",
 
-	// Default security materials for CCM connection. Will be effective
-	// for connections to CCM networks if no other data provided with security materials storage.
-	
+    // Default security materials for CCM connection. Will be effective
+    // for connections to CCM networks if no other data provided with security materials storage.
+
     // The private key file in PEM format.
     // Must be provided if 'EnableCcm' == true.
     "PrivateKeyFile" : "/usr/local/etc/commissioner/credentials/private-key.pem",
@@ -64,8 +64,8 @@
     // Must be provided if 'EnableCcm' == true.
     "TrustAnchorFile" : "/usr/local/etc/commissioner/credentials/trust-anchor.pem",
 
-	// The commissioner token as HEX string.
-	// It is assumed that commissioner token was pre-obtained from the registrar.
-	// Optional even if 'EnableCcm' == true
+    // The commissioner token as HEX string.
+    // It is assumed that commissioner token was pre-obtained from the registrar.
+    // Optional even if 'EnableCcm' == true
     "ComTokFile" : "/home/otc/src/ccm/dsr-commissioner/build/SMRoot/dom/DomTCE1/tok.cbor"
 }
