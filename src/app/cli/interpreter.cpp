@@ -316,7 +316,7 @@ static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::stri
 
 bool Interpreter::MultiNetCommandContext::HasGroupAlias()
 {
-    for (auto alias : mNwkAliases)
+    for (const auto &alias : mNwkAliases)
     {
         if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
             return true;
@@ -517,7 +517,7 @@ exit:
 
 bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
 {
-    for (auto word : aExpr)
+    for (const auto &word : aExpr)
     {
         if (word == KEYWORD_NETWORK || word == KEYWORD_DOMAIN)
         {
@@ -553,7 +553,7 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         // network and domain must not be specified simultaneously
         VerifyOrExit(mContext.mDomAliases.size() == 0, error = ERROR_INVALID_ARGS(SYNTAX_NWK_DOM_MUTUAL));
         // validate group alias usage; if used, it must be alone
-        for (auto alias : mContext.mNwkAliases)
+        for (const auto &alias : mContext.mNwkAliases)
         {
             if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
             {
@@ -562,7 +562,7 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         }
         StringArray    unresolved;
         RegistryStatus status = mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, aNids, unresolved);
-        for (auto alias : unresolved)
+        for (const auto &alias : unresolved)
         {
             PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
         }
@@ -601,7 +601,7 @@ exit:
 
 bool Interpreter::IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const
 {
-    for (auto commandCase : aArr)
+    for (const auto &commandCase : aArr)
     {
         if (commandCase.size() > aExpr.size())
             continue;
@@ -643,7 +643,7 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
     bool        inKey = false;
     std::string lastKey;
 
-    for (auto word : aExpr)
+    for (const auto &word : aExpr)
     {
         std::string prefix = word.substr(0, 2);
 
@@ -701,7 +701,7 @@ void Interpreter::Print(const Value &aValue)
 
     if (aValue.HasNoError() && mContext.mExportFiles.size() > 0)
     {
-        for (auto path : mContext.mExportFiles)
+        for (const auto &path : mContext.mExportFiles)
         {
             std::string filePath = path;
 
@@ -1004,7 +1004,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
         if (mContext.mDomAliases.size() > 0)
         {
-            for (auto dom : mContext.mDomAliases)
+            for (const auto &dom : mContext.mDomAliases)
             {
                 std::vector<Network> domNetworks;
                 status = mRegistry->GetNetworksInDomain(dom, domNetworks);
@@ -1022,7 +1022,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         {
             StringArray unresolved;
             status = mRegistry->GetNetworksByAliases(mContext.mNwkAliases, networks, unresolved);
-            for (auto alias : unresolved)
+            for (const auto &alias : unresolved)
             {
                 PrintNetworkMessage(alias, "network alias unknown", COLOR_ALIAS_FAILED);
             }
@@ -1038,7 +1038,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         }
         if (networks.size() > 0)
         {
-            for (auto nwk : networks)
+            for (const auto &nwk : networks)
             {
                 std::vector<BorderRouter> nwkRouters;
                 status = mRegistry->GetBorderRoutersInNetwork(nwk.mXpan, nwkRouters);
@@ -1200,7 +1200,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             }
         }
 
-        for (auto agent : agents)
+        for (const auto &agent : agents)
         {
             auto status = mRegistry->Add(agent);
             if (status != RegistryStatus::REG_SUCCESS)
@@ -1256,7 +1256,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 value = Error(ErrorCode ::kIOError, "Failed to delete border routers");
             }
             // Report unresolved aliases
-            for (auto &&alias : unresolved)
+            for (const auto &alias : unresolved)
             {
                 PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
             }
@@ -1381,7 +1381,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, xpans, unresolved) ==
                              RegistryStatus::REG_SUCCESS,
                          value = ERROR_IO_ERROR("Failed to convert network aliases to XPAN IDs"));
-            for (auto alias : unresolved)
+            for (const auto &alias : unresolved)
             {
                 PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
             }
@@ -1391,7 +1391,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         }
 
         // Serialize BorderAgents to JSON into value
-        for (auto agentOrError : borderAgents)
+        for (const auto &agentOrError : borderAgents)
         {
             if (agentOrError.mError != ErrorCode::kNone)
             {
@@ -1439,7 +1439,7 @@ Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
         nlohmann::json      json;
         std::vector<Domain> domains;
 
-        for (auto alias : mContext.mDomAliases)
+        for (const auto &alias : mContext.mDomAliases)
         {
             if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
             {
@@ -1450,7 +1450,7 @@ Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
         {
             StringArray unresolved;
             status = mRegistry->GetDomainsByAliases(mContext.mDomAliases, domains, unresolved);
-            for (auto alias : unresolved)
+            for (const auto &alias : unresolved)
             {
                 PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
             }
@@ -1617,7 +1617,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
     else
     {
         // Quickly check group aliases
-        for (auto alias : mContext.mNwkAliases)
+        for (const auto &alias : mContext.mNwkAliases)
         {
             if (alias == ALIAS_ALL || alias == ALIAS_OTHERS)
                 VerifyOrExit(mContext.mNwkAliases.size() == 1, value = ERROR_INVALID_ARGS(SYNTAX_GROUP_ALIAS, alias));
@@ -1625,7 +1625,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
 
         StringArray    unresolved;
         RegistryStatus status = mRegistry->GetNetworksByAliases(mContext.mNwkAliases, networks, unresolved);
-        for (auto alias : unresolved)
+        for (const auto &alias : unresolved)
         {
             PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
         }
@@ -2364,7 +2364,7 @@ Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
     if (aExpr.size() == 1)
     {
         std::string data;
-        for (auto &kv : mEvaluatorMap)
+        for (const auto &kv : mEvaluatorMap)
         {
             data += kv.first + "\n";
         }
