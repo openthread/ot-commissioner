@@ -49,13 +49,14 @@ namespace commissioner {
 
 using Json = nlohmann::json;
 using persistent_storage::Network;
+using security_material::SecurityMaterials;
 
 Error JobManager::Init(const Config &aConf)
 {
     Error error;
 
     mDefaultConf = aConf;
-    SuccessOrExit(error = sm::Init(aConf));
+    SuccessOrExit(error = security_material::Init(aConf));
     SuccessOrExit(error = CommissionerAppCreate(mDefaultCommissioner, aConf));
 exit:
     return error;
@@ -259,12 +260,12 @@ exit:
 
 Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
 {
-    Error                 error;
-    std::string           domainName;
-    bool                  isCCM = false;
-    sm::SecurityMaterials dtlsConfig;
-    RegistryStatus        status;
-    Network               nwk;
+    Error             error;
+    std::string       domainName;
+    bool              isCCM = false;
+    SecurityMaterials dtlsConfig;
+    RegistryStatus    status;
+    Network           nwk;
 
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
@@ -281,7 +282,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         aConfig.mDomainName = domainName;
         if (domainName != "DefaultDomain")
         {
-            error = sm::GetDomainSM(domainName, dtlsConfig);
+            error = security_material::GetDomainSM(domainName, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -294,7 +295,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         }
         else
         {
-            error = sm::GetDefaultDomainSM(nwk.mXpan.str(), isCCM, dtlsConfig);
+            error = security_material::GetDefaultDomainSM(nwk.mXpan.str(), isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -309,7 +310,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
             {
                 goto update;
             }
-            error = sm::GetDefaultDomainSM(nwk.mName, isCCM, dtlsConfig);
+            error = security_material::GetDefaultDomainSM(nwk.mName, isCCM, dtlsConfig);
             if (ERROR_NONE != error)
             {
                 LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -326,7 +327,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     {
         goto update;
     }
-    error = sm::GetNetworkSM(nwk.mXpan.str(), isCCM, dtlsConfig);
+    error = security_material::GetNetworkSM(nwk.mXpan.str(), isCCM, dtlsConfig);
     if (ERROR_NONE != error)
     {
         LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -341,7 +342,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     {
         goto update;
     }
-    error = sm::GetNetworkSM(nwk.mName, isCCM, dtlsConfig);
+    error = security_material::GetNetworkSM(nwk.mName, isCCM, dtlsConfig);
     if (ERROR_NONE != error)
     {
         LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());

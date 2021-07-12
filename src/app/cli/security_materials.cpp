@@ -46,7 +46,7 @@ namespace ot {
 
 namespace commissioner {
 
-namespace sm {
+namespace security_material {
 
 using SMPair = std::pair<std::string, ByteArray *>;
 
@@ -235,7 +235,7 @@ bool SecurityMaterials::IsEmpty(bool isCCM)
                   : (mPSKc.size() == 0));
 }
 
-} // namespace sm
+} // namespace security_material
 
 } // namespace commissioner
 

@@ -41,7 +41,7 @@ namespace ot {
 
 namespace commissioner {
 
-namespace sm {
+namespace security_material {
 
 struct SecurityMaterials
 {
@@ -71,7 +71,7 @@ Error GetDefaultDomainSM(const std::string aAlias, bool ccm, SecurityMaterials &
 
 Error GetNetworkSM(const std::string aAlias, bool ccm, SecurityMaterials &aSM);
 
-} // namespace sm
+} // namespace security_material
 
 } // namespace commissioner
 
