@@ -192,9 +192,9 @@ public:
     virtual Status CurrentNetworkGet(NetworkId &aNwkId) override;
 
 private:
-    std::string            mFileName;    /**< name of the file */
-    nlohmann::json         mCache;       /**< internal chache */
-    ot::os::sem::Semaphore mStorageLock; /**< lock to sync file access */
+    std::string                  mFileName;    /**< name of the file */
+    nlohmann::json               mCache;       /**< internal chache */
+    ot::os::semaphore::Semaphore mStorageLock; /**< lock to sync file access */
 
     /**
      * Reads data from file to mCache

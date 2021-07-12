@@ -43,7 +43,7 @@ namespace ot {
 
 namespace os {
 
-namespace sem {
+namespace semaphore {
 
 /**
  * OS dependent semaphore impl
@@ -53,7 +53,7 @@ struct Semaphore
     sem_t *mPlatform; /**< posix semaphore type */
 };
 
-} // namespace sem
+} // namespace semaphore
 
 } // namespace os
 
