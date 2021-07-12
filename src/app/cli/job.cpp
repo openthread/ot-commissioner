@@ -33,8 +33,8 @@
 
 #include "app/cli/job.hpp"
 #include "app/ps/registry.hpp"
+#include "common/logging.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 
 namespace ot {
 

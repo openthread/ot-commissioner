@@ -36,8 +36,8 @@
 #include "app/cli/console.hpp"
 #include "app/file_util.hpp"
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 
 #define SM_ERROR_MESSAGE_NO_ROOT_AVAILABLE "ThreadSMRoot value is not available"
 #define SM_ERROR_MESSAGE_PEM_READ_FAILED "Failed to read security data from file {}"

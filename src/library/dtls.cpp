@@ -38,8 +38,8 @@
 #include <mbedtls/platform.h>
 
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 #include "library/mbedtls_error.hpp"
 #include "library/openthread/sha256.hpp"
 

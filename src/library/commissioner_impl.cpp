@@ -33,10 +33,10 @@
 
 #include "library/commissioner_impl.hpp"
 
+#include "common/logging.hpp"
 #include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/dtls.hpp"
-#include "library/logging.hpp"
 #include "library/openthread/bloom_filter.hpp"
 #include "library/openthread/pbkdf2_cmac.hpp"
 #include "library/openthread/sha256.hpp"

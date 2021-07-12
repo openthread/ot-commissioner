@@ -45,8 +45,6 @@ add_library(commissioner
     event.hpp
     joiner_session.cpp
     joiner_session.hpp
-    logging.cpp
-    logging.hpp
     mbedtls_error.cpp
     mbedtls_error.hpp
     message.hpp
