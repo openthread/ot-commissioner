@@ -46,15 +46,15 @@ namespace ot {
 
 namespace os {
 
-namespace sem {
+namespace semaphore {
 
 /**
  * Semaphore operation status
  */
 enum SemaphoreStatus
 {
-    SEM_SUCCESS, /**< operation succeeded */
-    SEM_ERROR    /**< operation failed */
+    kSuccess, /**< operation succeeded */
+    kError,   /**< operation failed */
 };
 
 /**
@@ -102,7 +102,7 @@ SemaphoreStatus SemaphorePost(Semaphore &aSem);
  */
 SemaphoreStatus SemaphoreWait(Semaphore &aSem);
 
-} // namespace sem
+} // namespace semaphore
 
 } // namespace os
 

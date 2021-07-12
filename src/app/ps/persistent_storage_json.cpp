@@ -56,6 +56,7 @@ const std::string JSON_BR_SEQ = "br_seq";
 const std::string JSON_CURR_NWK = "curr_nwk";
 
 using nlohmann::json;
+using SemaphoreStatus = ot::os::semaphore::SemaphoreStatus;
 
 PersistentStorageJson::PersistentStorageJson(std::string const &aFileName)
     : mFileName(aFileName)
@@ -109,7 +110,7 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
         return PersistentStorage::Status::PS_SUCCESS;
     }
 
-    if (SemaphoreWait(mStorageLock) != ot::os::sem::SemaphoreStatus::SEM_SUCCESS)
+    if (SemaphoreWait(mStorageLock) != SemaphoreStatus::kSuccess)
     {
         return PersistentStorage::Status::PS_ERROR;
     }
@@ -169,7 +170,7 @@ PersistentStorage::Status PersistentStorageJson::CacheToFile()
         return PersistentStorage::Status::PS_SUCCESS;
     }
 
-    if (SemaphoreWait(mStorageLock) != ot::os::sem::SemaphoreStatus::SEM_SUCCESS)
+    if (SemaphoreWait(mStorageLock) != SemaphoreStatus::kSuccess)
     {
         return PersistentStorage::Status::PS_ERROR;
     }
