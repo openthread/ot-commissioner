@@ -31,17 +31,7 @@
  *   The file implements CLI interpreter.
  */
 
-#include "app/cli/interpreter.hpp"
-
-#include <algorithm>
 #include <fcntl.h>
-#include <functional>
-#include <memory>
-#include <signal.h>
-#include <sstream>
-#include <string.h>
-#include <thread>
-#include <unistd.h>
 
 #include <event2/event-config.h>
 #include <event2/event.h>
@@ -49,7 +39,14 @@
 #include <event2/util.h>
 #include <mdns/mdns.h>
 
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <sstream>
+#include <thread>
+
 #include "app/br_discover.hpp"
+#include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
