@@ -55,4 +55,7 @@
     // It is assumed that the commissioner certificate is directly signed by this trust anchor.
     // Must be provided if 'EnableCcm' == true.
     "TrustAnchorFile" : "/usr/local/etc/commissioner/credentials/trust-anchor.pem"
+
+    // Thread security materials root directory.
+    "ThreadSMRoot" : "/usr/local/etc/commissioner"
 }

@@ -57,6 +57,6 @@
     // Must be provided if 'EnableCcm' == true.
     //"TrustAnchorFile" : "/usr/local/etc/commissioner/credentials/trust-anchor.pem"
 
-	// Thread security materials root directory.
-	"ThreadSMRoot" : "/usr/local/etc/commissioner"
+    // Thread security materials root directory.
+    "ThreadSMRoot" : "/usr/local/etc/commissioner"
 }
