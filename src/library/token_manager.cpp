@@ -37,9 +37,9 @@
 
 #include <mbedtls/x509_crt.h>
 
+#include "common/logging.hpp"
 #include "library/cose.hpp"
 #include "library/cwt.hpp"
-#include "library/logging.hpp"
 #include "library/mbedtls_error.hpp"
 #include "library/tlv.hpp"
 #include "library/uri.hpp"

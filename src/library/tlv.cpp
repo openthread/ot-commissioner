@@ -36,8 +36,8 @@
 #include <set>
 
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 
 namespace ot {
 

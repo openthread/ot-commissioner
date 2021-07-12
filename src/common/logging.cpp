@@ -31,7 +31,7 @@
  *   This file includes wrapper of mbedtls.
  */
 
-#include "library/logging.hpp"
+#include "logging.hpp"
 
 namespace ot {
 

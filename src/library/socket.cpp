@@ -31,8 +31,8 @@
 #include <memory.h>
 #include <netinet/in.h>
 
+#include "common/logging.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 
 namespace ot {
 

@@ -33,8 +33,8 @@
 
 #include "library/joiner_session.hpp"
 
+#include "common/logging.hpp"
 #include "library/commissioner_impl.hpp"
-#include "library/logging.hpp"
 #include "library/tlv.hpp"
 #include "library/uri.hpp"
 

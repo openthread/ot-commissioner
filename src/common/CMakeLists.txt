@@ -31,6 +31,8 @@ add_library(commissioner-common
     address.hpp
     error.cpp
     error_macros.hpp
+    logging.cpp
+    logging.hpp
     time.cpp
     time.hpp
     utils.cpp

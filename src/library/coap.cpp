@@ -39,8 +39,8 @@
 #include <memory.h>
 
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "common/utils.hpp"
-#include "library/logging.hpp"
 #include "library/openthread/random.hpp"
 
 namespace ot {
