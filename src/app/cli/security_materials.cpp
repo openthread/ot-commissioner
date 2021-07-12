@@ -106,7 +106,7 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
 
     domPath = smRoot.Get().append("dom/").append(aDid).append("/");
     SuccessOrExit(error = PathExists(domPath));
-    for (auto element : smElements)
+    for (const auto &element : smElements)
     {
         std::string path = domPath + element.first;
         if (ERROR_NONE != PathExists(path))
@@ -176,7 +176,7 @@ static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aA
         std::vector<SMPair> smElements{
             {"cert.pem", &aSM.mCertificate}, {"priv.pem", &aSM.mPrivateKey}, {"ca.pem", &aSM.mTrustAnchor}};
 
-        for (auto element : smElements)
+        for (const auto &element : smElements)
         {
             std::string path = nwkPath + element.first;
             if (ERROR_NONE != PathExists(path))

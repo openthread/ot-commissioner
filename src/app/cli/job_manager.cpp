@@ -103,7 +103,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanId
 
     Error error;
 
-    for (auto nid : aNids)
+    for (const auto &nid : aNids)
     {
         auto entry = mCommissionerPool.find(nid);
         if (entry == mCommissionerPool.end())
@@ -159,7 +159,7 @@ Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const X
      */
     ASSERT(aExpr.size() == 1);
 
-    for (auto nid : aNids)
+    for (const auto &nid : aNids)
     {
         BorderRouter br;
         Config       conf = mDefaultConf;
@@ -210,7 +210,7 @@ Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const Xp
 
     ASSERT(utils::ToLower(aExpr[0]) == "stop");
 
-    for (auto nid : aNids)
+    for (const auto &nid : aNids)
     {
         auto entry = mCommissionerPool.find(nid);
         if (entry == mCommissionerPool.end())
@@ -394,7 +394,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     if (nwk.mCcm > 0) // Dealing with domain network
     {
         // - try to find active and connectable Primary BBR
-        for (auto item : brs)
+        for (const auto &item : brs)
         {
             if (item.mAgent.mState.mBbrIsPrimary && item.mAgent.mState.mConnectionMode > 0)
             {
@@ -406,7 +406,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
             }
         }
         // - go on with other active and connectable BBRs
-        for (auto item : brs)
+        for (const auto &item : brs)
         {
             if (item.mAgent.mState.mBbrIsActive && item.mAgent.mState.mConnectionMode > 0)
             {
@@ -417,7 +417,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     else // Dealing with standalone networks
     {
         // go on with connectable BRs
-        for (auto item : brs)
+        for (const auto &item : brs)
         {
             if (item.mAgent.mState.mConnectionMode > 0)
             {
@@ -429,7 +429,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     // Below a final triage is done
 
     // - prefer br with high-availability
-    for (auto item : choice)
+    for (const auto &item : choice)
     {
         if (item.mAgent.mState.mThreadIfStatus > 1 && item.mAgent.mState.mAvailability > 0)
         {
@@ -438,7 +438,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         }
     }
     // - prefer br with Thread Interface actively participating in communication
-    for (auto item : choice)
+    for (const auto &item : choice)
     {
         if (item.mAgent.mState.mThreadIfStatus > 1)
         {
@@ -447,7 +447,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         }
     }
     // - try to find br with Thread Interface at least enabled
-    for (auto item : choice)
+    for (const auto &item : choice)
     {
         if (item.mAgent.mState.mThreadIfStatus > 0)
         {
@@ -595,7 +595,7 @@ Interpreter::Value JobManager::CollectJobsValue()
     nlohmann::json     json;
     XpanId             xpan;
 
-    for (auto job : mJobPool)
+    for (const auto &job : mJobPool)
     {
         ASSERT(job->IsStopped());
         if (job->GetValue().HasNoError())

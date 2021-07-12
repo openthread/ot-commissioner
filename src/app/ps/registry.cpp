@@ -264,7 +264,7 @@ Registry::Status Registry::GetNetworkXpansInDomain(const std::string &aDomainNam
 
     if (status == Registry::Status::REG_SUCCESS)
     {
-        for (auto nwk : networks)
+        for (const auto &nwk : networks)
         {
             aRet.push_back(nwk.mXpan);
         }
@@ -316,7 +316,7 @@ Registry::Status Registry::GetDomainsByAliases(const StringArray &aAliases, Doma
     Registry::Status status;
     DomainArray      domains;
 
-    for (auto alias : aAliases)
+    for (const auto &alias : aAliases)
     {
         Domain dom;
 
@@ -381,7 +381,7 @@ Registry::Status Registry::GetNetworkXpansByAliases(const StringArray &aAliases,
 
     if (status == Registry::Status::REG_SUCCESS)
     {
-        for (auto nwk : networks)
+        for (const auto &nwk : networks)
         {
             aRet.push_back(nwk.mXpan);
         }
@@ -399,7 +399,7 @@ Registry::Status Registry::GetNetworksByAliases(const StringArray &aAliases,
     if (aAliases.size() == 0)
         return Registry::Status::REG_ERROR;
 
-    for (auto alias : aAliases)
+    for (const auto &alias : aAliases)
     {
         if (alias == ALIAS_ALL || alias == ALIAS_OTHER)
         {
@@ -631,7 +631,7 @@ Registry::Status Registry::DeleteBorderRoutersInNetworks(const StringArray &aAli
     Network          current;
 
     // Check aAliases acceptable
-    for (auto alias : aAliases)
+    for (const auto &alias : aAliases)
     {
         if (alias == ALIAS_THIS)
         {
@@ -662,7 +662,7 @@ Registry::Status Registry::DeleteBorderRoutersInNetworks(const StringArray &aAli
         }
     }
 
-    for (auto nwk : nwks)
+    for (const auto &nwk : nwks)
     {
         BorderRouterArray brs;
         BorderRouter      br;
