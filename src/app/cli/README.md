@@ -311,7 +311,7 @@ Before exiting, use the command `stop` to gracefully leave the Thread network:
 > stop --dom this
 [
     "DEAD00BEEF00CAFE" : done,
-	"AAAA00BBBB00CCCC" : done
+    "AAAA00BBBB00CCCC" : done
 ]
 [done]
 ```
