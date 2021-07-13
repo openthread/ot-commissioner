@@ -228,6 +228,29 @@ struct SecurityPolicy
 };
 
 /**
+ * Mask bit constants originate from the Spec pt. 8.10.1.15
+ */
+enum SecurityPolicyFlags
+{
+    // Byte[0]
+    kSecurityPolicyBit_O   = 1 << 0, /// out-of-band commissioning enabled
+    kSecurityPolicyBit_N   = 1 << 1, /// native commissioning using PSKc allowed
+    kSecurityPolicyBit_R   = 1 << 2, /// Thread 1.1.x Routers enabled
+    kSecurityPolicyBit_C   = 1 << 3, /// external commissioning using PSKc allowed
+    kSecurityPolicyBit_B   = 1 << 4, /// Thread 1.1.x Beacons enabled
+    kSecurityPolicyBit_CCM = 1 << 5, /// Commercial Commissioning Mode disabled
+    kSecurityPolicyBit_AE  = 1 << 6, /// Autonomous Enrollment disabled
+    kSecurityPolicyBit_NMP = 1 << 7, /// Network Master-key Provisioning disabled
+
+    // Byte[1]
+    kSecurityPolicyBit_L   = 1 << 0, /// ToBLE Link enabled
+    kSecurityPolicyBit_NCR = 1 << 1, /// non-CCM Routers disabled in the CCM network
+
+    kSecurityPolicyMask_Rsv = 1 << 2 | 1 << 3 | 1 << 4, /// Reserved bits
+    kSecurityPolicyMask_VR  = 1 << 5 | 1 << 6 | 1 << 7, /// Protocol version
+};
+
+/**
  * A PAN identifier.
  */
 struct PanId
