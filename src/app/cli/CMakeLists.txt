@@ -92,8 +92,8 @@ add_executable(job-manager-test
     job.cpp
     ${PROJECT_SOURCE_DIR}/src/common/time.cpp
     ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
-    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_replace.cpp
 )
 
 target_include_directories(job-manager-test
@@ -137,8 +137,8 @@ add_executable(interpreter-test
     ${PROJECT_SOURCE_DIR}/src/common/time.cpp
     ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
-    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_replace.cpp
 )
 
 target_include_directories(interpreter-test
