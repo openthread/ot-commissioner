@@ -55,8 +55,7 @@ namespace commissioner {
 struct UnixTime
 {
     std::time_t mTime;
-    UnixTime(std::time_t aTime);
-    UnixTime();
+    UnixTime(std::time_t aTime = 0);
     // Requires date format "%Y%m%dT%H%M%S"
     UnixTime(const std::string &aTimeStr);
     bool operator==(const UnixTime &other) const;

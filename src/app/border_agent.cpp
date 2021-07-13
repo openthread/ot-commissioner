@@ -39,13 +39,8 @@ namespace ot {
 
 namespace commissioner {
 
-UnixTime::UnixTime(std::time_t aTime)
+UnixTime::UnixTime(std::time_t aTime /* =0 */)
     : mTime(aTime)
-{
-}
-
-UnixTime::UnixTime()
-    : UnixTime(0)
 {
 }
 
