@@ -122,7 +122,14 @@ private:
 private:
     Expression Read();
     Value      Eval(const Expression &aExpr);
-    void       Print(const Value &aValue);
+    /**
+     * Prints the collected resultant value to console unless export
+     * to a file is expected by the executed command. In the latter
+     * case the collected value itself is exported to the specified
+     * file while sole '[done|failed]' command result indication is
+     * printed to console.
+     */
+    void       PrintOrExport(const Value &aValue);
     void       PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor);
     void       PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor);
     Expression ParseExpression(const std::string &aLiteral);
