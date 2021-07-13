@@ -2059,12 +2059,9 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             {
                 nwk.mMlp = Ipv6PrefixToString(dataset.mMeshLocalPrefix);
             }
-            // Magic constant originates from the Spec pt. 8.10.1.15
-            // The flag set indicates 'CCM **not** supported' state
-            nwk.mCcm =
-                (((AODS_FIELD_IF_IS_SET(SecurityPolicy, (SecurityPolicy{0, ByteArray{0, 0}})).mFlags[0] & 0x04) == 0)
-                     ? 1
-                     : 0);
+
+            SecurityPolicy sp = AODS_FIELD_IF_IS_SET(SecurityPolicy, (SecurityPolicy{0, ByteArray{0, 0}}));
+            nwk.mCcm          = !(sp.mFlags[0] & kSecurityPolicyBit_CCM);
 #undef AODS_FIELD_IF_IS_SET
             // Store network object in the registry
             mRegistry->Update(nwk);

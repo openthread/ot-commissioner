@@ -193,8 +193,17 @@ Registry::Status Registry::Add(BorderAgent const &aValue)
                 }
                 nwk.mDomainId = dom.mId;
                 nwk.mXpan     = aValue.mExtendedPanId;
-                nwk.mCcm      = ((aValue.mState.mConnectionMode == 4) ? 1 : 0);
-                status        = MapStatus(mStorage->Add(nwk, networkId));
+
+                // Provisionally set network's CCM flag considering
+                // advertised Connection Mode.
+                //
+                // Please note that actually see if CCM enabled or not
+                // is possible only by respective security policy flag
+                // from Active Operational Dataset. Later, if and when
+                // successfully petitioned to the network, the flag
+                // will be updated by real network dataset.
+                nwk.mCcm = ((aValue.mState.mConnectionMode == 4) ? 1 : 0);
+                status   = MapStatus(mStorage->Add(nwk, networkId));
                 if (status != Registry::Status::REG_SUCCESS)
                 {
                     throw status;
