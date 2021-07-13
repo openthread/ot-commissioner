@@ -31,10 +31,8 @@
  *   The file implements security materials storage.
  */
 
-#include <string>
-
-#include "app/cli/console.hpp"
 #include "app/cli/security_materials.hpp"
+#include "app/cli/console.hpp"
 #include "app/file_util.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"

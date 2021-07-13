@@ -35,6 +35,7 @@
 #define OT_COMM_APP_CLI_JOB_HPP_
 
 #include <thread>
+
 #include "app/cli/interpreter.hpp"
 #include "app/commissioner_app.hpp"
 

@@ -42,9 +42,6 @@
 #include "app/ps/persistent_storage_json.hpp"
 #include "app/ps/registry.hpp"
 
-#include <sys/stat.h>
-#include <thread>
-
 using namespace ot::commissioner;
 
 using testing::_;
