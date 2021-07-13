@@ -1658,7 +1658,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     expr  = ctx.mInterpreter.ParseExpression("opdataset get active --export ./aods.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    ctx.mInterpreter.Print(value);
+    ctx.mInterpreter.PrintOrExport(value);
     EXPECT_EQ(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
 
     std::string jsonStr;
@@ -1946,7 +1946,7 @@ TEST_F(InterpreterTestSuite, PC_BrScanExport)
     expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --timeout 1 --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    ctx.mInterpreter.Print(value);
+    ctx.mInterpreter.PrintOrExport(value);
     EXPECT_EQ(PathExists(jsonFileName).GetCode(), ErrorCode::kNone);
 
     std::string jsonStr;
@@ -1973,7 +1973,7 @@ TEST_F(InterpreterTestSuite, PC_BrScanExportDirAbsent)
     expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --timeout 1 --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
-    ctx.mInterpreter.Print(value);
+    ctx.mInterpreter.PrintOrExport(value);
     value = PathExists(jsonFileName);
     EXPECT_TRUE(value.HasNoError());
 }

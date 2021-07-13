@@ -380,7 +380,7 @@ void Interpreter::Run()
 
     while (!mShouldExit)
     {
-        Print(Eval(Read()));
+        PrintOrExport(Eval(Read()));
     }
 
 exit:
@@ -687,13 +687,14 @@ exit:
     return error;
 }
 
-void Interpreter::Print(const Value &aValue)
+void Interpreter::PrintOrExport(const Value &aValue)
 {
-    Error       error  = {ErrorCode::kUnknown, ""};
     std::string output = aValue.ToString();
 
     if (aValue.HasNoError() && mContext.mExportFiles.size() > 0)
     {
+        Error error;
+
         for (const auto &path : mContext.mExportFiles)
         {
             std::string filePath = path;
@@ -718,12 +719,12 @@ void Interpreter::Print(const Value &aValue)
                 break;
             }
         }
-    }
-    if (error == ERROR_NONE)
-    {
-        // value is written to file, no console output expected other than
-        // [done]/[failed]
-        output.clear();
+        if (error == ERROR_NONE)
+        {
+            // value is written to file, no console output expected other than
+            // [done]/[failed]
+            output.clear();
+        }
     }
     if (!output.empty())
     {
