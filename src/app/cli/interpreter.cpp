@@ -702,23 +702,19 @@ void Interpreter::Print(const Value &aValue)
             error = RestoreFilePath(path);
             if (error != ERROR_NONE)
             {
-                mConsole.Write(error.GetMessage(), Console::Color::kRed);
+                Console::Write(error.GetMessage(), Console::Color::kRed);
                 break;
             }
-#if 0
-            error = PathExists(filePath);
-            while (error != ERROR_NONE)
-            {
-                // TODO: suggest new file name by incrementing suffix
-                //       file-name[-suffix].ext
-                error = PathExists(filePath);
-            }
-#endif
+            ///
+            /// @todo: maybe instead of overwriting an existing file
+            ///        suggest a new file name by incrementing suffix
+            ///        filePath[-suffix].ext
+            ///
             error = WriteFile(aValue.ToString(), filePath);
             if (error != ERROR_NONE)
             {
                 std::string out = fmt::format(FMT_STRING("failed to write to '{}'\n"), filePath);
-                mConsole.Write(out, Console::Color::kRed);
+                Console::Write(out, Console::Color::kRed);
                 break;
             }
         }
@@ -736,7 +732,7 @@ void Interpreter::Print(const Value &aValue)
     output += aValue.HasNoError() ? "[done]" : "[failed]";
     auto color = aValue.HasNoError() ? Console::Color::kGreen : Console::Color::kRed;
 
-    mConsole.Write(output, color);
+    Console::Write(output, color);
 }
 
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
@@ -747,9 +743,9 @@ void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Conso
 
 void Interpreter::PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor)
 {
-    mConsole.Write(alias.append(": "));
-    mConsole.Write(aMessage, aColor);
-    mConsole.Write("\n");
+    Console::Write(alias.append(": "));
+    Console::Write(aMessage, aColor);
+    Console::Write("\n");
 }
 
 std::string Interpreter::Value::ToString() const
@@ -1388,7 +1384,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         {
             if (agentOrError.mError != ErrorCode::kNone)
             {
-                mConsole.Write(agentOrError.mError.GetMessage(), Console::Color::kRed);
+                Console::Write(agentOrError.mError.GetMessage(), Console::Color::kRed);
             }
             else
             {
@@ -2015,13 +2011,13 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
                 }
                 else
                 {
-                    mConsole.Write("Dataset contains no network identification data", Console::Color::kYellow);
+                    Console::Write("Dataset contains no network identification data", Console::Color::kYellow);
                     break;
                 }
                 if (mRegistry->GetNetworkXpansByAliases(nwkAliases, xpans, unresolved) != RegistryStatus::REG_SUCCESS ||
                     xpans.size() != 1)
                 {
-                    mConsole.Write(fmt::format(FMT_STRING("Failed to load network XPAN by alias '{}': got {} XPANs"),
+                    Console::Write(fmt::format(FMT_STRING("Failed to load network XPAN by alias '{}': got {} XPANs"),
                                                nwkAliases[0], xpans.size()),
                                    Console::Color::kYellow);
                     break;
@@ -2029,7 +2025,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             }
             if (mRegistry->GetNetworkByXpan(xpans[0], nwk) != RegistryStatus::REG_SUCCESS)
             {
-                mConsole.Write(fmt::format(FMT_STRING("Failed to load network by XPAN '{}'"), xpans[0].str()),
+                Console::Write(fmt::format(FMT_STRING("Failed to load network by XPAN '{}'"), xpans[0].str()),
                                Console::Color::kYellow);
                 break;
             }
