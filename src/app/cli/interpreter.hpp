@@ -35,7 +35,6 @@
 #define OT_COMM_APP_CLI_INTERPRETER_HPP_
 
 #include <atomic>
-#include <map>
 
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"

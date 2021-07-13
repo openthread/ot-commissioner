@@ -61,9 +61,7 @@ using Json = nlohmann::json;
 class InterpreterTestSuite : public testing::Test
 {
 public:
-    using Registry              = ::ot::commissioner::persistent_storage::Registry;
-    using RegistryStatus        = ::ot::commissioner::persistent_storage::Registry::Status;
-    using PersistentStorageJson = ot::commissioner::persistent_storage::PersistentStorageJson;
+    using RegistryStatus = Registry::Status;
     typedef std::shared_ptr<CommissionerAppMock> CommissionerAppMockPtr;
 
     InterpreterTestSuite()          = default;

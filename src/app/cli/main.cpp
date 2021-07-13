@@ -33,14 +33,12 @@
 
 #include <thread>
 
+#include <getopt.h>
 #include <signal.h>
 
-#include <getopt.h>
-
 #include "app/cli/interpreter.hpp"
-#include "common/utils.hpp"
-
 #include "app/ps/registry.hpp"
+#include "common/utils.hpp"
 
 using namespace ot::commissioner;
 
