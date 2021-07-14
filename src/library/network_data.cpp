@@ -159,17 +159,17 @@ Error XpanId::FromHex(const std::string &aInput)
     mValue = 0;
 
     std::string input = aInput;
-    if (input.substr(0, 2) == "0x")
+    if (utils::ToLower(input.substr(0, 2)) == "0x")
     {
         input = input.substr(2);
     }
     if (input.empty() || input.length() > 16)
-        return ERROR_BAD_FORMAT("wrong XPAN string length {}", input.length());
+        return ERROR_BAD_FORMAT("{}: wrong XPAN ID string length", input.length());
     for (auto c : input)
     {
         if (!std::isxdigit(c))
         {
-            return ERROR_BAD_FORMAT("not a hex string '{}'", input);
+            return ERROR_BAD_FORMAT("{}: not a hex string", input);
         }
     }
 
@@ -204,17 +204,17 @@ Error PanId::FromHex(const std::string &aInput)
     mValue = 0;
 
     std::string input = aInput;
-    if (input.substr(0, 2) == "0x")
+    if (utils::ToLower(input.substr(0, 2)) == "0x")
     {
         input = input.substr(2);
     }
     if (input.empty() || input.length() > 4)
-        return ERROR_BAD_FORMAT("wrong XPAN string length {}", input.length());
+        return ERROR_BAD_FORMAT("{}: wrong PAN ID string length", input.length());
     for (auto c : input)
     {
         if (!std::isxdigit(c))
         {
-            return ERROR_BAD_FORMAT("not a hex string '{}'", input);
+            return ERROR_BAD_FORMAT("{}: not a hex string", input);
         }
     }
 
