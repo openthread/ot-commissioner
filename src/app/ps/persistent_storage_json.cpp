@@ -491,7 +491,7 @@ PersistentStorage::Status PersistentStorageJson::LookupAny(BorderRouter const &a
     return LookupPred<BorderRouter>(pred, aRet, JSON_BR);
 }
 
-PersistentStorage::Status PersistentStorageJson::CurrentNetworkSet(const NetworkId &aNwkId)
+PersistentStorage::Status PersistentStorageJson::SetCurrentNetwork(const NetworkId &aNwkId)
 {
     if (CacheFromFile() != PersistentStorage::Status::PS_SUCCESS)
     {
@@ -503,7 +503,7 @@ PersistentStorage::Status PersistentStorageJson::CurrentNetworkSet(const Network
     return CacheToFile();
 }
 
-PersistentStorage::Status PersistentStorageJson::CurrentNetworkGet(NetworkId &aNwkId)
+PersistentStorage::Status PersistentStorageJson::GetCurrentNetwork(NetworkId &aNwkId)
 {
     if (!mCache.contains(JSON_CURR_NWK))
     {
