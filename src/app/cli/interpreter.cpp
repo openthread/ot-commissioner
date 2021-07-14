@@ -292,14 +292,9 @@ exit:
     return error;
 }
 
-std::string ToLower(const std::string &aStr)
+static inline std::string ToLower(const std::string &aStr)
 {
-    std::string ret = aStr;
-    for (auto &c : ret)
-    {
-        c = tolower(c);
-    }
-    return ret;
+    return utils::ToLower(aStr);
 }
 
 static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs)
