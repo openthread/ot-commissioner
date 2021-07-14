@@ -172,13 +172,13 @@ public:
     /**
      * Set current Network.
      */
-    virtual Status CurrentNetworkSet(const NetworkId &aNetworkId) = 0;
+    virtual Status SetCurrentNetwork(const NetworkId &aNetworkId) = 0;
     /**
      * Get current Network
      *
      * @param aNetworkId[out] current Network identifier
      */
-    virtual Status CurrentNetworkGet(NetworkId &aNetworkId) = 0;
+    virtual Status GetCurrentNetwork(NetworkId &aNetworkId) = 0;
 };
 
 } // namespace persistent_storage

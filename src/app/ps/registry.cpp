@@ -538,21 +538,21 @@ Registry::Status Registry::SetCurrentNetwork(const NetworkId &aNetworkId)
 {
     assert(mStorage != nullptr);
 
-    return MapStatus(mStorage->CurrentNetworkSet(aNetworkId));
+    return MapStatus(mStorage->SetCurrentNetwork(aNetworkId));
 }
 
 Registry::Status Registry::SetCurrentNetwork(const BorderRouter &aBr)
 {
     assert(mStorage != nullptr);
 
-    return MapStatus(mStorage->CurrentNetworkSet(aBr.mNetworkId));
+    return MapStatus(mStorage->SetCurrentNetwork(aBr.mNetworkId));
 }
 
 Registry::Status Registry::GetCurrentNetwork(Network &aRet)
 {
     assert(mStorage != nullptr);
     NetworkId networkId;
-    if (MapStatus(mStorage->CurrentNetworkGet(networkId)) != Registry::Status::REG_SUCCESS)
+    if (MapStatus(mStorage->GetCurrentNetwork(networkId)) != Registry::Status::REG_SUCCESS)
     {
         return Registry::Status::REG_ERROR;
     }

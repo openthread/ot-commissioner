@@ -183,13 +183,13 @@ public:
     /**
      * Set current Network.
      */
-    virtual Status CurrentNetworkSet(const NetworkId &aNwkId) override;
+    virtual Status SetCurrentNetwork(const NetworkId &aNwkId) override;
     /**
      * Get current Network
      *
      * @param aNwkId[out] current Network identifier
      */
-    virtual Status CurrentNetworkGet(NetworkId &aNwkId) override;
+    virtual Status GetCurrentNetwork(NetworkId &aNwkId) override;
 
 private:
     std::string                  mFileName;    /**< name of the file */
