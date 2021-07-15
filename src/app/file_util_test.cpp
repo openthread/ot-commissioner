@@ -73,7 +73,7 @@ TEST(FileUtil, PathExists)
     EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNotFound);
     EXPECT_TRUE(RestoreDirPath(dirName).GetCode() == ErrorCode::kNone);
     EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNone);
-    FILE* f = fopen(fileName.c_str(), "w");
+    FILE *f = fopen(fileName.c_str(), "w");
     if (f != NULL)
     {
         EXPECT_TRUE(PathExists(fileName).GetCode() == ErrorCode::kNone);

@@ -39,7 +39,7 @@
 #include "commissioner/network_data.hpp"
 #include "common/utils.hpp"
 
-#define INFO(str)  Console::Write(str)
+#define INFO(str) Console::Write(str)
 
 namespace ot {
 
