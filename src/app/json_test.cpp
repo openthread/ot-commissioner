@@ -33,36 +33,38 @@
 
 #include "app/json.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
-#include <commissioner/network_data.hpp>
-
+#include "cli/console.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/utils.hpp"
+
+#define INFO(str)  Console::Write(str)
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("active-operational-dataset-encoding-decoding", "[json]")
+TEST(Json, ActiveOperationalDatasetEncodingDecoding)
 {
     const std::string        kNetworkMasterKey = "0123456789abcdef0123456789abcdef";
     ActiveOperationalDataset dataset;
 
-    SECTION("network master key serialization & deserialization")
+    // network master key serialization & deserialization
     {
-        REQUIRE(utils::Hex(dataset.mNetworkMasterKey, kNetworkMasterKey) == ErrorCode::kNone);
+        EXPECT_TRUE(utils::Hex(dataset.mNetworkMasterKey, kNetworkMasterKey) == ErrorCode::kNone);
         dataset.mPresentFlags |= ActiveOperationalDataset::kNetworkMasterKeyBit;
 
         std::string json = ActiveDatasetToJson(dataset);
 
         ActiveOperationalDataset dataset1;
-        REQUIRE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
+        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
 
-        REQUIRE((dataset1.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit));
-        REQUIRE(utils::Hex(dataset1.mNetworkMasterKey) == kNetworkMasterKey);
+        EXPECT_TRUE((dataset1.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit));
+        EXPECT_TRUE(utils::Hex(dataset1.mNetworkMasterKey) == kNetworkMasterKey);
     }
 
-    SECTION("security policy serialization & deserialization")
+    // security policy serialization & deserialization
     {
         const ByteArray kSecurityPolicyFlags  = {0x05, 0xff};
         dataset.mSecurityPolicy.mRotationTime = 32;
@@ -72,25 +74,26 @@ TEST_CASE("active-operational-dataset-encoding-decoding", "[json]")
         std::string              json = ActiveDatasetToJson(dataset);
         ActiveOperationalDataset dataset1;
         INFO(json);
-        REQUIRE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
+        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
 
-        REQUIRE((dataset1.mPresentFlags & ActiveOperationalDataset::kSecurityPolicyBit));
-        REQUIRE(dataset1.mSecurityPolicy.mFlags == ByteArray{0x05, 0xff});
+        EXPECT_TRUE((dataset1.mPresentFlags & ActiveOperationalDataset::kSecurityPolicyBit));
+        EXPECT_EQ(dataset1.mSecurityPolicy.mFlags, kSecurityPolicyFlags);
     }
 
-    SECTION("channel mask serialization & deserialization")
+    // channel mask serialization & deserialization
     {
         dataset.mChannelMask = {{1, {0xFF, 0xEE}}};
         dataset.mPresentFlags |= ActiveOperationalDataset::kChannelMaskBit;
 
         std::string              json = ActiveDatasetToJson(dataset);
         ActiveOperationalDataset dataset1;
-        REQUIRE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
+        INFO(json);
+        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
 
-        REQUIRE((dataset1.mPresentFlags & ActiveOperationalDataset::kChannelMaskBit));
-        REQUIRE(dataset1.mChannelMask.size() == 1);
-        REQUIRE(dataset1.mChannelMask[0].mPage == 1);
-        REQUIRE(dataset1.mChannelMask[0].mMasks == ByteArray{0xFF, 0xEE});
+        EXPECT_TRUE((dataset1.mPresentFlags & ActiveOperationalDataset::kChannelMaskBit));
+        EXPECT_TRUE(dataset1.mChannelMask.size() == 1);
+        EXPECT_TRUE(dataset1.mChannelMask[0].mPage == 1);
+        EXPECT_TRUE(dataset1.mChannelMask[0].mMasks == dataset.mChannelMask[0].mMasks);
     }
 }
 
