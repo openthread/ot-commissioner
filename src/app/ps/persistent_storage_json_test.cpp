@@ -31,7 +31,7 @@
  *   The file implements unit tests for JSON-based persistent storage
  */
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 #include "persistent_storage_json.hpp"
 
@@ -45,496 +45,500 @@
 using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner;
 
-TEST_CASE("Create default if not exists", "[ps_json]")
+TEST(PSJson, CreateDefaultIfNotExists)
 {
     PersistentStorageJson psj("./test_ps.json");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Read empty file", "[ps_json]")
+TEST(PSJson, ReadEmptyFile)
 {
     std::ofstream testTmp("./test.tmp");
     testTmp.close();
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Read non empty - default struct", "[ps_json]")
+TEST(PSJson, ReadNonEmptyDefault)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Add registrar", "[ps_json]")
+TEST(PSJson, AddRegistrar)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     RegistrarId newId;
 
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Add domain", "[ps_json]")
+TEST(PSJson, AddDomain)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     DomainId newId;
 
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom1"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom2"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom3"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom1"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom2"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom3"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Add network", "[ps_json]")
+TEST(PSJson, AddNetwork)
 {
     // Make the test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     NetworkId newId;
 
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Add br", "[ps_json]")
+TEST(PSJson, AddBorderRouter)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     BorderRouterId newId;
 
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Del Registrar", "[ps_json]")
+TEST(PSJson, DelRegistrar)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
-    REQUIRE(psj.Del(RegistrarId(0)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(RegistrarId(1)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(RegistrarId(2)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(RegistrarId(50)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(RegistrarId(0)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(RegistrarId(1)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(RegistrarId(2)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(RegistrarId(50)) == PersistentStorage::Status::PS_SUCCESS);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Del domain", "[ps_json]")
+TEST(PSJson, DelDomain)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
-    REQUIRE(psj.Del(DomainId(0)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(DomainId(1)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(DomainId(2)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(DomainId(50)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(DomainId(0)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(DomainId(1)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(DomainId(2)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(DomainId(50)) == PersistentStorage::Status::PS_SUCCESS);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Del network", "[ps_json]")
+TEST(PSJson, DelNetwork)
 {
     PersistentStorageJson psj("");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     NetworkId newId;
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
 
-    REQUIRE(psj.Del(NetworkId(0)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(NetworkId(0)) == PersistentStorage::Status::PS_SUCCESS);
     // Absent network successfully deletes newertheless
-    REQUIRE(psj.Del(NetworkId(1)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(NetworkId(1)) == PersistentStorage::Status::PS_SUCCESS);
 
     NetworkArray nets;
-    REQUIRE(psj.Lookup(Network{}, nets) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Lookup(Network{}, nets) == PersistentStorage::Status::PS_NOT_FOUND);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Del br", "[ps_json]")
+TEST(PSJson, DelBorderRouter)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
-    REQUIRE(psj.Del(BorderRouterId(0)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(BorderRouterId(1)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(BorderRouterId(2)) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Del(BorderRouterId(50)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(BorderRouterId(0)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(BorderRouterId(1)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(BorderRouterId(2)) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Del(BorderRouterId(50)) == PersistentStorage::Status::PS_SUCCESS);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get Registrar from empty", "[ps_json]")
+TEST(PSJson, GetRegistrarFromEmpty)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     Registrar returnValue;
 
-    REQUIRE(psj.Get(RegistrarId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(RegistrarId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get domain from empty", "[ps_json]")
+TEST(PSJson, GetDomainFromEmpty)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     Domain returnValue;
 
-    REQUIRE(psj.Get(DomainId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(DomainId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get network from empty", "[ps_json]")
+TEST(PSJson, GetNetworkFromEmpty)
 {
     PersistentStorageJson psj("");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     Network returnValue;
 
-    REQUIRE(psj.Get(NetworkId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(NetworkId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get br from empty", "[ps_json]")
+TEST(PSJson, GetBorderRouterFromEmpty)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     BorderRouter returnValue;
 
-    REQUIRE(psj.Get(BorderRouterId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(BorderRouterId(0), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get Registrar, not empty", "[ps_json]")
+TEST(PSJson, GetRegistrarNotEmpty)
 {
     // Make test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     RegistrarId newId;
 
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
     Registrar returnValue;
 
-    REQUIRE(psj.Get(RegistrarId(3), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
-    REQUIRE(psj.Get(RegistrarId(1), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 1);
-    REQUIRE(returnValue.mAddr == "0.0.0.2");
-    REQUIRE(returnValue.mPort == 2);
-    REQUIRE(returnValue.mDomains == std::vector<std::string>{"dom2"});
+    EXPECT_TRUE(psj.Get(RegistrarId(3), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(RegistrarId(1), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 1);
+    EXPECT_TRUE(returnValue.mAddr == "0.0.0.2");
+    EXPECT_TRUE(returnValue.mPort == 2);
+    EXPECT_TRUE(returnValue.mDomains == std::vector<std::string>{"dom2"});
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get Domain, not empty", "[ps_json]")
+TEST(PSJson, GetDomainNotEmpty)
 {
     // Make test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     DomainId newId;
 
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom1"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom2"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom3"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom1"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom2"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom3"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
     Domain returnValue;
 
-    REQUIRE(psj.Get(DomainId(3), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
-    REQUIRE(psj.Get(DomainId(0), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 0);
-    REQUIRE(returnValue.mName == "dom1");
+    EXPECT_TRUE(psj.Get(DomainId(3), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(DomainId(0), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 0);
+    EXPECT_TRUE(returnValue.mName == "dom1");
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get Network, not empty", "[ps_json]")
+TEST(PSJson, GetNetworkNotEmpty)
 {
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     NetworkId newId;
 
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1, 11, "FFF1", "2000:aaa1::0/8", 1}, newId) ==
-            PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2, 12, "FFF2", "2000:aaa2::0/8", 1}, newId) ==
-            PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3, 13, "FFF3", "2000:aaa3::0/8", 1}, newId) ==
-            PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1, 11, "FFF1", "2000:aaa1::0/8", 1},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2, 12, "FFF2", "2000:aaa2::0/8", 1},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3, 13, "FFF3", "2000:aaa3::0/8", 1},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
     Network returnValue;
 
-    REQUIRE(psj.Get(NetworkId(5), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
-    REQUIRE(psj.Get(NetworkId(0), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 0);
-    REQUIRE(returnValue.mName == "nwk1");
-    REQUIRE(returnValue.mChannel == 11);
+    EXPECT_TRUE(psj.Get(NetworkId(5), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(NetworkId(0), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 0);
+    EXPECT_TRUE(returnValue.mName == "nwk1");
+    EXPECT_TRUE(returnValue.mChannel == 11);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Get br, not empty", "[ps_json]")
+TEST(PSJson, GetBorderRouterNotEmpty)
 {
     // Make the test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     BorderRouterId newId;
 
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
     BorderRouter returnValue;
 
-    REQUIRE(psj.Get(BorderRouterId(3), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
-    REQUIRE(psj.Get(BorderRouterId(1), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 1);
-    REQUIRE(returnValue.mAgent.mPort == 12);
-    REQUIRE(returnValue.mAgent.mAddr == "1.1.1.3");
+    EXPECT_TRUE(psj.Get(BorderRouterId(3), returnValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Get(BorderRouterId(1), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 1);
+    EXPECT_TRUE(returnValue.mAgent.mPort == 12);
+    EXPECT_TRUE(returnValue.mAgent.mAddr == "1.1.1.3");
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
 // UPD
-TEST_CASE("Upd Registrar", "[ps_json]")
+TEST(PSJson, UpdRegistrar)
 {
     // Make the test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     // Add initial data
     RegistrarId newId;
 
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 2, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
 
     // Test actions
     Registrar newValue{EMPTY_ID, "4.4.4.4", 1, {"dom4"}};
 
-    REQUIRE(psj.Update(newValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Update(newValue) == PersistentStorage::Status::PS_NOT_FOUND);
     newValue.mId = 2;
-    REQUIRE(psj.Update(newValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Update(newValue) == PersistentStorage::Status::PS_SUCCESS);
 
     Registrar returnValue;
 
-    REQUIRE(psj.Get(RegistrarId(2), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 2);
-    REQUIRE(returnValue.mAddr == "4.4.4.4");
-    REQUIRE(returnValue.mPort == 1);
-    REQUIRE(returnValue.mDomains == std::vector<std::string>{"dom4"});
+    EXPECT_TRUE(psj.Get(RegistrarId(2), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 2);
+    EXPECT_TRUE(returnValue.mAddr == "4.4.4.4");
+    EXPECT_TRUE(returnValue.mPort == 1);
+    EXPECT_TRUE(returnValue.mDomains == std::vector<std::string>{"dom4"});
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Upd Domain", "[ps_json]")
+TEST(PSJson, UpdDomain)
 {
     // Make the test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     // Add initial data
     DomainId newId;
 
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom1"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom2"}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(Domain{EMPTY_ID, "dom3"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom1"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom2"}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Domain{EMPTY_ID, "dom3"}, newId) == PersistentStorage::Status::PS_SUCCESS);
 
     // Test actions
     Domain newValue{EMPTY_ID, "dom_upd"};
 
-    REQUIRE(psj.Update(newValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Update(newValue) == PersistentStorage::Status::PS_NOT_FOUND);
     newValue.mId = 1;
-    REQUIRE(psj.Update(newValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Update(newValue) == PersistentStorage::Status::PS_SUCCESS);
 
     Domain returnValue;
 
-    REQUIRE(psj.Get(DomainId(1), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 1);
-    REQUIRE(returnValue.mName == "dom_upd");
+    EXPECT_TRUE(psj.Get(DomainId(1), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 1);
+    EXPECT_TRUE(returnValue.mName == "dom_upd");
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Upd Network", "[ps_json]")
+TEST(PSJson, UpdNetwork)
 {
     unlink("./tmp.json");
     PersistentStorageJson psj("./tmp.json");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     Network nwk{EMPTY_ID, EMPTY_ID, "nwk", 0xFFFFFFFFFFFFFFFA, 17, "FFFA", "2000:aaa1::0/64", 0};
 
-    REQUIRE(psj.Update(nwk) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Update(nwk) == PersistentStorage::Status::PS_NOT_FOUND);
     NetworkId nid;
-    REQUIRE(psj.Add(nwk, nid) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(nwk, nid) == PersistentStorage::Status::PS_SUCCESS);
     nwk.mId      = nid;
     nwk.mChannel = 18;
     nwk.mName    = "nwk_upd";
-    REQUIRE(psj.Update(nwk) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Update(nwk) == PersistentStorage::Status::PS_SUCCESS);
 
     Network returnValue;
 
-    REQUIRE(psj.Get(NetworkId(0), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 0);
-    REQUIRE(returnValue.mName == "nwk_upd");
-    REQUIRE(returnValue.mChannel == 18);
+    EXPECT_TRUE(psj.Get(NetworkId(0), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 0);
+    EXPECT_TRUE(returnValue.mName == "nwk_upd");
+    EXPECT_TRUE(returnValue.mChannel == 18);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Upd br", "[ps_json]")
+TEST(PSJson, UpdBorderRouter)
 {
     // Make test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     // Add initial data
     BorderRouterId newId;
 
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
-                                 BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
-                                             "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
-                                             Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0,
-                                             "", 0, 0xFFFF}},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.2", 11, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.3", 12, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(BorderRouter{EMPTY_ID, EMPTY_ID,
+                                     BorderAgent{"1.1.1.4", 13, ByteArray{}, "th1.x", BorderAgent::State{1, 0, 1, 0, 1},
+                                                 "NetworkId", 0x1011223344556677ll, "vendor_name", "model_name",
+                                                 Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name",
+                                                 0, 0, "", 0, 0xFFFF}},
+                        newId) == PersistentStorage::Status::PS_SUCCESS);
 
     // Test actions
     BorderRouter newValue{EMPTY_ID, EMPTY_ID,
@@ -544,73 +548,73 @@ TEST_CASE("Upd br", "[ps_json]")
                                       Timestamp{0, 0, 0}, 1, "vendor_data", ByteArray{1, 2}, "Domain_name", 0, 0, "", 0,
                                       0xFFFF}};
 
-    REQUIRE(psj.Update(newValue) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(psj.Update(newValue) == PersistentStorage::Status::PS_NOT_FOUND);
     newValue.mId = 2;
-    REQUIRE(psj.Update(newValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Update(newValue) == PersistentStorage::Status::PS_SUCCESS);
 
     BorderRouter returnValue;
 
-    REQUIRE(psj.Get(BorderRouterId(2), returnValue) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(returnValue.mId.mId == 2);
-    REQUIRE(returnValue.mAgent.mPort == 18);
-    REQUIRE(returnValue.mAgent.mAddr == "5.5.5.5");
+    EXPECT_TRUE(psj.Get(BorderRouterId(2), returnValue) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(returnValue.mId.mId == 2);
+    EXPECT_TRUE(returnValue.mAgent.mPort == 18);
+    EXPECT_TRUE(returnValue.mAgent.mAddr == "5.5.5.5");
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Lookup Registrar", "[ps_json]")
+TEST(PSJson, LookupRegistrar)
 {
     // Make test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     //  Populate storage with test data
     RegistrarId newId;
 
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 1, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.1", 1, {"dom1"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.2", 1, {"dom2"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Add(Registrar{EMPTY_ID, "0.0.0.3", 3, {"dom3"}}, newId) == PersistentStorage::Status::PS_SUCCESS);
 
     // Test actions
     std::vector<Registrar> retLookup;
 
     Registrar searchReq{EMPTY_ID, "", 0, {}};
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 3);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 3);
 
     retLookup.clear();
 
     searchReq.mId.mId = 0;
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 1);
-    REQUIRE(retLookup[0].mId.mId == 0);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 1);
+    EXPECT_TRUE(retLookup[0].mId.mId == 0);
 
     retLookup.clear();
 
     searchReq.mId.mId = 0;
     searchReq.mAddr   = "0.0.0.2";
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_NOT_FOUND);
-    REQUIRE(retLookup.size() == 0);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_NOT_FOUND);
+    EXPECT_TRUE(retLookup.size() == 0);
 
     retLookup.clear();
 
     searchReq.mId.mId = 0;
     searchReq.mAddr   = "0.0.0.1";
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 1);
-    REQUIRE(retLookup[0].mId.mId == 0);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 1);
+    EXPECT_TRUE(retLookup[0].mId.mId == 0);
 
     retLookup.clear();
 
     searchReq.mId.mId = 0;
     searchReq.mAddr   = "0.0.0.1";
     searchReq.mPort   = 1;
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 1);
-    REQUIRE(retLookup[0].mId.mId == 0);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 1);
+    EXPECT_TRUE(retLookup[0].mId.mId == 0);
 
     retLookup.clear();
 
@@ -618,56 +622,59 @@ TEST_CASE("Lookup Registrar", "[ps_json]")
     searchReq.mAddr    = "0.0.0.1";
     searchReq.mPort    = 1;
     searchReq.mDomains = {"dom1"};
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 1);
-    REQUIRE(retLookup[0].mId.mId == 0);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 1);
+    EXPECT_TRUE(retLookup[0].mId.mId == 0);
 
     retLookup.clear();
 
     searchReq       = {};
     searchReq.mPort = 1;
-    REQUIRE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 2);
-    REQUIRE(retLookup[0].mId.mId == 0);
-    REQUIRE(retLookup[1].mId.mId == 1);
+    EXPECT_TRUE(psj.Lookup(searchReq, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 2);
+    EXPECT_TRUE(retLookup[0].mId.mId == 0);
+    EXPECT_TRUE(retLookup[1].mId.mId == 1);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }
 
-TEST_CASE("Lookup Network", "[ps_json]")
+TEST(PSJson, LookupNetwork)
 {
     // Make test independent
     unlink("./test.tmp");
 
     PersistentStorageJson psj("./test.tmp");
 
-    REQUIRE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Open() == PersistentStorage::Status::PS_SUCCESS);
 
     // Populate storage with initial data
     NetworkId newId;
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 0);
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 1);
-    REQUIRE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
-                    newId) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(newId.mId == 2);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 0);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 1);
+    EXPECT_TRUE(
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
+                newId) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(newId.mId == 2);
 
     // The test
     std::vector<Network> retLookup;
 
-    REQUIRE(psj.Lookup(Network{}, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 3);
+    EXPECT_TRUE(psj.Lookup(Network{}, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 3);
 
     retLookup.clear();
 
     Network net;
     net.mName = "nwk1";
     net.mCcm  = true;
-    REQUIRE(psj.Lookup(net, retLookup) == PersistentStorage::Status::PS_SUCCESS);
-    REQUIRE(retLookup.size() == 1);
+    EXPECT_TRUE(psj.Lookup(net, retLookup) == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(retLookup.size() == 1);
 
-    REQUIRE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_TRUE(psj.Close() == PersistentStorage::Status::PS_SUCCESS);
 }

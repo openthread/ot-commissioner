@@ -31,7 +31,7 @@
  *   The file implements registry test suite.
  */
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 #include "registry.hpp"
 
@@ -44,25 +44,23 @@ using namespace ot::commissioner;
 
 const char json_path[] = "./registry_test.json";
 
-TEST_CASE("create-empty-registry", "[reg_json]")
+TEST(RegJson, CreateEmptyRegistry)
 {
     unlink(json_path);
     Registry reg(json_path);
 
-    REQUIRE(reg.Open() == Registry::Status::REG_SUCCESS);
-    REQUIRE(reg.Close() == Registry::Status::REG_SUCCESS);
+    EXPECT_TRUE(reg.Open() == Registry::Status::REG_SUCCESS);
+    EXPECT_TRUE(reg.Close() == Registry::Status::REG_SUCCESS);
 }
 
-TEST_CASE("create-br-from-ba", "[reg_json]")
+TEST(RegJson, CreateBorderRouterFromBorderAgent)
 {
     unlink(json_path);
     Registry reg(json_path);
 
-    REQUIRE(reg.Open() == Registry::Status::REG_SUCCESS);
+    EXPECT_TRUE(reg.Open() == Registry::Status::REG_SUCCESS);
 
-    // TODO Re-implement by creating with explicit persistent storage
-#if 0
-    // Create border_router with network
+    // Create BorderRouter with network
     {
         BorderAgent ba{"1.1.1.1",
                        1,
@@ -84,16 +82,16 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_SUCCESS);
-        border_router ret_val;
-        REQUIRE(reg.get(border_router_id{0}, ret_val) == Registry::Status::REG_SUCCESS);
-        REQUIRE(ret_val.nwk_id.id == 0);
-        network nwk;
-        REQUIRE(reg.get(network_id{0}, nwk) == Registry::Status::REG_SUCCESS);
-        REQUIRE(nwk.dom_id.id == EMPTY_ID);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        BorderRouter ret_val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, ret_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(ret_val.mNetworkId.mId == 0);
+        Network nwk;
+        EXPECT_TRUE(reg.GetNetworkByXpan(XpanId{0}, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(nwk.mDomainId.mId == EMPTY_ID);
     }
 
-    // Create border_router with network and domain
+    // Create BorderRouter with network and domain
     {
         BorderAgent ba{"1.1.1.2",
                        2,
@@ -115,20 +113,21 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kDomainNameBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
 
-        border_router ret_val;
-        REQUIRE(reg.get(border_router_id{1}, ret_val) == Registry::Status::REG_SUCCESS);
-        REQUIRE(ret_val.nwk_id.id == 1);
-        network nwk;
-        REQUIRE(reg.get(network_id{1}, nwk) == Registry::Status::REG_SUCCESS);
-        REQUIRE(nwk.id.id == 1);
-        REQUIRE(nwk.dom_id.id == 0);
-        domain dom;
-        REQUIRE(reg.get(domain_id{0}, dom) == Registry::Status::REG_SUCCESS);
+        BorderRouter ret_val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{1}, ret_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(ret_val.mNetworkId.mId == 1);
+        Network nwk;
+        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(nwk.mId.mId == 1);
+        EXPECT_TRUE(nwk.mDomainId.mId == 0);
+        std::string dom;
+        EXPECT_TRUE(reg.GetDomainNameByXpan(nwk.mXpan, dom) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(dom == ba.mDomainName);
     }
 
-    // Fail to create border_router without network
+    // Fail to create BorderRouter without network
     {
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
@@ -150,21 +149,22 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        "",
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kVendorNameBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_ERROR);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_ERROR);
     }
-    // Update border_router fields
+    // Update BorderRouter fields
     {
-        // Check the border_router present
-        border_router val;
-        REQUIRE(reg.get(border_router_id{0}, val) == Registry::Status::REG_SUCCESS);
-        REQUIRE((val.agent.mPresentFlags & (BorderAgent::kAddrBit | BorderAgent::kPortBit)) ==
-                (BorderAgent::kAddrBit | BorderAgent::kPortBit));
-        REQUIRE(val.agent.mAddr == "1.1.1.1");
-        val.agent.mPresentFlags |=
+        // Check the BorderRouter present
+        BorderRouter val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE((val.mAgent.mPresentFlags & (BorderAgent::kAddrBit | BorderAgent::kPortBit)) ==
+                    (BorderAgent::kAddrBit | BorderAgent::kPortBit));
+        EXPECT_TRUE(val.mAgent.mAddr == "1.1.1.1");
+        val.mAgent.mPresentFlags |=
             BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit | BorderAgent::kDomainNameBit;
-        network nwk;
-        REQUIRE(reg.get(val.nwk_id, nwk) == Registry::Status::REG_SUCCESS);
-
+#if 0 // TODO: understand the case
+        Network nwk;
+        EXPECT_TRUE(reg.get(val.nwk_id, nwk) == Registry::Status::REG_SUCCESS);
+#endif
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
@@ -186,16 +186,16 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_SUCCESS);
-        border_router new_val;
-        REQUIRE(reg.get(border_router_id{0}, new_val) == Registry::Status::REG_SUCCESS);
-        REQUIRE(val.id.id == new_val.id.id);
-        REQUIRE(val.nwk_id.id == new_val.nwk_id.id);
-        REQUIRE((new_val.agent.mPresentFlags & BorderAgent::kVendorNameBit) != 0);
-        REQUIRE(new_val.agent.mVendorName == "vendorName");
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        BorderRouter new_val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(val.mId.mId == new_val.mId.mId);
+        EXPECT_TRUE(val.mNetworkId.mId == new_val.mNetworkId.mId);
+        EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kVendorNameBit) != 0);
+        EXPECT_TRUE(new_val.mAgent.mVendorName == ba.mVendorName);
     }
 
-    // Update border_router - switch network
+    // Update BorderRouter - switch network
     {
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
@@ -218,13 +218,13 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_SUCCESS);
-        border_router new_val;
-        REQUIRE(reg.get(border_router_id{0}, new_val) == Registry::Status::REG_SUCCESS);
-        REQUIRE(new_val.nwk_id.id == 2);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        BorderRouter new_val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(new_val.mNetworkId.mId == 2);
     }
 
-    // Update border_router - add network into domain
+    // Update BorderRouter - add network into domain
     {
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
@@ -247,16 +247,16 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kDomainNameBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_SUCCESS);
-        border_router new_val;
-        REQUIRE(reg.get(border_router_id{0}, new_val) == Registry::Status::REG_SUCCESS);
-        REQUIRE(new_val.nwk_id.id == 2);
-        network nwk;
-        REQUIRE(reg.get(network_id{2}, nwk) == Registry::Status::REG_SUCCESS);
-        REQUIRE(nwk.dom_id.id == 0);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        BorderRouter new_val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(new_val.mNetworkId.mId == 2);
+        Network nwk;
+        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(nwk.mDomainId.mId == 0);
     }
 
-    // Update border_router - move network into another domain
+    // Update BorderRouter - move network into another domain
     {
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
@@ -279,14 +279,14 @@ TEST_CASE("create-br-from-ba", "[reg_json]")
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kDomainNameBit};
-        REQUIRE(reg.add(ba) == Registry::Status::REG_SUCCESS);
-        border_router new_val;
-        REQUIRE(reg.get(border_router_id{0}, new_val) == Registry::Status::REG_SUCCESS);
-        REQUIRE(new_val.nwk_id.id == 2);
-        network nwk;
-        REQUIRE(reg.get(network_id{2}, nwk) == Registry::Status::REG_SUCCESS);
-        REQUIRE(nwk.dom_id.id == 1);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        BorderRouter new_val;
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(new_val.mNetworkId.mId == 2);
+        Network nwk;
+        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(nwk.mDomainId.mId == 1);
     }
-#endif
-    REQUIRE(reg.Close() == Registry::Status::REG_SUCCESS);
+
+    EXPECT_TRUE(reg.Close() == Registry::Status::REG_SUCCESS);
 }

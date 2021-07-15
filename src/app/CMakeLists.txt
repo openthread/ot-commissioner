@@ -110,12 +110,14 @@ if (OT_COMM_TEST)
         ${PROJECT_SOURCE_DIR}/src/common/time.cpp
         ${PROJECT_SOURCE_DIR}/src/common/utils.cpp
         ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+        $<TARGET_OBJECTS:commissioner-ps-test>
     )
 
     target_link_libraries(commissioner2-test
         fmt::fmt
         gtest
         mdns
+        persistent-storage
         readline
     )
 
