@@ -60,6 +60,7 @@ jobs:
       - name: Run unittests
         run: |
           ./build/tests/commissioner-test
+          ./build/tests/commissioner2-test
           ./build/tests/job-manager-test
           ./build/tests/interpreter-test
       - name: Run integration tests

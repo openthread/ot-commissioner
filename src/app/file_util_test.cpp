@@ -33,46 +33,56 @@
 
 #include "app/file_util.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("SplitPath", "[file_util]")
+TEST(FileUtil, SplitPath)
 {
     std::string path;
     std::string dirName  = "123";
     std::string baseName = "456";
 
-    SECTION("directory and file")
-    {
-        path = "dir/ect/ory/file";
-        SplitPath(path, dirName, baseName);
-        REQUIRE(dirName == std::string("dir/ect/ory/"));
-        REQUIRE(baseName == "file");
-    }
+    // directory and file
+    path = "dir/ect/ory/file";
+    SplitPath(path, dirName, baseName);
+    EXPECT_TRUE(dirName == std::string("dir/ect/ory/"));
+    EXPECT_TRUE(baseName == "file");
 
-    SECTION("file only")
-    {
-        path = "file.name";
-        SplitPath(path, dirName, baseName);
-        REQUIRE(dirName.empty());
-        REQUIRE(baseName == path);
-    }
+    // file only
+    path = "file.name";
+    SplitPath(path, dirName, baseName);
+    EXPECT_TRUE(dirName.empty());
+    EXPECT_TRUE(baseName == path);
 
-    SECTION("pure directory")
-    {
-        path = "dir/ect/ory/";
-        SplitPath(path, dirName, baseName);
-        REQUIRE(dirName == path);
-        REQUIRE(baseName.empty());
-    }
+    // pure directory
+    path = "dir/ect/ory/";
+    SplitPath(path, dirName, baseName);
+    EXPECT_TRUE(dirName == path);
+    EXPECT_TRUE(baseName.empty());
 }
 
-TEST_CASE("PathExists", "[file_util]")
+TEST(FileUtil, PathExists)
 {
-    REQUIRE(PathExists("./").GetCode() == ErrorCode::kNone);
+    std::string dirName  = "./tmp_FileUtil/";
+    std::string fileName = dirName + "test";
+
+    EXPECT_TRUE(PathExists("./").GetCode() == ErrorCode::kNone);
+    EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNotFound);
+    EXPECT_TRUE(RestoreDirPath(dirName).GetCode() == ErrorCode::kNone);
+    EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNone);
+    FILE* f = fopen(fileName.c_str(), "w");
+    if (f != NULL)
+    {
+        EXPECT_TRUE(PathExists(fileName).GetCode() == ErrorCode::kNone);
+        fclose(f);
+        EXPECT_TRUE(unlink(fileName.c_str()) == 0);
+        EXPECT_TRUE(PathExists(fileName).GetCode() == ErrorCode::kNotFound);
+    }
+    EXPECT_TRUE(rmdir(dirName.c_str()) == 0);
+    EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNotFound);
 }
 
 } // namespace commissioner
