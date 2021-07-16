@@ -259,7 +259,38 @@ PersistentStorage::Status PersistentStorageJson::Get(NetworkId const &aId, Netwo
 
 PersistentStorage::Status PersistentStorageJson::Get(BorderRouterId const &aId, BorderRouter &aRetValue)
 {
-    return GetId<BorderRouter, BorderRouterId>(aId, aRetValue, JSON_BR);
+    Status status = GetId<BorderRouter, BorderRouterId>(aId, aRetValue, JSON_BR);
+
+    if (status == Status::PS_SUCCESS && aRetValue.mNetworkId.mId != EMPTY_ID)
+    {
+        Network nwk;
+        status = Get(aRetValue.mNetworkId, nwk);
+        if (status == Status::PS_SUCCESS)
+        {
+            if (!nwk.mName.empty())
+            {
+                aRetValue.mAgent.mNetworkName = nwk.mName;
+                aRetValue.mAgent.mPresentFlags |= BorderAgent::kNetworkNameBit;
+            }
+            if (nwk.mXpan.mValue != XpanId::kEmptyXpanId)
+            {
+                aRetValue.mAgent.mExtendedPanId = nwk.mXpan.mValue;
+                aRetValue.mAgent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
+            }
+            if (nwk.mDomainId.mId != EMPTY_ID)
+            {
+                Domain dom;
+                status = Get(nwk.mDomainId, dom);
+                if (status == Status::PS_SUCCESS && !dom.mName.empty())
+                {
+                    aRetValue.mAgent.mDomainName = dom.mName;
+                    aRetValue.mAgent.mPresentFlags |= BorderAgent::kDomainNameBit;
+                }
+            }
+        }
+    }
+
+    return status;
 }
 
 PersistentStorage::Status PersistentStorageJson::Update(Registrar const &aValue)
@@ -327,7 +358,7 @@ PersistentStorage::Status PersistentStorageJson::Lookup(Network const &aValue, s
                     (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
                     (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) &&
                     (aValue.mName.empty() || (aValue.mName == el.mName)) &&
-                    (aValue.mXpan.mValue == 0 || aValue.mXpan == el.mXpan) &&
+                    (aValue.mXpan.mValue == XpanId::kEmptyXpanId || aValue.mXpan == el.mXpan) &&
                     (aValue.mPan.empty() || CaseInsensitiveEqual(aValue.mPan, el.mPan)) &&
                     (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) &&
                     (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));

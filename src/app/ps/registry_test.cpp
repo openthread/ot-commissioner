@@ -39,6 +39,10 @@
 
 #include <unistd.h>
 
+#include "app/cli/console.hpp"
+
+#define INFO(str) Console::Write(str)
+
 using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner;
 
@@ -159,12 +163,9 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
         EXPECT_TRUE((val.mAgent.mPresentFlags & (BorderAgent::kAddrBit | BorderAgent::kPortBit)) ==
                     (BorderAgent::kAddrBit | BorderAgent::kPortBit));
         EXPECT_TRUE(val.mAgent.mAddr == "1.1.1.1");
-        val.mAgent.mPresentFlags |=
-            BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit | BorderAgent::kDomainNameBit;
-#if 0 // TODO: understand the case
+        INFO(val.mAgent.mNetworkName + " : " + XpanId(val.mAgent.mExtendedPanId).str());
         Network nwk;
-        EXPECT_TRUE(reg.get(val.nwk_id, nwk) == Registry::Status::REG_SUCCESS);
-#endif
+        EXPECT_TRUE(reg.GetNetworkByXpan(val.mAgent.mExtendedPanId, nwk) == Registry::Status::REG_SUCCESS);
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
@@ -177,7 +178,7 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        "",
                        Timestamp{},
                        0,
-                       "",
+                       "vendorData",
                        ByteArray{},
                        "",
                        0,
@@ -185,14 +186,20 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        "",
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
-                           BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit};
+                           BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kVendorDataBit};
         EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
         BorderRouter new_val;
         EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
         EXPECT_TRUE(val.mId.mId == new_val.mId.mId);
         EXPECT_TRUE(val.mNetworkId.mId == new_val.mNetworkId.mId);
+        EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kNetworkNameBit) != 0);
+        EXPECT_TRUE(new_val.mAgent.mNetworkName == ba.mNetworkName);
+        EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0);
+        EXPECT_TRUE(new_val.mAgent.mExtendedPanId == ba.mExtendedPanId);
         EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kVendorNameBit) != 0);
         EXPECT_TRUE(new_val.mAgent.mVendorName == ba.mVendorName);
+        EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kVendorDataBit) != 0);
+        EXPECT_TRUE(new_val.mAgent.mVendorData == ba.mVendorData);
     }
 
     // Update BorderRouter - switch network

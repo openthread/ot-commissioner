@@ -117,7 +117,7 @@ XpanId::XpanId(uint64_t val)
 }
 
 XpanId::XpanId()
-    : XpanId(0)
+    : XpanId(kEmptyXpanId)
 {
 }
 
