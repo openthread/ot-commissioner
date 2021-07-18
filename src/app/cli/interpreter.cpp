@@ -351,7 +351,7 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
     mRegistry.reset(new Registry(aRegistryFile));
     VerifyOrExit(mRegistry != nullptr,
                  error = ERROR_OUT_OF_MEMORY("Failed to create registry for file '{}'", aRegistryFile));
-    VerifyOrExit(mRegistry->Open() == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("registry failed to open"));
+    VerifyOrExit(mRegistry->Open() == RegistryStatus::kSuccess, error = ERROR_IO_ERROR("registry failed to open"));
 
     VerifyOrExit(pipe(mCancelPipe) != -1,
                  error = ERROR_IO_ERROR("failed to initialize command cancellation structures"));
@@ -479,7 +479,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
             if (mContext.mNwkAliases.empty())
             {
                 auto result = mRegistry->GetCurrentNetworkXpan(xpan);
-                if (result != Registry::Status::REG_SUCCESS)
+                if (result != Registry::Status::kSuccess)
                 {
                     xpan = XpanId();
                 }
@@ -489,7 +489,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
                 XpanIdArray nwks;
                 StringArray unresolved;
                 VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, nwks, unresolved) ==
-                                 Registry::Status::REG_SUCCESS,
+                                 Registry::Status::kSuccess,
                              value = ERROR_INVALID_ARGS("Failed to resolve network alias for import"));
                 xpan = nwks[0];
             }
@@ -555,7 +555,7 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
             PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
         }
         VerifyOrExit(
-            status == RegistryStatus::REG_SUCCESS,
+            status == RegistryStatus::kSuccess,
             error = ERROR_IO_ERROR("Multi-network syntax violation: aliases failed to resolve with status={}", status));
     }
     else if (mContext.mDomAliases.size() > 0)
@@ -568,7 +568,7 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         // domain must be single
         VerifyOrExit(mContext.mDomAliases.size() < 2, error = ERROR_INVALID_ARGS(SYNTAX_MULTI_DOMAIN));
         RegistryStatus status = mRegistry->GetNetworkXpansInDomain(mContext.mDomAliases.front(), aNids);
-        VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(status == RegistryStatus::kSuccess,
                      error = ERROR_IO_ERROR("domain '{}' failed to resolve with status={}",
                                             mContext.mDomAliases.front(), status));
     }
@@ -843,7 +843,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         // starting currently selected network
         XpanId         nid;
         RegistryStatus status = mRegistry->GetCurrentNetworkXpan(nid);
-        VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("getting selected network failed"));
+        VerifyOrExit(status == RegistryStatus::kSuccess, value = ERROR_IO_ERROR("getting selected network failed"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         SuccessOrExit(value = mJobManager->MakeBorderRouterChoice(nid, br));
         expr.push_back(br.mAgent.mAddr);
@@ -856,9 +856,9 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
         persistent_storage::BorderRouterId rawid;
 
         SuccessOrExit(value = ParseInteger(rawid.mId, expr[1]));
-        VerifyOrExit(mRegistry->GetBorderRouter(rawid, br) == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(mRegistry->GetBorderRouter(rawid, br) == RegistryStatus::kSuccess,
                      value = ERROR_NOT_FOUND("br[{}] not found", rawid.mId));
-        VerifyOrExit(mRegistry->SetCurrentNetwork(br) == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(mRegistry->SetCurrentNetwork(br) == RegistryStatus::kSuccess,
                      value = ERROR_NOT_FOUND("network selection failed for nwk[{}]", br.mNetworkId.mId));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         expr.pop_back();
@@ -869,7 +869,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     case 3:
     {
         // starting network with explicit br_addr and br_port
-        VerifyOrExit(mRegistry->ForgetCurrentNetwork() == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(mRegistry->ForgetCurrentNetwork() == RegistryStatus::kSuccess,
                      value = ERROR_IO_ERROR("failed to drop network selection"));
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         break;
@@ -993,7 +993,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             {
                 std::vector<Network> domNetworks;
                 status = mRegistry->GetNetworksInDomain(dom, domNetworks);
-                if (status != RegistryStatus::REG_SUCCESS)
+                if (status != RegistryStatus::kSuccess)
                 {
                     PrintNetworkMessage(dom, "unrecognized domain", COLOR_ALIAS_FAILED);
                 }
@@ -1011,12 +1011,12 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             {
                 PrintNetworkMessage(alias, "network alias unknown", COLOR_ALIAS_FAILED);
             }
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+            VerifyOrExit(status == RegistryStatus::kSuccess, value = ERROR_IO_ERROR("lookup failed"));
         }
         else
         {
             status = mRegistry->GetAllBorderRouters(routers);
-            if (status != RegistryStatus::REG_SUCCESS && status != RegistryStatus::REG_NOT_FOUND)
+            if (status != RegistryStatus::kSuccess && status != RegistryStatus::kNotFound)
             {
                 ExitNow(value = ERROR_IO_ERROR("lookup failed"));
             }
@@ -1027,7 +1027,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             {
                 std::vector<BorderRouter> nwkRouters;
                 status = mRegistry->GetBorderRoutersInNetwork(nwk.mXpan, nwkRouters);
-                if (status == RegistryStatus::REG_SUCCESS)
+                if (status == RegistryStatus::kSuccess)
                 {
                     routers.insert(routers.end(), nwkRouters.begin(), nwkRouters.end());
                 }
@@ -1188,7 +1188,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         for (const auto &agent : agents)
         {
             auto status = mRegistry->Add(agent);
-            if (status != RegistryStatus::REG_SUCCESS)
+            if (status != RegistryStatus::kSuccess)
             {
                 value = ERROR_IO_ERROR("Registry insert failure with border agent address {} and port {}", agent.mAddr,
                                        agent.mPort);
@@ -1216,27 +1216,27 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 goto exit;
             }
             auto status = mRegistry->DeleteBorderRouterById(brId);
-            if (status == RegistryStatus::REG_RESTRICTED)
+            if (status == RegistryStatus::kRestricted)
             {
                 value = ERROR_IO_ERROR("Failed to delete border router ID {}: last router in the current network",
                                        aExpr[2]);
             }
-            else if (status != RegistryStatus::REG_SUCCESS)
+            else if (status != RegistryStatus::kSuccess)
             {
                 value = ERROR_IO_ERROR("Failed to delete border router ID {}", aExpr[2]);
             }
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS);
+            VerifyOrExit(status == RegistryStatus::kSuccess);
         }
         else if (mContext.mNwkAliases.size() > 0)
         {
             StringArray unresolved;
             // Remove all border agents in the networks
             auto status = mRegistry->DeleteBorderRoutersInNetworks(mContext.mNwkAliases, unresolved);
-            if (status == RegistryStatus::REG_RESTRICTED)
+            if (status == RegistryStatus::kRestricted)
             {
                 value = ERROR_IO_ERROR("Can't delete all border routers from the current network");
             }
-            else if (status != RegistryStatus::REG_SUCCESS)
+            else if (status != RegistryStatus::kSuccess)
             {
                 value = Error(ErrorCode ::kIOError, "Failed to delete border routers");
             }
@@ -1245,23 +1245,23 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             {
                 PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
             }
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS);
+            VerifyOrExit(status == RegistryStatus::kSuccess);
         }
         else if (mContext.mDomAliases.size() > 0)
         {
             StringArray undeleted;
             // Remove all border agents in the domain
             auto status = mRegistry->DeleteBorderRoutersInDomain(mContext.mDomAliases[0]);
-            if (status == RegistryStatus::REG_RESTRICTED)
+            if (status == RegistryStatus::kRestricted)
             {
                 value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}' of the current network",
                                        mContext.mDomAliases[0]);
             }
-            else if (status != RegistryStatus::REG_SUCCESS)
+            else if (status != RegistryStatus::kSuccess)
             {
                 value = ERROR_IO_ERROR("Failed to delete border routers in the domain '{}'", mContext.mDomAliases[0]);
             }
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS);
+            VerifyOrExit(status == RegistryStatus::kSuccess);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[1], "scan"))
@@ -1364,7 +1364,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         if (!mContext.mNwkAliases.empty())
         {
             VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, xpans, unresolved) ==
-                             RegistryStatus::REG_SUCCESS,
+                             RegistryStatus::kSuccess,
                          value = ERROR_IO_ERROR("Failed to convert network aliases to XPAN IDs"));
             for (const auto &alias : unresolved)
             {
@@ -1439,12 +1439,12 @@ Interpreter::Value Interpreter::ProcessDomain(const Expression &aExpr)
             {
                 PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
             }
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("lookup failed"));
+            VerifyOrExit(status == RegistryStatus::kSuccess, value = ERROR_IO_ERROR("lookup failed"));
         }
         else
         {
             status = mRegistry->GetAllDomains(domains);
-            if (status != RegistryStatus::REG_SUCCESS && status != RegistryStatus::REG_NOT_FOUND)
+            if (status != RegistryStatus::kSuccess && status != RegistryStatus::kNotFound)
             {
                 ExitNow(value = ERROR_IO_ERROR("lookup failed"));
             }
@@ -1493,18 +1493,18 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         if (CaseInsensitiveEqual(aExpr[2], "none"))
         {
             RegistryStatus status = mRegistry->ForgetCurrentNetwork();
-            VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_IO_ERROR("network select failed"));
+            VerifyOrExit(status == RegistryStatus::kSuccess, value = ERROR_IO_ERROR("network select failed"));
         }
         else
         {
             StringArray aliases = {aExpr[2]};
             XpanIdArray xpans;
             StringArray unresolved;
-            VerifyOrExit(mRegistry->GetNetworkXpansByAliases(aliases, xpans, unresolved) == RegistryStatus::REG_SUCCESS,
+            VerifyOrExit(mRegistry->GetNetworkXpansByAliases(aliases, xpans, unresolved) == RegistryStatus::kSuccess,
                          value = ERROR_IO_ERROR("Failed to resolve extended PAN Id for network {}", aExpr[2]));
             VerifyOrExit(xpans.size() == 1, value = ERROR_IO_ERROR("Detected {} networks instead of 1 for alias '{}'",
                                                                    xpans.size(), aExpr[2]));
-            VerifyOrExit(mRegistry->SetCurrentNetwork(xpans[0]) == RegistryStatus::REG_SUCCESS,
+            VerifyOrExit(mRegistry->SetCurrentNetwork(xpans[0]) == RegistryStatus::kSuccess,
                          value = ERROR_IO_ERROR("network set failed"));
         }
         value = std::string("done");
@@ -1516,7 +1516,7 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         std::string      nwkData;
 
         VerifyOrExit(aExpr.size() == 2, value = ERROR_INVALID_ARGS("too many arguments"));
-        VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == RegistryStatus::kSuccess,
                      value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
         if (nwk.mId.mId == EMPTY_ID)
         {
@@ -1526,7 +1526,7 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         {
             if (nwk.mDomainId.mId != EMPTY_ID)
             {
-                VerifyOrExit(mRegistry->GetDomainNameByXpan(nwk.mXpan, nwkData) == RegistryStatus::REG_SUCCESS,
+                VerifyOrExit(mRegistry->GetDomainNameByXpan(nwk.mXpan, nwkData) == RegistryStatus::kSuccess,
                              value = ERROR_NOT_FOUND(NOT_FOUND_STR DOMAIN_STR));
                 nwkData += '/';
             }
@@ -1588,13 +1588,13 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
 
     if (mContext.mDomAliases.size() > 0)
     {
-        VerifyOrExit(mRegistry->GetNetworksInDomain(mContext.mDomAliases[0], networks) == RegistryStatus::REG_SUCCESS,
+        VerifyOrExit(mRegistry->GetNetworksInDomain(mContext.mDomAliases[0], networks) == RegistryStatus::kSuccess,
                      value = ERROR_NOT_FOUND("failed to find networks in domain '{}'", mContext.mDomAliases[0]));
     }
     else if (mContext.mNwkAliases.size() == 0)
     {
         RegistryStatus status = mRegistry->GetAllNetworks(networks);
-        if (status != RegistryStatus::REG_SUCCESS && status != RegistryStatus::REG_NOT_FOUND)
+        if (status != RegistryStatus::kSuccess && status != RegistryStatus::kNotFound)
         {
             value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR);
         }
@@ -1614,7 +1614,7 @@ Interpreter::Value Interpreter::ProcessNetworkList(const Expression &aExpr)
         {
             PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
         }
-        VerifyOrExit(status == RegistryStatus::REG_SUCCESS, value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
+        VerifyOrExit(status == RegistryStatus::kSuccess, value = ERROR_NOT_FOUND(NOT_FOUND_STR NETWORK_STR));
     }
 
     json  = networks;
@@ -2010,7 +2010,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
                     Console::Write("Dataset contains no network identification data", Console::Color::kYellow);
                     break;
                 }
-                if (mRegistry->GetNetworkXpansByAliases(nwkAliases, xpans, unresolved) != RegistryStatus::REG_SUCCESS ||
+                if (mRegistry->GetNetworkXpansByAliases(nwkAliases, xpans, unresolved) != RegistryStatus::kSuccess ||
                     xpans.size() != 1)
                 {
                     Console::Write(fmt::format(FMT_STRING("Failed to load network XPAN by alias '{}': got {} XPANs"),
@@ -2019,7 +2019,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
                     break;
                 }
             }
-            if (mRegistry->GetNetworkByXpan(xpans[0], nwk) != RegistryStatus::REG_SUCCESS)
+            if (mRegistry->GetNetworkByXpan(xpans[0], nwk) != RegistryStatus::kSuccess)
             {
                 Console::Write(fmt::format(FMT_STRING("Failed to load network by XPAN '{}'"), xpans[0].str()),
                                Console::Color::kYellow);

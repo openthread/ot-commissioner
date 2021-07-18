@@ -268,10 +268,10 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     Network           nwk;
 
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
-    VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_IO_ERROR("network not found"));
+    VerifyOrExit(status == RegistryStatus::kSuccess, error = ERROR_IO_ERROR("network not found"));
     isCCM  = nwk.mCcm > 0;
     status = mInterpreter.mRegistry->GetDomainNameByXpan(aNid, domainName);
-    if (status != RegistryStatus::REG_SUCCESS)
+    if (status != RegistryStatus::kSuccess)
     {
         LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", XpanId(aNid).str(), status);
     }
@@ -401,7 +401,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     Network        nwk;
     RegistryStatus status = mInterpreter.mRegistry->GetBorderRoutersInNetwork(aNid, brs);
 
-    VerifyOrExit(status == RegistryStatus::REG_SUCCESS,
+    VerifyOrExit(status == RegistryStatus::kSuccess,
                  error = ERROR_NOT_FOUND("br lookup failed with status={}", status));
     if (brs.size() == 1)
     {
@@ -410,7 +410,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         ExitNow();
     }
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
-    VerifyOrExit(status == RegistryStatus::REG_SUCCESS, error = ERROR_NOT_FOUND("network lookup failed"));
+    VerifyOrExit(status == RegistryStatus::kSuccess, error = ERROR_NOT_FOUND("network lookup failed"));
     if (nwk.mCcm > 0) // Dealing with domain network
     {
         // - try to find active and connectable Primary BBR
@@ -669,7 +669,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
     RegistryStatus status;
 
     status = mInterpreter.mRegistry->GetCurrentNetworkXpan(nid);
-    VerifyOrExit(RegistryStatus::REG_SUCCESS == status, error = ERROR_IO_ERROR("selected network not found"));
+    VerifyOrExit(RegistryStatus::kSuccess == status, error = ERROR_IO_ERROR("selected network not found"));
 
     if (nid != 0)
     {
