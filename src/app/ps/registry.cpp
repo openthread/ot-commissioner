@@ -46,7 +46,7 @@ namespace persistent_storage {
 namespace {
 Registry::Status SuccessStatus(PersistentStorage::Status aStatus)
 {
-    if (aStatus == PersistentStorage::Status::PS_SUCCESS)
+    if (aStatus == PersistentStorage::Status::kSuccess)
     {
         return Registry::Status::kSuccess;
     }
@@ -55,15 +55,15 @@ Registry::Status SuccessStatus(PersistentStorage::Status aStatus)
 
 Registry::Status MapStatus(PersistentStorage::Status aStatus)
 {
-    if (aStatus == PersistentStorage::Status::PS_ERROR)
+    if (aStatus == PersistentStorage::Status::kError)
     {
         return Registry::Status::kError;
     }
-    if (aStatus == PersistentStorage::Status::PS_SUCCESS)
+    if (aStatus == PersistentStorage::Status::kSuccess)
     {
         return Registry::Status::kSuccess;
     }
-    if (aStatus == PersistentStorage::Status::PS_NOT_FOUND)
+    if (aStatus == PersistentStorage::Status::kNotFound)
     {
         return Registry::Status::kNotFound;
     }

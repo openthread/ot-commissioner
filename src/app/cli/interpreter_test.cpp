@@ -376,9 +376,9 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
 
     NetworkId nid;
     ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, "pan1", "", 0}, nid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, "pan1", "", 0}, nid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
 
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
@@ -1628,9 +1628,9 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
 
     NetworkId nwk_id;
     EXPECT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "", XpanId{1}, 0, "", "", 0}, nwk_id),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     Network nwk;
-    EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
     EXPECT_STREQ("", nwk.mPan.c_str());
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetActiveDataset(_, _))
@@ -1649,7 +1649,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::PS_SUCCESS);
+    EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
     EXPECT_STREQ("0x0001", nwk.mPan.c_str());
 
     EXPECT_EQ(system("rm -f ./aods.json"), 0);
