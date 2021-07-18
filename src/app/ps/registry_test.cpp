@@ -53,8 +53,8 @@ TEST(RegJson, CreateEmptyRegistry)
     unlink(json_path);
     Registry reg(json_path);
 
-    EXPECT_TRUE(reg.Open() == Registry::Status::REG_SUCCESS);
-    EXPECT_TRUE(reg.Close() == Registry::Status::REG_SUCCESS);
+    EXPECT_TRUE(reg.Open() == Registry::Status::kSuccess);
+    EXPECT_TRUE(reg.Close() == Registry::Status::kSuccess);
 }
 
 TEST(RegJson, CreateBorderRouterFromBorderAgent)
@@ -62,7 +62,7 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
     unlink(json_path);
     Registry reg(json_path);
 
-    EXPECT_TRUE(reg.Open() == Registry::Status::REG_SUCCESS);
+    EXPECT_TRUE(reg.Open() == Registry::Status::kSuccess);
 
     // Create BorderRouter with network
     {
@@ -86,12 +86,12 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
         BorderRouter ret_val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, ret_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, ret_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(ret_val.mNetworkId.mId == 0);
         Network nwk;
-        EXPECT_TRUE(reg.GetNetworkByXpan(XpanId{0}, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetNetworkByXpan(XpanId{0}, nwk) == Registry::Status::kSuccess);
         EXPECT_TRUE(nwk.mDomainId.mId == EMPTY_ID);
     }
 
@@ -117,17 +117,17 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kDomainNameBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
 
         BorderRouter ret_val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{1}, ret_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{1}, ret_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(ret_val.mNetworkId.mId == 1);
         Network nwk;
-        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::kSuccess);
         EXPECT_TRUE(nwk.mId.mId == 1);
         EXPECT_TRUE(nwk.mDomainId.mId == 0);
         std::string dom;
-        EXPECT_TRUE(reg.GetDomainNameByXpan(nwk.mXpan, dom) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetDomainNameByXpan(nwk.mXpan, dom) == Registry::Status::kSuccess);
         EXPECT_TRUE(dom == ba.mDomainName);
     }
 
@@ -153,19 +153,19 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        "",
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kVendorNameBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_ERROR);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kError);
     }
     // Update BorderRouter fields
     {
         // Check the BorderRouter present
         BorderRouter val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, val) == Registry::Status::kSuccess);
         EXPECT_TRUE((val.mAgent.mPresentFlags & (BorderAgent::kAddrBit | BorderAgent::kPortBit)) ==
                     (BorderAgent::kAddrBit | BorderAgent::kPortBit));
         EXPECT_TRUE(val.mAgent.mAddr == "1.1.1.1");
         INFO(val.mAgent.mNetworkName + " : " + XpanId(val.mAgent.mExtendedPanId).str());
         Network nwk;
-        EXPECT_TRUE(reg.GetNetworkByXpan(val.mAgent.mExtendedPanId, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetNetworkByXpan(val.mAgent.mExtendedPanId, nwk) == Registry::Status::kSuccess);
         // Modify explicitly
         BorderAgent ba{"1.1.1.1",
                        1,
@@ -187,9 +187,9 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kVendorDataBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
         BorderRouter new_val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(val.mId.mId == new_val.mId.mId);
         EXPECT_TRUE(val.mNetworkId.mId == new_val.mNetworkId.mId);
         EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kNetworkNameBit) != 0);
@@ -225,9 +225,9 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
         BorderRouter new_val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(new_val.mNetworkId.mId == 2);
     }
 
@@ -254,12 +254,12 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kDomainNameBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
         BorderRouter new_val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(new_val.mNetworkId.mId == 2);
         Network nwk;
-        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::kSuccess);
         EXPECT_TRUE(nwk.mDomainId.mId == 0);
     }
 
@@ -286,14 +286,14 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
                            BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kDomainNameBit};
-        EXPECT_TRUE(reg.Add(ba) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
         BorderRouter new_val;
-        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(new_val.mNetworkId.mId == 2);
         Network nwk;
-        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::REG_SUCCESS);
+        EXPECT_TRUE(reg.GetNetworkByName(ba.mNetworkName, nwk) == Registry::Status::kSuccess);
         EXPECT_TRUE(nwk.mDomainId.mId == 1);
     }
 
-    EXPECT_TRUE(reg.Close() == Registry::Status::REG_SUCCESS);
+    EXPECT_TRUE(reg.Close() == Registry::Status::kSuccess);
 }

@@ -59,16 +59,16 @@ public:
      */
     enum class Status : uint8_t
     {
-        REG_SUCCESS,   /**< operation succeeded */
-        REG_NOT_FOUND, /**< requested data not found */
+        kSuccess,  /**< operation succeeded */
+        kNotFound, /**< requested data not found */
         /**
          * param combination invalid or new data conflicts with registry
          * content
          */
-        REG_DATA_INVALID,
-        REG_AMBIGUITY, /**< lookup result was ambiguous */
-        REG_ERROR,     /**< operation failed */
-        REG_RESTRICTED /**< operation restricted */
+        kDataInvalid,
+        kAmbiguity,  /**< lookup result was ambiguous */
+        kError,      /**< operation failed */
+        kRestricted, /**< operation restricted */
     };
 
     /**
