@@ -107,18 +107,18 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
     if (mFileName.empty())
     {
         // No persistence, nothing to do
-        return PersistentStorage::Status::PS_SUCCESS;
+        return PersistentStorage::Status::kSuccess;
     }
 
     if (SemaphoreWait(mStorageLock) != SemaphoreStatus::kSuccess)
     {
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     if (RestoreFilePath(mFileName).GetCode() != ErrorCode::kNone)
     {
         SemaphorePost(mStorageLock);
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     std::string fdata;
@@ -126,7 +126,7 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
     if (error.GetCode() != ErrorCode::kNone)
     {
         SemaphorePost(mStorageLock);
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     if (fdata.size() == 0)
@@ -134,7 +134,7 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
         mCache = JsonDefault();
 
         SemaphorePost(mStorageLock);
-        return PersistentStorage::Status::PS_SUCCESS;
+        return PersistentStorage::Status::kSuccess;
     }
 
     try
@@ -143,7 +143,7 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
     } catch (json::parse_error const &)
     {
         SemaphorePost(mStorageLock);
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     if (mCache.empty())
@@ -155,11 +155,11 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
     if (!CacheStructValidation())
     {
         SemaphorePost(mStorageLock);
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     SemaphorePost(mStorageLock);
-    return PersistentStorage::Status::PS_SUCCESS;
+    return PersistentStorage::Status::kSuccess;
 }
 
 PersistentStorage::Status PersistentStorageJson::CacheToFile()
@@ -167,23 +167,23 @@ PersistentStorage::Status PersistentStorageJson::CacheToFile()
     if (mFileName.empty())
     {
         // No persistence, nothing to do
-        return PersistentStorage::Status::PS_SUCCESS;
+        return PersistentStorage::Status::kSuccess;
     }
 
     if (SemaphoreWait(mStorageLock) != SemaphoreStatus::kSuccess)
     {
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     Error error = WriteFile(mCache.dump(4), mFileName);
     if (error.GetCode() != ErrorCode::kNone)
     {
         SemaphorePost(mStorageLock);
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     SemaphorePost(mStorageLock);
-    return PersistentStorage::Status::PS_SUCCESS;
+    return PersistentStorage::Status::kSuccess;
 }
 
 PersistentStorage::Status PersistentStorageJson::Open()
@@ -261,11 +261,11 @@ PersistentStorage::Status PersistentStorageJson::Get(BorderRouterId const &aId, 
 {
     Status status = GetId<BorderRouter, BorderRouterId>(aId, aRetValue, JSON_BR);
 
-    if (status == Status::PS_SUCCESS && aRetValue.mNetworkId.mId != EMPTY_ID)
+    if (status == Status::kSuccess && aRetValue.mNetworkId.mId != EMPTY_ID)
     {
         Network nwk;
         status = Get(aRetValue.mNetworkId, nwk);
-        if (status == Status::PS_SUCCESS)
+        if (status == Status::kSuccess)
         {
             if (!nwk.mName.empty())
             {
@@ -281,7 +281,7 @@ PersistentStorage::Status PersistentStorageJson::Get(BorderRouterId const &aId, 
             {
                 Domain dom;
                 status = Get(nwk.mDomainId, dom);
-                if (status == Status::PS_SUCCESS && !dom.mName.empty())
+                if (status == Status::kSuccess && !dom.mName.empty())
                 {
                     aRetValue.mAgent.mDomainName = dom.mName;
                     aRetValue.mAgent.mPresentFlags |= BorderAgent::kDomainNameBit;
@@ -524,9 +524,9 @@ PersistentStorage::Status PersistentStorageJson::LookupAny(BorderRouter const &a
 
 PersistentStorage::Status PersistentStorageJson::SetCurrentNetwork(const NetworkId &aNwkId)
 {
-    if (CacheFromFile() != PersistentStorage::Status::PS_SUCCESS)
+    if (CacheFromFile() != PersistentStorage::Status::kSuccess)
     {
-        return PersistentStorage::Status::PS_ERROR;
+        return PersistentStorage::Status::kError;
     }
 
     mCache[JSON_CURR_NWK] = aNwkId;
@@ -545,7 +545,7 @@ PersistentStorage::Status PersistentStorageJson::GetCurrentNetwork(NetworkId &aN
     {
         aNwkId = mCache[JSON_CURR_NWK];
     }
-    return PersistentStorage::Status::PS_SUCCESS;
+    return PersistentStorage::Status::kSuccess;
 }
 
 } // namespace persistent_storage

@@ -225,9 +225,9 @@ private:
     template <typename V, typename I>
     Status AddOne(V const &aValue, I &aRetId, std::string aSeqName, std::string aArrName)
     {
-        if (CacheFromFile() != Status::PS_SUCCESS)
+        if (CacheFromFile() != Status::kSuccess)
         {
-            return Status::PS_ERROR;
+            return Status::kError;
         }
 
         V insValue = aValue;
@@ -262,12 +262,12 @@ private:
                                     [&aId](V const &el) { return el.mId.mId == aId.mId; });
         if (itValue == std::end(mCache[aArrName]))
         {
-            return Status::PS_NOT_FOUND;
+            return Status::kNotFound;
         }
 
         aRet = *itValue;
 
-        return Status::PS_SUCCESS;
+        return Status::kSuccess;
     }
 
     /**
@@ -279,7 +279,7 @@ private:
                                     [&aNewValue](const V &el) { return el.mId.mId == aNewValue.mId.mId; });
         if (itValue == std::end(mCache[aArrName]))
         {
-            return Status::PS_NOT_FOUND;
+            return Status::kNotFound;
         }
 
         *itValue = aNewValue;
@@ -298,10 +298,10 @@ private:
 
         if (aRet.size() > prevSize)
         {
-            return Status::PS_SUCCESS;
+            return Status::kSuccess;
         }
 
-        return Status::PS_NOT_FOUND;
+        return Status::kNotFound;
     }
 };
 

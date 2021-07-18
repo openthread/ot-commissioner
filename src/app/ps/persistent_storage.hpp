@@ -59,9 +59,9 @@ public:
      */
     enum class Status : uint8_t
     {
-        PS_SUCCESS,   /**< operation succeeded */
-        PS_NOT_FOUND, /**< data not found */
-        PS_ERROR      /**< operation failed */
+        kSuccess,  /**< operation succeeded */
+        kNotFound, /**< data not found */
+        kError,    /**< operation failed */
     };
 
     virtual ~PersistentStorage(){};

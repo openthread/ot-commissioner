@@ -100,7 +100,7 @@ public:
             .WillOnce(DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = aContext.mDefaultCommissioner; }),
                             Return(Error{})));
 
-        ASSERT_EQ(aContext.mPS->Open(), persistent_storage::PersistentStorage::Status::PS_SUCCESS);
+        ASSERT_EQ(aContext.mPS->Open(), persistent_storage::PersistentStorage::Status::kSuccess);
     }
 
     void Init(TestContext &aContext, const std::string &aSMRoot)
@@ -132,7 +132,7 @@ TEST_F(JobManagerTestSuite, StartStopSuccess)
     NetworkId      nid;
     BorderRouterId rid;
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -140,10 +140,10 @@ TEST_F(JobManagerTestSuite, StartStopSuccess)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 0);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -151,10 +151,10 @@ TEST_F(JobManagerTestSuite, StartStopSuccess)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 1);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -162,7 +162,7 @@ TEST_F(JobManagerTestSuite, StartStopSuccess)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 2);
 
     Init(ctx, ".");
@@ -233,7 +233,7 @@ TEST_F(JobManagerTestSuite, StartCancel)
     NetworkId      nid;
     BorderRouterId rid;
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -241,10 +241,10 @@ TEST_F(JobManagerTestSuite, StartCancel)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 0);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -252,10 +252,10 @@ TEST_F(JobManagerTestSuite, StartCancel)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 1);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -263,7 +263,7 @@ TEST_F(JobManagerTestSuite, StartCancel)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 2);
 
     Init(ctx, ".");
@@ -337,7 +337,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
     NetworkId      nid;
     BorderRouterId rid;
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -345,10 +345,10 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 0);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -356,10 +356,10 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 1);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -367,7 +367,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 2);
 
     Init(ctx, ".");
@@ -415,7 +415,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
     NetworkId      nid;
     BorderRouterId rid;
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -423,10 +423,10 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 0);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -434,10 +434,10 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 1);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -445,7 +445,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 2);
 
     Init(ctx, ".");
@@ -494,32 +494,32 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByDomain)
     NetworkId      nid;
     BorderRouterId rid;
 
-    ASSERT_EQ(ctx.mPS->Add(Domain{0, "domain1"}, did), PersistentStorage::Status::PS_SUCCESS);
-    ASSERT_EQ(ctx.mPS->Add(Domain{0, "domain2"}, did), PersistentStorage::Status::PS_SUCCESS);
-    ASSERT_EQ(ctx.mPS->Add(Domain{0, "domain3"}, did), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Domain{0, "domain1"}, did), PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(ctx.mPS->Add(Domain{0, "domain2"}, did), PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(ctx.mPS->Add(Domain{0, "domain3"}, did), PersistentStorage::Status::kSuccess);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 1, "pan2", 2, 1, "1", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 2, "pan3", 3, 1, "1", "", 1}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 1, "pan2", 2, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 2, "pan3", 3, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, 0,
                                         BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, 1,
                                         BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, 2,
                                         BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
 
     Init(ctx, ".");
 
@@ -551,7 +551,7 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     NetworkId      nid;
     BorderRouterId rid;
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -559,10 +559,10 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 0);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan2", 2, 2, "2", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -570,10 +570,10 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 1);
 
-    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 0}, nid), PersistentStorage::Status::PS_SUCCESS);
+    ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan3", 3, 3, "3", "", 0}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
@@ -581,7 +581,7 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
                                                     BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
-              PersistentStorage::Status::PS_SUCCESS);
+              PersistentStorage::Status::kSuccess);
     EXPECT_EQ(rid.mId, 2);
 
     Init(ctx, ".");
