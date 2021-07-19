@@ -38,7 +38,9 @@ run_unit_tests()
 
         *)
             FILTER=$1
-            shift
+            if [ "$FILTER" != "" ]; then
+                shift
+            fi
             ;;
     esac
     for test_item in $(ls $FILTER*-test)
