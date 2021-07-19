@@ -151,7 +151,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
                 "network list [--nwk <network-alias-list> | --dom <domain-name>]\n"
-                "network select <xpan>|none\n"
+                "network select <extended-pan-id>|<name>|<pan-id>|none\n"
                 "network identify"},
     {"sessionid", "sessionid"},
     {"borderagent", "borderagent discover [<timeout-in-milliseconds>]\n"
