@@ -171,7 +171,9 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        1,
                        ByteArray{},
                        "",
-                       BorderAgent::State{0},
+                       BorderAgent::State{BorderAgent::State::ConnectionMode::kVendorSpecific,
+                                          BorderAgent::State::ThreadInterfaceStatus::kActive,
+                                          BorderAgent::State::Availability::kHigh, 0, 0},
                        "net1",
                        0x0101010101010101,
                        "vendorName",
@@ -185,13 +187,18 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
                        0,
                        "",
                        0,
-                       BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
-                           BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit | BorderAgent::kVendorDataBit};
+                       BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kStateBit |
+                           BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit | BorderAgent::kVendorNameBit |
+                           BorderAgent::kVendorDataBit};
         EXPECT_TRUE(reg.Add(ba) == Registry::Status::kSuccess);
         BorderRouter new_val;
         EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, new_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(val.mId.mId == new_val.mId.mId);
         EXPECT_TRUE(val.mNetworkId.mId == new_val.mNetworkId.mId);
+        EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kStateBit) != 0);
+        EXPECT_TRUE(new_val.mAgent.mState.mConnectionMode == ba.mState.mConnectionMode);
+        EXPECT_TRUE(new_val.mAgent.mState.mThreadIfStatus == ba.mState.mThreadIfStatus);
+        EXPECT_TRUE(new_val.mAgent.mState.mAvailability == ba.mState.mAvailability);
         EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kNetworkNameBit) != 0);
         EXPECT_TRUE(new_val.mAgent.mNetworkName == ba.mNetworkName);
         EXPECT_TRUE((new_val.mAgent.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0);

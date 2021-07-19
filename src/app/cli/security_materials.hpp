@@ -60,6 +60,11 @@ struct SecurityMaterials
     // Optional for CCM Thread network.
     ByteArray mCommissionerToken; ///< COM_TOK
 
+    // See if any part of credentials is missing depending on the
+    // credentials type
+    bool IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false);
+
+    // See if entire set of credentials is empty
     bool IsEmpty(bool isCCM);
 };
 
@@ -67,9 +72,7 @@ Error Init(const Config &aDefaultConfig);
 
 Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM);
 
-Error GetDefaultDomainSM(const std::string aAlias, bool ccm, SecurityMaterials &aSM);
-
-Error GetNetworkSM(const std::string aAlias, bool ccm, SecurityMaterials &aSM);
+Error GetNetworkSM(const std::string aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM);
 
 } // namespace security_material
 

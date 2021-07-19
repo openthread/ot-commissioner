@@ -50,6 +50,7 @@ namespace commissioner {
 using Json = nlohmann::json;
 using persistent_storage::Network;
 using security_material::SecurityMaterials;
+using BRArray = std::vector<persistent_storage::BorderRouter>;
 
 Error JobManager::Init(const Config &aConf)
 {
@@ -244,8 +245,36 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     std::string       domainName;
     bool              isCCM = false;
     SecurityMaterials dtlsConfig;
-    RegistryStatus    status;
     Network           nwk;
+    BRArray           brs;
+    bool              needCert = false;
+    bool              needPSKc = false;
+    RegistryStatus    status   = mInterpreter.mRegistry->GetBorderRoutersInNetwork(aNid, brs);
+
+    VerifyOrExit(status == RegistryStatus::kSuccess,
+                 error = ERROR_NOT_FOUND("br lookup failed with status={}", status));
+
+    // review the network BRs connection modes that may require
+    // certain supported type of credentials
+    for (const auto &br : brs)
+    {
+        if (br.mAgent.mState.mConnectionMode == BorderAgent::State::ConnectionMode::kVendorSpecific ||
+            br.mAgent.mState.mConnectionMode == BorderAgent::State::ConnectionMode::kX509Connection)
+        {
+            needCert = true;
+        }
+        if (br.mAgent.mState.mConnectionMode == BorderAgent::State::ConnectionMode::kVendorSpecific ||
+            br.mAgent.mState.mConnectionMode == BorderAgent::State::ConnectionMode::kPSKcConnection)
+        {
+            needPSKc = true;
+        }
+    }
+
+    /// @note: If vendor specific connection mode encountered, PSKc as
+    ///        well as X.509 cert will be prepared to be available to
+    ///        choose from; in case of another security material
+    ///        type(s) required by BR vendor, please update
+    ///        JobManager::PrepareDtlsConfig() method appropriately.
 
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::kSuccess, error = ERROR_IO_ERROR("network not found"));
@@ -257,7 +286,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     }
 
     aConfig.mEnableCcm = isCCM;
-    if (!domainName.empty())
+    if (!domainName.empty() && needCert)
     {
         aConfig.mDomainName = domainName;
         if (domainName != "DefaultDomain")
@@ -272,42 +301,30 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
                 }
                 error = ERROR_NONE;
             }
+            if (!dtlsConfig.IsEmpty(isCCM))
+            {
+                if (needPSKc)
+                {
+                    /// @note: Please also note for CCM networks that only
+                    ///        X.509 based credentials are valid for
+                    ///        loading. Therefore, any other connection
+                    ///        mode is considered a wrong configuration of
+                    ///        border router, and respectively ignored.
+                    LOG_DEBUG(LOG_REGION_JOB_MANAGER, "loading PSKc ignored for CCM network [{}:'{}']", aNid.str(),
+                              nwk.mName);
+                }
+                goto update;
+            }
         }
         else
         {
-            error = security_material::GetDefaultDomainSM(nwk.mXpan.str(), isCCM, dtlsConfig);
-            if (ERROR_NONE != error)
-            {
-                LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
-                if (ErrorCode::kNotFound != error.GetCode())
-                {
-                    WarningMsg(aNid, error.GetMessage());
-                }
-                // else we try a chance with network name later
-                error = ERROR_NONE;
-            }
-            if (!dtlsConfig.IsEmpty(isCCM))
-            {
-                goto update;
-            }
-            error = security_material::GetDefaultDomainSM(nwk.mName, isCCM, dtlsConfig);
-            if (ERROR_NONE != error)
-            {
-                LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
-                if (ErrorCode::kNotFound != error.GetCode())
-                {
-                    WarningMsg(aNid, error.GetMessage());
-                }
-                // else we try a chance with folder under nwk later
-                error = ERROR_NONE;
-            }
+            // a network of DefaultDomain is a non-CCM one; we will
+            // look up in a folder under nwk later
+            error = ERROR_NONE;
         }
     }
-    if (!dtlsConfig.IsEmpty(isCCM))
-    {
-        goto update;
-    }
-    error = security_material::GetNetworkSM(nwk.mXpan.str(), isCCM, dtlsConfig);
+
+    error = security_material::GetNetworkSM(nwk.mXpan.str(), needCert, needPSKc, dtlsConfig);
     if (ERROR_NONE != error)
     {
         LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -318,11 +335,11 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         // else we try a chance with nwk.mName later
         error = ERROR_NONE;
     }
-    if (!dtlsConfig.IsEmpty(isCCM))
+    if (!dtlsConfig.IsIncomplete(needCert, needPSKc))
     {
         goto update;
     }
-    error = security_material::GetNetworkSM(nwk.mName, isCCM, dtlsConfig);
+    error = security_material::GetNetworkSM(nwk.mName, needCert, needPSKc, dtlsConfig);
     if (ERROR_NONE != error)
     {
         LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -363,9 +380,9 @@ update:
     UPDATE_IF_SET(PSKc);
 
 #undef UPDATE_IF_SET
-    if (dtlsConfig.IsEmpty(isCCM))
+    if (dtlsConfig.IsIncomplete(needCert, needPSKc, isCCM))
     {
-        error = ERROR_SECURITY("empty DTLS configuration for the network {}", aNid.str());
+        error = ERROR_SECURITY("incomplete DTLS configuration for the network [{}:'{}']", aNid.str(), nwk.mName);
     }
 exit:
     return error;
@@ -373,8 +390,6 @@ exit:
 
 Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
 {
-    using BRArray = std::vector<persistent_storage::BorderRouter>;
-
     Error          error;
     BRArray        brs;
     BRArray        choice;
@@ -396,10 +411,21 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         // - try to find active and connectable Primary BBR
         for (const auto &item : brs)
         {
-            if (item.mAgent.mState.mBbrIsPrimary && item.mAgent.mState.mConnectionMode > 0)
+            if (item.mAgent.mState.mBbrIsPrimary &&
+                item.mAgent.mState.mConnectionMode > BorderAgent::State::ConnectionMode::kNotAllowed)
             {
-                if (item.mAgent.mState.mBbrIsActive)
+                if (item.mAgent.mState.mBbrIsActive &&
+                    item.mAgent.mState.mThreadIfStatus > BorderAgent::State::ThreadInterfaceStatus::kNotInitialized)
                 {
+                    /// @todo: ideally here we would make sure the
+                    ///        Border Router's connection mode @ref
+                    ///        BorderAgent::State::ConnectionMode::kX509Connection
+                    ///        is specified, otherwise the announced
+                    ///        BBR appears inconsistent with Thread
+                    ///        spec. Although nothing we could do at
+                    ///        runtime here, a warning message might
+                    ///        be useful as an indication of a
+                    ///        potential issue
                     br = item;
                     ExitNow();
                 }
@@ -408,7 +434,8 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         // - go on with other active and connectable BBRs
         for (const auto &item : brs)
         {
-            if (item.mAgent.mState.mBbrIsActive && item.mAgent.mState.mConnectionMode > 0)
+            if (item.mAgent.mState.mBbrIsActive &&
+                item.mAgent.mState.mConnectionMode > BorderAgent::State::ConnectionMode::kNotAllowed)
             {
                 choice.push_back(item);
             }
@@ -419,7 +446,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         // go on with connectable BRs
         for (const auto &item : brs)
         {
-            if (item.mAgent.mState.mConnectionMode > 0)
+            if (item.mAgent.mState.mConnectionMode > BorderAgent::State::ConnectionMode::kNotAllowed)
             {
                 choice.push_back(item);
             }
@@ -431,7 +458,8 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     // - prefer br with high-availability
     for (const auto &item : choice)
     {
-        if (item.mAgent.mState.mThreadIfStatus > 1 && item.mAgent.mState.mAvailability > 0)
+        if (item.mAgent.mState.mThreadIfStatus > BorderAgent::State::ThreadInterfaceStatus::kNotActive &&
+            item.mAgent.mState.mAvailability > BorderAgent::State::Availability::kInfrequent)
         {
             br = item;
             ExitNow();
@@ -440,7 +468,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     // - prefer br with Thread Interface actively participating in communication
     for (const auto &item : choice)
     {
-        if (item.mAgent.mState.mThreadIfStatus > 1)
+        if (item.mAgent.mState.mThreadIfStatus > BorderAgent::State::ThreadInterfaceStatus::kNotActive)
         {
             br = item;
             ExitNow();
@@ -449,7 +477,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     // - try to find br with Thread Interface at least enabled
     for (const auto &item : choice)
     {
-        if (item.mAgent.mState.mThreadIfStatus > 0)
+        if (item.mAgent.mState.mThreadIfStatus > BorderAgent::State::ThreadInterfaceStatus::kNotInitialized)
         {
             br = item;
             ExitNow();
@@ -651,7 +679,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
     status = mInterpreter.mRegistry->GetCurrentNetworkXpan(nid);
     VerifyOrExit(RegistryStatus::kSuccess == status, error = ERROR_IO_ERROR("selected network not found"));
 
-    if (nid != 0)
+    if (nid != XpanId::kEmptyXpanId)
     {
         auto entry = mCommissionerPool.find(nid);
         if (entry != mCommissionerPool.end())

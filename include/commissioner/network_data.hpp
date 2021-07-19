@@ -60,7 +60,7 @@ static constexpr uint8_t kMlrStatusFailure     = 6;
  */
 struct XpanId
 {
-    static const uint64_t kEmptyXpanId = 0;
+    static constexpr uint64_t kEmptyXpanId = 0;
 
     uint64_t mValue;
 

@@ -92,9 +92,44 @@ struct BorderAgent
 
     /**
      * State bitmap. Mandatory.
+     *
+     * See Thread spec:
+     * - 8.4.1.1.2 Commissioner Discovery - Ethernet/WiFi
+     * - Table 8-5. Border Agent State Bitmap
      */
     struct State
     {
+        /**
+         * Connection modes defined by Thread spec.
+         */
+        enum ConnectionMode
+        {
+            kNotAllowed     = 0, /**< DTLS connection not allowed */
+            kPSKcConnection = 1, /**< DTLS using shared PSKc; non-CCM network */
+            kPSKdConnection = 2, /**< DTLS using BR PSKd */
+            kVendorSpecific = 3, /**< DTLS using vendor defined credentials */
+            kX509Connection = 4, /**< DTLS using X.509 certificate; CCM network */
+        };
+
+        /**
+         * Thread interface statuses defined by Thread spec.
+         */
+        enum ThreadInterfaceStatus
+        {
+            kNotInitialized = 0, /**< Interface not active and not initialized */
+            kNotActive      = 1, /**< Interface initialized, but not actively participating */
+            kActive         = 2, /**< Interface initialized and actively participating */
+        };
+
+        /**
+         * Availability modes defined by Thread spec.
+         */
+        enum Availability
+        {
+            kInfrequent = 0, /**< Interface may become inactive when device not in use */
+            kHigh       = 1, /**< Device is a part of stable always-on network */
+        };
+
         uint32_t mConnectionMode : 3;
         uint32_t mThreadIfStatus : 2;
         uint32_t mAvailability : 2;
