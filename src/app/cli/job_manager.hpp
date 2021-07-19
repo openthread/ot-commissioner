@@ -149,6 +149,12 @@ private:
      *        name. However, first search is to be done by network id,
      *        and if it was successful, i.e. at least one file was
      *        found not empty, the search is stopped.
+     *
+     * DTLS credentials are loaded according to connection modes known
+     * from BR records currently associated with the network. In case
+     * of any change in BRs occurred as a result of discovery, network
+     * connection must restart to adopt the most recent connection
+     * information.
      */
     Error PrepareDtlsConfig(const XpanId aNid, Config &aConfig);
     Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, XpanId aXpanId);

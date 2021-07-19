@@ -51,7 +51,8 @@ using SMPair = std::pair<std::string, ByteArray *>;
 
 static Error GetNetworkSMImpl(const std::string  aNwkFolder, // a folder to start from
                               const std::string  aAlias,     // network id or network name
-                              bool               aCCM,
+                              bool               aNeedCert,
+                              bool               aNeedPSKc,
                               SecurityMaterials &aSM);
 
 static class SMRoot
@@ -150,17 +151,16 @@ exit:
     return error;
 }
 
-Error GetDefaultDomainSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
+Error GetNetworkSM(const std::string aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM)
 {
-    return GetNetworkSMImpl("dom/DefaultDomain/", aAlias, aCCM, aSM);
+    return GetNetworkSMImpl("nwk/", aAlias, aNeedCert, aNeedPSKc, aSM);
 }
 
-Error GetNetworkSM(const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
-{
-    return GetNetworkSMImpl("nwk/", aAlias, aCCM, aSM);
-}
-
-static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aAlias, bool aCCM, SecurityMaterials &aSM)
+static Error GetNetworkSMImpl(const std::string  aNwkFolder,
+                              const std::string  aAlias,
+                              bool               aNeedCert,
+                              bool               aNeedPSKc,
+                              SecurityMaterials &aSM)
 {
     Error       error;
     std::string nwkPath;
@@ -170,7 +170,7 @@ static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aA
 
     nwkPath = smRoot.Get().append(aNwkFolder).append(aAlias).append("/");
     SuccessOrExit(error = PathExists(nwkPath));
-    if (aCCM)
+    if (aNeedCert)
     {
         std::vector<SMPair> smElements{
             {"cert.pem", &aSM.mCertificate}, {"priv.pem", &aSM.mPrivateKey}, {"ca.pem", &aSM.mTrustAnchor}};
@@ -217,7 +217,7 @@ static Error GetNetworkSMImpl(const std::string aNwkFolder, const std::string aA
             }
         } while (false);
     }
-    else
+    if (aNeedPSKc)
     {
         std::string path = nwkPath + "pskc.txt";
 
@@ -228,10 +228,17 @@ exit:
     return error;
 }
 
+bool SecurityMaterials::IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/)
+{
+    return (aNeedCert && (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)) ||
+           (aNeedToken && mCommissionerToken.size() == 0) || (aNeedPSKc && mPSKc.size() == 0);
+}
+
 bool SecurityMaterials::IsEmpty(bool isCCM)
 {
-    return (isCCM ? (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)
-                  : (mPSKc.size() == 0));
+    return isCCM ? mCertificate.size() == 0 && mPrivateKey.size() == 0 && mTrustAnchor.size() == 0 &&
+                       mCommissionerToken.size() == 0
+                 : mPSKc.size() == 0;
 }
 
 } // namespace security_material

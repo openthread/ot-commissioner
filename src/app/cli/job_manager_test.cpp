@@ -340,9 +340,11 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
     ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
+    BorderAgent::State baState{BorderAgent::State::ConnectionMode::kPSKcConnection,
+                               BorderAgent::State::ThreadInterfaceStatus::kActive,
+                               BorderAgent::State::Availability::kHigh, 0, 0};
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
-                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
@@ -352,8 +354,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
-                                        BorderAgent{"127.0.0.1", 20002, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20002, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
@@ -363,8 +364,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
-                                        BorderAgent{"127.0.0.1", 20003, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20003, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
@@ -418,9 +418,11 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
     ASSERT_EQ(ctx.mPS->Add(Network{0, 0, "pan1", 1, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nid.mId, 0);
 
+    BorderAgent::State baState{BorderAgent::State::ConnectionMode::kPSKcConnection,
+                               BorderAgent::State::ThreadInterfaceStatus::kActive,
+                               BorderAgent::State::Availability::kHigh, 0, 0};
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
-                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
@@ -430,8 +432,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
     EXPECT_EQ(nid.mId, 1);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
-                                        BorderAgent{"127.0.0.1", 20002, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20002, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
@@ -441,8 +442,7 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
     EXPECT_EQ(nid.mId, 2);
 
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, nid,
-                                        BorderAgent{"127.0.0.1", 20003, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20003, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
@@ -502,21 +502,21 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByDomain)
     ASSERT_EQ(ctx.mPS->Add(Network{0, 1, "pan2", 2, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
     ASSERT_EQ(ctx.mPS->Add(Network{0, 2, "pan3", 3, 1, "1", "", 1}, nid), PersistentStorage::Status::kSuccess);
 
+    BorderAgent::State baState{BorderAgent::State::ConnectionMode::kX509Connection,
+                               BorderAgent::State::ThreadInterfaceStatus::kActive,
+                               BorderAgent::State::Availability::kHigh, 0, 0};
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, 0,
-                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, 1,
-                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
     ASSERT_EQ(ctx.mPS->Add(BorderRouter{0, 2,
-                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1",
-                                                    BorderAgent::State{0, 0, 0, 0, 0}, "", 0, "", "",
+                                        BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baState, "", 0, "", "",
                                                     Timestamp{0, 0, 0}, 0, "", ByteArray{}, "", 0, 0, "", 0, 0x0F}},
                            rid),
               PersistentStorage::Status::kSuccess);
