@@ -114,6 +114,47 @@ domain list
 
 Note that `network select` command affects multi-network commands execution.
 
+### Network selection concept
+
+In multi-network environment it may be useful to manage multiple network tasks in duration of a single session. To simplify command execution a particular network may be selected to deal with by default. Selection would allow more concise command syntax to be used. For example, when selected with `network select` the network can be started with simple `start` command where the missing specification of border router address and port can be augmented automatically using information from Registry.
+
+To make a selection the network must be specified by a network alias string, where the alias may be:
+- an extended PAN ID in hexadecimal notation
+- a network name
+- a PAN ID in hexadecimal notation
+
+Examples:
+```shell
+network select DEAD00BEEF00CAFE
+network select Network-1
+network select FACE
+```
+
+**Note**: hexadecimal notation may or may not include `0x` prefix. The following are equivalent:
+```shell
+network select DEAD00BEEF00CAFE
+network select 0XDEAD00BEEF00CAFE
+network select dead00beef00cafe
+network select 0xdead00beef00cafe
+```
+
+Now a brief syntax of multi-network aware commands may be used effectively against the selected network as if it is a sole one connected at the time. All the other existing connection to Thread networks will remain unaffected.
+
+Examples:
+```shell
+network select DEAD00BEEF00CAFE
+start
+opdataset get active
+stop
+```
+
+To drop the current network selection a special alias `none` must be used:
+```shell
+network select none
+```
+
+From this moment no network is implied by default, and explicit network/domain-wise syntax must be used until the next selection.
+
 ### Deleting entries from the registry
 
 `br delete` command is the only command capable of deleting entries from the registry. While command explicitly deletes only border router entries, ot has recursive behavior. That is the deleting the last border router from the network will results in network deletion, and deleting last network from domain deletes the domain too.
