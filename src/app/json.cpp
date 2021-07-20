@@ -788,6 +788,11 @@ static void from_json(const nlohmann::json &aJson, BorderAgent::State &aState)
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson)
 {
     BorderAgent agent;
+    auto        json2xpan = [](const nlohmann::json &field) {
+        XpanId xpan;
+        Error  error = xpan.FromHex(field.get<std::string>());
+        return error == ERROR_NONE ? xpan.mValue : XpanId::kEmptyXpanId;
+    };
 
 #define SET_IF_PRESENT(field)                                                  \
     do                                                                         \
@@ -799,12 +804,22 @@ void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson)
         }                                                                      \
     } while (false)
 
+#define SET_IF_PRESENT_X(field)                                \
+    do                                                         \
+    {                                                          \
+        if (aJson.contains(#field))                            \
+        {                                                      \
+            agent.mPresentFlags |= BorderAgent::k##field##Bit; \
+            agent.m##field = json2xpan(aJson.at(#field));      \
+        }                                                      \
+    } while (false)
+
     SET_IF_PRESENT(Addr);
     SET_IF_PRESENT(Port);
     SET_IF_PRESENT(ThreadVersion);
     SET_IF_PRESENT(State);
     SET_IF_PRESENT(NetworkName);
-    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT_X(ExtendedPanId);
     SET_IF_PRESENT(VendorName);
     SET_IF_PRESENT(ModelName);
     SET_IF_PRESENT(ActiveTimestamp);
@@ -817,6 +832,7 @@ void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson)
     SET_IF_PRESENT(ServiceName);
 
 #undef SET_IF_PRESENT
+#undef SET_IF_PRESENT_X
 
     aAgent = agent;
 }
@@ -839,12 +855,21 @@ void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson)
         }                                                      \
     } while (false)
 
+#define SET_IF_PRESENT_X(field)                                \
+    do                                                         \
+    {                                                          \
+        if (aAgent.mPresentFlags & BorderAgent::k##field##Bit) \
+        {                                                      \
+            aJson[#field] = XpanId(aAgent.m##field).str();     \
+        }                                                      \
+    } while (false)
+
     SET_IF_PRESENT(Addr);
     SET_IF_PRESENT(Port);
     SET_IF_PRESENT(ThreadVersion);
     SET_IF_PRESENT(State);
     SET_IF_PRESENT(NetworkName);
-    SET_IF_PRESENT(ExtendedPanId);
+    SET_IF_PRESENT_X(ExtendedPanId);
     SET_IF_PRESENT(VendorName);
     SET_IF_PRESENT(ModelName);
     SET_IF_PRESENT(ActiveTimestamp);
@@ -857,6 +882,7 @@ void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson)
     SET_IF_PRESENT(ServiceName);
 
 #undef SET_IF_PRESENT
+#undef SET_IF_PRESENT_X
 }
 
 } // namespace commissioner

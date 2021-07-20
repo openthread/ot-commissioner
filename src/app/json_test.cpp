@@ -97,6 +97,48 @@ TEST(Json, ActiveOperationalDatasetEncodingDecoding)
     }
 }
 
+TEST(Json, BorderAgentEncodingDecoding)
+{
+    nlohmann::json json;
+    BorderAgent    new_val;
+    BorderAgent    ba_orig{"1.1.1.1",
+                        1,
+                        ByteArray{},
+                        "",
+                        BorderAgent::State{BorderAgent::State::ConnectionMode::kX509Connection,
+                                           BorderAgent::State::ThreadInterfaceStatus::kActive,
+                                           BorderAgent::State::Availability::kHigh, 0, 0},
+                        "net1",
+                        0x0101010101010101,
+                        "",
+                        "",
+                        Timestamp{},
+                        0,
+                        "",
+                        ByteArray{},
+                        "",
+                        0,
+                        0,
+                        "",
+                        0,
+                        BorderAgent::kAddrBit | BorderAgent::kPortBit | BorderAgent::kNetworkNameBit |
+                            BorderAgent::kExtendedPanIdBit | BorderAgent::kStateBit};
+
+    BorderAgentToJson(ba_orig, json);
+    INFO(json.dump(4));
+    BorderAgentFromJson(new_val, json);
+    EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kAddrBit) != 0);
+    EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kPortBit) != 0);
+    EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kNetworkNameBit) != 0);
+    EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0);
+    EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kStateBit) != 0);
+    EXPECT_TRUE(new_val.mAddr == ba_orig.mAddr);
+    EXPECT_TRUE(new_val.mPort == ba_orig.mPort);
+    EXPECT_TRUE(new_val.mNetworkName == ba_orig.mNetworkName);
+    EXPECT_TRUE(new_val.mState == ba_orig.mState);
+    EXPECT_TRUE(new_val.mExtendedPanId == ba_orig.mExtendedPanId);
+}
+
 } // namespace commissioner
 
 } // namespace ot

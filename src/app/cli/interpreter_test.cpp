@@ -2196,6 +2196,11 @@ TEST_F(InterpreterTestSuite, PC_BrAddInterObjectInconsistencyFail)
 
 TEST_F(InterpreterTestSuite, PC_BrAdd)
 {
+#define XPAN_1234 "1234"
+#define XPAN_1235 "0x1235"
+#define XPAN_1236 "0000000000001236"
+#define XPAN_1237 "00000000000001237" // length > 16
+
     TestContext ctx;
     InitContext(ctx);
 
@@ -2206,7 +2211,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
         \"NetworkName\": \"net1\",\n\
-        \"ExtendedPanId\": 1234,\n\
+        \"ExtendedPanId\": \"" XPAN_1234 "\",\n\
         \"DomainName\": \"dom1\"\n\
     },\n\
     {\n\
@@ -2215,7 +2220,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
         \"NetworkName\": \"net2\",\n\
-        \"ExtendedPanId\": 1235,\n\
+        \"ExtendedPanId\": \"" XPAN_1235 "\",\n\
         \"DomainName\": \"dom1\"\n\
     },\n\
     {\n\
@@ -2224,7 +2229,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
         \"NetworkName\": \"net2\",\n\
-        \"ExtendedPanId\": 1235,\n\
+        \"ExtendedPanId\": \"" XPAN_1235 "\",\n\
         \"DomainName\": \"dom1\"\n\
     },\n\
     {\n\
@@ -2233,7 +2238,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
         \"ThreadVersion\": \"th1.2\",\n\
         \"State\": 0,\n\
         \"NetworkName\": \"net3\",\n\
-        \"ExtendedPanId\": 1236,\n\
+        \"ExtendedPanId\": \"" XPAN_1236 "\",\n\
         \"DomainName\": \"dom3\"\n\
     }\n\
 ]";
@@ -2257,6 +2262,19 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
     DomainArray doms;
     EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllDomains(doms), RegistryStatus::kSuccess);
     EXPECT_EQ(doms.size(), 2);
+
+    Network nwk;
+    XpanId  xpan;
+    EXPECT_EQ(xpan.FromHex(XPAN_1234).GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetNetworkByXpan(0x1234, nwk), RegistryStatus::kSuccess);
+    EXPECT_EQ(nwk.mXpan, xpan);
+    EXPECT_EQ(xpan.FromHex(XPAN_1235).GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetNetworkByXpan(0x1235, nwk), RegistryStatus::kSuccess);
+    EXPECT_EQ(nwk.mXpan, xpan);
+    EXPECT_EQ(xpan.FromHex(XPAN_1236).GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetNetworkByXpan(0x1236, nwk), RegistryStatus::kSuccess);
+    EXPECT_EQ(nwk.mXpan, xpan);
+    EXPECT_EQ(xpan.FromHex(XPAN_1237).GetCode(), ErrorCode::kBadFormat);
 }
 
 TEST_F(InterpreterTestSuite, PC_BrList)
