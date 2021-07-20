@@ -71,6 +71,16 @@ public:
 private:
     friend class Job;
     friend class JobManager;
+
+    struct NetworkSelectionComparator
+    {
+        const Interpreter &mInterpreter;
+        XpanId             mStartWith;
+        bool               mSuccess;
+
+        NetworkSelectionComparator(const Interpreter &aInterpreter);
+        ~NetworkSelectionComparator();
+    };
     /**
      * The result value of an Expression processed by the Interpreter.
      * Specifically, it is an union of Error and std::string.
@@ -139,6 +149,7 @@ private:
     bool       IsInactiveCommissionerAllowed(const Expression &aExpr);
     Value      ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
     Error      ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
+    Error      UpdateNetworkSelectionInfo(bool onStart = false);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);

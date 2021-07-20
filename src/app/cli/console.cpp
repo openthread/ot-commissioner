@@ -44,13 +44,20 @@ namespace commissioner {
 
 bool gVerbose = false;
 
+std::string Console::mPrompt;
+
+void Console::SetPrompt(const std::string &aPrompt)
+{
+    mPrompt = aPrompt;
+}
+
 std::string Console::Read()
 {
     const char *line = "";
 
     while (line == nullptr || strlen(line) == 0)
     {
-        line = readline("> ");
+        line = readline((mPrompt + "> ").c_str());
     }
 
     add_history(line);

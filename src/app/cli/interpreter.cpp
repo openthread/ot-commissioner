@@ -79,6 +79,8 @@
 #define NOT_FOUND_STR "Failed to find registry entity of type: "
 #define DOMAIN_STR "domain"
 #define NETWORK_STR "network"
+#define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
+#define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
@@ -115,6 +117,35 @@ struct FDGuard
 };
 
 } // namespace
+
+Interpreter::NetworkSelectionComparator::NetworkSelectionComparator(const Interpreter &aInterpreter)
+    : mInterpreter(aInterpreter)
+{
+    Network        nwk;
+    RegistryStatus status = mInterpreter.mRegistry->GetCurrentNetwork(nwk);
+
+    mSuccess = status == RegistryStatus::kSuccess;
+    if (mSuccess)
+    {
+        mStartWith = nwk.mXpan;
+    }
+}
+
+Interpreter::NetworkSelectionComparator::~NetworkSelectionComparator()
+{
+    if (mSuccess)
+    {
+        Network        nwk;
+        RegistryStatus status = mInterpreter.mRegistry->GetCurrentNetwork(nwk);
+
+        if (status == RegistryStatus::kSuccess && mStartWith.mValue != nwk.mXpan.mValue)
+        {
+            Console::Write(nwk.mXpan == XpanId::kEmptyXpanId ? WARN_NETWORK_SELECTION_DROPPED
+                                                             : WARN_NETWORK_SELECTION_CHANGED,
+                           Console::Color::kYellow);
+        }
+    }
+}
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
     {"config", &Interpreter::ProcessConfig},       {"start", &Interpreter::ProcessStart},
@@ -321,6 +352,25 @@ void Interpreter::MultiNetCommandContext::Cleanup()
     mCommandKeys.clear();
 }
 
+Error Interpreter::UpdateNetworkSelectionInfo(bool onStart /*=false*/)
+{
+    Error   error;
+    Network nwk;
+
+    VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == Registry::Status::kSuccess,
+                 error = ERROR_IO_ERROR("getting current network failed"));
+    if (onStart && nwk.mXpan != XpanId::kEmptyXpanId)
+    {
+        Console::Write(fmt::format(FMT_STRING("Network selection recalled from previous session.\n"
+                                              "Restored to [{}:'{}']"),
+                                   nwk.mXpan.str(), nwk.mName),
+                       Console::Color::kGreen);
+    }
+exit:
+    Console::SetPrompt(nwk.mName);
+    return error;
+}
+
 Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegistryFile)
 {
     Error error;
@@ -362,7 +412,7 @@ Error Interpreter::Init(const std::string &aConfigFile, const std::string &aRegi
     fcntl(mCancelPipe[1], F_SETFL, flags | O_NONBLOCK);
     // set up console verbosity
     gVerbose = verboseEnv == "1" || verboseEnv == "yes" || verboseEnv == "true";
-
+    error    = UpdateNetworkSelectionInfo(true);
 exit:
     return error;
 }
@@ -854,12 +904,14 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     {
         // starting newtork by br raw id (experimental, for dev tests only)
         persistent_storage::BorderRouterId rawid;
+        NetworkSelectionComparator         guard(*this);
 
         SuccessOrExit(value = ParseInteger(rawid.mId, expr[1]));
         VerifyOrExit(mRegistry->GetBorderRouter(rawid, br) == RegistryStatus::kSuccess,
                      value = ERROR_NOT_FOUND("br[{}] not found", rawid.mId));
         VerifyOrExit(mRegistry->SetCurrentNetwork(br) == RegistryStatus::kSuccess,
                      value = ERROR_NOT_FOUND("network selection failed for nwk[{}]", br.mNetworkId.mId));
+        SuccessOrExit(UpdateNetworkSelectionInfo());
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         expr.pop_back();
         expr.push_back(br.mAgent.mAddr);
@@ -868,9 +920,12 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     }
     case 3:
     {
+        NetworkSelectionComparator guard(*this);
+
         // starting network with explicit br_addr and br_port
         VerifyOrExit(mRegistry->ForgetCurrentNetwork() == RegistryStatus::kSuccess,
                      value = ERROR_IO_ERROR("failed to drop network selection"));
+        SuccessOrExit(UpdateNetworkSelectionInfo());
         SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
         break;
     }
@@ -1507,7 +1562,8 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
             VerifyOrExit(mRegistry->SetCurrentNetwork(xpans[0]) == RegistryStatus::kSuccess,
                          value = ERROR_IO_ERROR("network set failed"));
         }
-        value = std::string("done");
+        // update console prompt after network selection/deselection
+        SuccessOrExit(UpdateNetworkSelectionInfo());
     }
     else if (CaseInsensitiveEqual(aExpr[1], "identify"))
     {
