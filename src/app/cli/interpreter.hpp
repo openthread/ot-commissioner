@@ -143,13 +143,53 @@ private:
     void       PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor);
     void       PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor);
     Expression ParseExpression(const std::string &aLiteral);
-    bool       IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
-    bool       IsMultiNetworkSyntax(const Expression &aExpr);
-    bool       IsMultiJob(const Expression &aExpr);
-    bool       IsInactiveCommissionerAllowed(const Expression &aExpr);
-    Value      ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
-    Error      ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
-    Error      UpdateNetworkSelectionInfo(bool onStart = false);
+    /**
+     * Tests if the current expression belongs to a particular group
+     * of commands. Mostly used in syntax validation procedure.
+     */
+    bool IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
+    /**
+     * Tests if network/domain-wise syntax encountered in the tested
+     * command parameters.
+     */
+    bool IsMultiNetworkSyntax(const Expression &aExpr);
+    /**
+     * Asserts if the tested command eligible for multi-job execution.
+     */
+    bool IsMultiJob(const Expression &aExpr);
+    /**
+     * Tests if the command allows execution with
+     * inactive/disconnected @ref CommissionerApp object.
+     *
+     * @see @ref JobManager::CommissionerPool
+     */
+    bool IsInactiveCommissionerAllowed(const Expression &aExpr);
+    /**
+     * Implements network/domain-wise syntax validation. Import syntax
+     * applicability is also taken into consideration. Besides,
+     * resolution of the provided network aliases is checked in the
+     * course of execution.
+     */
+    Value ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
+    /**
+     * Resolves network aliases into a set of network ids. In the
+     * course of resolution, duplicate network ids are compacted if
+     * encountered. The resultant expression is cleaned of the
+     * re-parsed multi-network syntax elements.
+     *
+     * @see @ref Interpreter::MultiNetCommandContext
+     */
+    Error ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
+    /**
+     * Updates on-screen visualization of the current network
+     * selection.
+     *
+     * If selected, network name is added to command prompt, and with
+     * no network selected the prompt is empty. Besides, if onStart
+     * flag passed, a message is produced regarding the last session's
+     * network selection restored if there was any.
+     */
+    Error UpdateNetworkSelectionInfo(bool onStart = false);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
@@ -207,7 +247,13 @@ private:
     bool mShouldExit = false;
 
     std::atomic_bool mCancelCommand;
-    int              mCancelPipe[2] = {-1, -1};
+    /**
+     * Pipe object intended to be added to event loop to listen on for
+     * command cancellation.
+     *
+     * @note So far, used solely for breaking `br scan' execution.
+     */
+    int mCancelPipe[2] = {-1, -1};
 
     static const std::map<std::string, std::string> & mUsageMap;
     static const std::map<std::string, Evaluator> &   mEvaluatorMap;

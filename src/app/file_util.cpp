@@ -54,13 +54,22 @@ Error WriteFile(const std::string &aData, const std::string &aFilename)
 
     if (f == nullptr)
     {
-        if (errno == ENOENT)
+        switch (errno)
         {
-            ExitNow(error = ERROR_NOT_FOUND("cannot open file '{}', {}", aFilename, strerror(errno)));
-        }
-        else
-        {
-            ExitNow(error = ERROR_IO_ERROR("cannot open file '{}', {}", aFilename, strerror(errno)));
+        case ENOENT:
+            ExitNow(error = ERROR_BAD_FORMAT("open file flags invalid '{}', {}", aFilename, strerror(errno)));
+            break;
+
+        case EEXIST:
+            ExitNow(error = ERROR_ALREADY_EXISTS("file already exists '{}', {}", aFilename, strerror(errno)));
+            break;
+
+        case EACCES:
+            ExitNow(error = ERROR_IO_ERROR("access denied on path '{}', {}", aFilename, strerror(errno)));
+            break;
+
+        default:
+            ExitNow(error = ERROR_IO_ERROR("error on opening file '{}', {}", aFilename, strerror(errno)));
         }
     }
 
@@ -201,6 +210,9 @@ static void RemoveTrailings(std::string &aPath)
     } while (true);
 }
 
+/*
+ * We will keep the function extern for the sake of file_util_test.cpp
+ */
 void SplitPath(const std::string &aPath, std::string &aDirName, std::string &aBaseName)
 {
     auto pos = aPath.find_last_of('/');
@@ -216,6 +228,9 @@ void SplitPath(const std::string &aPath, std::string &aDirName, std::string &aBa
     }
 }
 
+/*
+ * We will keep the function extern for the sake of file_util_test.cpp
+ */
 Error RestoreDirPath(const std::string &aPath)
 {
     std::string baseName;

@@ -91,7 +91,10 @@ namespace commissioner {
 using ot::commissioner::persistent_storage::Network;
 
 namespace {
-
+/**
+ * File descriptor guard. Automatically closes the attached descriptor
+ * on leaving guarded scope.
+ */
 struct FDGuard
 {
     FDGuard()
@@ -102,9 +105,11 @@ struct FDGuard
         : mFD(aFD)
     {
     }
-    // For the time being it is enough to call close on all file descriptors to be protected: they're from the POSIX
-    // environment. If we'd want support for Windows it would be necessary to add support for file descriptor close
-    // functions (like, say, closesocket() or even mdns_socket_close()).
+    // For the time being it is enough to call close() on POSIX file
+    // descriptors. If we'd want support Windows it would be necessary
+    // to add support for platform specific file descriptor close
+    // functions (like, say, closesocket() or even
+    // mdns_socket_close()).
     ~FDGuard()
     {
         if (mFD > 0)
@@ -439,13 +444,16 @@ void Interpreter::CancelCommand()
     // For commands being handled in place
     mCancelCommand = true;
 
-    // reading from non-blocking pipe
+    // reading from non-blocking pipe to empty the one prior to
+    // sending cancellation signal by writing to the pipe below
     if (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) == -1 && errno == EAGAIN)
     {
         cancelData = -1;
         // No data in the pipe, write is safe (no overflow)
         ssize_t result = write(mCancelPipe[1], &cancelData, sizeof(cancelData));
         (void)result;
+        // writing to the pipe results in invoking mdnsCancelEventQueue()
+        // lambda and respectively breaking event loop
     }
 }
 
@@ -462,6 +470,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
     int        cancelData;
 
     mCancelCommand = false;
+    // empty the pipe prior to starting command execution
     while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
         ;
 
@@ -1387,6 +1396,9 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             event_base *ev_base = (event_base *)aArg;
             event_base_loopbreak(ev_base);
         };
+        // Attach cancel pipe to event loop. When bytes written to the
+        // pipe, mdnsCancelEventQueue() lambda is invoked resulting in
+        // breaking event loop
         cancelEvent = std::unique_ptr<event, void (*)(event *)>(
             event_new(base, mCancelPipe[0], EV_READ | EV_PERSIST, mdnsCancelEventQueue, base), event_free);
         event_add(cancelEvent.get(), nullptr);

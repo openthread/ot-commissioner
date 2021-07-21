@@ -56,6 +56,12 @@ public:
     ~JobManager() = default;
 
     Error Init(const Config &aConf);
+    /**
+     * Prepares final expression and creates @ref Job objects per
+     * network specification.
+     *
+     * @see JobManager::CreateJob()
+     */
     Error PrepareJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
     /**
      * Run all prepared jobs.
@@ -157,17 +163,39 @@ private:
      * information.
      */
     Error PrepareDtlsConfig(const XpanId aNid, Config &aConfig);
+    /**
+     * Creates @ref Job object and places the job into @ref JobManager::mJobPool.
+     */
     Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, XpanId aXpanId);
 
     void ErrorMsg(XpanId aNid, std::string aMessage);
     void WarningMsg(XpanId aNid, std::string aMessage);
     void InfoMsg(XpanId aNid, std::string aMessage);
 
-    JobPool            mJobPool;
-    CommissionerPool   mCommissionerPool;
-    Config             mDefaultConf;
-    std::string        mImportFile;
-    Interpreter &      mInterpreter;
+    /**
+     * Pool of @ref Job objects prepared per command execution. The
+     * pool elements are created and dropped within the single command
+     * life time.
+     */
+    JobPool mJobPool;
+    /**
+     * Pool of @ref CommissionerApp instances created per distinct
+     * network. Every object once created persists in the pool
+     * disregarding if it is currently active or not.
+     */
+    CommissionerPool mCommissionerPool;
+    Config           mDefaultConf;
+    std::string      mImportFile;
+    /**
+     * Backward reference to an @ref Interpreter instance hosting the
+     * current job manager object.
+     */
+    Interpreter &mInterpreter;
+    /**
+     * A @ref CommissionerApp instance dedicated for working with a
+     * network missing identification or out of current network
+     * selection, e.g. with legacy syntax `start <br-addr> <br-port>`.
+     */
     CommissionerAppPtr mDefaultCommissioner = nullptr;
 };
 

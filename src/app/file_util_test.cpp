@@ -39,6 +39,9 @@ namespace ot {
 
 namespace commissioner {
 
+void  SplitPath(const std::string &aPath, std::string &aDirName, std::string &aBaseName);
+Error RestoreDirPath(const std::string &aPath);
+
 TEST(FileUtil, SplitPath)
 {
     std::string path;
