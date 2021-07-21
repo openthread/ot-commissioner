@@ -28,6 +28,8 @@
 #
 
 TEST_DIR=./build/tests
+TEST_RES=0
+FINAL_RES=success
 
 run_unit_tests()
 {
@@ -49,6 +51,7 @@ run_unit_tests()
             # run tests
             echo "----- $test_item -----"
             ./$test_item $@
+            TEST_RES=$?
             echo ""
         else
             # list per executable
@@ -56,13 +59,18 @@ run_unit_tests()
                 # test cases
                 echo "----- $test_item -----"
                 ./$test_item --gtest_list_tests
+                TEST_RES=$?
                 echo ""
             else
                 # executable names only
                 echo "    $test_item"
             fi
         fi
+        if [ $TEST_RES -gt 0 ]; then
+            FINAL_RES=failed
+        fi
     done
+    echo "[$FINAL_RES]"
 }
 
 help()
