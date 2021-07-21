@@ -55,9 +55,8 @@ namespace commissioner {
  *
  * @retval ErrorCode::kNone          Successfully written the whole string.
  * @retval ErrorCode::kAlreadyExists All path components already exist, cannot create.
- * @retval ErrorCode::kIOError       Failed because of access or other error
- * @retval ErrorCode::kBadFormat     Failed because of path non-creatable
- * @retval ...                       Failed to write the string.
+ * @retval ErrorCode::kIOBusy        Failed because of limited access.
+ * @retval ErrorCode::kIOError       Failed because of other error.
  *
  * @note This function is not atomic, which means the target file
  *       could be corrupted if this function failed.

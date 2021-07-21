@@ -88,6 +88,42 @@ TEST(FileUtil, PathExists)
     EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNotFound);
 }
 
+TEST(FileUtil, WriteFile)
+{
+    FILE *      f    = NULL;
+    std::string path = "./test_write";
+    std::string test = "test";
+    std::string alt  = "alt";
+    std::string read;
+
+    rmdir(path.c_str());
+    unlink(path.c_str());
+    // initial write
+    read.clear();
+    EXPECT_EQ(WriteFile(test, path), ErrorCode::kNone);
+    EXPECT_EQ(ReadFile(read, path), ErrorCode::kNone);
+    EXPECT_EQ(read, test);
+    // re-write the same file
+    read.clear();
+    EXPECT_EQ(WriteFile(alt, path), ErrorCode::kNone);
+    EXPECT_EQ(ReadFile(read, path), ErrorCode::kNone);
+    EXPECT_EQ(read, alt);
+    // write to a blocked file
+    EXPECT_TRUE((f = fopen(path.c_str(), "r")) != NULL);
+    EXPECT_EQ(fchmod(fileno(f), 0), 0);
+    EXPECT_EQ(WriteFile(test, path), ErrorCode::kIOBusy);
+
+    if (f != NULL)
+    {
+        fclose(f);
+    }
+    unlink(path.c_str());
+    // write to an already existing directory named same as the file
+    EXPECT_EQ(RestoreDirPath(path), ErrorCode::kNone);
+    EXPECT_EQ(WriteFile(test, path), ErrorCode::kAlreadyExists);
+    rmdir(path.c_str());
+}
+
 } // namespace commissioner
 
 } // namespace ot

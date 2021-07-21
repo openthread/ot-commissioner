@@ -56,16 +56,13 @@ Error WriteFile(const std::string &aData, const std::string &aFilename)
     {
         switch (errno)
         {
-        case ENOENT:
-            ExitNow(error = ERROR_BAD_FORMAT("open file flags invalid '{}', {}", aFilename, strerror(errno)));
-            break;
-
         case EEXIST:
-            ExitNow(error = ERROR_ALREADY_EXISTS("file already exists '{}', {}", aFilename, strerror(errno)));
+        case EISDIR:
+            ExitNow(error = ERROR_ALREADY_EXISTS("path already exists '{}', {}", aFilename, strerror(errno)));
             break;
 
         case EACCES:
-            ExitNow(error = ERROR_IO_ERROR("access denied on path '{}', {}", aFilename, strerror(errno)));
+            ExitNow(error = ERROR_IO_BUSY("access denied on path '{}', {}", aFilename, strerror(errno)));
             break;
 
         default:
