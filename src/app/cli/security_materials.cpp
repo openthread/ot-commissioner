@@ -228,6 +228,12 @@ exit:
     return error;
 }
 
+bool SecurityMaterials::IsAnyFound(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/)
+{
+    return (aNeedCert && (mCertificate.size() != 0 || mPrivateKey.size() != 0 || mTrustAnchor.size() != 0)) ||
+           (aNeedToken && mCommissionerToken.size() != 0) || (aNeedPSKc && mPSKc.size() != 0);
+}
+
 bool SecurityMaterials::IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/)
 {
     return (aNeedCert && (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)) ||

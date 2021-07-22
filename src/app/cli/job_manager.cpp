@@ -355,7 +355,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         // else we try a chance with nwk.mName later
         error = ERROR_NONE;
     }
-    if (!dtlsConfig.IsIncomplete(needCert, needPSKc))
+    if (dtlsConfig.IsAnyFound(needCert, needPSKc))
     {
         goto update;
     }
@@ -367,7 +367,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         {
             WarningMsg(aNid, error.GetMessage());
         }
-        // else we try a chance with nwk.mName later
+        // nothing found, so continue with default values
         error = ERROR_NONE;
     }
 update:

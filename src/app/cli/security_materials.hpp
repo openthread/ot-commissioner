@@ -60,6 +60,10 @@ struct SecurityMaterials
     // Optional for CCM Thread network.
     ByteArray mCommissionerToken; ///< COM_TOK
 
+    // See if any part of credentials is already found depending on the
+    // credentials type
+    bool IsAnyFound(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false);
+
     // See if any part of credentials is missing depending on the
     // credentials type
     bool IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false);
