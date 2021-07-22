@@ -41,21 +41,21 @@ namespace ot {
 namespace commissioner {
 
 /**
- * This function is the callback of a discovered Border Agent.
+ * Callback prototype for Border Agent discovery response handling.
  *
- * @param[in] aBorderAgent   The discovered Border Agent. Not null
- *                           only when aError== ErrorCode::kNone is true.
- * @param[in] aError         The error;
+ * @param[in] aBorderAgent   A received Border Agent information. Not null
+ *                           only when aError == ErrorCode::kNone is true.
+ * @param[in] aError         A resultant information about handling.
  *
  */
 using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const Error &aError)>;
 
 /**
- * Discovery Border Agent in local network with mDNS.
+ * Discovers Border Agents in local network with mDNS.
  *
- * @param[in] aBorderAgentHandler  The handler of found Border Agent.
- *                                 called once for each Border Agent.
- * @param[in] aTimeout             The time waiting for mDNS responses.
+ * @param[in] aBorderAgentHandler  The handler of a single Border Agent response.
+ * @param[in] aTimeout             The time to wait for mDNS responses. Any
+ *                                 response not within the interval is ignored.
  *
  */
 Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);

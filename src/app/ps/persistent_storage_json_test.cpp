@@ -34,13 +34,9 @@
 #include <gtest/gtest.h>
 
 #include "persistent_storage_json.hpp"
+#include "app/border_agent.hpp"
 
 #include <fstream>
-#include <vector>
-
-#include <unistd.h>
-
-#include "app/border_agent.hpp"
 
 using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner;

@@ -130,8 +130,14 @@ private:
     /**
      * Wait for all job threads to join.
      */
-    void  WaitForJobs();
+    void WaitForJobs();
+    /**
+     * A flavor of JobManager::PrepareJobs() for `start' command specifically.
+     */
     Error PrepareStartJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
+    /**
+     * A flavor of JobManager::PrepareJobs() for `stop' command specifically.
+     */
     Error PrepareStopJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
     /**
      * Updates DTLS parts of Config for the given network.
@@ -140,13 +146,9 @@ private:
      * appropriate lookup for credentials is done under
      * $THREAD_SM_ROOT/dom/$did/ folder.
      *
-     * If network belongs to DefaultDomain, the lookup is sequentially done in:
-     * - $THREAD_SM_ROOT/dom/DefaultDomain/$nid/
-     * - $THREAD_SM_ROOT/dom/DefaultDomain/$nname/
-     * - $THREAD_SM_ROOT/nwk/$nid/
-     * - $THREAD_SM_ROOT/nwk/$nname/
+     * If network belongs to DefaultDomain, or does not belong to any
+     * one, the lookup is sequentially done in:
      *
-     * If network does not belong to any domain, the lookup is done in:
      * - $THREAD_SM_ROOT/nwk/$nid/
      * - $THREAD_SM_ROOT/nwk/$nname/
      *

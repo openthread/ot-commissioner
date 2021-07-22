@@ -35,11 +35,6 @@
 #ifndef OT_COMM_BORDER_AGENT_HPP_
 #define OT_COMM_BORDER_AGENT_HPP_
 
-#include <ctime>
-#include <functional>
-#include <list>
-#include <string>
-
 #include <commissioner/defines.hpp>
 #include <commissioner/network_data.hpp>
 

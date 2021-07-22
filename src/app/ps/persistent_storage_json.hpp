@@ -37,11 +37,6 @@
 #include "persistent_storage.hpp"
 #include "semaphore.hpp"
 
-#include "nlohmann_json.hpp"
-
-#include <algorithm>
-#include <functional>
-
 namespace ot {
 
 namespace commissioner {

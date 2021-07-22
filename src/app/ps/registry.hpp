@@ -36,11 +36,9 @@
 
 #include "persistent_storage.hpp"
 #include "registry_entries.hpp"
-
-#include <map>
-#include <vector>
-
 #include "app/border_agent.hpp"
+
+#include <vector>
 
 namespace ot {
 namespace commissioner {

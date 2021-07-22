@@ -36,9 +36,6 @@
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
-#include <cassert>
-#include <sstream>
-
 namespace ot {
 namespace commissioner {
 namespace persistent_storage {

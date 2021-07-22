@@ -68,10 +68,37 @@ struct SecurityMaterials
     bool IsEmpty(bool isCCM);
 };
 
+/**
+ * Initializes access to Security Materials Storage. Internally, SM
+ * root path is retrieved, either from default configuration or
+ * environment variable THREAD_SM_ROOT.
+ */
 Error Init(const Config &aDefaultConfig);
 
+/**
+ * Finds security materials related to a domain. Domain credentials
+ * are always expected to be the ones applicable for CCM networks:
+ * - mCertificate
+ * - mPrivateKey
+ * - nTrustAnchor
+ * - mCommissionerToken
+ * where any element is optional.
+ *
+ * @see JobManager::PrepareDtlsConfig()
+ */
 Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM);
 
+/**
+ * Finds security materials related to a network. The returned content
+ * depends on the flags aNeedCert and aNeedPSKc, although again, any
+ * element of returned SecurityMaterials is optional.
+ *
+ * The requested network is identified by an alias which may be XPAN
+ * ID or network name. Only these two are allowed to form a path in SM
+ * Storage, but not PAN ID.
+ *
+ * @see JobManager::PrepareDtlsConfig()
+ */
 Error GetNetworkSM(const std::string aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM);
 
 } // namespace security_material
