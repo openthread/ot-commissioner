@@ -39,20 +39,23 @@ namespace ot {
 
 namespace commissioner {
 
+const std::string UnixTime::kFmtString = "%Y%m%dT%H%M%S";
+
 UnixTime::UnixTime(std::time_t aTime /* =0 */)
     : mTime(aTime)
 {
 }
 
-UnixTime::UnixTime(const std::string &aTimeStr)
-    : UnixTime()
+Error UnixTime::FromString(UnixTime &aTime, const std::string &aTimeStr)
 {
     std::tm lTm;
-    char *  result = strptime(aTimeStr.c_str(), "%Y%m%dT%H%M%S", &lTm);
+    char *  result = strptime(aTimeStr.c_str(), kFmtString.c_str(), &lTm);
     if (result != nullptr && *result == '\000')
     {
-        mTime = std::mktime(&lTm);
+        aTime = std::mktime(&lTm);
+        return ERROR_NONE;
     }
+    return ERROR_BAD_FORMAT("ill formed time string {}", aTimeStr);
 }
 
 bool UnixTime::operator==(const UnixTime &other) const
@@ -66,7 +69,7 @@ UnixTime::operator std::string() const
     gmtime_r(&mTime, &lTm);
 
     char lTimeStr[16];
-    std::strftime(lTimeStr, sizeof(lTimeStr), "%Y%m%dT%H%M%S", &lTm);
+    std::strftime(lTimeStr, sizeof(lTimeStr), kFmtString.c_str(), &lTm);
     return lTimeStr;
 }
 

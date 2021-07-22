@@ -230,6 +230,8 @@ void to_json(json &aJson, const BorderRouter &aValue)
     }
     if (aValue.mAgent.mPresentFlags & BorderAgent::kUpdateTimestampBit)
     {
+        // Note that UnixTime::operator std::string() does formatting
+        // here using UnixTime::kFmtString
         aJson[JSON_UPDATE_TIMESTAMP] = (std::string)aValue.mAgent.mUpdateTimestamp;
     }
 }
@@ -317,12 +319,12 @@ void from_json(const json &aJson, BorderRouter &aValue)
     }
     if (aJson.contains(JSON_UPDATE_TIMESTAMP))
     {
-        std::string tmp;
-        aJson.at(JSON_UPDATE_TIMESTAMP).get_to(tmp);
-        UnixTime ts{tmp};
-        if (ts.mTime != 0)
+        std::string timeStr;
+        aJson.at(JSON_UPDATE_TIMESTAMP).get_to(timeStr);
+        UnixTime timeStamp;
+        if (UnixTime::FromString(timeStamp, timeStr).GetCode() == ErrorCode::kNone && timeStamp.mTime != 0)
         {
-            aValue.mAgent.mUpdateTimestamp.mTime = ts.mTime;
+            aValue.mAgent.mUpdateTimestamp.mTime = timeStamp.mTime;
             aValue.mAgent.mPresentFlags |= BorderAgent::kUpdateTimestampBit;
         }
     }

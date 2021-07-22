@@ -54,10 +54,14 @@ namespace commissioner {
  */
 struct UnixTime
 {
+    static const std::string kFmtString; // = "%Y%m%dT%H%M%S"
+
     std::time_t mTime;
     UnixTime(std::time_t aTime = 0);
+
     // Requires date format "%Y%m%dT%H%M%S"
-    UnixTime(const std::string &aTimeStr);
+    static Error FromString(UnixTime &aTime, const std::string &aTimeStr);
+
     bool operator==(const UnixTime &other) const;
          operator std::string() const;
 };
