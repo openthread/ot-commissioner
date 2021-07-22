@@ -30,6 +30,8 @@
 TEST_DIR=./build/tests
 TEST_RES=0
 FINAL_RES=success
+FINAL_CLR="\e[32m"
+RESET_CLR="\e[0m"
 
 run_unit_tests()
 {
@@ -68,9 +70,10 @@ run_unit_tests()
         fi
         if [ $TEST_RES -gt 0 ]; then
             FINAL_RES=failed
+            FINAL_CLR="\e[31m"
         fi
     done
-    echo "[$FINAL_RES]"
+    echo "$FINAL_CLR[$FINAL_RES]$RESET_CLR"
 }
 
 help()
