@@ -34,9 +34,6 @@
 #ifndef OT_COMM_NETWORK_DATA_HPP_
 #define OT_COMM_NETWORK_DATA_HPP_
 
-#include <algorithm>
-#include <iomanip>
-#include <sstream>
 #include <string>
 
 #include <stdint.h>

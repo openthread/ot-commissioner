@@ -33,6 +33,9 @@
 
 #include <commissioner/network_data.hpp>
 
+#include <iomanip>
+#include <sstream>
+
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"

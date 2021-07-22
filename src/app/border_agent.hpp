@@ -38,6 +38,8 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/network_data.hpp>
 
+#include <iomanip>
+
 namespace ot {
 
 namespace commissioner {

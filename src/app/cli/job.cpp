@@ -36,6 +36,8 @@
 #include "common/logging.hpp"
 #include "common/utils.hpp"
 
+#include <sstream>
+
 namespace ot {
 
 namespace commissioner {

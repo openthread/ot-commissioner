@@ -35,8 +35,6 @@
 #define OT_COMM_COMMISSIONER_HPP_
 
 #include <functional>
-#include <list>
-#include <memory>
 #include <string>
 
 #include <stddef.h>

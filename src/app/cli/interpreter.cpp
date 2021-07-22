@@ -39,6 +39,7 @@
 #include <event2/util.h>
 #include <mdns/mdns.h>
 
+#include <sstream>
 #include <thread>
 
 #include "app/br_discover.hpp"

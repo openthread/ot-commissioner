@@ -36,6 +36,7 @@
 
 #include <exception>
 #include <iostream>
+#include <sstream>
 
 #include "app/commissioner_app.hpp"
 #include "app/file_logger.hpp"
