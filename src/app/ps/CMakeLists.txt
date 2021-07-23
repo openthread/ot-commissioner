@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Commissioner Authors.
+#  Copyright (c) 2021, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -56,12 +56,10 @@ target_link_libraries(persistent-storage
     commissioner-app
 )
 
-if (BUILD_SHARED_LIBS)
-    install(TARGETS persistent-storage
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-    )
-endif()
+install(TARGETS persistent-storage
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
 
 if (OT_COMM_TEST)
     add_library(commissioner-ps-test OBJECT

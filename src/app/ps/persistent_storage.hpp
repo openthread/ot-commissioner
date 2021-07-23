@@ -44,12 +44,22 @@ namespace commissioner {
 namespace persistent_storage {
 
 /**
- * Persistent storage interface
+ * Persistent storage abstract interface
  *
- * Assume DB-like interface - all values stored in records.
- * Each record has unique id. Values can be read, updated, deleted by id.
- * Limited lookup functionality by camparing record's fields.
- * @see registry_entries.hpp
+ * Assumes DB-like operations:
+ * - tables are simulated by categorized arrays constituting key-value storage
+ *   - "br"  - Thread border routers
+ *   - "nwk" - Thread networks
+ *   - "dom" - Thread domains
+ * - all values are stored in entity records under respective categories
+ * - each entity record has unique id used in fact as a primary key; per
+ *   category, id uniqueness is based on respective sequence counters
+ *   "{br,nwk,dom}_seq" kept in the same storage along with categories
+ * - records can be added with unique id and further read/updated/deleted by
+ *   the id
+ * - a limited lookup function is implemented based on record fields comparison
+ *
+ *  @see registry_entries.hpp
  */
 class PersistentStorage
 {
@@ -64,7 +74,7 @@ public:
         kError,    /**< operation failed */
     };
 
-    virtual ~PersistentStorage(){};
+    virtual ~PersistentStorage() = default;
 
     /**
      * Prepares storage for work. Called once on start.

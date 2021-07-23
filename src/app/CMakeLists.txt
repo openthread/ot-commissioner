@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Commissioner Authors.
+#  Copyright (c) 2021, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ if (OT_COMM_TEST)
             ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googlemock/include
             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/fmtlib/repo/include>
             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
-)
+    )
 
 endif()
 

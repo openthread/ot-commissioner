@@ -156,10 +156,6 @@ BorderAgent::BorderAgent(std::string const &aAddr,
 {
 }
 
-BorderAgent::~BorderAgent()
-{
-}
-
 } // namespace commissioner
 
 } // namespace ot

@@ -272,7 +272,7 @@ struct BorderAgent
     /**
      * Virtual destructor for polymorph storage comunications
      */
-    virtual ~BorderAgent();
+    virtual ~BorderAgent() = default;
 };
 
 struct BorderAgentOrErrorMsg

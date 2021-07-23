@@ -64,7 +64,7 @@ public:
     /**
      * Destructor
      */
-    virtual ~PersistentStorageJson();
+    ~PersistentStorageJson() override;
 
     /**
      * Opens file, loads cache
@@ -72,7 +72,7 @@ public:
      * @return Status
      * @see Status
      */
-    virtual Status Open() override;
+    Status Open() override;
 
     /**
      * Writes cache to file, closes file
@@ -80,7 +80,7 @@ public:
      * @return Status
      * @see Status
      */
-    virtual Status Close() override;
+    Status Close() override;
 
     /**
      * Adds value to store
@@ -91,10 +91,10 @@ public:
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Add(Registrar const &aValue, RegistrarId &aRetId) override;
-    virtual Status Add(Domain const &aValue, DomainId &aRetId) override;
-    virtual Status Add(Network const &aValue, NetworkId &aRetId) override;
-    virtual Status Add(BorderRouter const &aValue, BorderRouterId &aRetId) override;
+    Status Add(Registrar const &aValue, RegistrarId &aRetId) override;
+    Status Add(Domain const &aValue, DomainId &aRetId) override;
+    Status Add(Network const &aValue, NetworkId &aRetId) override;
+    Status Add(BorderRouter const &aValue, BorderRouterId &aRetId) override;
 
     /**
      * Deletes value by unique id from store
@@ -104,10 +104,10 @@ public:
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Del(RegistrarId const &aId) override;
-    virtual Status Del(DomainId const &aId) override;
-    virtual Status Del(NetworkId const &aId) override;
-    virtual Status Del(BorderRouterId const &aId) override;
+    Status Del(RegistrarId const &aId) override;
+    Status Del(DomainId const &aId) override;
+    Status Del(NetworkId const &aId) override;
+    Status Del(BorderRouterId const &aId) override;
 
     /**
      * Gets value by unique id from store
@@ -118,10 +118,10 @@ public:
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Get(RegistrarId const &aId, Registrar &aValue) override;
-    virtual Status Get(DomainId const &aId, Domain &aValue) override;
-    virtual Status Get(NetworkId const &aId, Network &aValue) override;
-    virtual Status Get(BorderRouterId const &aId, BorderRouter &aValue) override;
+    Status Get(RegistrarId const &aId, Registrar &aValue) override;
+    Status Get(DomainId const &aId, Domain &aValue) override;
+    Status Get(NetworkId const &aId, Network &aValue) override;
+    Status Get(BorderRouterId const &aId, BorderRouter &aValue) override;
 
     /**
      * Updates value in store
@@ -134,10 +134,10 @@ public:
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Update(Registrar const &aValue) override;
-    virtual Status Update(Domain const &aValue) override;
-    virtual Status Update(Network const &aValue) override;
-    virtual Status Update(BorderRouter const &aValue) override;
+    Status Update(Registrar const &aValue) override;
+    Status Update(Domain const &aValue) override;
+    Status Update(Network const &aValue) override;
+    Status Update(BorderRouter const &aValue) override;
 
     /**
      * Looks for a matching values in store
@@ -152,10 +152,10 @@ public:
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status Lookup(Registrar const &aValue, std::vector<Registrar> &aRet) override;
-    virtual Status Lookup(Domain const &aValue, std::vector<Domain> &aRet) override;
-    virtual Status Lookup(Network const &aValue, std::vector<Network> &aRet) override;
-    virtual Status Lookup(BorderRouter const &aValue, std::vector<BorderRouter> &aRet) override;
+    Status Lookup(Registrar const &aValue, std::vector<Registrar> &aRet) override;
+    Status Lookup(Domain const &aValue, std::vector<Domain> &aRet) override;
+    Status Lookup(Network const &aValue, std::vector<Network> &aRet) override;
+    Status Lookup(BorderRouter const &aValue, std::vector<BorderRouter> &aRet) override;
 
     /**
      * Looks for a matching values in store
@@ -170,21 +170,21 @@ public:
      * @see Status
      * @see registry_entries.hpp
      */
-    virtual Status LookupAny(Registrar const &aValue, std::vector<Registrar> &aRet) override;
-    virtual Status LookupAny(Domain const &aValue, std::vector<Domain> &aRet) override;
-    virtual Status LookupAny(Network const &aValue, std::vector<Network> &aRet) override;
-    virtual Status LookupAny(BorderRouter const &aValue, std::vector<BorderRouter> &aRet) override;
+    Status LookupAny(Registrar const &aValue, std::vector<Registrar> &aRet) override;
+    Status LookupAny(Domain const &aValue, std::vector<Domain> &aRet) override;
+    Status LookupAny(Network const &aValue, std::vector<Network> &aRet) override;
+    Status LookupAny(BorderRouter const &aValue, std::vector<BorderRouter> &aRet) override;
 
     /**
      * Set current Network.
      */
-    virtual Status SetCurrentNetwork(const NetworkId &aNwkId) override;
+    Status SetCurrentNetwork(const NetworkId &aNwkId) override;
     /**
      * Get current Network
      *
      * @param aNwkId[out] current Network identifier
      */
-    virtual Status GetCurrentNetwork(NetworkId &aNwkId) override;
+    Status GetCurrentNetwork(NetworkId &aNwkId) override;
 
 private:
     std::string                  mFileName;    /**< name of the file */
