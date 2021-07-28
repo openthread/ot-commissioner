@@ -186,7 +186,7 @@ private:
      *
      * If selected, network name is added to command prompt, and with
      * no network selected the prompt is empty. Besides, if onStart
-     * flag passed, a message is produced regarding the last session's
+     * flag passed, a message is produced regarding the last session
      * network selection restored if there was any.
      */
     Error UpdateNetworkSelectionInfo(bool onStart = false);
