@@ -169,7 +169,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"migrate", &Interpreter::ProcessMigrate},     {"mlr", &Interpreter::ProcessMlr},
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
-    {"help", &Interpreter::ProcessHelp},
+    {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -245,6 +245,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"energy", "energy scan <channel-mask> <count> <period> <scan-duration> <dst-addr>\n"
                "energy report [<dst-addr>]"},
     {"exit", "exit"},
+    {"quit", "quit\n"
+             "(an alias to 'exit' command)"},
     {"help", "help [<command>]"},
 };
 
