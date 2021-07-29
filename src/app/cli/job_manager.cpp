@@ -78,6 +78,11 @@ exit:
     return error;
 }
 
+void JobManager::UpdateDefaultConfigCommissionerToken()
+{
+    mDefaultConf.mCommissionerToken = mDefaultCommissioner->GetToken();
+}
+
 std::string JobManager::GetDefaultConfigPSKc() const
 {
     return utils::Hex(mDefaultConf.mPSKc);

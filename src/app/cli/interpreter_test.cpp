@@ -1071,13 +1071,15 @@ TEST_F(InterpreterTestSuite, PC_Token)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
+    const ByteArray token = {'1', '2', '3', 'a', 'e', 'f'};
+
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, RequestToken(_, _)).WillOnce(Return(Error{}));
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
 
     expr  = ctx.mInterpreter.ParseExpression("token request 127.0.0.1 2001");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    const ByteArray token = {'1', '2', '3', 'a', 'e', 'f'};
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
     expr  = ctx.mInterpreter.ParseExpression("token print");
     value = ctx.mInterpreter.Eval(expr);
@@ -1085,6 +1087,147 @@ TEST_F(InterpreterTestSuite, PC_Token)
 
     EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_)).WillOnce(Return(Error{}));
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
+    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_TokenWithCCM)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    // prepare CCM network record
+    const std::string  kDomainName  = "domain1";
+    const std::string  kNetworkName = "net1";
+    const std::string  kSmPath      = "./dom/" + kDomainName + "/";
+    XpanId             xpanCcm{1};
+    BorderAgent::State baStateCcm{BorderAgent::State::ConnectionMode::kX509Connection, 0, 0, 0, 0};
+
+    ASSERT_EQ(
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baStateCcm, kNetworkName, xpanCcm.mValue,
+                                       "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, kDomainName, 0, 0, "", 0,
+                                       0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
+        RegistryStatus::kSuccess);
+
+    // prepare fake SM for the CCM network
+    std::vector<std::pair<std::string, std::string>> smFiles = {{"ca", kSmPath + "ca.pem"},
+                                                                {"key", kSmPath + "priv.pem"},
+                                                                {"cert", kSmPath + "cert.pem"},
+                                                                {"123aef", kSmPath + "tok.cbor"}};
+
+    EXPECT_EQ(RestoreFilePath(smFiles.front().second).GetCode(), ErrorCode::kNone);
+    for (auto smFile : smFiles)
+    {
+        EXPECT_EQ(WriteFile(smFile.first, smFile.second).GetCode(), ErrorCode::kNone);
+    }
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = pcaMock; }), Return(Error{})));
+    EXPECT_CALL(*pcaMock, RequestToken(_, _)).WillOnce(Return(Error{}));
+    // note: we do not expect GetToken() here because no default
+    //       config update to happen with a network selected
+
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->SetCurrentNetwork(xpanCcm), RegistryStatus::kSuccess);
+    expr  = ctx.mInterpreter.ParseExpression("token request 127.0.0.1 2001");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    const ByteArray token = {'1', '2', '3', 'a', 'e', 'f'};
+
+    EXPECT_CALL(*pcaMock, SetToken(_)).WillOnce(Return(Error{}));
+    // note: again, we do not expect GetToken() here, same reason
+
+    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
+    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_TokenWithNonCCM)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    // prepare non-CCM network record
+    const std::string  kDomainName  = "DefaultDomain";
+    const std::string  kNetworkName = "net2";
+    const std::string  kSmPath      = "./nwk/" + kNetworkName + "/";
+    XpanId             xpanNonCcm{2};
+    BorderAgent::State baStateNonCcm{BorderAgent::State::ConnectionMode::kPSKcConnection, 0, 0, 0, 0};
+
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baStateNonCcm, kNetworkName,
+                                             xpanNonCcm.mValue, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{},
+                                             kDomainName, 0, 0, "", 0,
+                                             0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
+              RegistryStatus::kSuccess);
+    // prepare fake SM for the non-CCM network
+    std::vector<std::pair<std::string, std::string>> smFiles = {
+        {"ca", kSmPath + "ca.pem"}, {"key", kSmPath + "priv.pem"}, {"cert", kSmPath + "cert.pem"}};
+
+    EXPECT_EQ(RestoreFilePath(smFiles.front().second).GetCode(), ErrorCode::kNone);
+    for (auto smFile : smFiles)
+    {
+        EXPECT_EQ(WriteFile(smFile.first, smFile.second).GetCode(), ErrorCode::kNone);
+    }
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
+    EXPECT_CALL(ctx.mCommissionerAppStaticExpecter, Create(_, _))
+        .WillOnce(DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = pcaMock; }), Return(Error{})));
+    // note: we do not expect RequestToken() here as 'token request'
+    //       execution is prohibited with non-CCM network selected
+
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->SetCurrentNetwork(xpanNonCcm), RegistryStatus::kSuccess);
+    expr  = ctx.mInterpreter.ParseExpression("token request 127.0.0.1 2001");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(!value.HasNoError());
+    EXPECT_EQ(value.mError.GetCode(), ErrorCode::kInvalidState);
+
+    EXPECT_CALL(*pcaMock, SetToken(_)).WillOnce(Return(Error{}));
+    // note: we do not expect GetToken() here as no default config
+    //       update to happen with a network selected
+
+    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
+    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_TokenWithNone)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    const ByteArray token = {'1', '2', '3', 'a', 'e', 'f'};
+
+    // with no network selected we expect 'token request' to call
+    // RequestToken() first, and then have GetToken() called on
+    // default commissioner to update default config
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, RequestToken(_, _)).WillOnce(Return(Error{}));
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
+
+    EXPECT_EQ(ctx.mInterpreter.mRegistry->ForgetCurrentNetwork(), RegistryStatus::kSuccess);
+    expr  = ctx.mInterpreter.ParseExpression("token request 127.0.0.1 2001");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_)).WillOnce(Return(Error{}));
+    // 'token set' is also to update default config here, so we expect
+    // GetToken() to be called on default commissioner instance
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
+
+    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
     expr  = ctx.mInterpreter.ParseExpression("token set ./token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());

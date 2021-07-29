@@ -95,7 +95,7 @@ public:
      */
     bool IsClean();
     /**
-     * Apply new PSKc bytes and re-create @ref
+     * Applies new PSKc bytes and re-creates @ref
      * JobManager::mDefaultCommissioner instance
      */
     Error UpdateDefaultConfigPSKc(const ByteArray &aPSKc);
@@ -103,6 +103,16 @@ public:
      * Reads PSKc to string for the sake of `config get pskc' command
      */
     std::string GetDefaultConfigPSKc() const;
+    /**
+     * Updates commissioner token in the default configuration object.
+     * The token source always is @ref JobManager::mDefaultCommissioner.
+     *
+     * It does not matter if the default commissioner is active or not
+     * as the one always has its internally stored token consistently
+     * up to date. This method updates strictly default configuration
+     * to be later used with JobManager::PrepareDtlsConfig().
+     */
+    void UpdateDefaultConfigCommissionerToken();
     /**
      * Appends to aExpr an imported argument loaded from mImportFile.
      *

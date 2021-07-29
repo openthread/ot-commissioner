@@ -1009,16 +1009,34 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
 {
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
+    RegistryStatus     status;
+    Network            curNwk;
 
     SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
+    VerifyOrExit((status = mRegistry->GetCurrentNetwork(curNwk)) == RegistryStatus::kSuccess,
+                 value = ERROR_IO_ERROR("registry operation failed with status={}", status));
 
     if (CaseInsensitiveEqual(aExpr[1], "request"))
     {
-        uint16_t port;
         VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
-        SuccessOrExit(value = ParseInteger(port, aExpr[3]));
-        SuccessOrExit(value = commissioner->RequestToken(aExpr[2], port));
+        // request allowed in case of CCM network or no network selected
+        if (curNwk.mId.mId == persistent_storage::EMPTY_ID || curNwk.mCcm != 0)
+        {
+            uint16_t port;
+            SuccessOrExit(value = ParseInteger(port, aExpr[3]));
+            SuccessOrExit(value = commissioner->RequestToken(aExpr[2], port));
+            if (curNwk.mId.mId == persistent_storage::EMPTY_ID)
+            {
+                // when there is no network selected, a successful
+                // 'token request' must update default configuration
+                mJobManager->UpdateDefaultConfigCommissionerToken();
+            }
+        }
+        else
+        {
+            ExitNow(value = ERROR_INVALID_STATE("request disallowed when non-CCM network selected"));
+        }
     }
     else if (CaseInsensitiveEqual(aExpr[1], "print"))
     {
@@ -1033,6 +1051,13 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
         SuccessOrExit(value = ReadHexStringFile(signedToken, aExpr[2]));
 
         SuccessOrExit(value = commissioner->SetToken(signedToken));
+        if (curNwk.mId.mId == persistent_storage::EMPTY_ID)
+        {
+            // when there is no network selected, a successful
+            // 'token set' must update default configuration
+            // as well
+            mJobManager->UpdateDefaultConfigCommissionerToken();
+        }
     }
     else
     {
