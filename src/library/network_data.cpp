@@ -146,11 +146,9 @@ bool XpanId::operator<(const XpanId aOther) const
 
 XpanId::operator std::string() const
 {
-    std::ostringstream stream;
-    stream << std::setfill('0') << std::setw(sizeof(mValue) * 2) << std::hex << mValue;
-    std::string out = stream.str();
-    std::for_each(out.begin(), out.end(), [](char &c) { c = std::toupper(c); });
-    return out;
+    std::ostringstream value;
+    value << std::uppercase << std::hex << std::setw(sizeof(mValue) * 2) << std::setfill('0') << mValue;
+    return value.str();
 }
 
 /**
@@ -187,7 +185,7 @@ PanId::PanId(uint16_t aValue)
 }
 
 PanId::PanId()
-    : PanId(0)
+    : PanId(kEmptyPanId)
 {
 }
 
@@ -200,6 +198,13 @@ PanId &PanId::operator=(uint16_t aValue)
 PanId::operator uint16_t() const
 {
     return mValue;
+}
+
+PanId::operator std::string() const
+{
+    std::ostringstream value;
+    value << "0x" << std::uppercase << std::hex << std::setw(sizeof(mValue) * 2) << std::setfill('0') << mValue;
+    return value.str();
 }
 
 Error PanId::FromHex(const std::string &aInput)

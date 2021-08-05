@@ -375,27 +375,37 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
     InitContext(ctx);
 
     NetworkId nid;
-    ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, "pan1", "", 0}, nid),
+    ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, 0xAB, "", 0}, nid),
               PersistentStorage::Status::kSuccess);
-    ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, "pan1", "", 0}, nid),
-              PersistentStorage::Status::kSuccess);
-
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         RegistryStatus::kSuccess);
+
+    // lookup by PAN ID must succeed
+    Interpreter::Expression expr, ret;
+    XpanIdArray             nids;
+    expr = ctx.mInterpreter.ParseExpression("start --nwk ab");
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(nids.size(), 1);
+    EXPECT_EQ(nids[0], XpanId{1});
+    ctx.mInterpreter.mContext.Cleanup();
+
+    // create ambiguity by adding another network with the same PAN ID
+    ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, 0xAB, "", 0}, nid),
+              PersistentStorage::Status::kSuccess);
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         RegistryStatus::kSuccess);
 
-    Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
-    expr = ctx.mInterpreter.ParseExpression("start --nwk pan1");
+    // the same lookup must fail
+    expr = ctx.mInterpreter.ParseExpression("start --nwk ab");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
-    EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
+    EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kIOError);
 }
 
 TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
@@ -1770,11 +1780,11 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     InitContext(ctx);
 
     NetworkId nwk_id;
-    EXPECT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "", XpanId{1}, 0, "", "", 0}, nwk_id),
+    EXPECT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "", XpanId{1}, 0, 0, "", 0}, nwk_id),
               PersistentStorage::Status::kSuccess);
     Network nwk;
     EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
-    EXPECT_STREQ("", nwk.mPan.c_str());
+    EXPECT_EQ((std::string)nwk.mPan, "0x0000");
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetActiveDataset(_, _))
         .Times(2)
@@ -1793,7 +1803,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     EXPECT_TRUE(value.HasNoError());
 
     EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
-    EXPECT_STREQ("0x0001", nwk.mPan.c_str());
+    EXPECT_EQ(nwk.mPan, 0x0001);
 
     EXPECT_EQ(system("rm -f ./aods.json"), 0);
     EXPECT_NE(PathExists("./aods.json").GetCode(), ErrorCode::kNone);

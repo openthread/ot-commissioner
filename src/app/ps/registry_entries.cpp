@@ -147,7 +147,7 @@ void to_json(json &aJson, const Network &aValue)
     aJson = json{{JSON_ID, aValue.mId},
                  {JSON_DOM_REF, aValue.mDomainId},
                  {JSON_NAME, aValue.mName},
-                 {JSON_PAN, aValue.mPan},
+                 {JSON_PAN, (std::string)aValue.mPan},
                  {JSON_XPAN, (std::string)aValue.mXpan},
                  {JSON_CHANNEL, aValue.mChannel},
                  {JSON_MLP, aValue.mMlp},
@@ -159,11 +159,12 @@ void from_json(const json &aJson, Network &aValue)
     aJson.at(JSON_ID).get_to(aValue.mId);
     aJson.at(JSON_DOM_REF).get_to(aValue.mDomainId);
     aJson.at(JSON_NAME).get_to(aValue.mName);
-    aJson.at(JSON_PAN).get_to(aValue.mPan);
 
-    std::string xpanStr;
-    aJson.at(JSON_XPAN).get_to(xpanStr);
-    SuccessOrThrow(aValue.mXpan.FromHex(xpanStr));
+    std::string hexStr;
+    aJson.at(JSON_PAN).get_to(hexStr);
+    SuccessOrThrow(aValue.mPan.FromHex(hexStr));
+    aJson.at(JSON_XPAN).get_to(hexStr);
+    SuccessOrThrow(aValue.mXpan.FromHex(hexStr));
 
     aJson.at(JSON_CHANNEL).get_to(aValue.mChannel);
     aJson.at(JSON_MLP).get_to(aValue.mMlp);
@@ -402,7 +403,7 @@ Network::Network(NetworkId const &  aId,
                  std::string const &aName,
                  XpanId const &     aXpan,
                  unsigned int const aChannel,
-                 std::string const &aPan,
+                 uint16_t const     aPan,
                  std::string const &aMlp,
                  int const          aCcm)
     : mId(aId)
@@ -417,7 +418,7 @@ Network::Network(NetworkId const &  aId,
 }
 
 Network::Network()
-    : Network(EMPTY_ID, EMPTY_ID, "", XpanId{}, 0, "", "", -1)
+    : Network(EMPTY_ID, EMPTY_ID, "", XpanId{}, 0, 0, "", -1)
 {
 }
 

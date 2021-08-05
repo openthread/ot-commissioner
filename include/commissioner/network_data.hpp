@@ -254,12 +254,15 @@ enum SecurityPolicyFlags
  */
 struct PanId
 {
+    static constexpr uint64_t kEmptyPanId = 0;
+
     uint16_t mValue;
     PanId(uint16_t aValue);
     PanId();
 
     PanId &operator=(uint16_t aValue);
            operator uint16_t() const;
+           operator std::string() const;
 
     Error FromHex(const std::string &aInput);
 };

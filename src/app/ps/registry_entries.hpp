@@ -139,7 +139,7 @@ struct Network
     std::string  mName;     /**< network name */
     XpanId       mXpan;     /**< Extended PAN_ID */
     unsigned int mChannel;  /**< network channel */
-    std::string  mPan;      /**< PAN_ID */
+    PanId        mPan;      /**< PAN_ID */
     std::string  mMlp;      /**< Mesh-local prefix */
     int          mCcm;      /**< Commercial commissioning mode;<0 not set,
                              * 0 false, >0 true */
@@ -149,7 +149,7 @@ struct Network
             std::string const &aName,
             XpanId const &     aXpan,
             unsigned int const aChannel,
-            std::string const &aPan,
+            uint16_t const     aPan,
             std::string const &aMlp,
             int const          aCcm);
     Network();

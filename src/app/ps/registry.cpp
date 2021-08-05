@@ -510,7 +510,10 @@ Registry::Status Registry::GetNetworksByAliases(const StringArray &aAliases,
     }
 
     aRet.insert(aRet.end(), networks.begin(), networks.end());
-    status = networks.size() > 0 ? Registry::Status::kSuccess : Registry::Status::kNotFound;
+    if (networks.size() > 0)
+    {
+        status = Registry::Status::kSuccess;
+    }
 exit:
     return status;
 }
@@ -596,7 +599,12 @@ Registry::Status Registry::GetNetworkByName(const std::string &aName, Network &a
 Registry::Status Registry::GetNetworkByPan(const std::string &aPan, Network &aRet)
 {
     Network nwk{};
-    nwk.mPan = aPan;
+    PanId   panId;
+    if (panId.FromHex(aPan).GetCode() != ErrorCode::kNone)
+    {
+        return Registry::Status::kError;
+    }
+    nwk.mPan = panId;
     return LookupOne(nwk, aRet);
 }
 

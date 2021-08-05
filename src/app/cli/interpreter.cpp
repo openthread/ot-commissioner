@@ -618,7 +618,19 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         RegistryStatus status = mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, aNids, unresolved);
         for (const auto &alias : unresolved)
         {
-            PrintNetworkMessage(alias, "failed to resolve", COLOR_ALIAS_FAILED);
+            std::string errorMessage;
+            switch (status)
+            {
+            case RegistryStatus::kAmbiguity:
+                errorMessage = "ambiguous alias";
+                break;
+            case RegistryStatus::kNotFound:
+                errorMessage = "alias unknown; no match found";
+                break;
+            default:
+                errorMessage = "failed to resolve";
+            }
+            PrintNetworkMessage(alias, errorMessage, COLOR_ALIAS_FAILED);
         }
         VerifyOrExit(
             status == RegistryStatus::kSuccess,
@@ -2136,14 +2148,11 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             nwk.mPan     = AODS_FIELD_IF_IS_SET(PanId, PanId{0});
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0)
             {
-                nwk.mPan = "";
+                nwk.mPan = PanId::kEmptyPanId;
             }
             else
             {
-                std::ostringstream value;
-                value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0')
-                      << dataset.mPanId.mValue;
-                nwk.mPan = value.str();
+                nwk.mPan = dataset.mPanId;
             }
 
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0)

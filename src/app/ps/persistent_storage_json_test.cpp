@@ -116,15 +116,15 @@ TEST(PSJson, AddNetwork)
     NetworkId newId;
 
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, 0xFFF1, "2000:aaa1::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, 0xFFF2, "2000:aaa2::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 1);
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, 0xFFF3, "2000:aaa3::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 2);
 
@@ -200,7 +200,7 @@ TEST(PSJson, DelNetwork)
 
     NetworkId newId;
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, 0xFFF1, "2000:aaa1::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
 
@@ -346,13 +346,13 @@ TEST(PSJson, GetNetworkNotEmpty)
 
     NetworkId newId;
 
-    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1, 11, "FFF1", "2000:aaa1::0/8", 1},
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1, 11, 0xFFF1, "2000:aaa1::0/8", 1},
                         newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
-    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2, 12, "FFF2", "2000:aaa2::0/8", 1},
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2, 12, 0xFFF2, "2000:aaa2::0/8", 1},
                         newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 1);
-    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3, 13, "FFF3", "2000:aaa3::0/8", 1},
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3, 13, 0xFFF3, "2000:aaa3::0/8", 1},
                         newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 2);
 
@@ -485,7 +485,7 @@ TEST(PSJson, UpdNetwork)
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
-    Network nwk{EMPTY_ID, EMPTY_ID, "nwk", 0xFFFFFFFFFFFFFFFA, 17, "FFFA", "2000:aaa1::0/64", 0};
+    Network nwk{EMPTY_ID, EMPTY_ID, "nwk", 0xFFFFFFFFFFFFFFFA, 17, 0xFFFA, "2000:aaa1::0/64", 0};
 
     EXPECT_TRUE(psj.Update(nwk) == PersistentStorage::Status::kNotFound);
     NetworkId nid;
@@ -646,15 +646,15 @@ TEST(PSJson, LookupNetwork)
     // Populate storage with initial data
     NetworkId newId;
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, "FFF1", "2000:aaa1::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, 0xFFF1, "2000:aaa1::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, "FFF2", "2000:aaa2::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, 0xFFF2, "2000:aaa2::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 1);
     EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, "FFF3", "2000:aaa3::0/8", 1},
+        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, 0xFFF3, "2000:aaa3::0/8", 1},
                 newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 2);
 

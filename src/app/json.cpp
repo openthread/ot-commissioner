@@ -410,9 +410,7 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 
 static void to_json(Json &aJson, const ot::commissioner::PanId &aPanId)
 {
-    std::ostringstream value;
-    value << "0x" << std::uppercase << std::hex << std::setw(4) << std::setfill('0') << aPanId.mValue;
-    aJson = value.str();
+    aJson = (std::string)aPanId;
 }
 
 static void from_json(const Json &aJson, ot::commissioner::PanId &aPanId)
