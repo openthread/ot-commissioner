@@ -476,20 +476,20 @@ Registry::Status Registry::GetNetworksByAliases(const StringArray &aAliases,
         {
             Network nwk;
             XpanId  xpid;
+            PanId   pid;
 
-            status = (xpid.FromHex(alias) == ERROR_NONE) ? Registry::Status::kSuccess : Registry::Status::kError;
-
-            if (status == Registry::Status::kSuccess)
+            status = Registry::Status::kNotFound;
+            if (xpid.FromHex(alias) == ERROR_NONE)
             {
                 status = GetNetworkByXpan(xpid, nwk);
             }
             if (status != Registry::Status::kSuccess)
             {
                 status = GetNetworkByName(alias, nwk);
-                if (status != Registry::Status::kSuccess)
-                {
-                    status = GetNetworkByPan(alias, nwk);
-                }
+            }
+            if (status != Registry::Status::kSuccess && pid.FromHex(alias) == ERROR_NONE)
+            {
+                status = GetNetworkByPan(alias, nwk);
             }
             if (status == Registry::Status::kSuccess)
             {

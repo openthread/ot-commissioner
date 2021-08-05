@@ -405,7 +405,7 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
     // the same lookup must fail
     expr = ctx.mInterpreter.ParseExpression("start --nwk ab");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
-    EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kIOError);
+    EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kRegistryError);
 }
 
 TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
@@ -2430,7 +2430,7 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
     EXPECT_EQ(xpan.FromHex(XPAN_1237).GetCode(), ErrorCode::kBadFormat);
 }
 
-TEST_F(InterpreterTestSuite, PC_BrList)
+TEST_F(InterpreterTestSuite, PC_BrListPositive)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -2459,6 +2459,37 @@ TEST_F(InterpreterTestSuite, PC_BrList)
     expr  = ctx.mInterpreter.ParseExpression("br list --dom domain1");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
+}
+
+TEST_F(InterpreterTestSuite, PC_BrListNegative)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    ASSERT_NE(ctx.mRegistry, nullptr);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::kSuccess);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20002, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
+                                             "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0,
+                                             "", 0, 0x1F | BorderAgent::kDomainNameBit}),
+              RegistryStatus::kSuccess);
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+
+    expr  = ctx.mInterpreter.ParseExpression("br list --nwk net1 net3");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_TRUE(value.HasNoError());
+
+    expr  = ctx.mInterpreter.ParseExpression("br list --nwk net3");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_EQ(value.mError.GetCode(), ErrorCode::kRegistryError);
+
+    expr  = ctx.mInterpreter.ParseExpression("br list --dom domain3");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_EQ(value.mError.GetCode(), ErrorCode::kRegistryError);
 }
 
 TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitPass)

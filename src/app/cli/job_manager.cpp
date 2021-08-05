@@ -277,7 +277,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     RegistryStatus    status   = mInterpreter.mRegistry->GetBorderRoutersInNetwork(aNid, brs);
 
     VerifyOrExit(status == RegistryStatus::kSuccess,
-                 error = ERROR_NOT_FOUND("br lookup failed with status={}", status));
+                 error = ERROR_REGISTRY_ERROR("br lookup failed with status={}", status));
 
     // review the network BRs connection modes that may require
     // certain supported type of credentials
@@ -302,7 +302,8 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     ///        JobManager::PrepareDtlsConfig() method appropriately.
 
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
-    VerifyOrExit(status == RegistryStatus::kSuccess, error = ERROR_IO_ERROR("network not found"));
+    VerifyOrExit(status == RegistryStatus::kSuccess,
+                 error = ERROR_NOT_FOUND("network not found by XPAN '{}'", aNid.str()));
     isCCM  = nwk.mCcm > 0;
     status = mInterpreter.mRegistry->GetDomainNameByXpan(aNid, domainName);
     if (status != RegistryStatus::kSuccess)
@@ -422,7 +423,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     RegistryStatus status = mInterpreter.mRegistry->GetBorderRoutersInNetwork(aNid, brs);
 
     VerifyOrExit(status == RegistryStatus::kSuccess,
-                 error = ERROR_NOT_FOUND("br lookup failed with status={}", status));
+                 error = ERROR_REGISTRY_ERROR("br lookup failed with status={}", status));
     if (brs.size() == 1)
     {
         // looks like not much of a choice
@@ -430,7 +431,8 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
         ExitNow();
     }
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
-    VerifyOrExit(status == RegistryStatus::kSuccess, error = ERROR_NOT_FOUND("network lookup failed"));
+    VerifyOrExit(status == RegistryStatus::kSuccess,
+                 error = ERROR_NOT_FOUND("network not found by XPAN '{}'", aNid.str()));
     if (nwk.mCcm > 0) // Dealing with domain network
     {
         // - try to find active and connectable Primary BBR
@@ -702,7 +704,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
     RegistryStatus status;
 
     status = mInterpreter.mRegistry->GetCurrentNetworkXpan(nid);
-    VerifyOrExit(RegistryStatus::kSuccess == status, error = ERROR_IO_ERROR("selected network not found"));
+    VerifyOrExit(RegistryStatus::kSuccess == status, error = ERROR_REGISTRY_ERROR("getting selected network failed"));
 
     if (nid != XpanId::kEmptyXpanId)
     {

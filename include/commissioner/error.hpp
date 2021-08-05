@@ -152,9 +152,14 @@ enum class ErrorCode : int
     kCoapError = 17,
 
     /**
+     * The Registry operation failed.
+     */
+    kRegistryError = 18,
+
+    /**
      * The error is out of the address space of OT Commissioner.
      */
-    kUnknown = 18,
+    kUnknown = 19,
 };
 
 /**
