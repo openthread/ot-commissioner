@@ -53,6 +53,8 @@ readonly COMMISSIONER_CTL=/usr/local/bin/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
 readonly COMMISSIONER_LOG=./commissioner.log
 
+readonly MINI_COMMISSIONER=/usr/local/bin/mini-commissioner
+
 readonly CCM_TOKEN=/usr/local/etc/commissioner/credentials/token.hex
 readonly CCM_CA_CERT=/usr/local/etc/commissioner/credentials/trust-anchor.pem
 readonly NON_CCM_CONFIG=/usr/local/etc/commissioner/non-ccm-config.json
@@ -246,4 +248,21 @@ start_border_agent_mdns_service() {
 
 stop_border_agent_mdns_service() {
     sudo service avahi-daemon stop
+}
+
+# Start mini commissioner in background.
+start_mini_commissioner() {
+    if [ -n "$(pgrep -f "${MINI_COMMISSIONER}")" ]; then
+        sudo kill -9 "$(pgrep -f "${MINI_COMMISSIONER}")"
+    fi
+
+    echo "starting mini commissioner"
+    ${MINI_COMMISSIONER} 127.0.0.1 49191 ${PSKC} ${JOINER_CREDENTIAL} 2>&1 &
+    sleep 1
+
+    pgrep -f "${MINI_COMMISSIONER}"
+}
+
+stop_mini_commissioner() {
+    sudo kill -9 "$(pgrep -f "${MINI_COMMISSIONER}")"
 }
