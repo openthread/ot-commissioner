@@ -33,8 +33,8 @@
 
 #include "library/udp_proxy.hpp"
 
+#include "common/logging.hpp"
 #include "library/commissioner_impl.hpp"
-#include "library/logging.hpp"
 #include "library/uri.hpp"
 
 namespace ot {

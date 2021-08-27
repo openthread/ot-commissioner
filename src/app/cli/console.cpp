@@ -42,13 +42,22 @@ namespace ot {
 
 namespace commissioner {
 
+bool gVerbose = false;
+
+std::string Console::mPrompt;
+
+void Console::SetPrompt(const std::string &aPrompt)
+{
+    mPrompt = aPrompt;
+}
+
 std::string Console::Read()
 {
     const char *line = "";
 
     while (line == nullptr || strlen(line) == 0)
     {
-        line = readline("> ");
+        line = readline((mPrompt + "> ").c_str());
     }
 
     add_history(line);
@@ -64,6 +73,8 @@ void Console::Write(const std::string &aLine, Color aColor)
     switch (aColor)
     {
     case Color::kDefault:
+        colorCode = "\u001b[0m";
+        break;
     case Color::kWhite:
         colorCode = "\u001b[37m";
         break;
@@ -73,8 +84,17 @@ void Console::Write(const std::string &aLine, Color aColor)
     case Color::kGreen:
         colorCode = "\u001b[32m";
         break;
+    case Color::kYellow:
+        colorCode = "\u001b[33m";
+        break;
     case Color::kBlue:
         colorCode = "\u001b[34m";
+        break;
+    case Color::kMagenta:
+        colorCode = "\u001b[35m";
+        break;
+    case Color::kCyan:
+        colorCode = "\u001b[36m";
         break;
     }
 

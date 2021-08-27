@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+#  Copyright (c) 2021, The OpenThread Commissioner Authors.
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#  3. Neither the name of the copyright holder nor the
+#     names of its contributors may be used to endorse or promote products
+#     derived from this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
+
+TEST_DIR=./build/tests
+TEST_RES=0
+FINAL_RES=success
+FINAL_CLR="\e[32m"
+RESET_CLR="\e[0m"
+
+run_unit_tests()
+{
+    echo "run-ut: $@"
+    case $1 in
+        -l)
+            ;;
+
+        *)
+            FILTER=$1
+            if [ "$FILTER" != "" ]; then
+                shift
+            fi
+            ;;
+    esac
+    for test_item in $(ls $FILTER*-test)
+    do
+        if [ "$1" != "-l" ]; then
+            # run tests
+            echo "----- $test_item -----"
+            ./$test_item $@
+            TEST_RES=$?
+            echo ""
+        else
+            # list per executable
+            if [ "$2" != "-e" ]; then
+                # test cases
+                echo "----- $test_item -----"
+                ./$test_item --gtest_list_tests
+                TEST_RES=$?
+                echo ""
+            else
+                # executable names only
+                echo "    $test_item"
+            fi
+        fi
+        if [ $TEST_RES -gt 0 ]; then
+            FINAL_RES=failed
+            FINAL_CLR="\e[31m"
+        fi
+    done
+    echo "$FINAL_CLR[$FINAL_RES]$RESET_CLR"
+}
+
+help()
+{
+    echo "Syntax: $0 [-ut [test-pattern [option(s)]] [-l [-e]]]"
+    echo ""
+    echo "        -ut           - unit tests"
+    echo "        -l            - list test cases per executable"
+    echo "        -e            - executable names only"
+    echo "        test-pattern  - string/wildcard the name starts with (excluding '-test')"
+    echo "        option        - any option supported by the executable"
+    echo ""
+    echo "Examples:"
+    echo "    $0 -ut                              (run all unit tests)"
+    echo "    $0 -ut inter -l                     (list interpreter-test cases)"
+    echo "    $0 -ut inter                        (run interpreter-test cases)"
+    echo "    $0 -ut int --gtest_filter=*.PC_Br*  (run interpreter-test cases matching PC_Br*)"
+    echo "    $0 -ut -l -e                        (list executable names)"
+    echo "    $0 -ut -l                           (list test cases in executables)"
+    echo ""
+}
+
+case $1 in
+   -ut)
+        shift
+        cd $TEST_DIR
+        run_unit_tests $@
+        cd -
+        ;;
+
+    *)
+        help
+        ;;
+
+esac

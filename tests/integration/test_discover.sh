@@ -30,6 +30,10 @@
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
 test_discover() {
+    set -e
+
+    install_borderagent_mdns_data "${CUR_DIR}/../etc/avahi/services"
+
     start_border_agent_mdns_service
     start_commissioner "${NON_CCM_CONFIG}"
 
@@ -37,5 +41,5 @@ test_discover() {
     send_command_to_commissioner "borderagent discover"
 
     stop_commissioner
-    stop_border_agent_mdns_service
+
 }

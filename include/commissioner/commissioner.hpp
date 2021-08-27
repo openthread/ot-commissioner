@@ -35,8 +35,6 @@
 #define OT_COMM_COMMISSIONER_HPP_
 
 #include <functional>
-#include <list>
-#include <memory>
 #include <string>
 
 #include <stddef.h>
@@ -124,6 +122,12 @@ struct Config
 
     // Mandatory for CCM Thread network.
     ByteArray mTrustAnchor; ///< The trust anchor of 'mCertificate'.
+
+    // Optional for CCM Thread network.
+    ByteArray mCommissionerToken; ///< COM_TOK
+
+    // Thread Security Materials Root path
+    std::string mThreadSMRoot;
 };
 
 /**

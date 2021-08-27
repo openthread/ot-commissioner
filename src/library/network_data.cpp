@@ -33,6 +33,9 @@
 
 #include <commissioner/network_data.hpp>
 
+#include <iomanip>
+#include <sstream>
+
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
@@ -109,6 +112,135 @@ std::string Ipv6PrefixToString(ByteArray aPrefix)
     SuccessOrDie(addr.Set(aPrefix));
 
     return addr.ToString() + "/" + std::to_string(prefixLength);
+}
+
+XpanId::XpanId(uint64_t val)
+    : mValue(val)
+{
+}
+
+XpanId::XpanId()
+    : XpanId(kEmptyXpanId)
+{
+}
+
+std::string XpanId::str() const
+{
+    return *this;
+}
+
+bool XpanId::operator==(const XpanId &aOther) const
+{
+    return mValue == aOther.mValue;
+}
+
+bool XpanId::operator!=(const uint64_t aOther) const
+{
+    return !operator==(aOther);
+}
+
+bool XpanId::operator<(const XpanId aOther) const
+{
+    return mValue < aOther.mValue;
+}
+
+XpanId::operator std::string() const
+{
+    std::ostringstream value;
+    value << std::uppercase << std::hex << std::setw(sizeof(mValue) * 2) << std::setfill('0') << mValue;
+    return value.str();
+}
+
+/**
+ * Converts hex string to the corresponding integer type.
+ * @attention Makes no validity checks.
+ */
+Error XpanId::FromHex(const std::string &aInput)
+{
+    mValue = 0;
+
+    std::string input = aInput;
+    if (utils::ToLower(input.substr(0, 2)) == "0x")
+    {
+        input = input.substr(2);
+    }
+    if (input.empty() || input.length() > 16)
+        return ERROR_BAD_FORMAT("{}: wrong XPAN ID string length", input.length());
+    for (auto c : input)
+    {
+        if (!std::isxdigit(c))
+        {
+            return ERROR_BAD_FORMAT("{}: not a hex string", input);
+        }
+    }
+
+    std::istringstream is(input);
+    is >> std::hex >> mValue;
+    return ERROR_NONE;
+}
+
+PanId::PanId(uint16_t aValue)
+    : mValue(aValue)
+{
+}
+
+PanId::PanId()
+    : PanId(kEmptyPanId)
+{
+}
+
+PanId &PanId::operator=(uint16_t aValue)
+{
+    mValue = aValue;
+    return *this;
+}
+
+PanId::operator uint16_t() const
+{
+    return mValue;
+}
+
+PanId::operator std::string() const
+{
+    std::ostringstream value;
+    value << "0x" << std::uppercase << std::hex << std::setw(sizeof(mValue) * 2) << std::setfill('0') << mValue;
+    return value.str();
+}
+
+Error PanId::FromHex(const std::string &aInput)
+{
+    mValue = 0;
+
+    std::string input = aInput;
+    if (utils::ToLower(input.substr(0, 2)) == "0x")
+    {
+        input = input.substr(2);
+    }
+    if (input.empty() || input.length() > 4)
+        return ERROR_BAD_FORMAT("{}: wrong PAN ID string length", input.length());
+    for (auto c : input)
+    {
+        if (!std::isxdigit(c))
+        {
+            return ERROR_BAD_FORMAT("{}: not a hex string", input);
+        }
+    }
+
+    std::istringstream is(input);
+    is >> std::hex >> mValue;
+    return ERROR_NONE;
+}
+
+ActiveOperationalDataset::ActiveOperationalDataset()
+    : mActiveTimestamp(Timestamp::Cur())
+    , mPresentFlags(kActiveTimestampBit)
+{
+}
+
+PendingOperationalDataset::PendingOperationalDataset()
+    : mPendingTimestamp(mActiveTimestamp)
+{
+    mPresentFlags |= kPendingTimestampBit;
 }
 
 } // namespace commissioner

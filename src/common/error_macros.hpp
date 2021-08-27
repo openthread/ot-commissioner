@@ -74,6 +74,8 @@
     Error { ErrorCode::kRejected, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
 #define ERROR_COAP_ERROR(aFormat, ...) \
     Error { ErrorCode::kCoapError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
+#define ERROR_REGISTRY_ERROR(aFormat, ...) \
+    Error { ErrorCode::kRegistryError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
 #define ERROR_UNKNOWN(aFormat, ...) \
     Error { ErrorCode::kUnknown, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
 

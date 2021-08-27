@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2019, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2020, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,35 +28,84 @@
 
 /**
  * @file
- *   This file includes wrapper of mbedtls.
+ *   The file defines global system wide semaphore ops.
  */
 
-#include "library/logging.hpp"
+#ifndef _OS_SEMAPHORE_HPP_
+#define _OS_SEMAPHORE_HPP_
+
+#include <string>
+
+#if defined(_WIN32) || defined(WIN32)
+#include "semaphore_win.hpp"
+#else
+#include "semaphore_posix.hpp"
+#endif
 
 namespace ot {
 
-namespace commissioner {
+namespace os {
 
-static std::shared_ptr<Logger> sLogger = nullptr;
+namespace semaphore {
 
-void InitLogger(std::shared_ptr<Logger> aLogger)
+/**
+ * Semaphore operation status
+ */
+enum SemaphoreStatus
 {
-    sLogger = aLogger;
-}
+    kSuccess, /**< operation succeeded */
+    kError,   /**< operation failed */
+};
 
-std::shared_ptr<Logger> GetLogger(void)
-{
-    return sLogger;
-}
+/**
+ * Opens/creates semaphore.
+ *
+ * Name of the semaphore should not contain any suffixes or prefixes
+ * and will be converted to system specific format.
+ *
+ * @param[in] aName semaphore name
+ * @param[out] aSem created semaphore
+ * @see Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
+ */
+SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem);
 
-void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMessage)
-{
-    if (GetLogger())
-    {
-        GetLogger()->Log(aLevel, aRegion, aMessage);
-    }
-}
+/**
+ * Close semaphore previously created by open
+ * @see SemaphoreOpen
+ *
+ * @param[in] aSem semaphore
+ * @see Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
+ */
+SemaphoreStatus SemaphoreClose(Semaphore &aSem);
 
-} // namespace commissioner
+/**
+ * Posts semaphore
+ *
+ * @param[in] aSem semaphore
+ * @see Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
+ */
+SemaphoreStatus SemaphorePost(Semaphore &aSem);
+
+/**
+ * Blocks until semaphore can be obtained
+ *
+ * @param[in] aSem semaphore
+ * @See Semaphore
+ * @return SemaphoreStatus
+ * @see SemaphoreStatus
+ */
+SemaphoreStatus SemaphoreWait(Semaphore &aSem);
+
+} // namespace semaphore
+
+} // namespace os
 
 } // namespace ot
+
+#endif // _OS_SEMAPHORE_HPP_

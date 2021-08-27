@@ -51,7 +51,10 @@ public:
         kWhite,
         kRed,
         kGreen,
+        kYellow,
         kBlue,
+        kMagenta,
+        kCyan,
     };
 
     Console()  = default;
@@ -61,7 +64,19 @@ public:
 
     // Write to the console
     static void Write(const std::string &aLine, Color aColor = Color::kDefault);
+
+    static void SetPrompt(const std::string &aPrompt);
+
+protected:
+    static std::string mPrompt;
 };
+
+/**
+ * Indicates if console is running verbose mode. If verbose, debug
+ * messages appear printed to console, and if not, go to log file
+ * instead.
+ */
+extern bool gVerbose;
 
 } // namespace commissioner
 

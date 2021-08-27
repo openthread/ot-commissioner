@@ -45,8 +45,6 @@ add_library(commissioner
     event.hpp
     joiner_session.cpp
     joiner_session.hpp
-    logging.cpp
-    logging.hpp
     mbedtls_error.cpp
     mbedtls_error.hpp
     message.hpp
@@ -179,6 +177,7 @@ if (OT_COMM_TEST)
             commissioner
             $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
             commissioner-common
+            persistent-storage
     )
 
     target_compile_definitions(commissioner-test

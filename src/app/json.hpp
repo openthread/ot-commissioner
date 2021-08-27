@@ -41,7 +41,12 @@
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
 
+#include "app/border_agent.hpp"
 #include "app/commissioner_app.hpp"
+
+#include <nlohmann/json.hpp>
+
+#define JSON_INDENT_DEFAULT 4
 
 namespace ot {
 
@@ -75,6 +80,17 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson);
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
+
+void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
+void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);
+
+/**
+ * Get clean JSON string from a supposedly JSON file.
+ *
+ * If file includes comments, those are stripped off.
+ * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
+ */
+Error JsonFromFile(std::string &aJson, const std::string &aPath);
 
 } // namespace commissioner
 

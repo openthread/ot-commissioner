@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Commissioner Authors.
+#  Copyright (c) 2021, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,15 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+add_definitions(-D_XOPEN_SOURCE)
+
 add_library(commissioner-app
     commissioner_app.cpp
     commissioner_app.hpp
     border_agent.cpp
     border_agent.hpp
+    br_discover.cpp
+    br_discover.hpp
     file_logger.cpp
     file_logger.hpp
     file_util.cpp
@@ -40,6 +44,8 @@ add_library(commissioner-app
     logger_util.hpp
     sys_logger.cpp
     sys_logger.hpp
+    mdns_handler.hpp
+    mdns_handler.cpp
 )
 
 target_link_libraries(commissioner-app
@@ -73,8 +79,6 @@ if (OT_COMM_TEST)
     add_library(commissioner-app-test OBJECT
         commissioner_app.hpp
         commissioner_app_test.cpp
-        json.hpp
-        json_test.cpp
     )
 
     target_include_directories(commissioner-app-test
@@ -82,7 +86,56 @@ if (OT_COMM_TEST)
             ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/src
             ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )
+
+    add_library(ut-gtest-main OBJECT cli/gmock_main.cpp)
+
+    target_include_directories(ut-gtest-main
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
+    )
+
+    add_executable(commissioner2-test
+        $<TARGET_OBJECTS:ut-gtest-main>
+        cli/console.cpp
+        file_util.cpp
+        file_util_test.cpp
+        json_test.cpp
+        ${PROJECT_SOURCE_DIR}/src/app/border_agent.cpp
+        ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
+        ${PROJECT_SOURCE_DIR}/src/app/json.cpp
+        ${PROJECT_SOURCE_DIR}/src/common/address.cpp
+        ${PROJECT_SOURCE_DIR}/src/common/error.cpp
+        ${PROJECT_SOURCE_DIR}/src/common/time.cpp
+        ${PROJECT_SOURCE_DIR}/src/common/utils.cpp
+        ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+        $<TARGET_OBJECTS:commissioner-ps-test>
+    )
+
+    target_link_libraries(commissioner2-test
+        fmt::fmt
+        gtest
+        mdns
+        persistent-storage
+        readline
+    )
+
+    set_target_properties(commissioner2-test
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+    )
+
+    target_include_directories(commissioner2-test
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
+            ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googlemock/include
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/fmtlib/repo/include>
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+    )
+
 endif()
 
 add_subdirectory(cli)
+add_subdirectory(ps)

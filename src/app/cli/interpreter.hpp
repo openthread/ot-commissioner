@@ -34,29 +34,53 @@
 #ifndef OT_COMM_APP_CLI_INTERPRETER_HPP_
 #define OT_COMM_APP_CLI_INTERPRETER_HPP_
 
-#include <map>
+#include <atomic>
 
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
 #include "app/commissioner_app.hpp"
+#include "app/ps/registry.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
+typedef std::shared_ptr<CommissionerApp> CommissionerAppPtr;
+
+class JobManager;
+
 class Interpreter
 {
+    friend class InterpreterTestSuite;
+
 public:
+    using Expression     = std::vector<std::string>;
+    using StringArray    = std::vector<std::string>;
+    using Registry       = ot::commissioner::persistent_storage::Registry;
+    using RegistryStatus = Registry::Status;
+
     Interpreter()  = default;
     ~Interpreter() = default;
 
-    Error Init(const std::string &aConfigFile);
+    Error Init(const std::string &aConfigFile, const std::string &aRegistry);
 
     void Run();
 
     void CancelCommand();
 
 private:
+    friend class Job;
+    friend class JobManager;
+
+    struct NetworkSelectionComparator
+    {
+        const Interpreter &mInterpreter;
+        XpanId             mStartWith;
+        bool               mSuccess;
+
+        NetworkSelectionComparator(const Interpreter &aInterpreter);
+        ~NetworkSelectionComparator();
+    };
     /**
      * The result value of an Expression processed by the Interpreter.
      * Specifically, it is an union of Error and std::string.
@@ -68,19 +92,13 @@ private:
         Value() = default;
 
         // Allow implicit conversion from std::string to Value.
-        Value(std::string aData)
-            : mData(aData)
-        {
-        }
+        Value(std::string aData);
 
         // Allow implicit conversion from Error to Value.
-        Value(Error aError)
-            : mError(aError)
-        {
-        }
+        Value(Error aError);
 
-        bool operator==(const ErrorCode &aErrorCode) const { return mError.GetCode() == aErrorCode; }
-        bool operator!=(const ErrorCode &aErrorCode) const { return !(*this == aErrorCode); }
+        bool operator==(const ErrorCode &aErrorCode) const;
+        bool operator!=(const ErrorCode &aErrorCode) const;
 
         std::string ToString() const;
         bool        HasNoError() const;
@@ -90,23 +108,98 @@ private:
         std::string mData;
     };
 
-    using Expression = std::vector<std::string>;
-    using Evaluator  = std::function<Value(Interpreter *, const Expression &)>;
+    using Evaluator    = std::function<Value(Interpreter *, const Expression &)>;
+    using JobEvaluator = std::function<Value(Interpreter *, CommissionerAppPtr &, const Expression &)>;
 
+    /**
+     * Multi-network command context.
+     *
+     * Filled in by ReParseMultiNetworkSyntax(). After that the
+     * context is validated by ValidateMultiNetworkSyntax().
+     */
+    struct MultiNetCommandContext
+    {
+        StringArray mNwkAliases;
+        StringArray mDomAliases;
+        StringArray mExportFiles;
+        StringArray mImportFiles;
+        StringArray mCommandKeys;
+
+        void Cleanup();
+        bool HasGroupAlias();
+    } mContext;
+
+private:
     Expression Read();
-
-    Value Eval(const Expression &aExpr);
-
-    void Print(const Value &aValue);
-
+    Value      Eval(const Expression &aExpr);
+    /**
+     * Prints the collected resultant value to console unless export
+     * to a file is expected by the executed command. In the latter
+     * case the collected value itself is exported to the specified
+     * file while sole '[done|failed]' command result indication is
+     * printed to console.
+     */
+    void       PrintOrExport(const Value &aValue);
+    void       PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor);
+    void       PrintNetworkMessage(std::string alias, std::string aMessage, Console::Color aColor);
     Expression ParseExpression(const std::string &aLiteral);
+    /**
+     * Tests if the current expression belongs to a particular group
+     * of commands. Mostly used in syntax validation procedure.
+     */
+    bool IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const;
+    /**
+     * Tests if network/domain-wise syntax encountered in the tested
+     * command parameters.
+     */
+    bool IsMultiNetworkSyntax(const Expression &aExpr);
+    /**
+     * Asserts if the tested command eligible for multi-job execution.
+     */
+    bool IsMultiJob(const Expression &aExpr);
+    /**
+     * Tests if the command allows execution with
+     * inactive/disconnected @ref CommissionerApp object.
+     *
+     * @see @ref JobManager::CommissionerPool
+     */
+    bool IsInactiveCommissionerAllowed(const Expression &aExpr);
+    /**
+     * Implements network/domain-wise syntax validation. Import syntax
+     * applicability is also taken into consideration. Besides,
+     * resolution of the provided network aliases is checked in the
+     * course of execution.
+     */
+    Value ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
+    /**
+     * Resolves network aliases into a set of network ids. In the
+     * course of resolution, duplicate network ids are compacted if
+     * encountered. The resultant expression is cleaned of the
+     * re-parsed multi-network syntax elements.
+     *
+     * @see @ref Interpreter::MultiNetCommandContext
+     */
+    Error ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
+    /**
+     * Updates on-screen visualization of the current network
+     * selection.
+     *
+     * If selected, network name is added to command prompt, and with
+     * no network selected the prompt is empty. Besides, if onStart
+     * flag passed, a message is produced regarding the last session
+     * network selection restored if there was any.
+     */
+    Error UpdateNetworkSelectionInfo(bool onStart = false);
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
     Value ProcessStop(const Expression &aExpr);
     Value ProcessActive(const Expression &aExpr);
     Value ProcessToken(const Expression &aExpr);
+    Value ProcessBr(const Expression &aExpr);
+    Value ProcessDomain(const Expression &aExpr);
     Value ProcessNetwork(const Expression &aExpr);
+    Value ProcessNetworkList(const Expression &aExpr);
     Value ProcessSessionId(const Expression &aExpr);
     Value ProcessBorderAgent(const Expression &aExpr);
     Value ProcessJoiner(const Expression &aExpr);
@@ -123,7 +216,13 @@ private:
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
-    Error UpdateConfig(const ByteArray &aPSKc);
+    Value ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessActiveJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessSessionIdJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 
@@ -142,17 +241,29 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    Config                           mConfig;
-    std::shared_ptr<CommissionerApp> mCommissioner = nullptr;
-    Console                          mConsole;
+    std::shared_ptr<JobManager> mJobManager = nullptr;
+    std::shared_ptr<Registry>   mRegistry   = nullptr;
 
     bool mShouldExit = false;
 
-    static const std::map<std::string, std::string> &mUsageMap;
-    static const std::map<std::string, Evaluator> &  mEvaluatorMap;
-};
+    std::atomic_bool mCancelCommand;
+    /**
+     * Pipe object intended to be added to event loop to listen on for
+     * command cancellation.
+     *
+     * @note So far, used solely for breaking `br scan' execution.
+     */
+    int mCancelPipe[2] = {-1, -1};
 
-std::string ToLower(const std::string &aStr);
+    static const std::map<std::string, std::string> & mUsageMap;
+    static const std::map<std::string, Evaluator> &   mEvaluatorMap;
+    static const std::vector<StringArray> &           mMultiNetworkSyntax;
+    static const std::vector<StringArray> &           mMultiJobExecution;
+    static const std::vector<StringArray> &           mInactiveCommissionerExecution;
+    static const std::vector<StringArray> &           mExportSyntax;
+    static const std::vector<StringArray> &           mImportSyntax;
+    static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;
+};
 
 } // namespace commissioner
 

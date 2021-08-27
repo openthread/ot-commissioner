@@ -35,16 +35,33 @@
 #ifndef OT_COMM_BORDER_AGENT_HPP_
 #define OT_COMM_BORDER_AGENT_HPP_
 
-#include <functional>
-#include <list>
-#include <string>
-
 #include <commissioner/defines.hpp>
 #include <commissioner/network_data.hpp>
+
+#include <iomanip>
 
 namespace ot {
 
 namespace commissioner {
+
+/**
+ * Unix time
+ *
+ * @note C++ supports std::chrono parsing starting from C++20, so using low-level C API.
+ */
+struct UnixTime
+{
+    static const std::string kFmtString; // = "%Y%m%dT%H%M%S"
+
+    std::time_t mTime;
+    UnixTime(std::time_t aTime = 0);
+
+    // Requires date format "%Y%m%dT%H%M%S"
+    static Error FromString(UnixTime &aTime, const std::string &aTimeStr);
+
+    bool operator==(const UnixTime &other) const;
+         operator std::string() const;
+};
 
 /**
  * The definition of Border Agent discovered by Commissioner.
@@ -76,14 +93,70 @@ struct BorderAgent
 
     /**
      * State bitmap. Mandatory.
+     *
+     * See Thread spec:
+     * - 8.4.1.1.2 Commissioner Discovery - Ethernet/WiFi
+     * - Table 8-5. Border Agent State Bitmap
      */
     struct State
     {
+        /**
+         * Connection modes defined by Thread spec.
+         */
+        enum ConnectionMode
+        {
+            kNotAllowed     = 0, /**< DTLS connection not allowed */
+            kPSKcConnection = 1, /**< DTLS using shared PSKc; non-CCM network */
+            kPSKdConnection = 2, /**< DTLS using BR PSKd */
+            kVendorSpecific = 3, /**< DTLS using vendor defined credentials */
+            kX509Connection = 4, /**< DTLS using X.509 certificate; CCM network */
+        };
+
+        /**
+         * Thread interface statuses defined by Thread spec.
+         */
+        enum ThreadInterfaceStatus
+        {
+            kNotInitialized = 0, /**< Interface not active and not initialized */
+            kNotActive      = 1, /**< Interface initialized, but not actively participating */
+            kActive         = 2, /**< Interface initialized and actively participating */
+        };
+
+        /**
+         * Availability modes defined by Thread spec.
+         */
+        enum Availability
+        {
+            kInfrequent = 0, /**< Interface may become inactive when device not in use */
+            kHigh       = 1, /**< Device is a part of stable always-on network */
+        };
+
         uint32_t mConnectionMode : 3;
         uint32_t mThreadIfStatus : 2;
         uint32_t mAvailability : 2;
         uint32_t mBbrIsActive : 1;
         uint32_t mBbrIsPrimary : 1;
+
+        static constexpr uint32_t kConnectionModeOffset = 6;
+        static constexpr uint32_t kThreadIfStatusOffset = 4;
+        static constexpr uint32_t kAvailabilityOffset   = 2;
+        static constexpr uint32_t kBbrIsActiveOffset    = 1;
+        static constexpr uint32_t kBbrIsPrimaryOffset   = 0;
+
+        static constexpr uint32_t kConnectionModeMask = 7 << kConnectionModeOffset;
+        static constexpr uint32_t kThreadIfStatusMask = 3 << kThreadIfStatusOffset;
+        static constexpr uint32_t kAvailabilityMask   = 3 << kAvailabilityOffset;
+        static constexpr uint32_t kBbrIsActiveMask    = 1 << kBbrIsActiveOffset;
+        static constexpr uint32_t kBbrIsPrimaryMask   = 1 << kBbrIsPrimaryOffset;
+
+        State(uint32_t aConnectionMode,
+              uint32_t aThreadIfStatus,
+              uint32_t aAvailability,
+              uint32_t aBbrIsActive,
+              uint32_t aBbrIsPrimary);
+        State(uint32_t aState);
+        State();
+        operator uint32_t() const;
     } mState;
 
     /**
@@ -144,45 +217,69 @@ struct BorderAgent
      */
     uint16_t mBbrPort;
 
-    uint16_t mPresentFlags = 0;
+    /**
+     * mDNS service name
+     */
+    std::string mServiceName;
 
-    static constexpr uint16_t kAddrBit            = 1 << 0;
-    static constexpr uint16_t kPortBit            = 1 << 1;
-    static constexpr uint16_t kThreadVersionBit   = 1 << 2;
-    static constexpr uint16_t kStateBit           = 1 << 3;
-    static constexpr uint16_t kNetworkNameBit     = 1 << 4;
-    static constexpr uint16_t kExtendedPanIdBit   = 1 << 5;
-    static constexpr uint16_t kVendorNameBit      = 1 << 6;
-    static constexpr uint16_t kModelNameBit       = 1 << 7;
-    static constexpr uint16_t kActiveTimestampBit = 1 << 8;
-    static constexpr uint16_t kPartitionIdBit     = 1 << 9;
-    static constexpr uint16_t kVendorDataBit      = 1 << 10;
-    static constexpr uint16_t kVendorOuiBit       = 1 << 11;
-    static constexpr uint16_t kDomainNameBit      = 1 << 12;
-    static constexpr uint16_t kBbrSeqNumberBit    = 1 << 13;
-    static constexpr uint16_t kBbrPortBit         = 1 << 14;
-    static constexpr uint16_t kDiscriminatorBit   = 1 << 15;
+    /**
+     * Information update time stamp
+     */
+    UnixTime mUpdateTimestamp;
+
+    uint32_t mPresentFlags = 0;
+
+    static constexpr uint32_t kAddrBit            = 1 << 0;
+    static constexpr uint32_t kPortBit            = 1 << 1;
+    static constexpr uint32_t kThreadVersionBit   = 1 << 2;
+    static constexpr uint32_t kStateBit           = 1 << 3;
+    static constexpr uint32_t kNetworkNameBit     = 1 << 4;
+    static constexpr uint32_t kExtendedPanIdBit   = 1 << 5;
+    static constexpr uint32_t kVendorNameBit      = 1 << 6;
+    static constexpr uint32_t kModelNameBit       = 1 << 7;
+    static constexpr uint32_t kActiveTimestampBit = 1 << 8;
+    static constexpr uint32_t kPartitionIdBit     = 1 << 9;
+    static constexpr uint32_t kVendorDataBit      = 1 << 10;
+    static constexpr uint32_t kVendorOuiBit       = 1 << 11;
+    static constexpr uint32_t kDomainNameBit      = 1 << 12;
+    static constexpr uint32_t kBbrSeqNumberBit    = 1 << 13;
+    static constexpr uint32_t kBbrPortBit         = 1 << 14;
+    static constexpr uint32_t kDiscriminatorBit   = 1 << 15;
+    static constexpr uint32_t kServiceNameBit     = 1 << 16;
+    static constexpr uint32_t kUpdateTimestampBit = 1 << 17;
+
+    BorderAgent();
+
+    BorderAgent(std::string const &aAddr,
+                uint16_t           aPort,
+                ByteArray const &  aDiscriminator,
+                std::string const &aThreadVersion,
+                BorderAgent::State aState,
+                std::string const &aNetworkName,
+                uint64_t           aExtendedPanId,
+                std::string const &aVendorName,
+                std::string const &aModelName,
+                Timestamp          aActiveTimestamp,
+                uint32_t           aPartitionId,
+                std::string const &aVendorData,
+                ByteArray const &  aVendorOui,
+                std::string const &aDomainName,
+                uint8_t            aBbrSeqNumber,
+                uint16_t           aBbrPort,
+                std::string const &aServiceName,
+                UnixTime           aUpdateTimestamp,
+                uint32_t           aPresentFlags);
+    /**
+     * Virtual destructor for polymorph storage comunications
+     */
+    virtual ~BorderAgent() = default;
 };
 
-/**
- * This function is the callback of a discovered Border Agent.
- *
- * @param[in] aBorderAgent   The discovered Border Agent. Not null
- *                           only when aError== ErrorCode::kNone is true.
- * @param[in] aError         The error;
- *
- */
-using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, const Error &aError)>;
-
-/**
- * Discovery Border Agent in local network with mDNS.
- *
- * @param[in] aBorderAgentHandler  The handler of found Border Agent.
- *                                 called once for each Border Agent.
- * @param[in] aTimeout             The time waiting for mDNS responses.
- *
- */
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);
+struct BorderAgentOrErrorMsg
+{
+    BorderAgent mBorderAgent;
+    Error       mError;
+};
 
 } // namespace commissioner
 

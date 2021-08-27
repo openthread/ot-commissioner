@@ -35,9 +35,9 @@
 
 #include <future>
 
+#include "common/logging.hpp"
 #include "library/coap.hpp"
 #include "library/cose.hpp"
-#include "library/logging.hpp"
 #include "library/openthread/bloom_filter.hpp"
 
 namespace ot {

@@ -100,7 +100,22 @@ Error Hex(ByteArray &aBuf, const std::string &aHexStr)
     return ERROR_NONE;
 }
 
-} // namespace utils
+std::string ToLower(const std::string &aStr)
+{
+    std::string ret = aStr;
+    for (auto &c : ret)
+    {
+        c = tolower(c);
+    }
+    return ret;
+}
+
+bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs)
+{
+    return ToLower(aLhs) == ToLower(aRhs);
+}
+
+} // Namespace utils
 
 } // namespace commissioner
 

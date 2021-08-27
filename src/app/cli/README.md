@@ -12,7 +12,9 @@ active
 announce
 bbrdataset
 borderagent
+br
 commdataset
+domain
 domainreset
 energy
 exit
@@ -38,13 +40,252 @@ All commands are synchronous, which means the command will not return until succ
 
 To cancel a command, send signal `Interrupt` to OT Commissioner, which is `CTRL + C` for a Linux machine.
 
+### Multi-network syntax
+
+The commands below are able to work with multiple Thread networks simultaneously:
+
+```shell
+start
+stop
+active
+sessionid
+bbrdataset get
+commdataset get
+opdataset get active
+opdataset get pending
+opdataset set securitypolicy
+br list
+br delete
+br scan
+domain list
+network list
+token request
+```
+
+Multi-network syntax uses `--nwk <network-alias>` or `--dom <domain-alias>` keys to identify set of target networks for a command. Another provided possibility is network selection (see `network select` below). Explicit aliases on the command line override network selection for the command.
+
+Multi-network commands execute as parallel single-network commands. Nevertheless the whole commissioner command executes synchronously.
+
+The supported network aliases (in order of resolution) are:
+
+- `all` - attempt command execution on all known networks in the registry (see below).
+- `this` - command affects the selected network only.
+- `other` - command affects all but selected network.
+- network extended PAN ID (as hexadecimal string).
+- network name.
+- network PAN ID. Special network aliases `all`, `this`, and `other` are mutually exclusive and incompatible with other aliaces (i. e. only one such alias alone is allowed). It is possible to provide multiple explicit network aliases (XPANs, names, or PAN IDs) on the command line after the single `--nwk` key:
+
+```shell
+start --nwk all
+active --nwk this
+sessionid --nwk other
+stop --nwk DEAD00BEEF00CAFE ThreadNet1 0xFACE
+```
+
+The supported domain aliaces are (in order of resolution):
+
+- `this` - domain of the selected network.
+- domain name. Only one domain alias is allowed per command: no command can span multiple domains:
+
+```shell
+start --dom this
+stop --dom ThreadDomain
+```
+
+Using `--nwk` and `--dom` keys simultaneously is unsupported.
+
+### Registry
+
+Commissioner has internal registry of the known Thread networks. This registry with security materials storage (see below) allows accessing Thread networks in a user-friendly manner with multi-network syntax.
+
+Persistent registry has form of a JSON file stored as defined by `-r|--registry <registry-file-name` commissioner startup parameter. If no such parameter provided, the registry will be stored in memory, so won't persist.
+
+Registry manipulation commands are:
+
+```shell
+br add
+br delete
+br list
+network list
+network select
+network identify
+domain list
+```
+
+Note that `network select` command affects multi-network commands execution.
+
+### Network selection concept
+
+In multi-network environment it may be useful to manage multiple network tasks in duration of a single session. To simplify command execution a particular network may be selected to deal with by default. Selection would allow more concise command syntax to be used. For example, when selected with `network select` the network can be started with simple `start` command where the missing specification of border router address and port can be augmented automatically using information from Registry.
+
+To make a selection the network must be specified by a network alias string, where the alias may be:
+
+- an extended PAN ID in hexadecimal notation
+- a network name
+- a PAN ID in hexadecimal notation
+
+Examples:
+
+```shell
+network select DEAD00BEEF00CAFE
+network select Network-1
+network select FACE
+```
+
+**Note**: hexadecimal notation may or may not include `0x` prefix. The following are equivalent:
+
+```shell
+network select DEAD00BEEF00CAFE
+network select 0XDEAD00BEEF00CAFE
+network select dead00beef00cafe
+network select 0xdead00beef00cafe
+```
+
+Now a brief syntax of multi-network aware commands may be used effectively against the selected network as if it is a sole one connected at the time. All the other existing connection to Thread networks will remain unaffected.
+
+Examples:
+
+```shell
+network select DEAD00BEEF00CAFE
+start
+opdataset get active
+stop
+```
+
+To drop the current network selection a special alias `none` must be used:
+
+```shell
+network select none
+```
+
+From this moment no network is implied by default, and explicit network/domain-wise syntax must be used until the next selection.
+
+### Deleting entries from the registry
+
+`br delete` command is the only command capable of deleting entries from the registry. While command explicitly deletes only border router entries, ot has recursive behavior. That is the deleting the last border router from the network will results in network deletion, and deleting last network from domain deletes the domain too.
+
+Note that deleting the last border router entity in the selected network is prohibited add will result in error message.
+
+## Security materials storage
+
+The storage root is passed to commissioner via configuration JSON object optional parameter `ThreadSMRoot`. If the parameter is not found in configuration, application falls back to environment variable `THREAD_SM_ROOT`. The environment variable can be easily configured using a shell script per scenario. If environment variable is also not available, security materials from configuration will be used by default.
+
+Domain-based security materials:
+
+```
+  - certificate:  $THREAD_SM_ROOT/dom/$domain_id/cert.pem
+  - private key:  $THREAD_SM_ROOT/dom/$domain_id/priv.pem
+  - trust anchor: $THREAD_SM_ROOT/dom/$domain_id/ca.pem
+  - COM_TOK:      $THREAD_SM_ROOT/dom/$domain_id/tok.cbor
+```
+
+Network-based:
+
+```
+  - certificate:  $THREAD_SM_ROOT/nwk/$network_id/cert.pem
+  - private key:  $THREAD_SM_ROOT/nwk/$network_id/priv.pem
+  - trust anchor: $THREAD_SM_ROOT/dom/$network_id/ca.pem
+  - COM_TOK:      $THREAD_SM_ROOT/nwk/$network_id/tok.cbor
+  - PSKc:         $THREAD_SM_ROOT/nwk/$network_id/pskc.txt
+```
+
+Example:
+
+```
+$THREAD_SM_ROOT
+               \_ dom
+               |      \_ domain1
+               |      |         \_ cert.pem
+               |      |         |_ priv.pem
+               |      |         |_ ca.pem
+               |      |         |_ tok.cbor
+               |      \_ domain2
+               |                \_ cert.pem
+               |                |_ priv.pem
+               |                |_ ca.pem
+               |                |_ tok.cbor
+               |_ nwk
+                     \_ AC69B4FE5F428433
+                     |                  \_ pskc.txt
+                     |_ EB7EA78599265FB7
+                     |                  \_ pskc.txt
+                     |_ DEAD00BEEF00CAFE
+                                        \_ cert.pem
+                                        |_ priv.pem
+                                        |_ ca.pem
+                                        |_ tok.cbor
+```
+
+**Note**: it is user's duty to take all possible care about completeness and consistency of the stored security materials and the structure of the storage.
+
+#### Looking up in SM storage
+
+A configuration object must include DTLS configuration that corresponds to the network the CommissionerApp instance to deal with. Therefore, some lookup phase must precede the instance initialization.
+
+**Note**: The logic is a part of `start` command pre-processing and all the other commands do not use this.
+
+- Configuration object is cloned from default configuration.
+- If target network belongs to a domain:
+  - the domain-based path pattern `$THREAD_SM_ROOT/dom/$domain_id/` must be constructed and tested for presence
+    - if folder exists
+      - the `cert.pem`, `priv.pem`, `ca.pem` and `tok.cbor` files must be tested as well
+      - if any of the file test fails (except `tok.cbor` whichis optional)
+        - error reported for the files
+      - any newly confirmed SM path is set to the configuration object
+- If network is standalone one or still no files found above
+  - the network-based path pattern `$THREAD_SM_ROOT/nwk/$network_id/` must be constructed and tested for presence
+    - if folder exists
+      - if network Connection Mode expects certificate-based connection
+        - the `cert.pem`, `priv.pem`, `ca.pem` and `tok.cbor` files must be tested as well
+      - else the `pskc.txt` file must be tested for presence
+      - if any of the file test fails (again with exception of the `tok.cbor`)
+        - error reported for the file
+      - any newly confirmed SM path is set to the configuration object
+
+#### When SM storage root is not configured
+
+If SM storage root is not configured by any means, it must not change DTLS options inherited from the configuration JSON object.
+
+**Example** use case is where only a single **COM_TOK** is defined by a configuration JSON file, e.g. because there’s only one Thread Domain. In this case the user could opt to not define a **THREAD_SM_ROOT** structure and only specify all security material by the JSON config.
+
+```
+"PrivateKeyFile" : "/usr/local/etc/commissioner/credentials/private-key.pem",
+"CertificateFile" : "/usr/local/etc/commissioner/credentials/certificate.pem",
+"TrustAnchorFile" : "/usr/local/etc/commissioner/credentials/trust-anchor.pem",
+"ComTokFile”: "/usr/local/etc/commissioner/credentials/my-com-tok.cbor"
+```
+
+### Export/import syntax
+
+The commissioner supports exporting command execution results in JSON form by appending `--export <JSON-file-name>` key to the following commands:
+
+```shell
+bbrdataset get
+br scan
+commdataset get
+opdataset get active
+optdataset get pending
+
+```
+
+By appending `--import <JSON-file-name>` parameter it is possible to put the referenced JSON as the last parameter of the following commands:
+
+```shell
+opdataset set active
+opdataset set pending
+```
+
+There is no requirement for JSON to be formatted as single string for importing.
+
+Import/export syntax is compatible with multi-network syntax.
+
 ### Help
 
 List all commands.
 
 ### Commissioner token
 
-Per the Thread 1.2 specification, `COM_TOK` is required for signing requests. **If running in CCM mode, the Commissioner must request and set `COM_TOK` before connecting to a Thread network.**
+Per the Thread 1.2 specification, `COM_TOK` is required for signing requests. **If running in CCM mode or accessing CCM network in multi-network style, the Commissioner must request and set `COM_TOK` before connecting to a Thread network.**
 
 #### Request `COM_TOK`
 
@@ -84,6 +325,12 @@ To start petitioning as the active Commissioner of a Thread network:
 >
 ```
 
+```shell
+### Petition with border agent belonging to the selected network; address, port, and connection mode selected by application according to data in the registry
+> start --nwk this
+[done]
+```
+
 ### Active
 
 Upon success, the Commissioner periodically sends keep alive messages in background. The Commissioner now is in the active state:
@@ -91,6 +338,11 @@ Upon success, the Commissioner periodically sends keep alive messages in backgro
 ```shell
 > active
 true
+[done]
+> active --nwk DEAD00BEEF00CAFE
+[
+    "DEAD00BEEF00CAFE" : true
+]
 [done]
 >
 ```
@@ -102,7 +354,12 @@ Before exiting, use the command `stop` to gracefully leave the Thread network:
 ```shell
 > stop
 [done]
->
+> stop --dom this
+[
+    "DEAD00BEEF00CAFE" : done,
+    "AAAA00BBBB00CCCC" : done
+]
+[done]
 ```
 
 ### Exit
@@ -480,3 +737,172 @@ Each advanced command always sends associative `MGMT_*_(GET|SET).req` requests.
 - `opdataset set active '<active-dataset-in-json-string>'`
 - `opdataset get pending` -- get the whole pending operational dataset as a JSON string;
 - `opdataset set pending '<pending-dataset-in-json-string>'`
+
+## Border router registry entries manipulation
+
+```shell
+> help br
+usage:
+br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>]
+br add <json-file-path>
+br list [--nwk <network-alias-list> | --dom <domain-name>]
+br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)
+[done]
+>
+
+### (Initial) discovery of border routers (default timeout is 10000 ms).
+### The command provides data on border routers and Thread networks and domains they belong to.
+> br scan --timeout 2000 --export border-routers.json
+[done]
+
+### Re-discover border routers for the specific network
+> br scan --nwk ThreadNetwork --export brs-ThreadNetwork.json
+[done]
+
+### Insert or update (if present) border routers data in the registry (from discovery results)
+> br add border-routers.json
+[done]
+
+### List known border routers
+> br list
+[
+    {
+        "addr": "fd01:1234:5678:0:85bd:7906:c79c:81b8",
+        "bbr_port": 48936,
+        "bbr_seq_number": 60,
+        "id": 3,
+        "nwk_ref": 3,
+        "port": 49191,
+        "service_name": "net1._meshcop._udp.local.",
+        "state_bitmap": 295,
+        "thread_version": "1.2.0"
+    },
+    {
+        "addr": "fd01:1234:5678:0:db87:9c61:63d4:5d80",
+        "bbr_port": 49048,
+        "bbr_seq_number": 115,
+        "id": 4,
+        "nwk_ref": 4,
+        "port": 49191,
+        "service_name": "net3._meshcop._udp.local.",
+        "state_bitmap": 295,
+        "thread_version": "1.2.0"
+    },
+    {
+        "addr": "fd01:1234:5678:0:c5b2:7f6:1f43:3ff4",
+        "bbr_port": 48968,
+        "bbr_seq_number": 126,
+        "id": 5,
+        "nwk_ref": 5,
+        "port": 49191,
+        "service_name": "net2._meshcop._udp.local.",
+        "state_bitmap": 295,
+        "thread_version": "1.2.0"
+    }
+]
+[done]
+
+### Delete border router entry by registry identifier
+> br delete 4
+[done]
+
+### Delete all border routers in the network 'net1' (which is assumed to be selected network)
+> br delete --nwk net1
+IO_ERROR: Can't delete all border routers from the current network
+[failed]
+>
+```
+
+## Network registry entries manipulation
+
+```shell
+> help network
+usage:
+network list [--nwk <network-alias-list> | --dom <domain-name>]
+network select <xpan>|none
+network identify
+[done]
+
+### List networks in the domain DomTCE1
+> network list --dom DomTCE1
+[
+    {
+        "ccm": 1,
+        "channel": 0,
+        "dom_ref": 2,
+        "id": 3,
+        "mlp": "",
+        "name": "net1",
+        "pan": "",
+        "xpan": "01DEAD00BEEF0001"
+    },
+    {
+        "ccm": 1,
+        "channel": 0,
+        "dom_ref": 2,
+        "id": 5,
+        "mlp": "",
+        "name": "net2",
+        "pan": "",
+        "xpan": "02DEAD00BEEF0002"
+    }
+]
+[done]
+>
+
+### Set network 'net2' as current
+> network select net2
+[done]
+
+### Show selected network
+> network identify
+{
+    "02DEAD00BEEF0002": "DomTCE1/net2"
+}
+[done]
+>
+
+### Explicitly discared network selection
+> network select none
+done
+[done]
+> network identify
+none
+[done]
+```
+
+## Domain registry entries manipulations
+
+```shell
+> help domain
+usage:
+domain list [--dom <domain-name>]
+[done]
+
+### List all known domains in the registry
+> domain list
+[
+    {
+        "id": 2,
+        "name": "DomTCE1"
+    },
+    {
+        "id": 3,
+        "name": "DomTCE2"
+    }
+]
+[done]
+
+### Show domain of the selected network
+> network select net2
+[done]
+> domain list --dom this
+[
+    {
+        "id": 2,
+        "name": "DomTCE1"
+    }
+]
+[done]
+
+```

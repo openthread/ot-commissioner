@@ -31,17 +31,31 @@ add_executable(commissioner-cli
     console.hpp
     interpreter.cpp
     interpreter.hpp
+    job.cpp
+    job.hpp
+    job_manager.cpp
+    job_manager.hpp
+    security_materials.cpp
+    security_materials.hpp
     main.cpp
 )
 
 target_include_directories(commissioner-cli
     PRIVATE
         ${PROJECT_SOURCE_DIR}/src
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+        ${PROJECT_BINARY_DIR}/third_party/libevent/repo/include>
+        ${PROJECT_SOURCE_DIR}/third_party/libevent/repo/include
 )
 
 target_link_libraries(commissioner-cli
     PRIVATE
         commissioner-app
+        commissioner-common
+        event_core
+        event_pthreads
+        mdns
+        persistent-storage
         pthread
         readline
 )
@@ -49,3 +63,108 @@ target_link_libraries(commissioner-cli
 install(TARGETS commissioner-cli
         RUNTIME DESTINATION bin
 )
+
+if (OT_COMM_TEST)
+add_library(ut-main OBJECT gmock_main.cpp)
+
+target_include_directories(ut-main
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
+)
+
+add_executable(job-manager-test
+    gmock_main.cpp
+    job_manager_test.cpp
+    interpreter.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/ps/registry.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/ps/persistent_storage_json.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/file_util.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/json.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/mdns_handler.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/border_agent_functions_mock.cpp
+    console.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/utils.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/error.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/address.cpp
+    job_manager.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
+    security_materials.cpp
+    job.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/time.cpp
+    ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
+)
+
+target_include_directories(job-manager-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
+        ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googlemock/include
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/fmtlib/repo/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/src
+)
+
+target_link_libraries(job-manager-test
+    event_core
+    event_pthreads
+    fmt::fmt
+    gtest
+    gmock
+    mdns
+    persistent-storage
+    readline
+)
+
+add_executable(interpreter-test
+    $<TARGET_OBJECTS:ut-main>
+    interpreter_test.cpp
+    interpreter.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/ps/registry.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/ps/persistent_storage_json.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/file_util.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/json.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/mdns_handler.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/border_agent_functions_mock.cpp
+    console.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/utils.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/error.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/address.cpp
+    job_manager.cpp
+    security_materials.cpp
+    job.cpp
+    ${PROJECT_SOURCE_DIR}/src/common/time.cpp
+    ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
+)
+
+target_include_directories(interpreter-test
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
+        ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googlemock/include
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/fmtlib/repo/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/src
+)
+
+target_link_libraries(interpreter-test
+    event_core
+    event_pthreads
+    fmt::fmt
+    gtest
+    gmock
+    mdns
+    persistent-storage
+    readline
+)
+
+set_target_properties(
+    interpreter-test
+    job-manager-test
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+)
+endif()

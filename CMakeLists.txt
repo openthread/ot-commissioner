@@ -69,6 +69,15 @@ target_compile_definitions(commissioner-config
     INTERFACE OT_COMM_VERSION="${OT_COMM_VERSION}"
 )
 
+# Override GoogleTest defaults to omit GoogltTest installation
+option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
+
+if (OT_COMM_TEST)
+  add_definitions(-DMOCKABLE=virtual)
+else (OT_COMM_TEST)
+  add_definitions(-DMOCKABLE=)
+endif (OT_COMM_TEST)
+
 add_subdirectory(src)
 add_subdirectory(tools)
 add_subdirectory(third_party EXCLUDE_FROM_ALL)

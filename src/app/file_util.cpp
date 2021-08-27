@@ -37,6 +37,8 @@
 #include <algorithm>
 
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -52,13 +54,19 @@ Error WriteFile(const std::string &aData, const std::string &aFilename)
 
     if (f == nullptr)
     {
-        if (errno == ENOENT)
+        switch (errno)
         {
-            ExitNow(error = ERROR_NOT_FOUND("cannot open file '{}', {}", aFilename, strerror(errno)));
-        }
-        else
-        {
-            ExitNow(error = ERROR_IO_ERROR("cannot open file '{}', {}", aFilename, strerror(errno)));
+        case EEXIST:
+        case EISDIR:
+            ExitNow(error = ERROR_ALREADY_EXISTS("path already exists '{}', {}", aFilename, strerror(errno)));
+            break;
+
+        case EACCES:
+            ExitNow(error = ERROR_IO_BUSY("access denied on path '{}', {}", aFilename, strerror(errno)));
+            break;
+
+        default:
+            ExitNow(error = ERROR_IO_ERROR("error on opening file '{}', {}", aFilename, strerror(errno)));
         }
     }
 
@@ -138,6 +146,155 @@ Error ReadHexStringFile(ByteArray &aData, const std::string &aFilename)
 
 exit:
     return error;
+}
+
+Error PathExists(std::string path)
+{
+    int err = access(path.c_str(), F_OK);
+    if (err != 0)
+    {
+        switch (errno)
+        {
+        case ENOENT:
+            return ERROR_NOT_FOUND("{} path does not exist", path);
+        case ENOTDIR:
+            return ERROR_NOT_FOUND("{} path is not a directory", path);
+        default:
+            return ERROR_NOT_FOUND("path error, errno = {}", errno);
+        }
+    }
+    return ERROR_NONE;
+}
+
+static std::string::size_type EndsWithAtPos(const std::string &testString, const std::string &subString)
+{
+    auto result = std::string::npos;
+    ;
+
+    if (testString.length() >= subString.length())
+    {
+        result = testString.length() - subString.length();
+        if (testString.substr(result) != subString)
+        {
+            result = std::string::npos;
+        }
+    }
+    return result;
+}
+
+static void RemoveTrailings(std::string &aPath)
+{
+    constexpr auto NPos = std::string::npos;
+
+    // Special path endings to be removed: "/", "/..", "/."
+    std::string::size_type pos;
+    do
+    {
+        pos = EndsWithAtPos(aPath, "/");
+        if (pos == NPos)
+        {
+            pos = EndsWithAtPos(aPath, "/.");
+            if (pos == NPos)
+            {
+                pos = EndsWithAtPos(aPath, "/..");
+                if (pos == NPos)
+                {
+                    break;
+                }
+            }
+        }
+        aPath.erase(aPath.begin() + pos, aPath.end());
+    } while (true);
+}
+
+/*
+ * We will keep the function extern for the sake of file_util_test.cpp
+ */
+void SplitPath(const std::string &aPath, std::string &aDirName, std::string &aBaseName)
+{
+    auto pos = aPath.find_last_of('/');
+    if (pos == std::string::npos)
+    {
+        aDirName  = "";
+        aBaseName = aPath;
+    }
+    else
+    {
+        aDirName  = aPath.substr(0, pos + 1);
+        aBaseName = aPath.substr(pos + 1);
+    }
+}
+
+/*
+ * We will keep the function extern for the sake of file_util_test.cpp
+ */
+Error RestoreDirPath(const std::string &aPath)
+{
+    std::string baseName;
+    std::string dirName;
+    Error       error;
+
+    std::string path = aPath;
+    RemoveTrailings(path);
+
+    if (path.empty())
+    {
+        // Nothing to restore: everything possible is already present in the FS:
+        // aPath is either the root directory or relative to the current directory without any named component.
+        return ERROR_ALREADY_EXISTS("Nothing to create for {}", aPath);
+    }
+
+    // Check path exists
+    error = PathExists(path);
+    if (error == ERROR_NONE)
+    {
+        return error;
+    }
+
+    SplitPath(path, dirName, baseName);
+    if (dirName.empty())
+    {
+        // (baseName == path) => it is already known the path restoration is impossible (from the caller level)
+        return ERROR_REJECTED("Path restoration impossible for path {}", aPath);
+    }
+
+    error = RestoreDirPath(dirName);
+    if (error.GetCode() != ErrorCode::kNone && error.GetCode() != ErrorCode::kAlreadyExists)
+    {
+        return error;
+    }
+
+    int result = mkdir(path.c_str(), 0770);
+    if (result == -1)
+    {
+        return ERROR_IO_ERROR("Failed to create directory {}: {}", path, strerror(errno));
+    }
+
+    return ERROR_NONE;
+}
+
+Error RestoreFilePath(const std::string &aPath)
+{
+    Error error;
+    if (PathExists(aPath).GetCode() != ErrorCode::kNone)
+    {
+        std::string dirName, baseName;
+        SplitPath(aPath, dirName, baseName);
+
+        if (!dirName.empty() && (PathExists(dirName).GetCode() != ErrorCode::kNone))
+        {
+            error = RestoreDirPath(dirName);
+            if (error != ERROR_NONE)
+            {
+                return error;
+            }
+        }
+
+        // Attempt to create empty file
+        return WriteFile("", aPath);
+    }
+
+    return ERROR_NONE;
 }
 
 } // namespace commissioner

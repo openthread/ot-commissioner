@@ -30,3 +30,6 @@
 	path = third_party/fmtlib/repo
 	url = https://github.com/fmtlib/fmt.git
 	branch = master
+[submodule "third_party/googletest/repo"]
+	path = third_party/googletest/repo
+	url = https://github.com/google/googletest.git
