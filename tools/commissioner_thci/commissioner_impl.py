@@ -406,7 +406,18 @@ class OTCommissioner(ICommissioner):
         return processed_logs
 
     def getMlrLogs(self):
-        return [log for log in self._getThciLogs() if "MLR.rsp" in log]
+        processed_logs = []
+        for mlr in [log for log in self._getThciLogs() if "MLR.rsp" in log]:
+            encrypted_packet = PlatformDiagnosticPacket()
+            hex_value = mlr.split("MLR.rsp:")[-1].strip()
+            payload = list(bytearray.fromhex(hex_value))
+            encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.OUT
+            encrypted_packet.Type = PlatformDiagnosticPacket_Type.MLR_rsp
+            encrypted_packet.TLVsLength = len(payload)
+            encrypted_packet.TLVs = PlatformPackets.read(
+                encrypted_packet.Type, payload)
+            processed_logs.append(encrypted_packet)
+        return processed_logs
 
     def _getThciLogs(self):
         return self._command("grep \"\\[ thci \\]\" {}".format(self.log_file))
