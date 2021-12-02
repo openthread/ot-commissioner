@@ -42,27 +42,28 @@
     // The pre-shared key used to connect to the border agent.
     // The maximum length is 16 bytes.
     // Must be provided if 'EnableCcm' == false.
-    "PSKc" : "3aa55f91ca47d1e4e71a08cb35e91591",
+    "PSKc" : "3aa55f91ca47d1e4e71a08cb35e91591"
 
     // The private key file in PEM format.
-    // Must be provided if 'EnableCcm' == true.
+    // Not required for non-CCM mode.
     //"PrivateKeyFile" : "/usr/local/etc/commissioner/credentials/private-key.pem",
 
     // The certificate file in PEM format.
-    // Must be provided if 'EnableCcm' == true.
+    // Not required for non-CCM mode.
     //"CertificateFile" : "/usr/local/etc/commissioner/credentials/certificate.pem",
 
     // The trust anchor certificate file in PEM format.
     // It is assumed that the commissioner certificate is directly signed by this trust anchor.
-    // Must be provided if 'EnableCcm' == true.
+    // Not required for non-CCM mode.
     //"TrustAnchorFile" : "/usr/local/etc/commissioner/credentials/trust-anchor.pem",
 
     // The commissioner token file in HEX format.
     // It is assumed that commissioner token was pre-obtained from the
     // registrar for the 'CertificateFile'.
-    // Optional even if 'EnableCcm' == true
+    // Not required for non-CCM mode.
     // "ComTokFile" : "/usr/local/etc/commissioner/credentials/tok.cbor",
 
     // Thread security materials root directory.
-    "ThreadSMRoot" : "/usr/local/etc/commissioner"
+    // Not required for non-CCM mode.
+    // "ThreadSMRoot" : "/usr/local/etc/commissioner"
 }
