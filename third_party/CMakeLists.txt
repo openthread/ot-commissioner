@@ -27,7 +27,6 @@
 #
 
 if (OT_COMM_TEST)
-    add_subdirectory(Catch2/repo)
     add_subdirectory(googletest/repo)
 endif()
 

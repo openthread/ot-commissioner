@@ -33,88 +33,89 @@
 
 #include "common/utils.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("integer-encoding-decoding", "[utils]")
+TEST(UtilsTest, IntegerEncodingDecoding_8BitsInteger)
 {
     ByteArray buf;
 
-    SECTION("8 bits integers")
-    {
-        buf = utils::Encode<uint8_t>(0xFC);
-        REQUIRE(buf == ByteArray{0xFC});
-        utils::Encode<uint8_t>(buf, 0xFB);
-        REQUIRE(buf == ByteArray{0xFC, 0xFB});
+    buf = utils::Encode<uint8_t>(0xFC);
+    EXPECT_EQ(buf, (ByteArray{0xFC}));
 
-        REQUIRE(utils::Decode<int8_t>(utils::Encode<int8_t>(0xFD)) == static_cast<int8_t>(0xFD));
-    }
+    utils::Encode<uint8_t>(buf, 0xFB);
+    EXPECT_EQ(buf, (ByteArray{0xFC, 0xFB}));
 
-    SECTION("16 bits integers")
-    {
-        buf = utils::Encode<uint16_t>(0x010F);
-        REQUIRE(buf == ByteArray{0x01, 0x0F});
-        REQUIRE(utils::Decode<uint16_t>(buf) == 0x010F);
-
-        REQUIRE(utils::Decode<int16_t>(utils::Encode<int16_t>(0xFDFC)) == static_cast<int16_t>(0xFDFC));
-    }
-
-    SECTION("32 bits integers")
-    {
-        buf = utils::Encode<uint32_t>(0x00010E0F);
-        REQUIRE(buf == ByteArray{0x00, 0x01, 0x0E, 0x0F});
-        REQUIRE(utils::Decode<uint32_t>(buf) == 0x00010E0F);
-
-        REQUIRE(utils::Decode<int32_t>(utils::Encode<int32_t>(0xFDFCFBFA)) == static_cast<int32_t>(0xFDFCFBFA));
-    }
-
-    SECTION("64 bits integers")
-    {
-        buf = utils::Encode<uint64_t>(0x00010E0F00010E0F);
-        REQUIRE(buf == ByteArray{0x00, 0x01, 0x0E, 0x0F, 0x00, 0x01, 0x0E, 0x0F});
-        REQUIRE(utils::Decode<uint64_t>(buf) == 0x00010E0F00010E0F);
-
-        REQUIRE(utils::Decode<int64_t>(utils::Encode<int64_t>(0xFDFCFBFAF9F8F7F6)) ==
-                static_cast<int64_t>(0xFDFCFBFAF9F8F7F6));
-    }
+    EXPECT_EQ(utils::Decode<int8_t>(utils::Encode<int8_t>(0xFD)), static_cast<int8_t>(0xFD));
 }
 
-TEST_CASE("hex-encoding-decoding", "[utils]")
+TEST(UtilsTest, IntegerEncodingDecoding_16BitsInteger)
+{
+    ByteArray buf;
+    buf = utils::Encode<uint16_t>(0x010F);
+    EXPECT_EQ(buf, (ByteArray{0x01, 0x0F}));
+    EXPECT_EQ(utils::Decode<uint16_t>(buf), 0x010F);
+
+    EXPECT_EQ(utils::Decode<int16_t>(utils::Encode<int16_t>(0xFDFC)), static_cast<int16_t>(0xFDFC));
+}
+
+TEST(UtilsTest, IntegerEncodingDecoding_32BitsInteger)
+{
+    ByteArray buf;
+    buf = utils::Encode<uint32_t>(0x00010E0F);
+    EXPECT_EQ(buf, (ByteArray{0x00, 0x01, 0x0E, 0x0F}));
+    EXPECT_EQ(utils::Decode<uint32_t>(buf), 0x00010E0FU);
+
+    EXPECT_EQ(utils::Decode<int32_t>(utils::Encode<int32_t>(0xFDFCFBFA)), static_cast<int32_t>(0xFDFCFBFA));
+}
+
+TEST(UtilsTest, IntegerEncodingDecoding_64BitsInteger)
+{
+    ByteArray buf;
+    buf = utils::Encode<uint64_t>(0x00010E0F00010E0F);
+    EXPECT_EQ(buf, (ByteArray{0x00, 0x01, 0x0E, 0x0F, 0x00, 0x01, 0x0E, 0x0F}));
+    EXPECT_EQ(utils::Decode<uint64_t>(buf), 0x00010E0F00010E0FU);
+
+    EXPECT_EQ(utils::Decode<int64_t>(utils::Encode<int64_t>(0xFDFCFBFAF9F8F7F6)),
+              static_cast<int64_t>(0xFDFCFBFAF9F8F7F6));
+}
+
+TEST(UtilsTest, HexEncodingDecoding_ByteArraysEqualAfterEncodingDecoding)
 {
     ByteArray   buf;
     std::string hexStr;
 
-    SECTION("a byte array equals to itself after encoding and decoding")
-    {
-        hexStr = utils::Hex(ByteArray{0x00, 0x01, 0x02, 0x03});
-        REQUIRE(hexStr == "00010203");
-        REQUIRE(utils::Hex(buf, hexStr) == ErrorCode::kNone);
-        REQUIRE(buf == ByteArray{0x00, 0x01, 0x02, 0x03});
-    }
+    hexStr = utils::Hex(ByteArray{0x00, 0x01, 0x02, 0x03});
 
-    SECTION("decoding empty HEX string results nothing")
-    {
-        REQUIRE(utils::Hex(buf, hexStr) == ErrorCode::kNone);
-        REQUIRE(buf.empty());
-    }
+    EXPECT_EQ(hexStr, "00010203");
+    EXPECT_EQ(utils::Hex(buf, hexStr), ErrorCode::kNone);
+    EXPECT_EQ(buf, (ByteArray{0x00, 0x01, 0x02, 0x03}));
 }
 
-TEST_CASE("hex-negative-decoding", "[utils]")
+TEST(UtilsTest, HexEncodingDecoding_EmptyStringDecodedIntoEmptyByteArray)
+{
+    ByteArray   buf;
+    std::string hexStr;
+
+    EXPECT_EQ(utils::Hex(buf, hexStr), ErrorCode::kNone);
+    EXPECT_TRUE(buf.empty());
+}
+
+TEST(UtilsTest, HexEncodingDecoding_DecodingHexStringWithOddLengthShouldFail)
 {
     ByteArray buf;
 
-    SECTION("decoding HEX string with odd length should fail")
-    {
-        REQUIRE(utils::Hex(buf, "00010") == ErrorCode::kInvalidArgs);
-    }
+    EXPECT_EQ(utils::Hex(buf, "00010"), ErrorCode::kInvalidArgs);
+}
 
-    SECTION("decoding HEX string with invalid characters should fail")
-    {
-        REQUIRE(utils::Hex(buf, "00010g") == ErrorCode::kInvalidArgs);
-    }
+TEST(UtilsTest, HexEncodingDecoding_DecodingHexStringWithInvalidCharactersShouldFail)
+{
+    ByteArray buf;
+
+    EXPECT_EQ(utils::Hex(buf, "00010g"), ErrorCode::kInvalidArgs);
 }
 
 } // namespace commissioner

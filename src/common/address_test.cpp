@@ -36,133 +36,116 @@
 #include <memory.h>
 #include <netinet/in.h>
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("address-from-string", "[address]")
+TEST(AddressTest, AddressFromString_Ipv4LoopbackAddress)
 {
     Address addr;
 
-    SECTION("IPv4 loopback address")
-    {
-        REQUIRE(addr.Set("127.0.0.1") == ErrorCode::kNone);
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv4());
+    EXPECT_EQ(addr.Set("127.0.0.1"), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsIpv4());
 
-        REQUIRE(addr.ToString() == "127.0.0.1");
-    }
-
-    SECTION("IPv6 loopback address")
-    {
-        REQUIRE(addr.Set("::1") == ErrorCode::kNone);
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv6());
-
-        REQUIRE(addr.ToString() == "::1");
-    }
-
-    SECTION("IPv6 prefix")
-    {
-        const static std::string kPrefix = "2001:db8:3c4d:15::";
-        REQUIRE(addr.Set(kPrefix) == ErrorCode::kNone);
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv6());
-
-        REQUIRE(addr.ToString() == kPrefix);
-    }
-
-    SECTION("IPv4 FromString")
-    {
-        addr = Address::FromString("127.0.0.1");
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv4());
-
-        REQUIRE(addr.ToString() == "127.0.0.1");
-    }
-
-    SECTION("IPv6 FromString")
-    {
-        addr = Address::FromString("::1");
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv6());
-
-        REQUIRE(addr.ToString() == "::1");
-    }
+    EXPECT_EQ(addr.ToString(), "127.0.0.1");
 }
 
-TEST_CASE("address-from-sockaddr", "[address]")
+TEST(AddressTest, AddressFromString_Ipv6LoopbackAddress)
 {
     Address addr;
 
-    SECTION("ipv4 socket address")
-    {
-        sockaddr_in sockaddr;
-        memset(&sockaddr, 0, sizeof(sockaddr));
-        sockaddr.sin_family      = AF_INET;
-        sockaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        sockaddr.sin_port        = htons(5684);
+    EXPECT_EQ(addr.Set("::1"), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsIpv6());
 
-        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == ErrorCode::kNone);
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv4());
-
-        REQUIRE(addr.ToString() == "127.0.0.1");
-    }
-
-    SECTION("ipv6 socket address")
-    {
-        sockaddr_in6 sockaddr;
-        memset(&sockaddr, 0, sizeof(sockaddr));
-        sockaddr.sin6_family = AF_INET6;
-        sockaddr.sin6_addr   = in6addr_loopback;
-        sockaddr.sin6_port   = htons(5684);
-
-        REQUIRE(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)) == ErrorCode::kNone);
-        REQUIRE(addr.IsValid());
-        REQUIRE(addr.IsIpv6());
-
-        REQUIRE(addr.ToString() == "::1");
-    }
+    EXPECT_EQ(addr.ToString(), "::1");
 }
 
-TEST_CASE("address-negative-tests", "[address]")
+TEST(AddressTest, AddressFromString_Ipv6Prefix)
 {
     Address addr;
 
-    SECTION("invalid address ToString should fail")
-    {
-        REQUIRE(addr.Set(addr.ToString()) == ErrorCode::kInvalidArgs);
-        REQUIRE(!addr.IsValid());
-        REQUIRE(!addr.IsIpv4());
-        REQUIRE(!addr.IsIpv6());
-    }
+    const static std::string kPrefix = "2001:db8:3c4d:15::";
+    EXPECT_EQ(addr.Set(kPrefix), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsIpv6());
 
-    SECTION("invalid raw address should fail")
-    {
-        REQUIRE(addr.Set(ByteArray{0, 0, 0}) == ErrorCode::kInvalidArgs);
-        REQUIRE(!addr.IsValid());
-        REQUIRE(!addr.IsIpv4());
-        REQUIRE(!addr.IsIpv6());
-    }
+    EXPECT_EQ(addr.ToString(), kPrefix);
+}
 
-    SECTION("invalid ipv4 address should fail")
-    {
-        REQUIRE(addr.Set("127.0.0.1.2") == ErrorCode::kInvalidArgs);
-        REQUIRE(!addr.IsValid());
-        REQUIRE(!addr.IsIpv4());
-        REQUIRE(!addr.IsIpv6());
-    }
+TEST(AddressTest, AddressFromSockaddr_Ipv4SocketAddress)
+{
+    Address     addr;
+    sockaddr_in sockaddr;
+    memset(&sockaddr, 0, sizeof(sockaddr));
+    sockaddr.sin_family      = AF_INET;
+    sockaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    sockaddr.sin_port        = htons(5684);
 
-    SECTION("invalid ipv6 address should fail")
-    {
-        REQUIRE(addr.Set("::1::2") == ErrorCode::kInvalidArgs);
-        REQUIRE(!addr.IsValid());
-        REQUIRE(!addr.IsIpv4());
-        REQUIRE(!addr.IsIpv6());
-    }
+    EXPECT_EQ(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsIpv4());
+
+    EXPECT_EQ(addr.ToString(), "127.0.0.1");
+}
+
+TEST(AddressTest, AddressFromSockaddr_Ipv6SocketAddress)
+{
+    Address      addr;
+    sockaddr_in6 sockaddr;
+    memset(&sockaddr, 0, sizeof(sockaddr));
+    sockaddr.sin6_family = AF_INET6;
+    sockaddr.sin6_addr   = in6addr_loopback;
+    sockaddr.sin6_port   = htons(5684);
+
+    EXPECT_EQ(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsIpv6());
+
+    EXPECT_EQ(addr.ToString(), "::1");
+}
+
+TEST(AddressTest, AddressNegativeTests_InvalidAddressToString)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set(addr.ToString()), ErrorCode::kInvalidArgs);
+    EXPECT_FALSE(addr.IsValid());
+    EXPECT_FALSE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsIpv6());
+}
+
+TEST(AddressTest, AddressNegativeTests_SetInvalidRawAddress)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set(ByteArray{0, 0, 0}), ErrorCode::kInvalidArgs);
+    EXPECT_FALSE(addr.IsValid());
+    EXPECT_FALSE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsIpv6());
+}
+
+TEST(AddressTest, AddressNegativeTests_InvalidIpv4Address)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set("127.0.0.1.2"), ErrorCode::kInvalidArgs);
+    EXPECT_FALSE(addr.IsValid());
+    EXPECT_FALSE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsIpv6());
+}
+
+TEST(AddressTest, AddressNegativeTests_InvalidIpv6Address)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set("::1::2"), ErrorCode::kInvalidArgs);
+    EXPECT_FALSE(addr.IsValid());
+    EXPECT_FALSE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsIpv6());
 }
 
 } // namespace commissioner

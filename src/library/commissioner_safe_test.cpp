@@ -32,15 +32,15 @@
  *
  */
 
-#include <catch2/catch.hpp>
-
 #include "library/commissioner_safe.hpp"
+
+#include <gtest/gtest.h>
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("stop-immediately-after-starting", "[commissioner]")
+TEST(CommissionerSafeTest, StopImmediatelyAfterStarting)
 {
     CommissionerHandler dummyHandler;
 
@@ -50,8 +50,8 @@ TEST_CASE("stop-immediately-after-starting", "[commissioner]")
 
     // This creates an CommissionerSafe instance.
     auto commissioner = Commissioner::Create(dummyHandler);
-    REQUIRE(commissioner != nullptr);
-    REQUIRE(commissioner->Init(config) == ErrorCode::kNone);
+    EXPECT_NE(commissioner, nullptr);
+    EXPECT_EQ(commissioner->Init(config), ErrorCode::kNone);
 }
 
 } // namespace commissioner

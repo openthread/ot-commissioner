@@ -36,8 +36,7 @@
 
 #include "library/commissioner_impl.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 #include "common/utils.hpp"
 
@@ -46,55 +45,52 @@ namespace ot {
 namespace commissioner {
 
 // This teat case is from section 8.4.1.2.2 of the Thread 1.2.0 specification.
-TEST_CASE("pskc-test-vector-from-thread-1.2.0-spec", "[pskc]")
+TEST(PskcTest, PskcTestVectorFromThread12Spec)
 {
     const std::string passphrase    = "12SECRETPASSWORD34";
     const std::string networkName   = "Test Network";
     const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
     ByteArray         pskc;
 
-    REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId) == ErrorCode::kNone);
-    REQUIRE(pskc.size() == kMaxPSKcLength);
-    REQUIRE(utils::Hex(pskc) == "c3f59368445a1b6106be420a706d4cc9");
+    EXPECT_EQ(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId), ErrorCode::kNone);
+    EXPECT_EQ(pskc.size(), kMaxPSKcLength);
+    EXPECT_EQ(utils::Hex(pskc), "c3f59368445a1b6106be420a706d4cc9");
 }
 
-TEST_CASE("pskc-test-invalid-args", "[pskc]")
+TEST(PskcTest, InvalidArgs_PassphraseIsTooShort)
 {
-    SECTION("passphrase is too short")
-    {
-        const std::string passphrase    = "12S";
-        const std::string networkName   = "Test Network";
-        const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-        ByteArray         pskc;
+    const std::string passphrase    = "12S";
+    const std::string networkName   = "Test Network";
+    const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    ByteArray         pskc;
 
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() ==
-                ErrorCode::kInvalidArgs);
-    }
-
-    SECTION("passphrase is too long")
-    {
-        const std::string passphrase(256, '1');
-        const std::string networkName   = "Test Network";
-        const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-        ByteArray         pskc;
-
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() ==
-                ErrorCode::kInvalidArgs);
-    }
-
-    SECTION("network name is too long")
-    {
-        const std::string passphrase    = "12SECRETPASSWORD34";
-        const std::string networkName   = "Too Long network name";
-        const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-        ByteArray         pskc;
-
-        REQUIRE(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode() ==
-                ErrorCode::kInvalidArgs);
-    }
+    EXPECT_EQ(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode(),
+              ErrorCode::kInvalidArgs);
 }
 
-TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
+TEST(PskcTest, InvalidArgs_PassphraseIsTooLong)
+{
+    const std::string passphrase(256, '1');
+    const std::string networkName   = "Test Network";
+    const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    ByteArray         pskc;
+
+    EXPECT_EQ(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode(),
+              ErrorCode::kInvalidArgs);
+}
+
+TEST(PskcTest, InvalidArgs_NetworkNameIsTooLong)
+{
+    const std::string passphrase    = "12SECRETPASSWORD34";
+    const std::string networkName   = "Too Long network name";
+    const ByteArray   extendedPanId = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    ByteArray         pskc;
+
+    EXPECT_EQ(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode(),
+              ErrorCode::kInvalidArgs);
+}
+
+TEST(CommissionerImpl, NotImplementedApis)
 {
     static const std::string kDstAddr = "fd00:7d03:7d03:7d03:d020:79b7:6a02:ab5e";
 
@@ -105,44 +101,44 @@ TEST_CASE("commissioner-impl-not-implemented-APIs", "[comm-impl]")
     CommissionerHandler dummyHandler;
     struct event_base * eventBase = event_base_new();
     CommissionerImpl    commImpl(dummyHandler, eventBase);
-    REQUIRE(commImpl.Init(config) == ErrorCode::kNone);
+    EXPECT_EQ(commImpl.Init(config), ErrorCode::kNone);
 
-    REQUIRE(commImpl.Connect("::1", 5684) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.Connect("::1", 5684), ErrorCode::kUnimplemented);
 
     std::string existingCommissionerId;
-    REQUIRE(commImpl.Petition(existingCommissionerId, "::1", 5684) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.Resign() == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.Petition(existingCommissionerId, "::1", 5684), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.Resign(), ErrorCode::kUnimplemented);
 
     CommissionerDataset commDataset;
-    REQUIRE(commImpl.GetCommissionerDataset(commDataset, 0xFFFF) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetCommissionerDataset({}) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.GetCommissionerDataset(commDataset, 0xFFFF), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.SetCommissionerDataset({}), ErrorCode::kUnimplemented);
 
     BbrDataset bbrDataset;
-    REQUIRE(commImpl.GetBbrDataset(bbrDataset, 0xFFFF) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetBbrDataset({}) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.GetBbrDataset(bbrDataset, 0xFFFF), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.SetBbrDataset({}), ErrorCode::kUnimplemented);
 
     ActiveOperationalDataset activeDataset;
-    REQUIRE(commImpl.GetActiveDataset(activeDataset, 0xFFFF) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetActiveDataset({}) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.GetActiveDataset(activeDataset, 0xFFFF), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.SetActiveDataset({}), ErrorCode::kUnimplemented);
 
     PendingOperationalDataset pendingDataset;
-    REQUIRE(commImpl.GetPendingDataset(pendingDataset, 0xFFFF) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetPendingDataset({}) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.SetSecurePendingDataset(30, {}) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.GetPendingDataset(pendingDataset, 0xFFFF), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.SetPendingDataset({}), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.SetSecurePendingDataset(30, {}), ErrorCode::kUnimplemented);
 
-    REQUIRE(commImpl.CommandReenroll(kDstAddr) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.CommandDomainReset(kDstAddr) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.CommandMigrate(kDstAddr, "designated-net") == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.CommandReenroll(kDstAddr), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.CommandDomainReset(kDstAddr), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.CommandMigrate(kDstAddr, "designated-net"), ErrorCode::kUnimplemented);
 
     uint8_t mlrStatus;
-    REQUIRE(commImpl.RegisterMulticastListener(mlrStatus, {"ff02::9"}, 300).GetCode() == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.RegisterMulticastListener(mlrStatus, {"ff02::9"}, 300).GetCode(), ErrorCode::kUnimplemented);
 
-    REQUIRE(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr) == ErrorCode::kUnimplemented);
-    REQUIRE(commImpl.EnergyScan(0xFFFFFFFF, 10, 10, 20, kDstAddr) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.AnnounceBegin(0xFFFFFFFF, 10, 10, kDstAddr), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.PanIdQuery(0xFFFFFFFF, 0xFACE, kDstAddr), ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.EnergyScan(0xFFFFFFFF, 10, 10, 20, kDstAddr), ErrorCode::kUnimplemented);
 
     ByteArray signedToken;
-    REQUIRE(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684) == ErrorCode::kUnimplemented);
+    EXPECT_EQ(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684), ErrorCode::kUnimplemented);
 
     event_base_free(eventBase);
 }

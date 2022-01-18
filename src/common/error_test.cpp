@@ -35,77 +35,68 @@
 
 #include "common/error_macros.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("error-message", "[error]")
+TEST(ErrorTest, ErrorMessage_DefaultErrorHasNoErrorMessage)
 {
-    SECTION("default Error object has no error message")
-    {
-        Error error;
+    Error error;
 
-        REQUIRE(error.GetCode() == ErrorCode::kNone);
-        REQUIRE(error.GetMessage().empty());
-    }
+    EXPECT_EQ(error.GetCode(), ErrorCode::kNone);
+    EXPECT_TRUE(error.GetMessage().empty());
 }
 
-TEST_CASE("error-to-string", "[error]")
+TEST(ErrorTest, ErrorToString_DefaultErrorShouldReturnOkAsString)
 {
-    SECTION("default Error object should return 'OK' as string representation")
-    {
-        Error error;
+    Error error;
 
-        REQUIRE(error.ToString() == "OK");
-    }
+    EXPECT_EQ(error.ToString(), "OK");
+}
 
-    SECTION("non-OK errors return their string representations (not required by the class Error API)")
-    {
+TEST(ErrorTest, ErrorToString_NonOkErrorToString)
+{
 // Check if the error string starts with the error name.
 #define CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(aErrorName) \
-    REQUIRE(ERROR_##aErrorName("").ToString().find(#aErrorName) == 0)
+    EXPECT_EQ((ERROR_##aErrorName("").ToString().find(#aErrorName)), 0U)
 
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(CANCELLED);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_ARGS);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_COMMAND);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(TIMEOUT);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(NOT_FOUND);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(SECURITY);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(UNIMPLEMENTED);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(BAD_FORMAT);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(BUSY);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(OUT_OF_MEMORY);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(IO_ERROR);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(IO_BUSY);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(ALREADY_EXISTS);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(ABORTED);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_STATE);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(REJECTED);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(COAP_ERROR);
-        CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(UNKNOWN);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(CANCELLED);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_ARGS);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_COMMAND);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(TIMEOUT);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(NOT_FOUND);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(SECURITY);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(UNIMPLEMENTED);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(BAD_FORMAT);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(BUSY);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(OUT_OF_MEMORY);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(IO_ERROR);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(IO_BUSY);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(ALREADY_EXISTS);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(ABORTED);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(INVALID_STATE);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(REJECTED);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(COAP_ERROR);
+    CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME(UNKNOWN);
 
 #undef CHECK_ERROR_STR_STARTS_WITH_ERROR_NAME
-    }
 }
 
-TEST_CASE("error-comparison", "[error]")
+TEST(ErrorTest, ErrorComparison_DefaultErrorsEqualToEachOther)
 {
-    SECTION("default Error objects should be equal to each other")
-    {
-        Error lhs;
-        Error rhs;
+    Error lhs;
+    Error rhs;
 
-        REQUIRE(lhs == rhs);
-    }
+    EXPECT_EQ(lhs, rhs);
+}
 
-    SECTION("default Error object should be equal to ErrorCode::kNone")
-    {
-        Error error;
+TEST(ErrorTest, ErrorComparison_DefaultErrorEqualToErrorNone)
+{
+    Error error;
 
-        REQUIRE(error == ErrorCode::kNone);
-    }
+    EXPECT_EQ(error, ErrorCode::kNone);
 }
 
 } // namespace commissioner

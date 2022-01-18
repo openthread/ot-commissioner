@@ -35,7 +35,7 @@
 
 #include "library/token_manager.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 #include "library/commissioner_impl.hpp"
 #include "library/uri.hpp"
@@ -89,7 +89,7 @@ static const std::string kSignedToken = "d28443a10126a058aea40366546872656164047
                                         "7c482e1505a76ad6f69911ed5f7a2a341b4a417d109916659d4c824fa8433049"
                                         "b099d7443f65fd752d3c14d14a8f9b936fee0dc7ad6bd25ef1";
 
-TEST_CASE("signing-message", "[token]")
+TEST(TokenTest, SigningMessage)
 {
     Config config;
 
@@ -105,24 +105,24 @@ TEST_CASE("signing-message", "[token]")
     config.mPrivateKey.push_back(0);
 
     struct event_base *eventBase = event_base_new();
-    REQUIRE(eventBase != nullptr);
+    EXPECT_NE(eventBase, nullptr);
 
     TokenManager tokenManager{eventBase};
 
-    REQUIRE(tokenManager.Init(config) == ErrorCode::kNone);
+    EXPECT_EQ(tokenManager.Init(config), ErrorCode::kNone);
 
     ByteArray signedToken;
-    REQUIRE(utils::Hex(signedToken, kSignedToken) == ErrorCode::kNone);
-    REQUIRE(tokenManager.SetToken(signedToken) == ErrorCode::kNone);
-    REQUIRE(tokenManager.GetToken() == signedToken);
+    EXPECT_EQ(utils::Hex(signedToken, kSignedToken), ErrorCode::kNone);
+    EXPECT_EQ(tokenManager.SetToken(signedToken), ErrorCode::kNone);
+    EXPECT_EQ(tokenManager.GetToken(), signedToken);
 
     coap::Message pet{coap::Type::kConfirmable, coap::Code::kPost};
-    REQUIRE(pet.SetUriPath(uri::kPetitioning) == ErrorCode::kNone);
-    REQUIRE(AppendTlv(pet, {tlv::Type::kCommissionerId, config.mId}) == ErrorCode::kNone);
+    EXPECT_EQ(pet.SetUriPath(uri::kPetitioning), ErrorCode::kNone);
+    EXPECT_EQ(AppendTlv(pet, {tlv::Type::kCommissionerId, config.mId}), ErrorCode::kNone);
 
     ByteArray signature;
-    REQUIRE(tokenManager.SignMessage(signature, pet) == ErrorCode::kNone);
-    REQUIRE(tokenManager.ValidateSignature(signature, pet) == ErrorCode::kNone);
+    EXPECT_EQ(tokenManager.SignMessage(signature, pet), ErrorCode::kNone);
+    EXPECT_EQ(tokenManager.ValidateSignature(signature, pet), ErrorCode::kNone);
 }
 
 } // namespace commissioner

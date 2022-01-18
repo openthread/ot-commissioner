@@ -35,7 +35,7 @@
 
 #include <memory.h>
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 #include "common/utils.hpp"
 
@@ -152,32 +152,33 @@ exit:
     return rval;
 }
 
-TEST_CASE("UDP-socket-hello", "[socket]")
+TEST(SocketTest, UdpSocketHello)
 {
     const ByteArray kHello{'h', 'e', 'l', 'l', 'o'};
     const ByteArray kWorld{'w', 'o', 'r', 'l', 'd'};
 
     auto eventBase = event_base_new();
-    REQUIRE(eventBase != nullptr);
+    EXPECT_NE(eventBase, nullptr);
 
     UdpSocket serverSocket{eventBase};
     serverSocket.SetEventHandler([&](short aFlags) {
         uint8_t buf[1024];
         int     len;
 
-        REQUIRE(serverSocket.GetLocalPort() == kServerPort);
+        EXPECT_EQ(serverSocket.GetLocalPort(), kServerPort);
 
         if (aFlags & EV_READ)
         {
-            REQUIRE((len = serverSocket.Receive(buf, sizeof(buf))) > 0);
-            REQUIRE(ByteArray{buf, buf + len} == kHello);
+            len = serverSocket.Receive(buf, sizeof(buf));
+            EXPECT_GT(len, 0);
+            EXPECT_EQ((ByteArray{buf, buf + len}), kHello);
 
-            REQUIRE((len = serverSocket.Send(&kWorld[0], kWorld.size())) > 0);
-            REQUIRE(static_cast<size_t>(len) == kWorld.size());
+            len = serverSocket.Send(&kWorld[0], kWorld.size());
+            EXPECT_EQ(static_cast<size_t>(len), kWorld.size());
         }
     });
-    REQUIRE(serverSocket.Bind(kServerAddr, kServerPort) == 0);
-    REQUIRE(serverSocket.GetLocalPort() == kServerPort);
+    EXPECT_EQ(serverSocket.Bind(kServerAddr, kServerPort), 0);
+    EXPECT_EQ(serverSocket.GetLocalPort(), kServerPort);
 
     UdpSocket clientSocket{eventBase};
     clientSocket.SetEventHandler([&](short aFlags) {
@@ -186,28 +187,28 @@ TEST_CASE("UDP-socket-hello", "[socket]")
 
         if (aFlags & EV_READ)
         {
-            REQUIRE((len = clientSocket.Receive(buf, sizeof(buf))) > 0);
-            REQUIRE(ByteArray{buf, buf + len} == kWorld);
+            len = clientSocket.Receive(buf, sizeof(buf));
+            EXPECT_EQ((ByteArray{buf, buf + len}), kWorld);
 
             event_base_loopbreak(eventBase);
         }
     });
 
-    REQUIRE(clientSocket.Connect(kServerAddr, kServerPort) == 0);
-    REQUIRE(clientSocket.GetPeerPort() == kServerPort);
-    REQUIRE(clientSocket.Send(&kHello[0], kHello.size()) == kHello.size());
+    EXPECT_EQ(clientSocket.Connect(kServerAddr, kServerPort), 0);
+    EXPECT_EQ(clientSocket.GetPeerPort(), kServerPort);
+    EXPECT_EQ(clientSocket.Send(&kHello[0], kHello.size()), kHello.size());
 
-    REQUIRE(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY) == 0);
+    EXPECT_EQ(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY), 0);
     event_base_free(eventBase);
 }
 
-TEST_CASE("mock-socket-hello", "[socket]")
+TEST(SocketTest, MockSocketHello)
 {
     const ByteArray kHello{'h', 'e', 'l', 'l', 'o'};
     const ByteArray kWorld{'w', 'o', 'r', 'l', 'd'};
 
     auto eventBase = event_base_new();
-    REQUIRE(eventBase != nullptr);
+    EXPECT_NE(eventBase, nullptr);
 
     auto clientSocket = std::make_shared<MockSocket>(eventBase, Address::FromString(kClientAddr), kClientPort);
     auto serverSocket = std::make_shared<MockSocket>(eventBase, Address::FromString(kServerAddr), kServerPort);
@@ -215,25 +216,23 @@ TEST_CASE("mock-socket-hello", "[socket]")
     clientSocket->Connect(serverSocket);
     serverSocket->Connect(clientSocket);
 
-    REQUIRE(clientSocket->IsConnected());
-    REQUIRE(serverSocket->IsConnected());
+    EXPECT_TRUE(clientSocket->IsConnected());
+    EXPECT_TRUE(serverSocket->IsConnected());
 
-    REQUIRE(clientSocket->GetPeerAddr() == serverSocket->GetLocalAddr());
-    REQUIRE(clientSocket->GetPeerPort() == serverSocket->GetLocalPort());
-    REQUIRE(clientSocket->GetLocalAddr() == serverSocket->GetPeerAddr());
-    REQUIRE(clientSocket->GetLocalPort() == serverSocket->GetPeerPort());
+    EXPECT_EQ(clientSocket->GetPeerAddr(), serverSocket->GetLocalAddr());
+    EXPECT_EQ(clientSocket->GetPeerPort(), serverSocket->GetLocalPort());
+    EXPECT_EQ(clientSocket->GetLocalAddr(), serverSocket->GetPeerAddr());
+    EXPECT_EQ(clientSocket->GetLocalPort(), serverSocket->GetPeerPort());
 
     serverSocket->SetEventHandler([&](short aFlags) {
         if (aFlags & EV_READ)
         {
             uint8_t buf[1024];
             int     len = serverSocket->Receive(buf, sizeof(buf));
-            REQUIRE(len > 0);
-            REQUIRE(static_cast<size_t>(len) == kHello.size());
+            EXPECT_EQ(static_cast<size_t>(len), kHello.size());
 
             len = serverSocket->Send(&kWorld[0], kWorld.size());
-            REQUIRE(len > 0);
-            REQUIRE(static_cast<size_t>(len) == kWorld.size());
+            EXPECT_EQ(static_cast<size_t>(len), kWorld.size());
         }
     });
     clientSocket->SetEventHandler([&](short aFlags) {
@@ -241,18 +240,16 @@ TEST_CASE("mock-socket-hello", "[socket]")
         {
             uint8_t buf[1024];
             int     len = clientSocket->Receive(buf, sizeof(buf));
-            REQUIRE(len > 0);
-            REQUIRE(static_cast<size_t>(len) == kWorld.size());
+            EXPECT_EQ(static_cast<size_t>(len), kWorld.size());
 
             event_base_loopbreak(eventBase);
         }
     });
 
     int len = clientSocket->Send(&kHello[0], kHello.size());
-    REQUIRE(len > 0);
-    REQUIRE(static_cast<size_t>(len) == kHello.size());
+    EXPECT_EQ(static_cast<size_t>(len), kHello.size());
 
-    REQUIRE(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY) == 0);
+    EXPECT_EQ(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY), 0);
     event_base_free(eventBase);
 }
 
