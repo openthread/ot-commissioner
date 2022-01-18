@@ -1225,8 +1225,9 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                  BorderAgent::kStateBit | BorderAgent::kNetworkNameBit | BorderAgent::kExtendedPanIdBit);
             if ((iter->mPresentFlags & kMandatoryFieldsBits) != kMandatoryFieldsBits)
             {
-                value = Value(ERROR_REJECTED("Missing mandatory border agent fields"));
-                goto exit;
+                ExitNow(value = ERROR_REJECTED(
+                            "Missing mandatory border agent fields (fieldFlags = {:X}, expectedFlags = {:X})",
+                            iter->mPresentFlags, kMandatoryFieldsBits));
             }
 
             // Check local network information sanity
@@ -1235,9 +1236,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             if (((iter->mPresentFlags & kNetworkInfoBits) != 0) &&
                 (((iter->mPresentFlags & BorderAgent::kExtendedPanIdBit) == 0) || (iter->mExtendedPanId == 0)))
             {
-                value = ERROR_REJECTED("XPAN required but not provided for border agent host:port {}:{}", iter->mAddr,
-                                       iter->mPort);
-                goto exit;
+                ExitNow(value = ERROR_REJECTED("XPAN required but not provided for border agent host:port {}:{}",
+                                               iter->mAddr, iter->mPort));
             }
 
             // Sanity check across inbound data
@@ -1276,16 +1276,15 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 {
                     if (flags.addr)
                     {
-                        value = Value(
+                        value =
                             ERROR_REJECTED("Address {} and port {} combination is not unique for inbound border agents",
-                                           iter->mAddr, iter->mPort));
+                                           iter->mAddr, iter->mPort);
                     }
                     else if (flags.name)
                     {
-                        value =
-                            Value(ERROR_REJECTED("Two inbound border agents have same XPAN '{}', but different network "
-                                                 "names ('{}' and '{}')",
-                                                 iter->mExtendedPanId, iter->mNetworkName, found->mNetworkName));
+                        value = ERROR_REJECTED("Two inbound border agents have same XPAN '{}', but different network "
+                                               "names ('{}' and '{}')",
+                                               iter->mExtendedPanId, iter->mNetworkName, found->mNetworkName);
                     }
                     else if (flags.domain)
                     {
@@ -1293,7 +1292,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                             "Two inbound border agents have same XPAN '{}', but different domain names ('{}' and '{}')",
                             iter->mExtendedPanId, iter->mDomainName, found->mDomainName);
                     }
-                    goto exit;
+                    ExitNow();
                 }
             }
         }
@@ -1303,9 +1302,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             auto status = mRegistry->Add(agent);
             if (status != RegistryStatus::kSuccess)
             {
-                value = ERROR_REGISTRY_ERROR("Insertion failure with border agent address {} and port {}", agent.mAddr,
-                                             agent.mPort);
-                goto exit;
+                ExitNow(value = ERROR_REGISTRY_ERROR("Insertion failure with border agent address {} and port {}",
+                                                     agent.mAddr, agent.mPort));
             }
         }
     }
@@ -1313,8 +1311,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     {
         if (aExpr.size() > 3 || (aExpr.size() == 3 && !(mContext.mNwkAliases.empty() && mContext.mDomAliases.empty())))
         {
-            value = Error(ErrorCode::kInvalidArgs, "Too many arguments for `br delete` command`");
-            goto exit;
+            ExitNow(value = ERROR_INVALID_ARGS("Too many arguments for `br delete` command`"));
         }
         else if (aExpr.size() == 3)
         {
@@ -1325,8 +1322,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 brId = BorderRouterId(std::stoi(aExpr[2]));
             } catch (...)
             {
-                value = ERROR_INVALID_ARGS("Failed to evaluate border router ID '{}'", aExpr[2]);
-                goto exit;
+                ExitNow(value = ERROR_INVALID_ARGS("Failed to evaluate border router ID '{}'", aExpr[2]));
             }
             auto status = mRegistry->DeleteBorderRouterById(brId);
             if (status == RegistryStatus::kRestricted)
