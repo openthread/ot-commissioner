@@ -32,62 +32,87 @@
  *
  */
 
-#include <catch2/catch.hpp>
-
 #include "app/commissioner_app.hpp"
+
+#include <gtest/gtest.h>
+
 #include "common/utils.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-TEST_CASE("pskd-validation", "[pskd]")
+TEST(PskdTest, Pskdvalidation_TooShortPskdShouldBeRejected)
 {
     Config config;
     config.mEnableCcm = false;
     config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
     std::shared_ptr<CommissionerApp> commApp;
-    REQUIRE(CommissionerAppCreate(commApp, config) == ErrorCode::kNone);
+    EXPECT_EQ(CommissionerAppCreate(commApp, config), ErrorCode::kNone);
 
     constexpr uint64_t eui64 = 0x0011223344556677;
 
-    SECTION("A PSKd shorter than 6 characters should be rejected")
-    {
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "00001") == ErrorCode::kInvalidArgs);
-    }
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "00001"), ErrorCode::kInvalidArgs);
+}
 
-    SECTION("A PSKd longer than 32 characters should be rejected")
-    {
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "000000000000000000000000000000001").GetCode() ==
-                ErrorCode::kInvalidArgs);
-    }
+TEST(PskdTest, Pskdvalidation_TooLongPskdShouldBeRejected)
+{
+    Config config;
+    config.mEnableCcm = false;
+    config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
-    SECTION("A PSKd including invalid characters should be rejected")
-    {
-        // Includes capital 'O' at the end.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "00000O") == ErrorCode::kInvalidArgs);
+    std::shared_ptr<CommissionerApp> commApp;
+    EXPECT_EQ(CommissionerAppCreate(commApp, config), ErrorCode::kNone);
 
-        // Includes capital 'I' at the end.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "11111I") == ErrorCode::kInvalidArgs);
+    constexpr uint64_t eui64 = 0x0011223344556677;
 
-        // Includes capital 'Q' at the end.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "99999Q") == ErrorCode::kInvalidArgs);
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "000000000000000000000000000000001").GetCode(),
+              ErrorCode::kInvalidArgs);
+}
 
-        // Includes capital 'Z' at the end.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "22222Z") == ErrorCode::kInvalidArgs);
+TEST(PskdTest, Pskdvalidation_PskdWithInvalidCharactersShouldBeRejected)
+{
+    Config config;
+    config.mEnableCcm = false;
+    config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
-        // Includes lowercase alphanumeric characters.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "abcedf") == ErrorCode::kInvalidArgs);
+    std::shared_ptr<CommissionerApp> commApp;
+    EXPECT_EQ(CommissionerAppCreate(commApp, config), ErrorCode::kNone);
 
-        // Includes non-alphanumeric characters.
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "+-#$%@") == ErrorCode::kInvalidArgs);
-    }
+    constexpr uint64_t eui64 = 0x0011223344556677;
 
-    SECTION("A compliant PSKd should be accepted and kInvalidState error is expected")
-    {
-        REQUIRE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "PSKD01") == ErrorCode::kInvalidState);
-    }
+    // Includes capital 'O' at the end.
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "00000O"), ErrorCode::kInvalidArgs);
+
+    // Includes capital 'I' at the end.
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "11111I"), ErrorCode::kInvalidArgs);
+
+    // Includes capital 'Q' at the end.
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "99999Q"), ErrorCode::kInvalidArgs);
+
+    // Includes capital 'Z' at the end.
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "22222Z"), ErrorCode::kInvalidArgs);
+
+    // Includes lowercase alphanumeric characters.
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "abcedf"), ErrorCode::kInvalidArgs);
+
+    // Includes non-alphanumeric characters.
+    EXPECT_EQ(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "+-#$%@"), ErrorCode::kInvalidArgs);
+}
+
+TEST(PskdTest, Pskdvalidation_GoodPskdShouldBeAccepted)
+{
+    Config config;
+    config.mEnableCcm = false;
+    config.mPSKc = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    std::shared_ptr<CommissionerApp> commApp;
+    EXPECT_EQ(CommissionerAppCreate(commApp, config), ErrorCode::kNone);
+
+    constexpr uint64_t eui64 = 0x0011223344556677;
+
+    EXPECT_NE(commApp->EnableJoiner(JoinerType::kMeshCoP, eui64, "PSKD01"), ErrorCode::kInvalidArgs);
 }
 
 } // namespace commissioner

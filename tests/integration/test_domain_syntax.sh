@@ -35,12 +35,14 @@ mdns_announce_add_th() {
     local ba_port
     ba_port="$(sudo "${OT_CTL}" ba port | grep -o '[0-9]\+')"
     sudo sed -i "s/49191/$ba_port/" /etc/avahi/services/border-agent.service
-    cat /etc/avahi/services/border-agent.service
+    sudo cat /etc/avahi/services/border-agent.service
     sleep 3
     start_border_agent_mdns_service
 
     send_command_to_commissioner "br scan --timeout 1000 --export /tmp/nwk.json"
     sed -i '/Addr/ s/^.*$/"Addr": "::1",/' /tmp/nwk.json
+
+    cat /tmp/nwk.json
 
     send_command_to_commissioner "br add /tmp/nwk.json"
     rm -f /tmp/nwk.json

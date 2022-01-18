@@ -35,11 +35,8 @@
 
 #include <gtest/gtest.h>
 
-#include "cli/console.hpp"
 #include "commissioner/network_data.hpp"
 #include "common/utils.hpp"
-
-#define INFO(str) Console::Write(str)
 
 namespace ot {
 
@@ -73,9 +70,8 @@ TEST(Json, ActiveOperationalDatasetEncodingDecoding)
 
         std::string              json = ActiveDatasetToJson(dataset);
         ActiveOperationalDataset dataset1;
-        INFO(json);
-        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
 
+        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
         EXPECT_TRUE((dataset1.mPresentFlags & ActiveOperationalDataset::kSecurityPolicyBit));
         EXPECT_EQ(dataset1.mSecurityPolicy.mFlags, kSecurityPolicyFlags);
     }
@@ -87,9 +83,8 @@ TEST(Json, ActiveOperationalDatasetEncodingDecoding)
 
         std::string              json = ActiveDatasetToJson(dataset);
         ActiveOperationalDataset dataset1;
-        INFO(json);
-        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
 
+        EXPECT_TRUE(ActiveDatasetFromJson(dataset1, json) == ErrorCode::kNone);
         EXPECT_TRUE((dataset1.mPresentFlags & ActiveOperationalDataset::kChannelMaskBit));
         EXPECT_TRUE(dataset1.mChannelMask.size() == 1);
         EXPECT_TRUE(dataset1.mChannelMask[0].mPage == 1);
@@ -125,7 +120,7 @@ TEST(Json, BorderAgentEncodingDecoding)
                             BorderAgent::kExtendedPanIdBit | BorderAgent::kStateBit};
 
     BorderAgentToJson(ba_orig, json);
-    INFO(json.dump(4));
+
     BorderAgentFromJson(new_val, json);
     EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kAddrBit) != 0);
     EXPECT_TRUE((new_val.mPresentFlags & BorderAgent::kPortBit) != 0);

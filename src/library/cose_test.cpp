@@ -35,9 +35,7 @@
 
 #include "library/cose.hpp"
 
-#include <catch2/catch.hpp>
-
-#include <mbedtls/base64.h>
+#include <gtest/gtest.h>
 
 #include "library/token_manager.hpp"
 
@@ -67,7 +65,7 @@ static const char kPrivateKey[] = "-----BEGIN PRIVATE KEY-----\r\n"
                                   "Xvr27euqi54WCMXJEMk6IIaPyFBNNw8bJvqXWfZ5g7t4hj7amsvqUST2\r\n"
                                   "-----END PRIVATE KEY-----\r\n";
 
-TEST_CASE("cose-sign-and-verify", "[cose]")
+TEST(CoseTest, CoseSignAndVerify_SignWithoutExternalData)
 {
     ByteArray content{1, 2, 3, 4, 5, 6};
     ByteArray externalData{6, 5, 4, 3, 2, 1};
@@ -78,94 +76,103 @@ TEST_CASE("cose-sign-and-verify", "[cose]")
     mbedtls_pk_init(&publicKey);
     mbedtls_pk_init(&privateKey);
 
-    REQUIRE(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}) ==
-            ErrorCode::kNone);
-    REQUIRE(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}) ==
-            ErrorCode::kNone);
+    EXPECT_EQ(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
+              ErrorCode::kNone);
+    EXPECT_EQ(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}),
+              ErrorCode::kNone);
 
-    SECTION("cose sign without external data")
-    {
-        ByteArray    signature;
-        Sign1Message msg;
+    ByteArray    signature;
+    Sign1Message msg;
 
-        REQUIRE(msg.Init(kInitFlagsNone) == ErrorCode::kNone);
-        REQUIRE(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly) == ErrorCode::kNone);
-        REQUIRE(msg.SetContent(content) == ErrorCode::kNone);
-        REQUIRE(msg.Sign(privateKey) == ErrorCode::kNone);
+    EXPECT_EQ(msg.Init(kInitFlagsNone), ErrorCode::kNone);
+    EXPECT_EQ(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly), ErrorCode::kNone);
+    EXPECT_EQ(msg.SetContent(content), ErrorCode::kNone);
+    EXPECT_EQ(msg.Sign(privateKey), ErrorCode::kNone);
 
-        REQUIRE(msg.Serialize(signature) == ErrorCode::kNone);
-        msg.Free();
+    EXPECT_EQ(msg.Serialize(signature), ErrorCode::kNone);
+    msg.Free();
 
-        REQUIRE(Sign1Message::Deserialize(msg, signature) == ErrorCode::kNone);
-        REQUIRE(msg.Validate(publicKey) == ErrorCode::kNone);
-    }
+    EXPECT_EQ(Sign1Message::Deserialize(msg, signature), ErrorCode::kNone);
+    EXPECT_EQ(msg.Validate(publicKey), ErrorCode::kNone);
+}
 
-    SECTION("cose sign with external data")
-    {
-        ByteArray    signature;
-        Sign1Message msg;
+TEST(CoseTest, CoseSignAndVerify_SignWithExternalData)
+{
+    ByteArray content{1, 2, 3, 4, 5, 6};
+    ByteArray externalData{6, 5, 4, 3, 2, 1};
 
-        REQUIRE(msg.Init(kInitFlagsNone) == ErrorCode::kNone);
-        REQUIRE(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly) == ErrorCode::kNone);
-        REQUIRE(msg.SetContent({}) == ErrorCode::kNone);
-        REQUIRE(msg.SetExternalData(externalData) == ErrorCode::kNone);
-        REQUIRE(msg.Sign(privateKey) == ErrorCode::kNone);
+    mbedtls_pk_context publicKey;
+    mbedtls_pk_context privateKey;
 
-        REQUIRE(msg.Serialize(signature) == ErrorCode::kNone);
-        msg.Free();
+    mbedtls_pk_init(&publicKey);
+    mbedtls_pk_init(&privateKey);
 
-        REQUIRE(Sign1Message::Deserialize(msg, signature) == ErrorCode::kNone);
-        REQUIRE(msg.SetExternalData(externalData) == ErrorCode::kNone);
-        REQUIRE(msg.Validate(publicKey) == ErrorCode::kNone);
-    }
+    EXPECT_EQ(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
+              ErrorCode::kNone);
+    EXPECT_EQ(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}),
+              ErrorCode::kNone);
 
-    SECTION("cose key construction")
-    {
-        ByteArray keyId = {};
-        ByteArray encodedCoseKey;
-        CborMap   coseKey;
+    ByteArray    signature;
+    Sign1Message msg;
 
-        REQUIRE(MakeCoseKey(encodedCoseKey, publicKey, keyId) == ErrorCode::kNone);
-        REQUIRE(CborMap::Deserialize(coseKey, &encodedCoseKey[0], encodedCoseKey.size()) == ErrorCode::kNone);
+    EXPECT_EQ(msg.Init(kInitFlagsNone), ErrorCode::kNone);
+    EXPECT_EQ(msg.AddAttribute(kHeaderAlgorithm, kAlgEcdsaWithSha256, kProtectOnly), ErrorCode::kNone);
+    EXPECT_EQ(msg.SetContent({}), ErrorCode::kNone);
+    EXPECT_EQ(msg.SetExternalData(externalData), ErrorCode::kNone);
+    EXPECT_EQ(msg.Sign(privateKey), ErrorCode::kNone);
 
-        uint8_t buf[1024];
-        size_t  bufLength = 0;
-        REQUIRE(coseKey.Serialize(buf, bufLength, sizeof(buf)) == ErrorCode::kNone);
+    EXPECT_EQ(msg.Serialize(signature), ErrorCode::kNone);
+    msg.Free();
 
-        int keyType = 0;
-        REQUIRE(coseKey.Get(cose::kKeyType, keyType) == ErrorCode::kNone);
-        REQUIRE(keyType == cose::kKeyTypeEC2);
+    EXPECT_EQ(Sign1Message::Deserialize(msg, signature), ErrorCode::kNone);
+    EXPECT_EQ(msg.SetExternalData(externalData), ErrorCode::kNone);
+    EXPECT_EQ(msg.Validate(publicKey), ErrorCode::kNone);
+}
 
-        int ec2Curve = 0;
-        REQUIRE(coseKey.Get(cose::kKeyEC2Curve, ec2Curve) == ErrorCode::kNone);
-        REQUIRE(ec2Curve == cose::kKeyEC2CurveP256);
+TEST(CoseTest, CoseSignAndVerify_KeyConstruction)
+{
+    ByteArray content{1, 2, 3, 4, 5, 6};
+    ByteArray externalData{6, 5, 4, 3, 2, 1};
 
-        const uint8_t *x;
-        size_t         xlen;
-        REQUIRE(coseKey.Get(cose::kKeyEC2X, x, xlen) == ErrorCode::kNone);
-        INFO(utils::Hex(ByteArray{x, x + xlen}));
-        INFO(xlen);
+    mbedtls_pk_context publicKey;
+    mbedtls_pk_context privateKey;
 
-        uint8_t dump[1024];
-        size_t  len;
-        REQUIRE(mbedtls_base64_encode(dump, sizeof(dump), &len, x, xlen) == 0);
+    mbedtls_pk_init(&publicKey);
+    mbedtls_pk_init(&privateKey);
 
-        INFO(std::string(dump, dump + len));
+    EXPECT_EQ(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
+              ErrorCode::kNone);
+    EXPECT_EQ(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}),
+              ErrorCode::kNone);
 
-        const uint8_t *y;
-        size_t         ylen;
-        REQUIRE(coseKey.Get(cose::kKeyEC2Y, y, ylen) == ErrorCode::kNone);
-        INFO(utils::Hex(ByteArray{y, y + ylen}));
-        INFO(ylen);
+    ByteArray keyId = {};
+    ByteArray encodedCoseKey;
+    CborMap   coseKey;
 
-        REQUIRE(mbedtls_base64_encode(dump, sizeof(dump), &len, y, ylen) == 0);
+    EXPECT_EQ(MakeCoseKey(encodedCoseKey, publicKey, keyId), ErrorCode::kNone);
+    EXPECT_EQ(CborMap::Deserialize(coseKey, &encodedCoseKey[0], encodedCoseKey.size()), ErrorCode::kNone);
 
-        INFO(std::string(dump, dump + len));
+    uint8_t buf[1024];
+    size_t  bufLength = 0;
+    EXPECT_EQ(coseKey.Serialize(buf, bufLength, sizeof(buf)), ErrorCode::kNone);
 
-        INFO(utils::Hex(ByteArray{buf, buf + bufLength}));
+    int keyType = 0;
+    EXPECT_EQ(coseKey.Get(cose::kKeyType, keyType), ErrorCode::kNone);
+    EXPECT_EQ(keyType, cose::kKeyTypeEC2);
 
-        coseKey.Free();
-    }
+    int ec2Curve = 0;
+    EXPECT_EQ(coseKey.Get(cose::kKeyEC2Curve, ec2Curve), ErrorCode::kNone);
+    EXPECT_EQ(ec2Curve, cose::kKeyEC2CurveP256);
+
+    const uint8_t *x;
+    size_t         xlen;
+    EXPECT_EQ(coseKey.Get(cose::kKeyEC2X, x, xlen), ErrorCode::kNone);
+
+    const uint8_t *y;
+    size_t         ylen;
+    EXPECT_EQ(coseKey.Get(cose::kKeyEC2Y, y, ylen), ErrorCode::kNone);
+
+    coseKey.Free();
 }
 
 } // namespace cose

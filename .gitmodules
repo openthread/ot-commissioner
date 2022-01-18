@@ -2,10 +2,6 @@
 	path = third_party/mbedtls/repo
 	url = https://github.com/ARMmbed/mbedtls.git
 	branch = master
-[submodule "third_party/Catch2/repo"]
-	path = third_party/Catch2/repo
-	url = https://github.com/catchorg/Catch2.git
-	branch = master
 [submodule "third_party/json/repo"]
 	path = third_party/json/repo
 	url = https://github.com/nlohmann/json.git

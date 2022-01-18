@@ -76,19 +76,6 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 if (OT_COMM_TEST)
-    add_library(commissioner-app-test OBJECT
-        commissioner_app.hpp
-        commissioner_app_test.cpp
-    )
-
-    target_include_directories(commissioner-app-test
-        PRIVATE
-            ${PROJECT_SOURCE_DIR}/include
-            ${PROJECT_SOURCE_DIR}/src
-            ${PROJECT_SOURCE_DIR}/third_party/Catch2/repo/single_include
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
-    )
-
     add_library(ut-gtest-main OBJECT cli/gmock_main.cpp)
 
     target_include_directories(ut-gtest-main
@@ -96,9 +83,10 @@ if (OT_COMM_TEST)
             ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
     )
 
-    add_executable(commissioner2-test
+    add_executable(commissioner-app-test
         $<TARGET_OBJECTS:ut-gtest-main>
         cli/console.cpp
+        commissioner_app_test.cpp
         file_util.cpp
         file_util_test.cpp
         json_test.cpp
@@ -113,7 +101,7 @@ if (OT_COMM_TEST)
         $<TARGET_OBJECTS:commissioner-ps-test>
     )
 
-    target_link_libraries(commissioner2-test
+    target_link_libraries(commissioner-app-test
         fmt::fmt
         gtest
         mdns
@@ -121,11 +109,11 @@ if (OT_COMM_TEST)
         readline
     )
 
-    set_target_properties(commissioner2-test
+    set_target_properties(commissioner-app-test
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
     )
 
-    target_include_directories(commissioner2-test
+    target_include_directories(commissioner-app-test
         PRIVATE
             ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/src

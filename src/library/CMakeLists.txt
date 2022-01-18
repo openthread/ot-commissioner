@@ -159,25 +159,22 @@ if (OT_COMM_TEST)
         socket_test.cpp
         token_manager.hpp
         token_manager_test.cpp
-        $<$<BOOL:${OT_COMM_APP}>:$<TARGET_OBJECTS:commissioner-app-test>>
         $<TARGET_OBJECTS:commissioner-common-test>
     )
 
     target_link_libraries(commissioner-test
         PRIVATE
-            Catch2::Catch2
+            commissioner
+            commissioner-common
             $<$<BOOL:${OT_COMM_CCM}>:cn-cbor::cn-cbor>
             $<$<BOOL:${OT_COMM_CCM}>:cose>
             mbedtls
             mbedx509
             mbedcrypto
-            fmt::fmt
             event_core
             event_pthreads
-            commissioner
-            $<$<BOOL:${OT_COMM_APP}>:commissioner-app>
-            commissioner-common
-            persistent-storage
+            gtest
+            gtest_main
     )
 
     target_compile_definitions(commissioner-test

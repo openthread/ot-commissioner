@@ -33,7 +33,7 @@
 
 #include "library/coap_secure.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 namespace ot {
 
@@ -106,7 +106,7 @@ static const std::string kServerKey = "-----BEGIN PRIVATE KEY-----\r\n"
 static const char *       kServerAddr = "::";
 static constexpr uint16_t kServerPort = 5683;
 
-TEST_CASE("coap-secure-basic", "[coaps]")
+TEST(CoapsTest, CoapsClientServerHello)
 {
     DtlsConfig config;
 
@@ -120,27 +120,27 @@ TEST_CASE("coap-secure-basic", "[coaps]")
     config.mOwnKey.push_back(0);
 
     auto eventBase = event_base_new();
-    REQUIRE(eventBase != nullptr);
+    ASSERT_NE(eventBase, nullptr);
 
     CoapSecure coapsServer{eventBase, true};
     Resource   resHello{"/hello", [&coapsServer](const Request &aRequest) {
-                          REQUIRE(aRequest.GetType() == Type::kConfirmable);
-                          REQUIRE(aRequest.GetCode() == Code::kPost);
+                          EXPECT_EQ(aRequest.GetType(), Type::kConfirmable);
+                          EXPECT_EQ(aRequest.GetCode(), Code::kPost);
 
                           Response response{Type::kAcknowledgment, Code::kChanged};
                           response.Append("world");
-                          REQUIRE(coapsServer.SendResponse(aRequest, response) == ErrorCode::kNone);
+                          EXPECT_EQ(coapsServer.SendResponse(aRequest, response), ErrorCode::kNone);
                       }};
-    REQUIRE(coapsServer.AddResource(resHello) == ErrorCode::kNone);
+    EXPECT_EQ(coapsServer.AddResource(resHello), ErrorCode::kNone);
 
     auto onServerConnected = [&coapsServer](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError == ErrorCode::kNone);
-        REQUIRE(&aSession == &coapsServer.GetDtlsSession());
-        REQUIRE(aSession.GetLocalPort() == kServerPort);
+        EXPECT_EQ(aError, ErrorCode::kNone);
+        EXPECT_EQ(&aSession, &coapsServer.GetDtlsSession());
+        EXPECT_EQ(aSession.GetLocalPort(), kServerPort);
     };
 
-    REQUIRE(coapsServer.Init(config) == ErrorCode::kNone);
-    REQUIRE(coapsServer.Start(onServerConnected, kServerAddr, kServerPort) == ErrorCode::kNone);
+    EXPECT_EQ(coapsServer.Init(config), ErrorCode::kNone);
+    EXPECT_EQ(coapsServer.Start(onServerConnected, kServerAddr, kServerPort), ErrorCode::kNone);
 
     // Setup coap secure client
     config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
@@ -152,21 +152,19 @@ TEST_CASE("coap-secure-basic", "[coaps]")
     config.mOwnKey.push_back(0);
 
     CoapSecure coapsClient{eventBase, false};
-    REQUIRE(coapsClient.Init(config) == ErrorCode::kNone);
+    EXPECT_EQ(coapsClient.Init(config), ErrorCode::kNone);
     auto onClientConnected = [&coapsClient, eventBase](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError == ErrorCode::kNone);
-        REQUIRE(aSession.GetPeerPort() == kServerPort);
+        EXPECT_EQ(aError, ErrorCode::kNone);
+        EXPECT_EQ(aSession.GetPeerPort(), kServerPort);
 
         Request request{Type::kConfirmable, Code::kPost};
-        REQUIRE(request.SetUriPath("/hello") == ErrorCode::kNone);
+        EXPECT_EQ(request.SetUriPath("/hello"), ErrorCode::kNone);
         auto onResponse = [eventBase](const Response *aResponse, Error aError) {
-            REQUIRE(aError == ErrorCode::kNone);
-            REQUIRE(aResponse != nullptr);
-            REQUIRE(aResponse->GetType() == Type::kAcknowledgment);
-            REQUIRE(aResponse->GetCode() == Code::kChanged);
-
-            auto payload = aResponse->GetPayload();
-            REQUIRE(std::string{payload.begin(), payload.end()} == "world");
+            EXPECT_EQ(aError, ErrorCode::kNone);
+            EXPECT_NE(aResponse, nullptr);
+            EXPECT_EQ(aResponse->GetType(), Type::kAcknowledgment);
+            EXPECT_EQ(aResponse->GetCode(), Code::kChanged);
+            EXPECT_EQ(aResponse->GetPayloadAsString(), "world");
 
             event_base_loopbreak(eventBase);
         };
@@ -174,7 +172,7 @@ TEST_CASE("coap-secure-basic", "[coaps]")
     };
     coapsClient.Connect(onClientConnected, kServerAddr, kServerPort);
 
-    REQUIRE(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY) == 0);
+    EXPECT_EQ(event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY), 0);
     event_base_free(eventBase);
 }
 

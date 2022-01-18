@@ -33,7 +33,7 @@
 
 #include "library/dtls.hpp"
 
-#include <catch2/catch.hpp>
+#include <gtest/gtest.h>
 
 #include "library/coap.hpp"
 
@@ -106,7 +106,7 @@ static const std::string kServerKey = "-----BEGIN PRIVATE KEY-----\r\n"
 static const char *       kServerAddr = "::";
 static constexpr uint16_t kServerPort = 5683;
 
-TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
+TEST(DtlsTest, MbedtlsClientServer)
 {
     const ByteArray kHello{'h', 'e', 'l', 'l', 'o'};
 
@@ -122,23 +122,23 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     config.mOwnKey.push_back(0);
 
     auto eventBase = event_base_new();
-    REQUIRE(eventBase != nullptr);
+    ASSERT_NE(eventBase, nullptr);
 
     auto serverSocket = std::make_shared<UdpSocket>(eventBase);
-    REQUIRE(serverSocket->Bind(kServerAddr, kServerPort) == 0);
-    DtlsSession dtlsServer{eventBase, true, serverSocket};
+    EXPECT_EQ(serverSocket->Bind(kServerAddr, kServerPort), 0);
 
-    REQUIRE(dtlsServer.Init(config) == ErrorCode::kNone);
+    DtlsSession dtlsServer{eventBase, true, serverSocket};
+    EXPECT_EQ(dtlsServer.Init(config), ErrorCode::kNone);
 
     dtlsServer.SetReceiver([&kHello, eventBase](Endpoint &, const ByteArray &aBuf) {
-        REQUIRE(aBuf == kHello);
+        EXPECT_EQ(aBuf, kHello);
 
         event_base_loopbreak(eventBase);
     });
 
     auto serverConnected = [](const DtlsSession &aSession, Error aError) {
-        REQUIRE(aError == ErrorCode::kNone);
-        REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
+        EXPECT_EQ(aError, ErrorCode::kNone);
+        EXPECT_EQ(aSession.GetState(), DtlsSession::State::kConnected);
     };
     dtlsServer.Connect(serverConnected);
 
@@ -152,21 +152,20 @@ TEST_CASE("dtls-mbedtls-client-server", "[dtls]")
     config.mOwnKey.push_back(0);
 
     auto clientSocket = std::make_shared<UdpSocket>(eventBase);
-    REQUIRE(clientSocket->Connect(kServerAddr, kServerPort) == 0);
-    DtlsSession dtlsClient{eventBase, false, clientSocket};
+    EXPECT_EQ(clientSocket->Connect(kServerAddr, kServerPort), 0);
 
-    REQUIRE(dtlsClient.Init(config) == ErrorCode::kNone);
+    DtlsSession dtlsClient{eventBase, false, clientSocket};
+    EXPECT_EQ(dtlsClient.Init(config), ErrorCode::kNone);
 
     auto clientConnected = [&kHello](DtlsSession &aSession, Error aError) {
-        REQUIRE(aError == ErrorCode::kNone);
-        REQUIRE(aSession.GetState() == DtlsSession::State::kConnected);
-
-        REQUIRE(aSession.Send(kHello, MessageSubType::kNone) == ErrorCode::kNone);
+        EXPECT_EQ(aError, ErrorCode::kNone);
+        EXPECT_EQ(aSession.GetState(), DtlsSession::State::kConnected);
+        EXPECT_EQ(aSession.Send(kHello, MessageSubType::kNone), ErrorCode::kNone);
     };
     dtlsClient.Connect(clientConnected);
 
     int fail = event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY);
-    REQUIRE(fail == 0);
+    ASSERT_EQ(fail, 0);
     event_base_free(eventBase);
 }
 

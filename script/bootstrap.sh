@@ -138,7 +138,6 @@ if [ "${WITH_CCM}" = "1" ]; then
     git submodule update --init --recursive --depth=1 --progress
 else
     git submodule update --init --recursive --depth=1 --progress -- third_party/mbedtls/repo
-    git submodule update --init --recursive --depth=1 --progress -- third_party/Catch2/repo
     git submodule update --init --recursive --depth=1 --progress -- third_party/json/repo
     git submodule update --init --recursive --depth=1 --progress -- third_party/libevent/repo
     git submodule update --init --recursive --depth=1 --progress -- third_party/mdns/repo
