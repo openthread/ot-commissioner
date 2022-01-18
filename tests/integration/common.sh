@@ -66,7 +66,7 @@ readonly NETWORK_NAME=openthread-test
 readonly CHANNEL=19
 readonly PANID=0xface
 readonly XPANID=dead00beef00cafe
-readonly MASTERKEY=00112233445566778899aabbccddeeff
+readonly NETWORK_KEY=00112233445566778899aabbccddeeff
 readonly PSKC=3aa55f91ca47d1e4e71a08cb35e91591
 
 die() {
@@ -223,7 +223,7 @@ form_network() {
     sudo "${OT_CTL}" panid "${PANID}"
     sudo "${OT_CTL}" extpanid "${XPANID}"
     sudo "${OT_CTL}" pskc "${pskc}"
-    sudo "${OT_CTL}" masterkey "${MASTERKEY}"
+    sudo "${OT_CTL}" networkkey "${NETWORK_KEY}"
     sudo "${OT_CTL}" ifconfig up
     sudo "${OT_CTL}" thread start
 
