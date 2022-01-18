@@ -642,11 +642,7 @@ Registry::Status Registry::DeleteBorderRouterById(const BorderRouterId aRouterId
         {
             pred.mNetworkId = brNetwork.mId;
             VerifyOrExit((status = MapStatus(mStorage->Lookup(pred, routers))) == Registry::Status::kSuccess);
-            if (routers.size() <= 1)
-            {
-                status = Registry::Status::kRestricted;
-                goto exit;
-            }
+            VerifyOrExit(routers.size() > 1, status = Registry::Status::kRestricted);
         }
     }
 
@@ -702,11 +698,7 @@ Registry::Status Registry::DeleteBorderRoutersInNetworks(const StringArray &aAli
     {
         auto found =
             std::find_if(nwks.begin(), nwks.end(), [&](const Network &a) { return a.mId.mId == current.mId.mId; });
-        if (found != nwks.end())
-        {
-            status = Registry::Status::kRestricted;
-            goto exit;
-        }
+        VerifyOrExit(found == nwks.end(), status = Registry::Status::kRestricted);
     }
 
     for (const auto &nwk : nwks)
@@ -761,11 +753,7 @@ Registry::Status Registry::DeleteBorderRoutersInDomain(const std::string &aDomai
 
     dom.mName = aDomainName;
     VerifyOrExit((status = MapStatus(mStorage->Lookup(dom, doms))) == Registry::Status::kSuccess);
-    if (doms.size() != 1)
-    {
-        status = Registry::Status::kError;
-        goto exit;
-    }
+    VerifyOrExit(doms.size() == 1, status = Registry::Status::kError);
 
     VerifyOrExit((status = GetCurrentNetwork(current)) == Registry::Status::kSuccess);
     if (current.mDomainId.mId != EMPTY_ID)
@@ -773,32 +761,18 @@ Registry::Status Registry::DeleteBorderRoutersInDomain(const std::string &aDomai
         Domain currentDomain;
         VerifyOrExit((status = MapStatus(mStorage->Get(current.mDomainId, currentDomain))) ==
                      Registry::Status::kSuccess);
-
-        if (currentDomain.mName == aDomainName)
-        {
-            status = Registry::Status::kRestricted;
-            goto exit;
-        }
+        VerifyOrExit(currentDomain.mName != aDomainName, status = Registry::Status::kRestricted);
     }
 
     VerifyOrExit((status = GetNetworkXpansInDomain(aDomainName, xpans)) == Registry::Status::kSuccess);
-    if (xpans.empty())
-    {
-        // Domain is already empty
-        status = MapStatus(mStorage->Del(doms[0].mId));
-        goto exit;
-    }
+    VerifyOrExit(!xpans.empty(), status = MapStatus(mStorage->Del(doms[0].mId)));
 
     for (auto &&xpan : xpans)
     {
         aAliases.push_back(XpanId(xpan).str());
     }
     VerifyOrExit((status = DeleteBorderRoutersInNetworks(aAliases, aUnresolved)) == Registry::Status::kSuccess);
-    if (!aUnresolved.empty())
-    {
-        status = Registry::Status::kAmbiguity;
-        goto exit;
-    }
+    VerifyOrExit(aUnresolved.empty(), status = Registry::Status::kAmbiguity);
     // Domain will be deleted
 exit:
     return status;
