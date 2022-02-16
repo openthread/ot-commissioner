@@ -166,6 +166,8 @@ class OTCommissioner(ICommissioner):
         return OTCommissioner(config, serial_handler)
 
     def start(self, borderAgentAddr, borderAgentPort):
+        self._command(f'sudo rm {self.log_file}')
+        self._command(f'sudo touch {self.log_file}')
         self._execute_and_check('start {} {}'.format(
             borderAgentAddr,
             borderAgentPort,
