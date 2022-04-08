@@ -88,7 +88,7 @@ start_daemon() {
     sudo rm -rf ${OT_DAEMON_SETTINGS_PATH}
     sudo "${OT_DAEMON}" -Iwpan0 -d7 -v "spinel+hdlc+uart://${NON_CCM_RCP}?forkpty-arg=1" > "${OT_DAEMON_LOG}" 2>&1 &
 
-    sleep 10
+    sleep 15
 
     pidof ot-daemon || die "Failed to start ot-daemon"
 }
@@ -227,7 +227,7 @@ form_network() {
     sudo "${OT_CTL}" ifconfig up
     sudo "${OT_CTL}" thread start
 
-    sleep 3
+    sleep 10
 
     ot_ctl state
 }
