@@ -44,7 +44,7 @@ send "pskc ${PSKC}\r\n"
 expect "Done"
 send "thread start\r\n"
 expect "Done"
-sleep 3
+sleep 10
 send "state\r\n"
 expect "leader"
 expect "Done"
@@ -66,7 +66,7 @@ stop_leader() {
 test_native_commissioner() {
     set -x
     start_leader
-    sleep 6
+    sleep 15
 
     ba_lla=$(grep -A+1 'ipaddr linklocal' "${LEADER_OUTPUT}" | tail -n1 | tr -d '\r\n')
     ba_port=$(grep -A+1 'ba port' "${LEADER_OUTPUT}" | tail -n1 | tr -d '\r\n')
