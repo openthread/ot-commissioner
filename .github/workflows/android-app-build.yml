@@ -37,7 +37,7 @@ jobs:
       matrix:
         android-api: [24]
         android-abi: [x86, x86_64]
-        os: [macos-10.15, ubuntu-20.04]
+        os: [macos-12, ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
