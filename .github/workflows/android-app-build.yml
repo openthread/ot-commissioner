@@ -37,7 +37,7 @@ jobs:
       matrix:
         android-api: [24]
         android-abi: [x86, x86_64]
-        os: [macos-10.15, ubuntu-20.04]
+        os: [macos-12, ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -46,7 +46,7 @@ jobs:
       - name: Build
         run: |
           cd android
-          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle ./build-commissioner-libs.sh
+          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "24.*") ./build-commissioner-libs.sh
           cd openthread_commissioner
           ./gradlew build
       - name: Tests
