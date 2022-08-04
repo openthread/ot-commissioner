@@ -126,7 +126,7 @@ jobs:
           ./tests/interpreter-test
 
   macos:
-    runs-on: macos-10.15
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
@@ -161,7 +161,7 @@ jobs:
         run: |
           mkdir build && cd build
           cmake -GNinja                                                                             \
-                -DCMAKE_TOOLCHAIN_FILE=$ANDROID_HOME/ndk-bundle/build/cmake/android.toolchain.cmake \
+                -DCMAKE_TOOLCHAIN_FILE=$(find $ANDROID_HOME/ndk -name "24.*")/build/cmake/android.toolchain.cmake \
                 -DANDROID_ABI="armeabi-v7a"                                                         \
                 -DANDROID_ARM_NEON=ON                                                               \
                 -DANDROID_NATIVE_API_LEVEL=21                                                       \
@@ -177,7 +177,7 @@ jobs:
           ninja
 
   java-binding:
-    runs-on: macos-10.15
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v2
       - name: Bootstrap
