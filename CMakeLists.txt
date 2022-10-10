@@ -51,7 +51,7 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # `pthread` is already included in Android glibc implementation (`bionic`),
-# so there is no necessary to find the thread libs separately.
+# so it is not necessary to find the thread libs separately.
 if (ANDROID)
     set (CMAKE_THREAD_LIBS_INIT 1)
 endif()
