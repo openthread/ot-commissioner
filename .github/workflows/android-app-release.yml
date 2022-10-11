@@ -37,7 +37,7 @@ jobs:
   build-release:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Check Release Version
         id: check_release_version
         run: |
