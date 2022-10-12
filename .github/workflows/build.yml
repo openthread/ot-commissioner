@@ -43,7 +43,7 @@ jobs:
   pretty:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           sudo apt update
@@ -60,7 +60,7 @@ jobs:
       matrix:
         gcc_ver: [5, 6, 7, 8, 9, 10]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install CMake 3.10.1
         run: |
           wget https://cmake.org/files/v3.10/cmake-3.10.1.zip
@@ -101,7 +101,7 @@ jobs:
         clang_ver: [5, 6, 7, 8, 9, 10, 11]
         build_type: ["Debug", "Release"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           script/bootstrap.sh
@@ -128,7 +128,7 @@ jobs:
   macos:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           script/bootstrap.sh
@@ -153,7 +153,7 @@ jobs:
   android-ndk:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           script/bootstrap.sh
@@ -166,7 +166,7 @@ jobs:
   java-binding:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           script/bootstrap.sh
@@ -186,7 +186,7 @@ jobs:
   fmt-format-check:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           script/bootstrap.sh
