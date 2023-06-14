@@ -68,6 +68,9 @@ readonly PANID=0xface
 readonly XPANID=dead00beef00cafe
 readonly NETWORK_KEY=00112233445566778899aabbccddeeff
 readonly PSKC=3aa55f91ca47d1e4e71a08cb35e91591
+readonly CHANNEL_MASK=0x07fff800
+readonly SECURITY_POLICY=(672 onrc)
+readonly MESH_LOCAL_PREFIX="fd00:db8::"
 
 die() {
   echo " *** ERROR: " "$@"
@@ -218,12 +221,18 @@ ot_ctl() {
 form_network() {
     local pskc=$1
 
-    sudo "${OT_CTL}" channel "${CHANNEL}"
-    sudo "${OT_CTL}" networkname "${NETWORK_NAME}"
-    sudo "${OT_CTL}" panid "${PANID}"
-    sudo "${OT_CTL}" extpanid "${XPANID}"
-    sudo "${OT_CTL}" pskc "${pskc}"
-    sudo "${OT_CTL}" networkkey "${NETWORK_KEY}"
+    sudo "${OT_CTL}" dataset clear
+    sudo "${OT_CTL}" dataset activetimestamp 1
+    sudo "${OT_CTL}" dataset channel "${CHANNEL}"
+    sudo "${OT_CTL}" dataset channelmask "${CHANNEL_MASK}"
+    sudo "${OT_CTL}" dataset extpanid "${XPANID}"
+    sudo "${OT_CTL}" dataset meshlocalprefix "${MESH_LOCAL_PREFIX}"
+    sudo "${OT_CTL}" dataset networkkey "${NETWORK_KEY}"
+    sudo "${OT_CTL}" dataset networkname "${NETWORK_NAME}"
+    sudo "${OT_CTL}" dataset panid "${PANID}"
+    sudo "${OT_CTL}" dataset pskc "${pskc}"
+    sudo "${OT_CTL}" dataset securitypolicy "${SECURITY_POLICY[@]}"
+    sudo "${OT_CTL}" dataset commit active
     sudo "${OT_CTL}" ifconfig up
     sudo "${OT_CTL}" thread start
 
