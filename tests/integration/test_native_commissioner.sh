@@ -36,11 +36,17 @@ start_leader() {
 spawn ${NON_CCM_CLI} 9
 send "factoryreset\r\n"
 sleep 1
-send "panid 0xface\r\n"
+send "dataset init new\r\n"
+expect "Done"
+send "dataset channel 11\r\n"
+expect "Done"
+send "dataset panid 0xface\r\n"
+expect "Done"
+send "dataset pskc ${PSKC}\r\n"
+expect "Done"
+send "dataset commit active\r\n"
 expect "Done"
 send "ifconfig up\r\n"
-expect "Done"
-send "pskc ${PSKC}\r\n"
 expect "Done"
 send "thread start\r\n"
 expect "Done"
@@ -74,8 +80,9 @@ test_native_commissioner() {
     # Thread of the daemon node is disabled so that the daemon transmits un-secure
     # 15.4 frames to the Border Agent node on behalf of the commissioner.
     start_daemon
-    ot_ctl ifconfig up
+    ot_ctl channel 11
     ot_ctl panid 0xface
+    ot_ctl ifconfig up
 
     start_commissioner "${NON_CCM_CONFIG}"
 
