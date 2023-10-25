@@ -673,7 +673,7 @@ panid conflict <panid>
 >
 ```
 
-### Reenoll
+### Reenroll
 
 To command a Thread device to perform MGMT reenrollment, use the `reenroll` command:
 
