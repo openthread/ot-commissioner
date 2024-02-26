@@ -197,7 +197,9 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
-    {"config", "config get pskc\n"
+    {"config", "config get epskc\n"
+               "config set epskc <human-readable-utf8-string>\n"
+               "config get pskc\n"
                "config set pskc <pskc-hex-string>"},
     {"start", "start <border-agent-addr> <border-agent-port>\n"
               "start [ --nwk <network-alias-list | --dom <domain-alias>]"},
@@ -912,9 +914,15 @@ Interpreter::Value Interpreter::ProcessConfig(const Expression &aExpr)
     Value value;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
-    VerifyOrExit(aExpr[2] == "pskc", value = ERROR_INVALID_ARGS("{} is not a valid property", aExpr[2]));
+    VerifyOrExit(aExpr[2] == "pskc" || aExpr[2] == "epskc",
+                 value = ERROR_INVALID_ARGS("{} is not a valid property", aExpr[2]));
     if (aExpr[1] == "get")
     {
+        if (aExpr[2] == "epskc")
+        {
+            ExitNow(value = mEphemeralPSKc);
+        }
+
         value = mJobManager->GetDefaultConfigPSKc();
     }
     else if (aExpr[1] == "set")
@@ -922,7 +930,19 @@ Interpreter::Value Interpreter::ProcessConfig(const Expression &aExpr)
         ByteArray pskc;
 
         VerifyOrExit(aExpr.size() >= 4, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
-        SuccessOrExit(value = utils::Hex(pskc, aExpr[3]));
+        if (aExpr[2] == "epskc")
+        {
+            mEphemeralPSKc = aExpr[3];
+
+            for (char c : mEphemeralPSKc)
+            {
+                pskc.push_back(static_cast<uint8_t>(c));
+            }
+        }
+        else
+        {
+            SuccessOrExit(value = utils::Hex(pskc, aExpr[3]));
+        }
         SuccessOrExit(value = mJobManager->UpdateDefaultConfigPSKc(pskc));
     }
     else
