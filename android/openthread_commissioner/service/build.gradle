@@ -31,14 +31,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.1"
+    compileSdkVersion 34
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 30
-        versionCode 1
-        versionName "0.0.1"
+        targetSdkVersion 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -54,11 +51,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'io.openthread.commissioner.service'
 }
 
 // This is for the local tests (src/test) to find the native libraries.
 tasks.withType(Test) {
     systemProperty "java.library.path", "/usr/local/lib"
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.test:core:1.5.0'
+    }
 }
 
 dependencies {
@@ -72,9 +76,9 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.2'
     implementation 'androidx.navigation:navigation-fragment:2.3.0'
-    implementation 'com.google.android.gms:play-services-vision:9.4.0+'
+    implementation 'com.google.android.gms:play-services-vision:20.1.3+'
     implementation 'com.google.android.material:material:1.2.1'
     testImplementation 'junit:junit:4.+'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
 }
