@@ -38,6 +38,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # Eclipse Temurin JDK
+          java-version: '17'
       - name: Check Release Version
         id: check_release_version
         run: |
