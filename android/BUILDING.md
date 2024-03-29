@@ -6,6 +6,7 @@ This document describes how to build the OT Commissioner Android App.
 
 - macOS or Linux computer.
 - Install latest Android Studio from [here](https://developer.android.com/studio).
+- Install Android NDK by following https://developer.android.com/studio/projects/install-ndk#default-version.
 
 ## Bootstrap
 
@@ -18,12 +19,15 @@ This document describes how to build the OT Commissioner Android App.
 The Commissioner Android App is built on top of the native OT Commissioner library. Run the `build-commissioner-libs.sh` script in this directory to build the required libraries:
 
 ```shell
-ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$HOME/Library/Android/sdk/ndk-bundle ./build-commissioner-libs.sh
+ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$HOME/Android/Sdk/ndk/26.2.11394342 ./build-commissioner-libs.sh
 ```
 
-This script creates a build directory (`.build-${ANDROID_ABI}`) in the current directory and copies generated libraries into target sub-folders in `openthread_commissioner`.
+> Note:
+>
+> 1.  You need to set `ANDROID_ABI` to the ABI of your phone. This value can be retrived using the command `adb shell getprop ro.product.cpu.abi` after connecting the phone to your computer.
+> 2.  You need to set `ANDROID_NDK_HOME` to your Android NDK directory. This is typically `$HOME/Android/sdk/ndk/xx.x.xxxxx` (where `xx.x.xxxxx` is the NDK version) on Linux and Mac OS or `$HOME/Android/sdk/ndk-bundle` on older OS versions.
 
-> Note: you need to set env `ANDROID_ABI` to the ABI of your phone. This value can be got with command `adb shell getprop ro.product.cpu.abi` after connecting the phone to your computer.
+This script creates a build directory (`.build-${ANDROID_ABI}`) in the current directory and copies generated libraries into target sub-folders in `openthread_commissioner`.
 
 ## Build the App with Android Studio
 
