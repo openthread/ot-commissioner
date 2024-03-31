@@ -31,6 +31,12 @@
  *   This file implements wrapper of mbedtls.
  */
 
+// Private fields in mbedtls structs are not stable API after 3.x.
+// Enabling this flag to allow us continue accessing those fields.
+#ifndef MBEDTLS_ALLOW_PRIVATE_ACCESS
+#define MBEDTLS_ALLOW_PRIVATE_ACCESS
+#endif
+
 #include "library/dtls.hpp"
 
 #include <mbedtls/debug.h>
@@ -48,7 +54,7 @@ namespace ot {
 namespace commissioner {
 
 static const int    kAuthMode              = MBEDTLS_SSL_VERIFY_REQUIRED;
-static const size_t kMaxContentLength      = MBEDTLS_SSL_MAX_CONTENT_LEN;
+static const size_t kMaxContentLength      = MBEDTLS_SSL_IN_CONTENT_LEN;
 static const size_t KMaxFragmentLengthCode = MBEDTLS_SSL_MAX_FRAG_LEN_1024;
 static const size_t kMaxTransmissionUnit   = 1280;
 
@@ -110,8 +116,9 @@ void DtlsSession::InitMbedtls()
 {
     mbedtls_ssl_config_init(&mConfig);
     mbedtls_ssl_cookie_init(&mCookie);
-    mbedtls_ctr_drbg_init(&mCtrDrbg);
     mbedtls_entropy_init(&mEntropy);
+    mbedtls_ctr_drbg_init(&mCtrDrbg);
+    mbedtls_ctr_drbg_seed(&mCtrDrbg, mbedtls_entropy_func, &mEntropy, nullptr, 0);
     mbedtls_ssl_init(&mSsl);
 
     mbedtls_x509_crt_init(&mCaChain);
@@ -175,7 +182,8 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
         {
             ExitNow(error = ERROR_INVALID_ARGS("bad certificate; {}", ErrorFromMbedtlsError(fail).GetMessage()));
         }
-        if (int fail = mbedtls_pk_parse_key(&mOwnKey, &aConfig.mOwnKey[0], aConfig.mOwnKey.size(), nullptr, 0))
+        if (int fail = mbedtls_pk_parse_key(&mOwnKey, &aConfig.mOwnKey[0], aConfig.mOwnKey.size(), nullptr, 0,
+                                            mbedtls_ctr_drbg_random, &mCtrDrbg))
         {
             ExitNow(error = ERROR_INVALID_ARGS("bad private key; {}", ErrorFromMbedtlsError(fail).GetMessage()));
         }
@@ -192,13 +200,7 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     mCipherSuites.push_back(0);
     mbedtls_ssl_conf_ciphersuites(&mConfig, &mCipherSuites[0]);
 
-    mbedtls_ssl_conf_export_keys_cb(&mConfig, HandleMbedtlsExportKeys, this);
-
-    // RNG & Entropy
-    if (int fail = mbedtls_ctr_drbg_seed(&mCtrDrbg, mbedtls_entropy_func, &mEntropy, nullptr, 0))
-    {
-        ExitNow(error = ErrorFromMbedtlsError(fail));
-    }
+    mbedtls_ssl_set_export_keys_cb(&mSsl, HandleMbedtlsExportKeys, this);
     mbedtls_ssl_conf_rng(&mConfig, mbedtls_ctr_drbg_random, &mCtrDrbg);
 
     // Cookie
@@ -335,35 +337,59 @@ std::string DtlsSession::GetStateString() const
     return stateString;
 }
 
-int DtlsSession::HandleMbedtlsExportKeys(void                *aDtlsSession,
-                                         const unsigned char *aMasterSecret,
-                                         const unsigned char *aKeyBlock,
-                                         size_t               aMacLength,
-                                         size_t               aKeyLength,
-                                         size_t               aIvLength)
+#if OT_COMM_CONFIG_CCM_ENABLE
+const mbedtls_x509_crt *DtlsSession::GetPeerCertificate() const
+{
+    return mSsl.session ? mSsl.session->peer_cert : nullptr;
+}
+#endif
+
+void DtlsSession::HandleMbedtlsExportKeys(void                       *aDtlsSession,
+                                          mbedtls_ssl_key_export_type aType,
+                                          const unsigned char        *aMasterSecret,
+                                          size_t                      aMasterSecretLen,
+                                          const unsigned char         aClientRandom[32],
+                                          const unsigned char         aServerRandom[32],
+                                          mbedtls_tls_prf_types       aTlsPrfType)
 {
     auto dtlsSession = reinterpret_cast<DtlsSession *>(aDtlsSession);
-    return dtlsSession->HandleMbedtlsExportKeys(aMasterSecret, aKeyBlock, aMacLength, aKeyLength, aIvLength);
+    dtlsSession->HandleMbedtlsExportKeys(aType, aMasterSecret, aMasterSecretLen, aClientRandom, aServerRandom,
+                                         aTlsPrfType);
 }
 
-int DtlsSession::HandleMbedtlsExportKeys(const unsigned char *,
-                                         const unsigned char *aKeyBlock,
-                                         size_t               aMacLength,
-                                         size_t               aKeyLength,
-                                         size_t               aIvLength)
+void DtlsSession::HandleMbedtlsExportKeys(mbedtls_ssl_key_export_type aType,
+                                          const unsigned char        *aMasterSecret,
+                                          size_t                      aMasterSecretLen,
+                                          const unsigned char         aClientRandom[32],
+                                          const unsigned char         aServerRandom[32],
+                                          mbedtls_tls_prf_types       aTlsPrfType)
 {
-    Sha256 sha256;
+    Sha256        sha256;
+    unsigned char keyBlock[kKeyBlockSize];
+    unsigned char randBytes[2 * kRandomBufferSize];
+
+    VerifyOrExit(!mPSK.empty());
+    VerifyOrExit(aType == MBEDTLS_SSL_KEY_EXPORT_TLS12_MASTER_SECRET);
+
+    memcpy(randBytes, aServerRandom, kRandomBufferSize);
+    memcpy(randBytes + kRandomBufferSize, aClientRandom, kRandomBufferSize);
+
+    // Retrieve the Key block from Master secret
+    mbedtls_ssl_tls_prf(aTlsPrfType, aMasterSecret, aMasterSecretLen, "key expansion", randBytes, sizeof(randBytes),
+                        keyBlock, sizeof(keyBlock));
 
     sha256.Start();
-    sha256.Update(aKeyBlock, 2 * static_cast<uint16_t>(aMacLength + aKeyLength + aIvLength));
+    sha256.Update(keyBlock, kKeyBlockSize);
 
     mKek.resize(Sha256::kHashSize);
-    sha256.Finish(&mKek[0]);
+    sha256.Finish(mKek.data());
 
     static_assert(Sha256::kHashSize >= kJoinerRouterKekLength, "Sha256::kHashSize >= kJoinerRouterKekLength");
     mKek.resize(kJoinerRouterKekLength);
 
-    return 0;
+    LOG_DEBUG(LOG_REGION_DTLS, "Generated KEK");
+
+exit:;
 }
 
 void DtlsSession::HandleEvent(short aFlags)
