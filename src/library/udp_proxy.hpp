@@ -79,14 +79,14 @@ class ProxyClient
 public:
     ProxyClient(CommissionerImpl &aCommissioner, coap::CoapSecure &aBrClient);
 
-    void SendRequest(const coap::Request & aRequest,
+    void SendRequest(const coap::Request  &aRequest,
                      coap::ResponseHandler aHandler,
                      uint16_t              aPeerAloc16,
                      uint16_t              aPeerPort);
 
-    void SendRequest(const coap::Request & aRequest,
+    void SendRequest(const coap::Request  &aRequest,
                      coap::ResponseHandler aHandler,
-                     const Address &       aPeerAddr,
+                     const Address        &aPeerAddr,
                      uint16_t              aPeerPort);
 
     void SendEmptyChanged(const coap::Request &aRequest);

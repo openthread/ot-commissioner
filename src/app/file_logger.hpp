@@ -74,7 +74,7 @@ private:
     FileLogger() = default;
     Error Init(const std::string &aFilename, LogLevel aLogLevel);
 
-    FILE *     mLogFile;
+    FILE      *mLogFile;
     LogLevel   mLogLevel;
     std::mutex mLogMutex;
 };

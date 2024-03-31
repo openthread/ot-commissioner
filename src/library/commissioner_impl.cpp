@@ -58,10 +58,10 @@ static constexpr uint16_t kDefaultMmPort = 61631;
 static constexpr uint32_t kMinKeepAliveInterval = 30;
 static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
-Error Commissioner::GeneratePSKc(ByteArray &        aPSKc,
+Error Commissioner::GeneratePSKc(ByteArray         &aPSKc,
                                  const std::string &aPassphrase,
                                  const std::string &aNetworkName,
-                                 const ByteArray &  aExtendedPanId)
+                                 const ByteArray   &aExtendedPanId)
 {
     Error             error;
     const std::string saltPrefix = "Thread";
@@ -1520,7 +1520,7 @@ exit:
 }
 
 Error CommissionerImpl::DecodePendingOperationalDataset(PendingOperationalDataset &aDataset,
-                                                        const coap::Response &     aResponse)
+                                                        const coap::Response      &aResponse)
 {
     Error                     error;
     tlv::TlvSet               tlvSet;
@@ -1583,7 +1583,7 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request &                 aRequest,
+Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request                  &aRequest,
                                                        const ActiveOperationalDataset &aDataset)
 {
     Error error;
@@ -1650,7 +1650,7 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::EncodePendingOperationalDataset(coap::Request &                  aRequest,
+Error CommissionerImpl::EncodePendingOperationalDataset(coap::Request                   &aRequest,
                                                         const PendingOperationalDataset &aDataset)
 {
     Error error;

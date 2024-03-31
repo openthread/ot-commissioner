@@ -326,7 +326,7 @@ template <typename T> static Error ParseInteger(T &aInteger, const std::string &
 {
     Error    error;
     uint64_t integer;
-    char *   endPtr = nullptr;
+    char    *endPtr = nullptr;
 
     integer = strtoull(aStr.c_str(), &endPtr, 0);
 
@@ -1385,7 +1385,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         int                                       mdnsSocket  = -1;
         FDGuard                                   fdgMdnsSocket;
         std::thread                               selectThread;
-        event_base *                              base;
+        event_base                               *base;
         timeval                                   tvTimeout;
         std::unique_ptr<event, void (*)(event *)> mdnsEvent(nullptr, event_free);
         std::unique_ptr<event, void (*)(event *)> cancelEvent(nullptr, event_free);

@@ -49,7 +49,7 @@ UnixTime::UnixTime(std::time_t aTime /* =0 */)
 Error UnixTime::FromString(UnixTime &aTime, const std::string &aTimeStr)
 {
     std::tm lTm;
-    char *  result = strptime(aTimeStr.c_str(), kFmtString.c_str(), &lTm);
+    char   *result = strptime(aTimeStr.c_str(), kFmtString.c_str(), &lTm);
     if (result != nullptr && *result == '\000')
     {
         aTime = std::mktime(&lTm);
@@ -117,7 +117,7 @@ BorderAgent::BorderAgent()
 
 BorderAgent::BorderAgent(std::string const &aAddr,
                          uint16_t           aPort,
-                         ByteArray const &  aDiscriminator,
+                         ByteArray const   &aDiscriminator,
                          std::string const &aThreadVersion,
                          BorderAgent::State aState,
                          std::string const &aNetworkName,
@@ -127,7 +127,7 @@ BorderAgent::BorderAgent(std::string const &aAddr,
                          Timestamp          aActiveTimestamp,
                          uint32_t           aPartitionId,
                          std::string const &aVendorData,
-                         ByteArray const &  aVendorOui,
+                         ByteArray const   &aVendorOui,
                          std::string const &aDomainName,
                          uint8_t            aBbrSeqNumber,
                          uint16_t           aBbrPort,

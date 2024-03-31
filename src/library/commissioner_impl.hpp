@@ -70,7 +70,7 @@ class CommissionerImpl : public Commissioner
 public:
     explicit CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase);
 
-    CommissionerImpl(const CommissionerImpl &aCommissioner) = delete;
+    CommissionerImpl(const CommissionerImpl &aCommissioner)                  = delete;
     const CommissionerImpl &operator=(const CommissionerImpl &aCommissioner) = delete;
 
     Error Init(const Config &aConfig) override;
@@ -227,7 +227,10 @@ private:
     Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP, bool aAppendToken = true);
 #endif
 
-    Duration GetKeepAliveInterval() const { return std::chrono::seconds(mConfig.mKeepAliveInterval); };
+    Duration GetKeepAliveInterval() const
+    {
+        return std::chrono::seconds(mConfig.mKeepAliveInterval);
+    };
 
     void SendProxyMessage(ErrorHandler aHandler, const std::string &aDstAddr, const std::string &aUriPath);
 
@@ -251,7 +254,7 @@ private:
      */
 
     CommissionerHandler &mCommissionerHandler;
-    struct event_base *  mEventBase;
+    struct event_base   *mEventBase;
 
     Config mConfig;
 

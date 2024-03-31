@@ -42,14 +42,14 @@ namespace ot {
 
 namespace commissioner {
 
-JoinerSession::JoinerSession(CommissionerImpl & aCommImpl,
-                             const ByteArray &  aJoinerId,
+JoinerSession::JoinerSession(CommissionerImpl  &aCommImpl,
+                             const ByteArray   &aJoinerId,
                              const std::string &aJoinerPSkd,
                              uint16_t           aJoinerUdpPort,
                              uint16_t           aJoinerRouterLocator,
-                             const Address &    aJoinerAddr,
+                             const Address     &aJoinerAddr,
                              uint16_t           aJoinerPort,
-                             const Address &    aLocalAddr,
+                             const Address     &aLocalAddr,
                              uint16_t           aLocalPort)
     : mCommImpl(aCommImpl)
     , mJoinerId(aJoinerId)

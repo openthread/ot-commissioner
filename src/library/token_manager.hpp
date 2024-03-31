@@ -182,10 +182,10 @@ private:
     Error ValidateToken(const ByteArray &aSignedToken, const mbedtls_pk_context &aPublicKey) const;
 
     void         SendTokenRequest(Commissioner::Handler<ByteArray> aHandler);
-    static Error MakeTokenRequest(ByteArray &               aBuf,
+    static Error MakeTokenRequest(ByteArray                &aBuf,
                                   const mbedtls_pk_context &aPublicKey,
-                                  const std::string &       aId,
-                                  const std::string &       aDomainName);
+                                  const std::string        &aId,
+                                  const std::string        &aDomainName);
 
     // Prepare the content to be signed.
     // Described in 12.5.5 of Thread 1.2 spec.

@@ -46,13 +46,13 @@ void CommissionerApp::OnJoinerConnected(const ByteArray &aJoinerId, Error aError
     UNUSED(aError);
 }
 
-bool CommissionerApp::OnJoinerFinalize(const ByteArray &  aJoinerId,
+bool CommissionerApp::OnJoinerFinalize(const ByteArray   &aJoinerId,
                                        const std::string &aVendorName,
                                        const std::string &aVendorModel,
                                        const std::string &aVendorSwVersion,
-                                       const ByteArray &  aVendorStackVersion,
+                                       const ByteArray   &aVendorStackVersion,
                                        const std::string &aProvisioningUrl,
-                                       const ByteArray &  aVendorData)
+                                       const ByteArray   &aVendorData)
 {
     UNUSED(aJoinerId);
     UNUSED(aVendorName);
@@ -80,7 +80,7 @@ void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const Channe
 
 void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
                                      const ChannelMask &aChannelMask,
-                                     const ByteArray &  aEnergyList)
+                                     const ByteArray   &aEnergyList)
 {
     UNUSED(aPeerAddr);
     UNUSED(aChannelMask);
@@ -91,7 +91,7 @@ void CommissionerApp::OnDatasetChanged()
 {
 }
 
-Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
+Error CommissionerApp::Start(std::string       &aExistingCommissionerId,
                              const std::string &aBorderAgentAddr,
                              uint16_t           aBorderAgentPort)
 {
@@ -260,7 +260,7 @@ Error CommissionerApp::SetMeshLocalPrefix(const std::string &aPrefix, MilliSecon
     return Error{};
 }
 
-Error CommissionerApp::GetMeshLocalAddr(std::string &      aMeshLocalAddr,
+Error CommissionerApp::GetMeshLocalAddr(std::string       &aMeshLocalAddr,
                                         const std::string &aMeshLocalPrefix,
                                         uint16_t           aLocator16)
 {

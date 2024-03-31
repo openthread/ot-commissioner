@@ -66,18 +66,18 @@ using JoinerSessionPtr = std::shared_ptr<JoinerSession>;
 class JoinerSession : std::enable_shared_from_this<JoinerSession>
 {
 public:
-    JoinerSession(CommissionerImpl & aCommImpl,
-                  const ByteArray &  aJoinerId,
+    JoinerSession(CommissionerImpl  &aCommImpl,
+                  const ByteArray   &aJoinerId,
                   const std::string &aJoinerPSkd,
                   uint16_t           aJoinerUdpPort,
                   uint16_t           aJoinerRouterLocator,
-                  const Address &    aJoinerAddr,
+                  const Address     &aJoinerAddr,
                   uint16_t           aJoinerPort,
-                  const Address &    aLocalAddr,
+                  const Address     &aLocalAddr,
                   uint16_t           aLocalPort);
-    JoinerSession(JoinerSession &&aOther) = delete;
-    JoinerSession &operator=(JoinerSession &&aOther) = delete;
-    JoinerSession(const JoinerSession &aOther)       = delete;
+    JoinerSession(JoinerSession &&aOther)                 = delete;
+    JoinerSession &operator=(JoinerSession &&aOther)      = delete;
+    JoinerSession(const JoinerSession &aOther)            = delete;
     JoinerSession &operator=(const JoinerSession &aOther) = delete;
     ~JoinerSession()                                      = default;
 

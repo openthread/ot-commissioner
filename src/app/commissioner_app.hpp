@@ -104,13 +104,13 @@ public:
 
     MOCKABLE void OnJoinerConnected(const ByteArray &aJoinerId, Error aError) override;
 
-    MOCKABLE bool OnJoinerFinalize(const ByteArray &  aJoinerId,
+    MOCKABLE bool OnJoinerFinalize(const ByteArray   &aJoinerId,
                                    const std::string &aVendorName,
                                    const std::string &aVendorModel,
                                    const std::string &aVendorSwVersion,
-                                   const ByteArray &  aVendorStackVersion,
+                                   const ByteArray   &aVendorStackVersion,
                                    const std::string &aProvisioningUrl,
-                                   const ByteArray &  aVendorData) override;
+                                   const ByteArray   &aVendorData) override;
 
     MOCKABLE void OnKeepAliveResponse(Error aError) override;
 
@@ -120,11 +120,11 @@ public:
 
     MOCKABLE void OnEnergyReport(const std::string &aPeerAddr,
                                  const ChannelMask &aChannelMask,
-                                 const ByteArray &  aEnergyList) override;
+                                 const ByteArray   &aEnergyList) override;
 
     MOCKABLE void OnDatasetChanged() override;
 
-    MOCKABLE Error Start(std::string &      aExistingCommissionerId,
+    MOCKABLE Error Start(std::string       &aExistingCommissionerId,
                          const std::string &aBorderAgentAddr,
                          uint16_t           aBorderAgentPort);
     MOCKABLE void  Stop();
@@ -192,7 +192,7 @@ public:
      *
      * @return Error::kNone, succeed; Otherwise, failed.
      */
-    MOCKABLE Error GetMeshLocalAddr(std::string &      aMeshLocalAddr,
+    MOCKABLE Error GetMeshLocalAddr(std::string       &aMeshLocalAddr,
                                     const std::string &aMeshLocalPrefix,
                                     uint16_t           aLocator16);
 
@@ -245,9 +245,9 @@ public:
      * Commercial Commissioning features
      */
 
-    MOCKABLE Error Reenroll(const std::string &aDstAddr);
-    MOCKABLE Error DomainReset(const std::string &aDstAddr);
-    MOCKABLE Error Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork);
+    MOCKABLE Error            Reenroll(const std::string &aDstAddr);
+    MOCKABLE Error            DomainReset(const std::string &aDstAddr);
+    MOCKABLE Error            Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork);
     MOCKABLE const ByteArray &GetToken() const;
     MOCKABLE Error            RequestToken(const std::string &aAddr, uint16_t aPort);
     MOCKABLE Error            SetToken(const ByteArray &aSignedToken);
@@ -264,7 +264,7 @@ public:
                               uint16_t           aPeriod,
                               uint16_t           aScanDuration,
                               const std::string &aDstAddr);
-    MOCKABLE const EnergyReport *GetEnergyReport(const Address &aDstAddr) const;
+    MOCKABLE const EnergyReport    *GetEnergyReport(const Address &aDstAddr) const;
     MOCKABLE const EnergyReportMap &GetAllEnergyReports() const;
 
     const std::string &GetDomainName() const;
@@ -288,7 +288,7 @@ private:
     CommissionerDataset MakeDefaultCommissionerDataset();
 
     static ByteArray &GetSteeringData(CommissionerDataset &aDataset, JoinerType aJoinerType);
-    static uint16_t & GetJoinerUdpPort(CommissionerDataset &aDataset, JoinerType aJoinerType);
+    static uint16_t  &GetJoinerUdpPort(CommissionerDataset &aDataset, JoinerType aJoinerType);
 
     // Erases all joiner with specific type. Returns the number of erased joiners.
     size_t      EraseAllJoiners(JoinerType aJoinerType);

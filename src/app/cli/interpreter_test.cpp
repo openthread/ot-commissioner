@@ -73,7 +73,7 @@ public:
         ~TestContext() { ClearCommissionerAppStaticExpecter(); }
 
         Interpreter                   mInterpreter;
-        Registry *                    mRegistry = nullptr;
+        Registry                     *mRegistry = nullptr;
         CommissionerAppMockPtr        mDefaultCommissionerObject{new CommissionerAppMock()};
         CommissionerAppStaticExpecter mCommissionerAppStaticExpecter;
     };

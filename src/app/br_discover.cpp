@@ -42,7 +42,7 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 {
     static constexpr size_t             kDefaultBufferSize = 1024 * 16;
     static constexpr mdns_record_type_t kMdnsQueryType     = MDNS_RECORDTYPE_PTR;
-    static const char *                 kServiceName       = "_meshcop._udp.local";
+    static const char                  *kServiceName       = "_meshcop._udp.local";
 
     Error   error;
     uint8_t buf[kDefaultBufferSize];

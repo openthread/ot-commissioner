@@ -329,7 +329,7 @@ private:
 
     Address               mAddr;
     uint16_t              mPort;
-    MockEndpoint *        mPeer;
+    MockEndpoint         *mPeer;
     bool                  mDropMessage;
     std::queue<ByteArray> mSendQueue;
 };

@@ -154,7 +154,7 @@ Error Sign1Message::SetContent(const ByteArray &aContent)
     }
     else
     {
-        uint8_t emptyContent;
+        uint8_t emptyContent = 0;
         VerifyOrExit(COSE_Sign0_SetContent(mSign, &emptyContent, 0, nullptr),
                      error = ERROR_UNKNOWN("set COSE SIGN1 message content"));
     }
@@ -244,8 +244,8 @@ exit:
 const uint8_t *Sign1Message::GetPayload(size_t &aLength)
 {
     const uint8_t *ret = nullptr;
-    cn_cbor *      cbor;
-    cn_cbor *      payload;
+    cn_cbor       *cbor;
+    cn_cbor       *payload;
 
     VerifyOrDie(mSign != nullptr);
     VerifyOrExit((cbor = COSE_get_cbor(reinterpret_cast<HCOSE>(mSign))) != nullptr);

@@ -88,7 +88,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::Start(std::string &      aExistingCommissionerId,
+Error CommissionerApp::Start(std::string       &aExistingCommissionerId,
                              const std::string &aBorderAgentAddr,
                              uint16_t           aBorderAgentPort)
 {
@@ -575,7 +575,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::GetMeshLocalAddr(std::string &      aMeshLocalAddr,
+Error CommissionerApp::GetMeshLocalAddr(std::string       &aMeshLocalAddr,
                                         const std::string &aMeshLocalPrefix,
                                         uint16_t           aLocator16)
 {
@@ -1240,13 +1240,13 @@ void CommissionerApp::OnJoinerConnected(const ByteArray &aJoinerId, Error aError
     // TODO(wgtdkp): logging
 }
 
-bool CommissionerApp::OnJoinerFinalize(const ByteArray &  aJoinerId,
+bool CommissionerApp::OnJoinerFinalize(const ByteArray   &aJoinerId,
                                        const std::string &aVendorName,
                                        const std::string &aVendorModel,
                                        const std::string &aVendorSwVersion,
-                                       const ByteArray &  aVendorStackVersion,
+                                       const ByteArray   &aVendorStackVersion,
                                        const std::string &aProvisioningUrl,
-                                       const ByteArray &  aVendorData)
+                                       const ByteArray   &aVendorData)
 {
     (void)aVendorName;
     (void)aVendorModel;
@@ -1285,7 +1285,7 @@ void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const Channe
 
 void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
                                      const ChannelMask &aChannelMask,
-                                     const ByteArray &  aEnergyList)
+                                     const ByteArray   &aEnergyList)
 {
     Address addr;
 

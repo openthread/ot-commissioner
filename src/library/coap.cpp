@@ -343,7 +343,7 @@ bool Message::Header::IsValid() const
 Error Message::Serialize(OptionType         aOptionNumber,
                          const OptionValue &aOptionValue,
                          uint16_t           aLastOptionNumber,
-                         ByteArray &        aBuf) const
+                         ByteArray         &aBuf) const
 {
     Error    error;
     uint16_t delta = utils::to_underlying(aOptionNumber) - aLastOptionNumber;
@@ -406,11 +406,11 @@ exit:
     return error;
 }
 
-Error Message::Deserialize(OptionType &     aOptionNumber,
-                           OptionValue &    aOptionValue,
+Error Message::Deserialize(OptionType      &aOptionNumber,
+                           OptionValue     &aOptionValue,
                            uint16_t         aLastOptionNumber,
                            const ByteArray &aBuf,
-                           size_t &         aOffset)
+                           size_t          &aOffset)
 {
     Error    error;
     uint16_t delta;
@@ -637,7 +637,7 @@ void Coap::ReceiveMessage(Endpoint &aEndpoint, std::shared_ptr<Message> aMessage
 void Coap::HandleRequest(const Request &aRequest)
 {
     Error                                error;
-    const Response *                     response = nullptr;
+    const Response                      *response = nullptr;
     std::string                          uriPath;
     decltype(mResources)::const_iterator resource;
 

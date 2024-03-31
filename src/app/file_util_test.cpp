@@ -90,7 +90,7 @@ TEST(FileUtil, PathExists)
 
 TEST(FileUtil, WriteFile)
 {
-    FILE *      f    = NULL;
+    FILE       *f    = NULL;
     std::string path = "./test_write";
     std::string test = "test";
     std::string alt  = "alt";

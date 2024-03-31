@@ -199,13 +199,13 @@ public:
      * @note This will be called when A well-formed JOIN_FIN.req has been received.
      *
      */
-    virtual bool OnJoinerFinalize(const ByteArray &  aJoinerId,
+    virtual bool OnJoinerFinalize(const ByteArray   &aJoinerId,
                                   const std::string &aVendorName,
                                   const std::string &aVendorModel,
                                   const std::string &aVendorSwVersion,
-                                  const ByteArray &  aVendorStackVersion,
+                                  const ByteArray   &aVendorStackVersion,
                                   const std::string &aProvisioningUrl,
-                                  const ByteArray &  aVendorData)
+                                  const ByteArray   &aVendorData)
     {
         (void)aJoinerId;
         (void)aVendorName;
@@ -251,7 +251,7 @@ public:
      */
     virtual void OnEnergyReport(const std::string &aPeerAddr,
                                 const ChannelMask &aChannelMask,
-                                const ByteArray &  aEnergyList)
+                                const ByteArray   &aEnergyList)
     {
         (void)aPeerAddr;
         (void)aChannelMask;
@@ -1055,7 +1055,7 @@ public:
      *                                 listener to the included multicast group(s) expires; In seconds.
      * @return Error::kNone, succeed, the address has been successfully registered; Otherwise, failed;
      */
-    virtual Error RegisterMulticastListener(uint8_t &                       aStatus,
+    virtual Error RegisterMulticastListener(uint8_t                        &aStatus,
                                             const std::vector<std::string> &aMulticastAddrList,
                                             uint32_t                        aTimeout) = 0;
 
@@ -1116,10 +1116,10 @@ public:
      *
      * @return Error::kNone, succeed; Otherwise, failed;
      */
-    static Error GeneratePSKc(ByteArray &        aPSKc,
+    static Error GeneratePSKc(ByteArray         &aPSKc,
                               const std::string &aPassphrase,
                               const std::string &aNetworkName,
-                              const ByteArray &  aExtendedPanId);
+                              const ByteArray   &aExtendedPanId);
 
     /**
      * @brief Compute joiner ID with its IEEE EUI-64 value.

@@ -108,8 +108,8 @@ struct Registrar
     unsigned int             mPort;    /**< registrar port */
     std::vector<std::string> mDomains; /**< domains supplied by registrar */
 
-    Registrar(RegistrarId const &             aId,
-              std::string const &             aAddr,
+    Registrar(RegistrarId const              &aId,
+              std::string const              &aAddr,
               unsigned int const              aPort,
               std::vector<std::string> const &aDomains);
     Registrar();
@@ -144,10 +144,10 @@ struct Network
     int          mCcm;      /**< Commercial commissioning mode;<0 not set,
                              * 0 false, >0 true */
 
-    Network(NetworkId const &  aId,
-            DomainId const &   aDomainId,
+    Network(NetworkId const   &aId,
+            DomainId const    &aDomainId,
             std::string const &aName,
-            XpanId const &     aXpan,
+            XpanId const      &aXpan,
             unsigned int const aChannel,
             uint16_t const     aPan,
             std::string const &aMlp,

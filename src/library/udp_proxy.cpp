@@ -84,7 +84,7 @@ exit:
     return error;
 }
 
-void ProxyClient::SendRequest(const coap::Request & aRequest,
+void ProxyClient::SendRequest(const coap::Request  &aRequest,
                               coap::ResponseHandler aHandler,
                               uint16_t              aPeerAloc16,
                               uint16_t              aPeerPort)
@@ -108,9 +108,9 @@ void ProxyClient::SendRequest(const coap::Request & aRequest,
     }
 }
 
-void ProxyClient::SendRequest(const coap::Request & aRequest,
+void ProxyClient::SendRequest(const coap::Request  &aRequest,
                               coap::ResponseHandler aHandler,
-                              const Address &       aPeerAddr,
+                              const Address        &aPeerAddr,
                               uint16_t              aPeerPort)
 {
     VerifyOrDie(aPeerAddr.IsValid() && aPeerAddr.IsIpv6());

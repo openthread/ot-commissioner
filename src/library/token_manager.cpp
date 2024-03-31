@@ -95,18 +95,18 @@ exit:
     return error;
 }
 
-Error TokenManager::ValidateToken(CborMap &                 aToken,
-                                  const ByteArray &         aSignedToken,
+Error TokenManager::ValidateToken(CborMap                  &aToken,
+                                  const ByteArray          &aSignedToken,
                                   const mbedtls_pk_context &aPublicKey) const
 {
     Error              error;
     cose::Sign1Message coseSign;
     CborMap            token;
-    const uint8_t *    payload;
+    const uint8_t     *payload;
     size_t             payloadLength;
-    const char *       domainName;
+    const char        *domainName;
     size_t             domainNameLength;
-    const char *       expire;
+    const char        *expire;
     size_t             expireLength;
 
     VerifyOrExit(!aSignedToken.empty(), error = ERROR_INVALID_ARGS("the signed COM_TOK is empty"));
@@ -283,10 +283,10 @@ exit:
     return error;
 }
 
-Error TokenManager::MakeTokenRequest(ByteArray &               aBuf,
+Error TokenManager::MakeTokenRequest(ByteArray                &aBuf,
                                      const mbedtls_pk_context &aPublicKey,
-                                     const std::string &       aId,
-                                     const std::string &       aDomainName)
+                                     const std::string        &aId,
+                                     const std::string        &aDomainName)
 {
     static constexpr size_t kMaxTokenRequestSize = 1024;
 

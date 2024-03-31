@@ -75,8 +75,8 @@ std::string Job::GetCommandString()
     return out;
 }
 
-Job::Job(Interpreter &             aInterpreter,
-         CommissionerAppPtr &      aCommApp,
+Job::Job(Interpreter              &aInterpreter,
+         CommissionerAppPtr       &aCommApp,
          Interpreter::Expression   aExpr,
          Interpreter::JobEvaluator aEval,
          XpanId                    aXpanId)

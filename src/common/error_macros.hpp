@@ -39,44 +39,103 @@
 #include <commissioner/error.hpp>
 
 #define ERROR_NONE \
-    Error {}
-#define ERROR_CANCELLED(aFormat, ...) \
-    Error { ErrorCode::kCancelled, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_INVALID_ARGS(aFormat, ...) \
-    Error { ErrorCode::kInvalidArgs, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_INVALID_COMMAND(aFormat, ...) \
-    Error { ErrorCode::kInvalidCommand, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_TIMEOUT(aFormat, ...) \
-    Error { ErrorCode::kTimeout, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_NOT_FOUND(aFormat, ...) \
-    Error { ErrorCode::kNotFound, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_SECURITY(aFormat, ...) \
-    Error { ErrorCode::kSecurity, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_UNIMPLEMENTED(aFormat, ...) \
-    Error { ErrorCode::kUnimplemented, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_BAD_FORMAT(aFormat, ...) \
-    Error { ErrorCode::kBadFormat, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_BUSY(aFormat, ...) \
-    Error { ErrorCode::kBusy, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_OUT_OF_MEMORY(aFormat, ...) \
-    Error { ErrorCode::kOutOfMemory, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_IO_ERROR(aFormat, ...) \
-    Error { ErrorCode::kIOError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_IO_BUSY(aFormat, ...) \
-    Error { ErrorCode::kIOBusy, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_ALREADY_EXISTS(aFormat, ...) \
-    Error { ErrorCode::kAlreadyExists, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_ABORTED(aFormat, ...) \
-    Error { ErrorCode::kAborted, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_INVALID_STATE(aFormat, ...) \
-    Error { ErrorCode::kInvalidState, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_REJECTED(aFormat, ...) \
-    Error { ErrorCode::kRejected, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_COAP_ERROR(aFormat, ...) \
-    Error { ErrorCode::kCoapError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_REGISTRY_ERROR(aFormat, ...) \
-    Error { ErrorCode::kRegistryError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
-#define ERROR_UNKNOWN(aFormat, ...) \
-    Error { ErrorCode::kUnknown, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) }
+    Error          \
+    {              \
+    }
+#define ERROR_CANCELLED(aFormat, ...)                                            \
+    Error                                                                        \
+    {                                                                            \
+        ErrorCode::kCancelled, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_INVALID_ARGS(aFormat, ...)                                           \
+    Error                                                                          \
+    {                                                                              \
+        ErrorCode::kInvalidArgs, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_INVALID_COMMAND(aFormat, ...)                                           \
+    Error                                                                             \
+    {                                                                                 \
+        ErrorCode::kInvalidCommand, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_TIMEOUT(aFormat, ...)                                            \
+    Error                                                                      \
+    {                                                                          \
+        ErrorCode::kTimeout, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_NOT_FOUND(aFormat, ...)                                           \
+    Error                                                                       \
+    {                                                                           \
+        ErrorCode::kNotFound, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_SECURITY(aFormat, ...)                                            \
+    Error                                                                       \
+    {                                                                           \
+        ErrorCode::kSecurity, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_UNIMPLEMENTED(aFormat, ...)                                            \
+    Error                                                                            \
+    {                                                                                \
+        ErrorCode::kUnimplemented, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_BAD_FORMAT(aFormat, ...)                                           \
+    Error                                                                        \
+    {                                                                            \
+        ErrorCode::kBadFormat, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_BUSY(aFormat, ...)                                            \
+    Error                                                                   \
+    {                                                                       \
+        ErrorCode::kBusy, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_OUT_OF_MEMORY(aFormat, ...)                                          \
+    Error                                                                          \
+    {                                                                              \
+        ErrorCode::kOutOfMemory, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_IO_ERROR(aFormat, ...)                                           \
+    Error                                                                      \
+    {                                                                          \
+        ErrorCode::kIOError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_IO_BUSY(aFormat, ...)                                           \
+    Error                                                                     \
+    {                                                                         \
+        ErrorCode::kIOBusy, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_ALREADY_EXISTS(aFormat, ...)                                           \
+    Error                                                                            \
+    {                                                                                \
+        ErrorCode::kAlreadyExists, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_ABORTED(aFormat, ...)                                            \
+    Error                                                                      \
+    {                                                                          \
+        ErrorCode::kAborted, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_INVALID_STATE(aFormat, ...)                                           \
+    Error                                                                           \
+    {                                                                               \
+        ErrorCode::kInvalidState, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_REJECTED(aFormat, ...)                                            \
+    Error                                                                       \
+    {                                                                           \
+        ErrorCode::kRejected, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_COAP_ERROR(aFormat, ...)                                           \
+    Error                                                                        \
+    {                                                                            \
+        ErrorCode::kCoapError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_REGISTRY_ERROR(aFormat, ...)                                           \
+    Error                                                                            \
+    {                                                                                \
+        ErrorCode::kRegistryError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
+#define ERROR_UNKNOWN(aFormat, ...)                                            \
+    Error                                                                      \
+    {                                                                          \
+        ErrorCode::kUnknown, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
+    }
 
 #endif // ERROR_MACROS_HPP_
