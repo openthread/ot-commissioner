@@ -519,12 +519,12 @@ protected:
     Error        Serialize(OptionType         aOptionNumber,
                            const OptionValue &aOptionValue,
                            uint16_t           aLastOptionNumber,
-                           ByteArray &        aBuf) const;
-    static Error Deserialize(OptionType &     aOptionNumber,
-                             OptionValue &    aOptionValue,
+                           ByteArray         &aBuf) const;
+    static Error Deserialize(OptionType      &aOptionNumber,
+                             OptionValue     &aOptionValue,
                              uint16_t         aLastOptionNumber,
                              const ByteArray &aBuf,
-                             size_t &         aOffset);
+                             size_t          &aOffset);
 
     // Split the URI path by slash ('/').
     static Error SplitUriPath(std::list<std::string> &aUriPathList, const std::string &aUriPath);

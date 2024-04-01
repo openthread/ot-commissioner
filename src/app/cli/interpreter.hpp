@@ -255,13 +255,13 @@ private:
      */
     int mCancelPipe[2] = {-1, -1};
 
-    static const std::map<std::string, std::string> & mUsageMap;
-    static const std::map<std::string, Evaluator> &   mEvaluatorMap;
-    static const std::vector<StringArray> &           mMultiNetworkSyntax;
-    static const std::vector<StringArray> &           mMultiJobExecution;
-    static const std::vector<StringArray> &           mInactiveCommissionerExecution;
-    static const std::vector<StringArray> &           mExportSyntax;
-    static const std::vector<StringArray> &           mImportSyntax;
+    static const std::map<std::string, std::string>  &mUsageMap;
+    static const std::map<std::string, Evaluator>    &mEvaluatorMap;
+    static const std::vector<StringArray>            &mMultiNetworkSyntax;
+    static const std::vector<StringArray>            &mMultiJobExecution;
+    static const std::vector<StringArray>            &mInactiveCommissionerExecution;
+    static const std::vector<StringArray>            &mExportSyntax;
+    static const std::vector<StringArray>            &mImportSyntax;
     static const std::map<std::string, JobEvaluator> &mJobEvaluatorMap;
 };
 

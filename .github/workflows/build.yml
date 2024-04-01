@@ -33,7 +33,7 @@ on: [push, pull_request]
 jobs:
 
   cancel-previous-runs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: rokroskar/workflow-run-cleanup-action@master
         env:
@@ -41,13 +41,13 @@ jobs:
         if: "github.ref != 'refs/heads/main'"
 
   pretty:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           sudo apt update
-          sudo apt --no-install-recommends install -y clang-format-9
+          sudo apt --no-install-recommends install -y clang-format-14
           python3 -m pip install yapf==0.29.0
       - name: Check
         run: |
@@ -55,7 +55,7 @@ jobs:
 
   gcc-build:
     name: gcc-${{ matrix.gcc_ver }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         gcc_ver: [5, 6, 7, 8, 9, 10]
@@ -95,7 +95,7 @@ jobs:
 
   clang-build:
     name: clang-${{ matrix.clang_ver }}-${{ matrix.build_type }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         clang_ver: [5, 6, 7, 8, 9, 10, 11]
@@ -151,7 +151,7 @@ jobs:
           ./tests/interpreter-test
 
   android-ndk:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Bootstrap
@@ -184,7 +184,7 @@ jobs:
           ninja
 
   fmt-format-check:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Bootstrap

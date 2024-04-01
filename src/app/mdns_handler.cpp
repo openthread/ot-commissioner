@@ -54,11 +54,11 @@ int HandleRecord(const struct sockaddr *from,
                  uint16_t               type,
                  uint16_t               rclass,
                  uint32_t               ttl,
-                 const void *           data,
+                 const void            *data,
                  size_t                 size,
                  size_t                 offset,
                  size_t                 length,
-                 void *                 aBorderAgent)
+                 void                  *aBorderAgent)
 {
     struct sockaddr_storage fromAddrStorage;
     Address                 fromAddr;
@@ -67,8 +67,8 @@ int HandleRecord(const struct sockaddr *from,
     char                    nameBuffer[256];
 
     BorderAgentOrErrorMsg &borderAgentOrErrorMsg = *reinterpret_cast<BorderAgentOrErrorMsg *>(aBorderAgent);
-    BorderAgent &          borderAgent           = borderAgentOrErrorMsg.mBorderAgent;
-    Error &                error                 = borderAgentOrErrorMsg.mError;
+    BorderAgent           &borderAgent           = borderAgentOrErrorMsg.mBorderAgent;
+    Error                 &error                 = borderAgentOrErrorMsg.mError;
 
     (void)rclass;
     (void)ttl;

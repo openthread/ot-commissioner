@@ -53,9 +53,9 @@ class Socket
 {
 public:
     explicit Socket(struct event_base *aEventBase);
-    Socket(Socket &&aOther) = default;
-    Socket &operator=(Socket &&aOther) = delete;
-    Socket(const Socket &aOther)       = delete;
+    Socket(Socket &&aOther)                 = default;
+    Socket &operator=(Socket &&aOther)      = delete;
+    Socket(const Socket &aOther)            = delete;
     Socket &operator=(const Socket &aOther) = delete;
     virtual ~Socket();
 

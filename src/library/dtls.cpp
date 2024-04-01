@@ -335,7 +335,7 @@ std::string DtlsSession::GetStateString() const
     return stateString;
 }
 
-int DtlsSession::HandleMbedtlsExportKeys(void *               aDtlsSession,
+int DtlsSession::HandleMbedtlsExportKeys(void                *aDtlsSession,
                                          const unsigned char *aMasterSecret,
                                          const unsigned char *aKeyBlock,
                                          size_t               aMacLength,

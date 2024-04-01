@@ -71,7 +71,7 @@ public:
     {
     }
 
-    CommissionerSafe(const CommissionerSafe &aCommissioner) = delete;
+    CommissionerSafe(const CommissionerSafe &aCommissioner)                  = delete;
     const CommissionerSafe &operator=(const CommissionerSafe &aCommissioner) = delete;
 
     Error Init(const Config &aConfig) override;
@@ -149,7 +149,7 @@ public:
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;
-    Error RegisterMulticastListener(uint8_t &                       aStatus,
+    Error RegisterMulticastListener(uint8_t                        &aStatus,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;
 

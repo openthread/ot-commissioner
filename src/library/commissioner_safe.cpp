@@ -431,7 +431,7 @@ void CommissionerSafe::RegisterMulticastListener(Handler<uint8_t>               
     PushAsyncRequest([=]() { mImpl->RegisterMulticastListener(aHandler, aMulticastAddrList, aTimeout); });
 }
 
-Error CommissionerSafe::RegisterMulticastListener(uint8_t &                       aStatus,
+Error CommissionerSafe::RegisterMulticastListener(uint8_t                        &aStatus,
                                                   const std::vector<std::string> &aMulticastAddrList,
                                                   uint32_t                        aTimeout)
 {

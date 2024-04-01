@@ -90,7 +90,7 @@ public:
     DtlsSession(struct event_base *aEventBase, bool aIsServer, SocketPtr aSocket);
 
     ~DtlsSession() override;
-    DtlsSession(const DtlsSession &aOther) = delete;
+    DtlsSession(const DtlsSession &aOther)                  = delete;
     const DtlsSession &operator=(const DtlsSession &aOther) = delete;
 
     Error Send(const ByteArray &aBuf, MessageSubType aSubType) override;
@@ -170,7 +170,7 @@ private:
     // Decide if we should stop processing this session by given error.
     static bool ShouldStop(Error aError);
 
-    static int HandleMbedtlsExportKeys(void *               aDtlsSession,
+    static int HandleMbedtlsExportKeys(void                *aDtlsSession,
                                        const unsigned char *aMasterSecret,
                                        const unsigned char *aKeyBlock,
                                        size_t               aMacLength,

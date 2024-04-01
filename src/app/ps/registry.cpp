@@ -412,8 +412,8 @@ Registry::Status Registry::GetAllNetworks(NetworkArray &aRet)
 }
 
 Registry::Status Registry::GetNetworkXpansByAliases(const StringArray &aAliases,
-                                                    XpanIdArray &      aRet,
-                                                    StringArray &      aUnresolved)
+                                                    XpanIdArray       &aRet,
+                                                    StringArray       &aUnresolved)
 {
     NetworkArray     networks;
     Registry::Status status = GetNetworksByAliases(aAliases, networks, aUnresolved);
@@ -429,8 +429,8 @@ Registry::Status Registry::GetNetworkXpansByAliases(const StringArray &aAliases,
 }
 
 Registry::Status Registry::GetNetworksByAliases(const StringArray &aAliases,
-                                                NetworkArray &     aRet,
-                                                StringArray &      aUnresolved)
+                                                NetworkArray      &aRet,
+                                                StringArray       &aUnresolved)
 {
     Registry::Status status;
     NetworkArray     networks;

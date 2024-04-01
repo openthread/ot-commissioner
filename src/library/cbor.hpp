@@ -57,7 +57,7 @@ public:
     virtual Error Init() = 0;
     void          Free();
 
-    cn_cbor *      GetImpl() { return mCbor; }
+    cn_cbor       *GetImpl() { return mCbor; }
     const cn_cbor *GetImpl() const { return mCbor; }
 
     bool IsValid() const { return mCbor != nullptr; }

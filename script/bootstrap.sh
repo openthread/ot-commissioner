@@ -92,7 +92,7 @@ if [ "$(uname)" = "Linux" ]; then
                          lcov \
                          jsonlint
 
-    sudo apt-get --no-install-recommends install -y clang-format-9 || echo 'WARNING: could not install clang-format-9, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
+    sudo apt-get --no-install-recommends install -y clang-format-14 || echo 'WARNING: could not install clang-format-14, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
     python3 -m pip install yapf==0.29.0 || echo 'WARNING: could not install yapf, which is useful if you plan to contribute python code to the OpenThread project.'
 
     ## Install newest CMake
@@ -118,8 +118,8 @@ elif [ "$(uname)" = "Darwin" ]; then
                  swig@4 \
                  lcov && true
 
-    brew install llvm@9 && sudo ln -s "$(brew --prefix llvm@9)/bin/clang-format" /usr/local/bin/clang-format-9 \
-    || echo 'WARNING: could not install clang-format-9, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
+    brew install llvm@14 && sudo ln -s "$(brew --prefix llvm@14)/bin/clang-format" /usr/local/bin/clang-format-14 \
+    || echo 'WARNING: could not install clang-format-14, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
 
     ## Install latest cmake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {

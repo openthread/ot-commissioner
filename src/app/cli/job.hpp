@@ -46,8 +46,8 @@ namespace commissioner {
 class Job
 {
 public:
-    Job(Interpreter &             aInterpreter,
-        CommissionerAppPtr &      aCommApp,
+    Job(Interpreter              &aInterpreter,
+        CommissionerAppPtr       &aCommApp,
         Interpreter::Expression   aExpr,
         Interpreter::JobEvaluator aEval,
         XpanId                    aXpanId);
@@ -63,8 +63,8 @@ public:
     std::string        GetCommandString();
 
 private:
-    Interpreter &             mInterpreter;
-    CommissionerAppPtr &      mCommissioner;
+    Interpreter              &mInterpreter;
+    CommissionerAppPtr       &mCommissioner;
     Interpreter::Expression   mExpr;
     Interpreter::JobEvaluator mEval;
     Interpreter::Value        mValue;

@@ -174,7 +174,7 @@ public:
     uint16_t         GetValueAsUint16() const;
     std::string      GetValueAsString() const;
     const ByteArray &GetValue() const;
-    ByteArray &      GetValue();
+    ByteArray       &GetValue();
 
 private:
     Scope     mScope = Scope::kMeshCoP;
