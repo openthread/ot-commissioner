@@ -65,6 +65,20 @@ static const char kPrivateKey[] = "-----BEGIN PRIVATE KEY-----\r\n"
                                   "Xvr27euqi54WCMXJEMk6IIaPyFBNNw8bJvqXWfZ5g7t4hj7amsvqUST2\r\n"
                                   "-----END PRIVATE KEY-----\r\n";
 
+static Error ParsePublicKey(mbedtls_pk_context &aPublicKey, const ByteArray &aCert)
+{
+    TokenManager tokenManager{event_base_new()};
+
+    return tokenManager.ParsePublicKey(aPublicKey, aCert);
+}
+
+static Error ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteArray &aPrivateKeyRaw)
+{
+    TokenManager tokenManager{event_base_new()};
+
+    return tokenManager.ParsePrivateKey(aPrivateKey, aPrivateKeyRaw);
+}
+
 TEST(CoseTest, CoseSignAndVerify_SignWithoutExternalData)
 {
     ByteArray content{1, 2, 3, 4, 5, 6};
@@ -76,10 +90,9 @@ TEST(CoseTest, CoseSignAndVerify_SignWithoutExternalData)
     mbedtls_pk_init(&publicKey);
     mbedtls_pk_init(&privateKey);
 
-    EXPECT_EQ(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
+    EXPECT_EQ(ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
               ErrorCode::kNone);
-    EXPECT_EQ(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}),
-              ErrorCode::kNone);
+    EXPECT_EQ(ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}), ErrorCode::kNone);
 
     ByteArray    signature;
     Sign1Message msg;
@@ -107,10 +120,9 @@ TEST(CoseTest, CoseSignAndVerify_SignWithExternalData)
     mbedtls_pk_init(&publicKey);
     mbedtls_pk_init(&privateKey);
 
-    EXPECT_EQ(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
+    EXPECT_EQ(ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
               ErrorCode::kNone);
-    EXPECT_EQ(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}),
-              ErrorCode::kNone);
+    EXPECT_EQ(ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}), ErrorCode::kNone);
 
     ByteArray    signature;
     Sign1Message msg;
@@ -140,10 +152,9 @@ TEST(CoseTest, CoseSignAndVerify_KeyConstruction)
     mbedtls_pk_init(&publicKey);
     mbedtls_pk_init(&privateKey);
 
-    EXPECT_EQ(TokenManager::ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
+    EXPECT_EQ(ParsePublicKey(publicKey, ByteArray{kCertificate, kCertificate + sizeof(kCertificate)}),
               ErrorCode::kNone);
-    EXPECT_EQ(TokenManager::ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}),
-              ErrorCode::kNone);
+    EXPECT_EQ(ParsePrivateKey(privateKey, ByteArray{kPrivateKey, kPrivateKey + sizeof(kPrivateKey)}), ErrorCode::kNone);
 
     ByteArray keyId = {};
     ByteArray encodedCoseKey;

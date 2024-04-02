@@ -155,7 +155,7 @@ public:
      * @retval  ...           Failed to parse the public key.
      *
      */
-    static Error ParsePublicKey(mbedtls_pk_context &aPublicKey, const ByteArray &aCert);
+    Error ParsePublicKey(mbedtls_pk_context &aPublicKey, const ByteArray &aCert);
 
     /**
      * This method parse private key from PEM/DER encoded certificate.
@@ -167,7 +167,7 @@ public:
      * @retval  ...           Failed to parse the private key.
      *
      */
-    static Error ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteArray &aPrivateKeyRaw);
+    Error ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteArray &aPrivateKeyRaw);
 
 private:
     /*
@@ -205,11 +205,13 @@ private:
     // The cose signed commissioner token.
     ByteArray mSignedToken;
 
-    std::string        mCommissionerId;
-    std::string        mDomainName;
-    mbedtls_pk_context mPublicKey;
-    mbedtls_pk_context mPrivateKey;
-    mbedtls_pk_context mDomainCAPublicKey;
+    std::string              mCommissionerId;
+    std::string              mDomainName;
+    mbedtls_entropy_context  mEntropy;
+    mbedtls_ctr_drbg_context mCtrDrbg;
+    mbedtls_pk_context       mPublicKey;
+    mbedtls_pk_context       mPrivateKey;
+    mbedtls_pk_context       mDomainCAPublicKey;
 
     coap::CoapSecure mRegistrarClient;
 };

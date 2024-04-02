@@ -51,6 +51,9 @@ namespace commissioner {
 TokenManager::TokenManager(struct event_base *aEventBase)
     : mRegistrarClient(aEventBase)
 {
+    mbedtls_entropy_init(&mEntropy);
+    mbedtls_ctr_drbg_init(&mCtrDrbg);
+    mbedtls_ctr_drbg_seed(&mCtrDrbg, mbedtls_entropy_func, &mEntropy, nullptr, 0);
     mbedtls_pk_init(&mPublicKey);
     mbedtls_pk_init(&mPrivateKey);
     mbedtls_pk_init(&mDomainCAPublicKey);
@@ -58,6 +61,8 @@ TokenManager::TokenManager(struct event_base *aEventBase)
 
 TokenManager::~TokenManager()
 {
+    mbedtls_entropy_free(&mEntropy);
+    mbedtls_ctr_drbg_free(&mCtrDrbg);
     mbedtls_pk_free(&mPrivateKey);
     mbedtls_pk_free(&mPublicKey);
     mbedtls_pk_free(&mDomainCAPublicKey);
@@ -513,7 +518,8 @@ Error TokenManager::ParsePrivateKey(mbedtls_pk_context &aPrivateKey, const ByteA
     Error error;
 
     VerifyOrExit(!aPrivateKeyRaw.empty(), error = ERROR_INVALID_ARGS("the raw private key is empty"));
-    if (int fail = mbedtls_pk_parse_key(&aPrivateKey, aPrivateKeyRaw.data(), aPrivateKeyRaw.size(), nullptr, 0))
+    if (int fail = mbedtls_pk_parse_key(&aPrivateKey, aPrivateKeyRaw.data(), aPrivateKeyRaw.size(), nullptr, 0,
+                                        mbedtls_ctr_drbg_random, &mCtrDrbg))
     {
         error = ErrorFromMbedtlsError(fail);
         ExitNow(error = {ErrorCode::kInvalidArgs, error.GetMessage()});

@@ -35,6 +35,7 @@
 #define OT_COMM_ERROR_HPP_
 
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include <commissioner/defines.hpp>
@@ -270,6 +271,16 @@ inline bool operator==(const ErrorCode &aErrorCode, const Error &aError)
 inline bool operator!=(const ErrorCode &aErrorCode, const Error &aError)
 {
     return !(aErrorCode == aError);
+}
+
+/**
+ * Allows pretty-print in unit tests.
+ *
+ * See https://google.github.io/googletest/advanced.html#teaching-googletest-how-to-print-your-values
+ */
+inline void PrintTo(const Error &error, std::ostream *os)
+{
+    *os << error.ToString();
 }
 
 } // namespace commissioner

@@ -32,6 +32,11 @@
  */
 
 #if OT_COMM_CONFIG_CCM_ENABLE
+// Private fields in mbedtls structs are not stable API after 3.x.
+// Enabling this flag to allow us continue accessing those fields.
+#ifndef MBEDTLS_ALLOW_PRIVATE_ACCESS
+#define MBEDTLS_ALLOW_PRIVATE_ACCESS
+#endif
 
 #include "library/cose.hpp"
 

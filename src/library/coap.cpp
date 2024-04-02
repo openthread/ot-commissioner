@@ -195,8 +195,7 @@ Error Message::AppendOption(OptionType aNumber, const OptionValue &aValue)
 {
     Error error;
 
-    VerifyOrExit(IsValidOption(aNumber, aValue),
-                 error = ERROR_INVALID_ARGS("invalid CoAP option (number={})", aNumber));
+    VerifyOrExit(IsValidOption(aNumber, aValue), error = ERROR_INVALID_ARGS("invalid CoAP option {}", aNumber));
 
     if (aNumber == OptionType::kUriPath)
     {
@@ -219,7 +218,7 @@ Error Message::GetOption(std::string &aValue, OptionType aNumber) const
     Error error;
     auto  option = GetOption(aNumber);
 
-    VerifyOrExit(option != nullptr, error = ERROR_NOT_FOUND("CoAP option (number={}) not found", aNumber));
+    VerifyOrExit(option != nullptr, error = ERROR_NOT_FOUND("CoAP option {} not found", aNumber));
 
     aValue = option->GetStringValue();
 
@@ -232,7 +231,7 @@ Error Message::GetOption(uint32_t &aValue, OptionType aNumber) const
     Error error;
     auto  option = GetOption(aNumber);
 
-    VerifyOrExit(option != nullptr, error = ERROR_NOT_FOUND("CoAP option (number={}) not found", aNumber));
+    VerifyOrExit(option != nullptr, error = ERROR_NOT_FOUND("CoAP option {} not found", aNumber));
 
     aValue = option->GetUint32Value();
 
@@ -245,7 +244,7 @@ Error Message::GetOption(ByteArray &aValue, OptionType aNumber) const
     Error error;
     auto  option = GetOption(aNumber);
 
-    VerifyOrExit(option != nullptr, error = ERROR_NOT_FOUND("CoAP option (number={}) not found", aNumber));
+    VerifyOrExit(option != nullptr, error = ERROR_NOT_FOUND("CoAP option {} not found", aNumber));
 
     aValue = option->GetOpaqueValue();
 
@@ -355,7 +354,7 @@ Error Message::Serialize(OptionType         aOptionNumber,
     VerifyOrDie(utils::to_underlying(aOptionNumber) >= aLastOptionNumber);
 
     VerifyOrExit(IsValidOption(aOptionNumber, aOptionValue),
-                 error = ERROR_INVALID_ARGS("option (number={}) is not valid", aOptionNumber));
+                 error = ERROR_INVALID_ARGS("option {} is not valid", aOptionNumber));
 
     length = 1;
     length += delta < kOption1ByteExtension ? 0 : (delta < kOption2ByteExtension ? 1 : 2);
@@ -1287,3 +1286,64 @@ std::string Message::GetRequestUri(void) const
 } // namespace commissioner
 
 } // namespace ot
+
+auto fmt::formatter<ot::commissioner::coap::OptionType>::format(ot::commissioner::coap::OptionType optionType,
+                                                                format_context &ctx) -> decltype(ctx.out())
+{
+    using ot::commissioner::coap::OptionType;
+    string_view name;
+    switch (optionType)
+    {
+    case OptionType::kIfMatch:
+        name = "kIfMatch";
+        break;
+    case OptionType::kUriHost:
+        name = "kUriHost";
+        break;
+    case OptionType::kETag:
+        name = "kETag";
+        break;
+    case OptionType::kIfNonMatch:
+        name = "kIfNonMatch";
+        break;
+    case OptionType::kObserve:
+        name = "kObserve";
+        break;
+    case OptionType::kUriPort:
+        name = "kUriPort";
+        break;
+    case OptionType::kLocationPath:
+        name = "kLocationPath";
+        break;
+    case OptionType::kUriPath:
+        name = "kUriPath";
+        break;
+    case OptionType::kContentFormat:
+        name = "kContentFormat";
+        break;
+    case OptionType::kMaxAge:
+        name = "kMaxAge";
+        break;
+    case OptionType::kUriQuery:
+        name = "kUriQuery";
+        break;
+    case OptionType::kAccept:
+        name = "kAccept";
+        break;
+    case OptionType::kLocationQuery:
+        name = "kLocationQuery";
+        break;
+    case OptionType::kProxyUri:
+        name = "kProxyUri";
+        break;
+    case OptionType::kProxyScheme:
+        name = "kProxyScheme";
+        break;
+    case OptionType::kSize1:
+        name = "kSize1";
+        break;
+    default:
+        name = "unknown";
+    }
+    return formatter<string_view>::format(name, ctx);
+}

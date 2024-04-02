@@ -111,14 +111,20 @@ public:
     uint16_t GetPeerPort() const override { return mSocket->GetPeerPort(); }
 
     uint16_t GetLocalPort() const { return mSocket->GetLocalPort(); }
-
-    const mbedtls_x509_crt *GetPeerCertificate() const { return mSsl.session ? mSsl.session->peer_cert : nullptr; }
-
-    const ByteArray &GetKek() const { return mKek; }
+#if OT_COMM_CONFIG_CCM_ENABLE
+    const mbedtls_x509_crt *GetPeerCertificate() const;
+#endif
+    const ByteArray &GetKek() const
+    {
+        return mKek;
+    }
 
     void HandleEvent(short aFlags);
 
 private:
+    static constexpr size_t kKeyBlockSize     = 40;
+    static constexpr size_t kRandomBufferSize = 32;
+
     class DtlsTimer : public Timer
     {
     public:
@@ -170,18 +176,20 @@ private:
     // Decide if we should stop processing this session by given error.
     static bool ShouldStop(Error aError);
 
-    static int HandleMbedtlsExportKeys(void                *aDtlsSession,
-                                       const unsigned char *aMasterSecret,
-                                       const unsigned char *aKeyBlock,
-                                       size_t               aMacLength,
-                                       size_t               aKeyLength,
-                                       size_t               aIvLength);
+    static void HandleMbedtlsExportKeys(void                       *aDtlsSession,
+                                        mbedtls_ssl_key_export_type aType,
+                                        const unsigned char        *aMasterSecret,
+                                        size_t                      aMasterSecretLen,
+                                        const unsigned char         aClientRandom[32],
+                                        const unsigned char         aServerRandom[32],
+                                        mbedtls_tls_prf_types       aTlsPrfType);
 
-    int HandleMbedtlsExportKeys(const unsigned char *aMasterSecret,
-                                const unsigned char *aKeyBlock,
-                                size_t               aMacLength,
-                                size_t               aKeyLength,
-                                size_t               aIvLength);
+    void HandleMbedtlsExportKeys(mbedtls_ssl_key_export_type aType,
+                                 const unsigned char        *aMasterSecret,
+                                 size_t                      aMasterSecretLen,
+                                 const unsigned char         aClientRandom[32],
+                                 const unsigned char         aServerRandom[32],
+                                 mbedtls_tls_prf_types       aTlsPrfType);
 
     SocketPtr mSocket;
     DtlsTimer mHandshakeTimer;
