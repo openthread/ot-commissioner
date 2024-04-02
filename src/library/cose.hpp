@@ -39,16 +39,15 @@
 
 #if OT_COMM_CONFIG_CCM_ENABLE
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
-#include <cose.h>
-#include <mbedtls/pk.h>
-
-#include <commissioner/defines.hpp>
-#include <commissioner/error.hpp>
-
+#include "cose.h"
+#include "cn-cbor/cn-cbor.h"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "library/cbor.hpp"
+#include "mbedtls/pk.h"
 
 namespace ot {
 

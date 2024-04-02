@@ -39,15 +39,17 @@
 #define OT_COMM_APP_COMMISSIONER_APP_HPP_
 
 #include <chrono>
-#include <fstream>
-#include <list>
+#include <cstddef>
+#include <cstdint>
 #include <map>
-#include <set>
-#include <unordered_set>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include <commissioner/commissioner.hpp>
-#include <commissioner/network_data.hpp>
-
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/address.hpp"
 
 namespace ot {
@@ -269,10 +271,12 @@ public:
 
     const std::string &GetDomainName() const;
 
+protected:
+    CommissionerApp() = default;
+
 private:
     friend Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);
 
-    CommissionerApp() = default;
     Error Init(const Config &aConfig);
 
     static Error Create(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);
@@ -285,7 +289,7 @@ private:
         bool operator<(const JoinerKey &aOther) const;
     };
 
-    CommissionerDataset MakeDefaultCommissionerDataset();
+    CommissionerDataset MakeDefaultCommissionerDataset() const;
 
     static ByteArray &GetSteeringData(CommissionerDataset &aDataset, JoinerType aJoinerType);
     static uint16_t  &GetJoinerUdpPort(CommissionerDataset &aDataset, JoinerType aJoinerType);

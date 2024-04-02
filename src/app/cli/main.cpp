@@ -31,13 +31,16 @@
  *   The file is the entrance of the commissioner CLI.
  */
 
+#include <csignal>
+#include <string>
 #include <thread>
 
 #include <getopt.h>
-#include <signal.h>
 
+#include "app/cli/console.hpp"
 #include "app/cli/interpreter.hpp"
-#include "app/ps/registry.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/error.hpp"
 #include "common/utils.hpp"
 
 using namespace ot::commissioner;
@@ -119,7 +122,7 @@ int main(int argc, const char *argv[])
 
     while (parseParams)
     {
-        ch = getopt_long(argc, (char *const *)argv, "hvc:r:", gCommissionerCliOptions, nullptr);
+        ch = getopt_long(argc, const_cast<char *const *>(argv), "hvc:r:", gCommissionerCliOptions, nullptr);
         switch (ch)
         {
         case 'h':

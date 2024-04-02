@@ -31,12 +31,25 @@
  *   The file implements command job manager.
  */
 
-#include "app/cli/job_manager.hpp"
+#include <exception>
+#include <string>
+#include <vector>
+
+#include <nlohmann/json.hpp>
+
+#include "app/border_agent.hpp"
+#include "app/cli/console.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
+#include "app/cli/job_manager.hpp"
 #include "app/cli/security_materials.hpp"
+#include "app/commissioner_app.hpp"
 #include "app/json.hpp"
-#include "app/ps/registry.hpp"
+#include "app/ps/registry_entries.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
@@ -92,7 +105,7 @@ void JobManager::CleanupJobs()
 {
     for (auto job : mJobPool)
     {
-        ASSERT(job == NULL || job->IsStopped());
+        ASSERT(job == nullptr || job->IsStopped());
         delete job;
     }
     mJobPool.clear();
@@ -122,12 +135,16 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
 
 Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
 {
-    if (utils::ToLower(aExpr[0]) == "start")
-        return PrepareStartJobs(aExpr, aNids, aGroupAlias);
-    else if (utils::ToLower(aExpr[0]) == "stop")
-        return PrepareStopJobs(aExpr, aNids, aGroupAlias);
-
     Error error;
+
+    if (utils::ToLower(aExpr[0]) == "start")
+    {
+        ExitNow(error = PrepareStartJobs(aExpr, aNids, aGroupAlias));
+    }
+    else if (utils::ToLower(aExpr[0]) == "stop")
+    {
+        ExitNow(error = PrepareStopJobs(aExpr, aNids, aGroupAlias));
+    }
 
     for (const auto &nid : aNids)
     {
@@ -169,6 +186,7 @@ Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanId
 
         SuccessOrExit(error = CreateJob(entry->second, jobExpr, nid));
     }
+
 exit:
     return error;
 }
@@ -603,7 +621,7 @@ void JobManager::RunJobs()
 {
     for (auto job : mJobPool)
     {
-        ASSERT(job != NULL);
+        ASSERT(job != nullptr);
         job->Run();
     }
     WaitForJobs();
@@ -616,7 +634,7 @@ void JobManager::CancelCommand()
 
     for (auto job : mJobPool)
     {
-        ASSERT(job != NULL);
+        ASSERT(job != nullptr);
         job->Cancel();
     }
     WaitForJobs();
@@ -639,7 +657,7 @@ void JobManager::WaitForJobs()
 {
     for (auto job : mJobPool)
     {
-        ASSERT(job != NULL);
+        ASSERT(job != nullptr);
         job->Wait();
     }
 }
@@ -655,7 +673,7 @@ Interpreter::Value JobManager::CollectJobsValue()
         ASSERT(job->IsStopped());
         if (job->GetValue().HasNoError())
         {
-            xpan = job->GetXpanId();
+            xpan = XpanId{job->GetXpanId()};
             try
             {
                 std::string valueStr = job->GetValue().ToString();
@@ -672,12 +690,12 @@ Interpreter::Value JobManager::CollectJobsValue()
                 json[xpan.str()] = nlohmann::json::parse(valueStr);
             } catch (std::exception &e)
             {
-                ErrorMsg(xpan.mValue, e.what());
+                ErrorMsg(xpan, e.what());
             }
         }
         else // produce error messages immediately before printing value
         {
-            ErrorMsg(job->GetXpanId(), job->GetValue().ToString());
+            ErrorMsg(XpanId{job->GetXpanId()}, job->GetValue().ToString());
         }
     }
     value = json.dump(JSON_INDENT_DEFAULT);
@@ -706,7 +724,7 @@ Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
     status = mInterpreter.mRegistry->GetCurrentNetworkXpan(nid);
     VerifyOrExit(RegistryStatus::kSuccess == status, error = ERROR_REGISTRY_ERROR("getting selected network failed"));
 
-    if (nid != XpanId::kEmptyXpanId)
+    if (nid.mValue != XpanId::kEmptyXpanId)
     {
         auto entry = mCommissionerPool.find(nid);
         if (entry != mCommissionerPool.end())
@@ -744,17 +762,17 @@ bool JobManager::IsClean()
 
 void JobManager::ErrorMsg(XpanId aNid, std::string aMessage)
 {
-    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
+    mInterpreter.PrintNetworkMessage(aNid.mValue, aMessage, Console::Color::kRed);
 }
 
 void JobManager::WarningMsg(XpanId aNid, std::string aMessage)
 {
-    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
+    mInterpreter.PrintNetworkMessage(aNid.mValue, aMessage, Console::Color::kMagenta);
 }
 
 void JobManager::InfoMsg(XpanId aNid, std::string aMessage)
 {
-    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
+    mInterpreter.PrintNetworkMessage(aNid.mValue, aMessage, Console::Color::kDefault);
 }
 
 } // namespace commissioner

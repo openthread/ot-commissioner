@@ -34,15 +34,24 @@
 
 #include "app/json.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <exception>
-#include <iostream>
-#include <sstream>
+#include <memory>
+#include <stdexcept>
+#include <string>
 
+#include "app/border_agent.hpp"
 #include "app/commissioner_app.hpp"
 #include "app/file_logger.hpp"
 #include "app/file_util.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "nlohmann/json.hpp"
 
 namespace ot {
 
@@ -410,7 +419,7 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 
 static void to_json(Json &aJson, const ot::commissioner::PanId &aPanId)
 {
-    aJson = (std::string)aPanId;
+    aJson = std::string(aPanId);
 }
 
 static void from_json(const Json &aJson, ot::commissioner::PanId &aPanId)

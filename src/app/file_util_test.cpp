@@ -77,7 +77,7 @@ TEST(FileUtil, PathExists)
     EXPECT_TRUE(RestoreDirPath(dirName).GetCode() == ErrorCode::kNone);
     EXPECT_TRUE(PathExists(dirName).GetCode() == ErrorCode::kNone);
     FILE *f = fopen(fileName.c_str(), "w");
-    if (f != NULL)
+    if (f != nullptr)
     {
         EXPECT_TRUE(PathExists(fileName).GetCode() == ErrorCode::kNone);
         fclose(f);
@@ -90,7 +90,7 @@ TEST(FileUtil, PathExists)
 
 TEST(FileUtil, WriteFile)
 {
-    FILE       *f    = NULL;
+    FILE       *f    = nullptr;
     std::string path = "./test_write";
     std::string test = "test";
     std::string alt  = "alt";
@@ -109,11 +109,11 @@ TEST(FileUtil, WriteFile)
     EXPECT_EQ(ReadFile(read, path), ErrorCode::kNone);
     EXPECT_EQ(read, alt);
     // write to a blocked file
-    EXPECT_TRUE((f = fopen(path.c_str(), "r")) != NULL);
+    EXPECT_TRUE((f = fopen(path.c_str(), "r")) != nullptr);
     EXPECT_EQ(fchmod(fileno(f), 0), 0);
     EXPECT_EQ(WriteFile(test, path), ErrorCode::kIOBusy);
 
-    if (f != NULL)
+    if (f != nullptr)
     {
         fclose(f);
     }

@@ -35,6 +35,7 @@
 #define OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 
 #include "app/cli/interpreter.hpp"
+#include "app/cli/job.hpp"
 #include "app/commissioner_app.hpp"
 #include "app/ps/registry_entries.hpp"
 
@@ -46,8 +47,6 @@ using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
 using RegistryStatus     = ot::commissioner::persistent_storage::Registry::Status;
 using ot::commissioner::XpanId;
 using ot::commissioner::persistent_storage::BorderRouter;
-
-class Job;
 
 class JobManager
 {

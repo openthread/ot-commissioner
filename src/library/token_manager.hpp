@@ -31,13 +31,19 @@
 
 #if OT_COMM_CONFIG_CCM_ENABLE
 
-#include <mbedtls/pk.h>
+#include <cstdint>
+#include <string>
 
-#include <commissioner/commissioner.hpp>
-#include <commissioner/error.hpp>
-
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "event2/event.h"
 #include "library/cbor.hpp"
+#include "library/coap.hpp"
 #include "library/coap_secure.hpp"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/pk.h"
 
 namespace ot {
 
@@ -173,7 +179,7 @@ private:
     /*
      * Thread Constants.
      */
-    static const size_t kMaxCoseKeyIdLength = 16;
+    static constexpr int kMaxCoseKeyIdLength = 16;
 
     // Move the resource from src to des, leaving the src invalid.
     static void MoveMbedtlsKey(mbedtls_pk_context &aDes, mbedtls_pk_context &aSrc);

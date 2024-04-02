@@ -26,7 +26,15 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include "app/commissioner_app.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "common/address.hpp"
 
 #define UNUSED(A) (void)A
 

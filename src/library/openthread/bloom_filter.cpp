@@ -29,11 +29,11 @@
 #include "library/openthread/bloom_filter.hpp"
 
 #include <assert.h>
-
+#include <cstddef>
+#include <cstdint>
 #include <limits>
 
-#include <commissioner/defines.hpp>
-
+#include "commissioner/defines.hpp"
 #include "library/openthread/crc16.hpp"
 
 namespace ot {

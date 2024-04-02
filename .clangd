@@ -1,0 +1,6 @@
+Diagnostics:
+  # for Include Cleaner, see https://clangd.llvm.org/design/include-cleaner
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+If:
+  PathExclude: third_party/.

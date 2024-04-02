@@ -34,9 +34,9 @@
 #ifndef OT_COMM_NETWORK_DATA_HPP_
 #define OT_COMM_NETWORK_DATA_HPP_
 
+#include <cstdint>
 #include <string>
-
-#include <stdint.h>
+#include <vector>
 
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
@@ -69,10 +69,10 @@ struct XpanId
 
     bool operator==(const XpanId &aOther) const;
 
-    bool operator!=(const uint64_t aOther) const;
-    bool operator<(const XpanId aOther) const;
+    bool operator!=(const XpanId &aOther) const;
+    bool operator<(const XpanId &aOther) const;
 
-    operator std::string() const;
+    explicit operator std::string() const;
 
     /**
      * Decodes hexadecimal string.
@@ -257,12 +257,14 @@ struct PanId
     static constexpr uint64_t kEmptyPanId = 0;
 
     uint16_t mValue;
-    PanId(uint16_t aValue);
+    explicit PanId(uint16_t aValue);
+    PanId(const PanId &aOther) = default;
     PanId();
 
-    PanId &operator=(uint16_t aValue);
-           operator uint16_t() const;
-           operator std::string() const;
+    PanId   &operator=(const PanId &aValue) = default;
+    PanId   &operator=(uint16_t aValue);
+    explicit operator uint16_t() const;
+    explicit operator std::string() const;
 
     Error FromHex(const std::string &aInput);
 };

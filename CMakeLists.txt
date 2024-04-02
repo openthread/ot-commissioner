@@ -43,6 +43,10 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+if (CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Output compile commands for clang-tidy" FORCE)
+endif()
+
 if(NOT "${CMAKE_CXX_STANDARD}")
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -34,8 +34,16 @@
 #ifndef _PERSISTENT_STORAGE_JSON_HPP_
 #define _PERSISTENT_STORAGE_JSON_HPP_
 
-#include "persistent_storage.hpp"
-#include "semaphore.hpp"
+#include <cstddef>
+#include <functional>
+#include <iterator>
+#include <string>
+#include <vector>
+
+#include "app/ps/persistent_storage.hpp"
+#include "app/ps/registry_entries.hpp"
+#include "app/ps/semaphore_posix.hpp"
+#include "nlohmann/json.hpp"
 
 namespace ot {
 
@@ -59,7 +67,7 @@ public:
      *
      * @param[in] aFileName file name to be used as storage
      */
-    PersistentStorageJson(std::string const &aFileName);
+    explicit PersistentStorageJson(std::string const &aFileName);
 
     /**
      * Destructor
@@ -113,15 +121,15 @@ public:
      * Gets value by unique id from store
      *
      * @param[in] aId value's unique id
-     * @param[out] aValue value from registry
+     * @param[out] aRetValue value from registry
      * @return Status
      * @see Status
      * @see registry_entries.hpp
      */
-    Status Get(RegistrarId const &aId, Registrar &aValue) override;
-    Status Get(DomainId const &aId, Domain &aValue) override;
-    Status Get(NetworkId const &aId, Network &aValue) override;
-    Status Get(BorderRouterId const &aId, BorderRouter &aValue) override;
+    Status Get(RegistrarId const &aId, Registrar &aRetValue) override;
+    Status Get(DomainId const &aId, Domain &aRetValue) override;
+    Status Get(NetworkId const &aId, Network &aRetValue) override;
+    Status Get(BorderRouterId const &aId, BorderRouter &aRetValue) override;
 
     /**
      * Updates value in store

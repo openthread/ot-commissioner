@@ -34,12 +34,13 @@
 #ifndef _REGISTRY_ENTRIES_HPP_
 #define _REGISTRY_ENTRIES_HPP_
 
-#include "nlohmann_json.hpp"
-
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "app/border_agent.hpp"
+#include "commissioner/network_data.hpp"
+#include "nlohmann/json.hpp"
 
 namespace ot {
 
@@ -52,7 +53,7 @@ namespace persistent_storage {
  *
  * Id value is not set
  */
-const unsigned int EMPTY_ID = (unsigned int)-1;
+const unsigned int EMPTY_ID = static_cast<unsigned int>(-1);
 
 /**
  * Registrar entity id
@@ -110,7 +111,7 @@ struct Registrar
 
     Registrar(RegistrarId const              &aId,
               std::string const              &aAddr,
-              unsigned int const              aPort,
+              unsigned int                    aPort,
               std::vector<std::string> const &aDomains);
     Registrar();
 };
@@ -148,10 +149,10 @@ struct Network
             DomainId const    &aDomainId,
             std::string const &aName,
             XpanId const      &aXpan,
-            unsigned int const aChannel,
-            uint16_t const     aPan,
+            unsigned int       aChannel,
+            uint16_t           aPan,
             std::string const &aMlp,
-            int const          aCcm);
+            int                aCcm);
     Network();
 };
 
@@ -171,7 +172,7 @@ struct BorderRouter
     /**
      * Minimum polymorphic requirements.
      */
-    virtual ~BorderRouter();
+    virtual ~BorderRouter() = default;
 };
 
 typedef std::vector<BorderRouter> BorderRouterArray;

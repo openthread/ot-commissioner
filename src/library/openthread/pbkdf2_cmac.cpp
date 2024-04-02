@@ -35,9 +35,12 @@
 #include "library/openthread/pbkdf2_cmac.hpp"
 
 #include <assert.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <memory.h>
 
-#include <mbedtls/cmac.h>
+#include "mbedtls/cmac.h"
 
 namespace ot {
 

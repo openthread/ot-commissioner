@@ -34,9 +34,9 @@
 #ifndef OT_COMM_ERROR_HPP_
 #define OT_COMM_ERROR_HPP_
 
-#include <memory>
 #include <ostream>
 #include <string>
+#include <utility>
 
 #include <commissioner/defines.hpp>
 
@@ -227,18 +227,9 @@ private:
     std::string mMessage;
 };
 
-inline Error::Error(const Error &aError)
-    : mCode(aError.mCode)
-    , mMessage(aError.mMessage)
-{
-}
+inline Error::Error(const Error &aError) = default;
 
-inline Error &Error::operator=(const Error &aError)
-{
-    mCode    = aError.mCode;
-    mMessage = aError.mMessage;
-    return *this;
-}
+inline Error &Error::operator=(const Error &aError) = default;
 
 inline Error::Error(Error &&aError) noexcept
     : mCode(std::move(aError.mCode))

@@ -33,8 +33,23 @@
 
 #include "library/udp_proxy.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "common/address.hpp"
+#include "common/error_macros.hpp"
 #include "common/logging.hpp"
+#include "common/utils.hpp"
+#include "library/coap.hpp"
+#include "library/coap_secure.hpp"
 #include "library/commissioner_impl.hpp"
+#include "library/message.hpp"
+#include "library/tlv.hpp"
 #include "library/uri.hpp"
 
 namespace ot {
@@ -159,7 +174,6 @@ exit:
         LOG_WARN(LOG_REGION_COAP, "client(={}) handle UDP_RX.ntf request failed: {}", static_cast<void *>(this),
                  error.ToString());
     }
-    return;
 }
 
 void ProxyClient::FetchMeshLocalPrefix(Commissioner::ErrorHandler aHandler)

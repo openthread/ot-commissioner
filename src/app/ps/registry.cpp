@@ -31,8 +31,18 @@
  *   The file implements JSON-based Thread networks/domains registry.
  */
 
-#include "registry.hpp"
-#include "persistent_storage_json.hpp"
+#include <algorithm>
+#include <cassert>
+#include <string>
+#include <vector>
+
+#include "app/border_agent.hpp"
+#include "app/ps/persistent_storage.hpp"
+#include "app/ps/persistent_storage_json.hpp"
+#include "app/ps/registry.hpp"
+#include "app/ps/registry_entries.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -136,7 +146,8 @@ Registry::Status Registry::Add(BorderAgent const &aValue)
         {
             return Registry::Status::kError;
         }
-        else if (status == Registry::Status::kNotFound)
+
+        if (status == Registry::Status::kNotFound)
         {
             DomainId domainId{EMPTY_ID};
             status = MapStatus(mStorage->Add(dom, domainId));
@@ -166,7 +177,7 @@ Registry::Status Registry::Add(BorderAgent const &aValue)
             // Decided: update network aName in the network entity
             if ((aValue.mPresentFlags & BorderAgent::kExtendedPanIdBit) != 0)
             {
-                nwk.mXpan = aValue.mExtendedPanId;
+                nwk.mXpan = XpanId{aValue.mExtendedPanId};
             }
             else
             {
@@ -179,7 +190,8 @@ Registry::Status Registry::Add(BorderAgent const &aValue)
             {
                 throw status;
             }
-            else if (status == Registry::Status::kNotFound)
+
+            if (status == Registry::Status::kNotFound)
             {
                 NetworkId networkId{EMPTY_ID};
                 // It is possible we found the network by xpan
@@ -189,7 +201,7 @@ Registry::Status Registry::Add(BorderAgent const &aValue)
                     nwk.mName = aValue.mNetworkName;
                 }
                 nwk.mDomainId = dom.mId;
-                nwk.mXpan     = aValue.mExtendedPanId;
+                nwk.mXpan     = XpanId{aValue.mExtendedPanId};
 
                 // Provisionally set network's CCM flag considering
                 // advertised Connection Mode.
@@ -224,7 +236,7 @@ Registry::Status Registry::Add(BorderAgent const &aValue)
             }
         }
 
-        BorderRouter br{EMPTY_ID, nwk.mId, aValue};
+        BorderRouter br{BorderRouterId{EMPTY_ID}, nwk.mId, aValue};
         try
         {
             if (br.mNetworkId.mId == EMPTY_ID)
@@ -331,7 +343,7 @@ Registry::Status Registry::GetNetworksInDomain(const std::string &aDomainName, N
     }
     else
     {
-        Domain dom{EMPTY_ID, aDomainName};
+        Domain dom{DomainId{EMPTY_ID}, aDomainName};
         VerifyOrExit((status = MapStatus(mStorage->Lookup(dom, domains))) == Registry::Status::kSuccess);
     }
     VerifyOrExit(domains.size() < 2, status = Registry::Status::kAmbiguity);
@@ -523,7 +535,7 @@ Registry::Status Registry::ForgetCurrentNetwork()
     return SetCurrentNetwork(NetworkId{});
 }
 
-Registry::Status Registry::SetCurrentNetwork(const XpanId aXpan)
+Registry::Status Registry::SetCurrentNetwork(const XpanId &aXpan)
 {
     Network          nwk;
     Registry::Status status;
@@ -582,7 +594,7 @@ exit:
     return status;
 }
 
-Registry::Status Registry::GetNetworkByXpan(const XpanId aXpan, Network &aRet)
+Registry::Status Registry::GetNetworkByXpan(const XpanId &aXpan, Network &aRet)
 {
     Network nwk{};
     nwk.mXpan = aXpan;
@@ -608,7 +620,7 @@ Registry::Status Registry::GetNetworkByPan(const std::string &aPan, Network &aRe
     return LookupOne(nwk, aRet);
 }
 
-Registry::Status Registry::GetDomainNameByXpan(const XpanId aXpan, std::string &aName)
+Registry::Status Registry::GetDomainNameByXpan(const XpanId &aXpan, std::string &aName)
 {
     Registry::Status status;
     Network          nwk;
@@ -621,7 +633,7 @@ exit:
     return status;
 }
 
-Registry::Status Registry::DeleteBorderRouterById(const BorderRouterId aRouterId)
+Registry::Status Registry::DeleteBorderRouterById(const BorderRouterId &aRouterId)
 {
     Registry::Status          status;
     BorderRouter              br;
@@ -778,9 +790,9 @@ exit:
     return status;
 }
 
-Registry::Status Registry::Update(const Network &nwk)
+Registry::Status Registry::Update(const Network &aNetwork)
 {
-    return MapStatus(mStorage->Update(nwk));
+    return MapStatus(mStorage->Update(aNetwork));
 }
 
 } // namespace persistent_storage

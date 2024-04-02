@@ -28,12 +28,22 @@
 
 #include "mdns_handler.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <ctime>
 #include <string>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+
 #include "border_agent.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "mdns/mdns.h"
 
 namespace ot {
 
@@ -49,15 +59,15 @@ static inline ByteArray ToByteArray(const mdns_string_t &aString)
     return ByteArray{aString.str, aString.str + aString.length};
 }
 
-int HandleRecord(const struct sockaddr *from,
-                 mdns_entry_type_t      entry,
-                 uint16_t               type,
-                 uint16_t               rclass,
-                 uint32_t               ttl,
-                 const void            *data,
-                 size_t                 size,
-                 size_t                 offset,
-                 size_t                 length,
+int HandleRecord(const struct sockaddr *aFrom,
+                 mdns_entry_type_t      aEntry,
+                 uint16_t               aType,
+                 uint16_t               aRclass,
+                 uint32_t               aTtl,
+                 const void            *aData,
+                 size_t                 aSize,
+                 size_t                 aOffset,
+                 size_t                 aLength,
                  void                  *aBorderAgent)
 {
     struct sockaddr_storage fromAddrStorage;
@@ -70,10 +80,10 @@ int HandleRecord(const struct sockaddr *from,
     BorderAgent           &borderAgent           = borderAgentOrErrorMsg.mBorderAgent;
     Error                 &error                 = borderAgentOrErrorMsg.mError;
 
-    (void)rclass;
-    (void)ttl;
+    (void)aRclass;
+    (void)aTtl;
 
-    *reinterpret_cast<struct sockaddr *>(&fromAddrStorage) = *from;
+    *reinterpret_cast<struct sockaddr *>(&fromAddrStorage) = *aFrom;
     if (fromAddr.Set(fromAddrStorage) != ErrorCode::kNone)
     {
         ExitNow(error = ERROR_BAD_FORMAT("invalid source address of mDNS response"));
@@ -81,29 +91,30 @@ int HandleRecord(const struct sockaddr *from,
 
     fromAddrStr = fromAddr.ToString();
 
-    entryType = (entry == MDNS_ENTRYTYPE_ANSWER) ? "answer"
-                                                 : ((entry == MDNS_ENTRYTYPE_AUTHORITY) ? "authority" : "additional");
-    if (type == MDNS_RECORDTYPE_PTR)
+    entryType = (aEntry == MDNS_ENTRYTYPE_ANSWER) ? "answer"
+                                                  : ((aEntry == MDNS_ENTRYTYPE_AUTHORITY) ? "authority" : "additional");
+    if (aType == MDNS_RECORDTYPE_PTR)
     {
-        mdns_string_t nameStr     = mdns_record_parse_ptr(data, size, offset, length, nameBuffer, sizeof(nameBuffer));
+        mdns_string_t nameStr = mdns_record_parse_ptr(aData, aSize, aOffset, aLength, nameBuffer, sizeof(nameBuffer));
         borderAgent.mServiceName  = std::string(nameStr.str, nameStr.length);
         borderAgent.mPresentFlags = BorderAgent::kServiceNameBit;
         // TODO(wgtdkp): add debug logging.
     }
-    else if (type == MDNS_RECORDTYPE_SRV)
+    else if (aType == MDNS_RECORDTYPE_SRV)
     {
-        mdns_record_srv_t server = mdns_record_parse_srv(data, size, offset, length, nameBuffer, sizeof(nameBuffer));
+        mdns_record_srv_t server =
+            mdns_record_parse_srv(aData, aSize, aOffset, aLength, nameBuffer, sizeof(nameBuffer));
 
         borderAgent.mPort = server.port;
         borderAgent.mPresentFlags |= BorderAgent::kPortBit;
     }
-    else if (type == MDNS_RECORDTYPE_A)
+    else if (aType == MDNS_RECORDTYPE_A)
     {
         struct sockaddr_storage addrStorage;
         struct sockaddr_in      addr;
         std::string             addrStr;
 
-        mdns_record_parse_a(data, size, offset, length, &addr);
+        mdns_record_parse_a(aData, aSize, aOffset, aLength, &addr);
 
         *reinterpret_cast<struct sockaddr_in *>(&addrStorage) = addr;
         if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
@@ -120,13 +131,13 @@ int HandleRecord(const struct sockaddr *from,
             borderAgent.mPresentFlags |= BorderAgent::kAddrBit;
         }
     }
-    else if (type == MDNS_RECORDTYPE_AAAA)
+    else if (aType == MDNS_RECORDTYPE_AAAA)
     {
         struct sockaddr_storage addrStorage;
         struct sockaddr_in6     addr;
         std::string             addrStr;
 
-        mdns_record_parse_aaaa(data, size, offset, length, &addr);
+        mdns_record_parse_aaaa(aData, aSize, aOffset, aLength, &addr);
 
         *reinterpret_cast<struct sockaddr_in6 *>(&addrStorage) = addr;
         if (fromAddr.Set(addrStorage) != ErrorCode::kNone)
@@ -139,13 +150,13 @@ int HandleRecord(const struct sockaddr *from,
         borderAgent.mAddr = addrStr;
         borderAgent.mPresentFlags |= BorderAgent::kAddrBit;
     }
-    else if (type == MDNS_RECORDTYPE_TXT)
+    else if (aType == MDNS_RECORDTYPE_TXT)
     {
         mdns_record_txt_t txtBuffer[128];
         size_t            parsed;
 
-        parsed =
-            mdns_record_parse_txt(data, size, offset, length, txtBuffer, sizeof(txtBuffer) / sizeof(mdns_record_txt_t));
+        parsed = mdns_record_parse_txt(aData, aSize, aOffset, aLength, txtBuffer,
+                                       sizeof(txtBuffer) / sizeof(mdns_record_txt_t));
 
         for (size_t i = 0; i < parsed; ++i)
         {
@@ -317,7 +328,7 @@ int HandleRecord(const struct sockaddr *from,
     if (borderAgent.mPresentFlags != 0)
     {
         // Actualize Timestamp
-        borderAgent.mUpdateTimestamp.mTime = time(0);
+        borderAgent.mUpdateTimestamp.mTime = time(nullptr);
         borderAgent.mPresentFlags |= BorderAgent::kUpdateTimestampBit;
     }
 exit:

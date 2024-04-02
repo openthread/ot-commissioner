@@ -28,8 +28,15 @@
 
 #include "common/address.hpp"
 
-#include <arpa/inet.h>
+#include <cstdint>
+#include <string>
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 

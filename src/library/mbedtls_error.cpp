@@ -31,13 +31,15 @@
  *   This file implements mbedtls error facilities.
  */
 
-#include "mbedtls_error.hpp"
+#include "library/mbedtls_error.hpp"
 
-#include <mbedtls/error.h>
-#include <mbedtls/ssl.h>
+#include <cstdint>
 
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "mbedtls/error.h"
+#include "mbedtls/ssl.h"
 
 namespace ot {
 

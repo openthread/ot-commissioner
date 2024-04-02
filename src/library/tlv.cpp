@@ -33,8 +33,14 @@
 
 #include "library/tlv.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <set>
+#include <string>
 
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"

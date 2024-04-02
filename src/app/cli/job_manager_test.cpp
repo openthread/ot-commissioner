@@ -30,24 +30,40 @@
  * @file Job manager unit tests
  */
 
-#include "gmock/gmock.h"
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <thread>
+
+#include <gmock/gmock-matchers.h>
+#include <gmock/gmock-spec-builders.h>
+#include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+#include <sys/stat.h>
 
 #define private public
 
+#include "app/border_agent.hpp"
 #include "app/cli/interpreter.hpp"
-#include "app/cli/job.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/commissioner_app.hpp"
 #include "app/commissioner_app_mock.hpp"
 #include "app/file_util.hpp"
+#include "app/ps/persistent_storage.hpp"
 #include "app/ps/persistent_storage_json.hpp"
 #include "app/ps/registry.hpp"
+#include "app/ps/registry_entries.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 
 using namespace ot::commissioner;
 
 using testing::_;
 using testing::DoAll;
 using testing::Invoke;
-using testing::Mock;
 using testing::Return;
 using testing::WithArg;
 using testing::WithArgs;
@@ -63,10 +79,7 @@ public:
     struct TestContext
     {
         TestContext()
-            : mPS{}
-            , mRegistry{}
-            , mConf{}
-            , mInterpreter{}
+            : mConf{}
             , mJobManager{mInterpreter}
             , mDefaultCommissioner{new CommissionerAppMock()}
         {
@@ -86,10 +99,7 @@ public:
         CommissionerAppStaticExpecter        mCommissionerAppStaticExpecter;
     };
 
-    JobManagerTestSuite()
-        : Test()
-    {
-    }
+    JobManagerTestSuite()          = default;
     virtual ~JobManagerTestSuite() = default;
 
     void SetInitialExpectations(TestContext &aContext)

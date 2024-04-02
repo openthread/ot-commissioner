@@ -35,16 +35,16 @@ namespace ot {
 
 namespace commissioner {
 
-int HandleRecord(const struct sockaddr *from,
-                 mdns_entry_type_t      entry,
-                 uint16_t               type,
-                 uint16_t               rclass,
-                 uint32_t               ttl,
-                 const void            *data,
-                 size_t                 size,
-                 size_t                 offset,
-                 size_t                 length,
-                 void                  *userData);
+int HandleRecord(const struct sockaddr *aFrom,
+                 mdns_entry_type_t      aEntry,
+                 uint16_t               aType,
+                 uint16_t               aRclass,
+                 uint32_t               aTtl,
+                 const void            *aData,
+                 size_t                 aSize,
+                 size_t                 aOffset,
+                 size_t                 aLength,
+                 void                  *aBorderAgent);
 
 } // namespace commissioner
 

@@ -29,9 +29,6 @@
 #ifndef OT_COMM_MBEDTLS_CONFIG_H
 #define OT_COMM_MBEDTLS_CONFIG_H
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #define MBEDTLS_DEBUG_C
 #define MBEDTLS_PLATFORM_SNPRINTF_MACRO snprintf
 

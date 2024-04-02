@@ -51,6 +51,7 @@ cmake-build-*
 #tools
 .vscode
 .idea
+.cache
 CMakeLists.txt.user
 
 #log

@@ -28,11 +28,23 @@
 
 #include "library/socket.hpp"
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <memory.h>
-#include <netinet/in.h>
+#include <string>
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#include "common/address.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
+#include "event2/event.h"
+#include "event2/util.h"
+#include "library/event.hpp"
+#include "library/message.hpp"
+#include "mbedtls/net_sockets.h"
 
 namespace ot {
 
@@ -40,20 +52,25 @@ namespace commissioner {
 
 static uint16_t GetSockPort(const sockaddr_storage &aSockAddr)
 {
+    uint16_t port;
+
     if (aSockAddr.ss_family == AF_INET)
     {
         auto &addr4 = *reinterpret_cast<const sockaddr_in *>(&aSockAddr);
-        return ntohs(addr4.sin_port);
+        ExitNow(port = ntohs(addr4.sin_port));
     }
     else if (aSockAddr.ss_family == AF_INET6)
     {
         auto &addr6 = *reinterpret_cast<const sockaddr_in6 *>(&aSockAddr);
-        return ntohs(addr6.sin6_port);
+        ExitNow(port = ntohs(addr6.sin6_port));
     }
     else
     {
         VerifyOrDie(false);
     }
+
+exit:
+    return port;
 }
 
 Socket::Socket(struct event_base *aEventBase)
@@ -111,9 +128,9 @@ UdpSocket::UdpSocket(UdpSocket &&aOther)
     mbedtls_net_init(&aOther.mNetCtx);
 }
 
-int UdpSocket::Connect(const std::string &aHost, uint16_t aPort)
+int UdpSocket::Connect(const std::string &aPeerAddr, uint16_t aPeerPort)
 {
-    auto portStr = std::to_string(aPort);
+    auto portStr = std::to_string(aPeerPort);
 
     // Free the fd if already opened.
     mbedtls_net_free(&mNetCtx);
@@ -123,7 +140,7 @@ int UdpSocket::Connect(const std::string &aHost, uint16_t aPort)
     }
 
     // Connect
-    int rval = mbedtls_net_connect(&mNetCtx, aHost.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
+    int rval = mbedtls_net_connect(&mNetCtx, aPeerAddr.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
     VerifyOrExit(rval == 0);
     VerifyOrExit((rval = mbedtls_net_set_nonblock(&mNetCtx)) == 0);
 
@@ -144,9 +161,9 @@ exit:
     return rval;
 }
 
-int UdpSocket::Bind(const std::string &aBindIp, uint16_t aPort)
+int UdpSocket::Bind(const std::string &aLocalAddr, uint16_t aLocalPort)
 {
-    auto portStr = std::to_string(aPort);
+    auto portStr = std::to_string(aLocalPort);
 
     // Free the fd if already opened.
     mbedtls_net_free(&mNetCtx);
@@ -156,7 +173,7 @@ int UdpSocket::Bind(const std::string &aBindIp, uint16_t aPort)
     }
 
     // Bind
-    int rval = mbedtls_net_bind(&mNetCtx, aBindIp.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
+    int rval = mbedtls_net_bind(&mNetCtx, aLocalAddr.c_str(), portStr.c_str(), MBEDTLS_NET_PROTO_UDP);
     VerifyOrExit(rval == 0);
     VerifyOrExit((rval = mbedtls_net_set_nonblock(&mNetCtx)) == 0);
 

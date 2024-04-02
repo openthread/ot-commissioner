@@ -34,7 +34,10 @@
 #ifndef OT_COMM_APP_CLI_SECURITY_MATERIALS_HPP_
 #define OT_COMM_APP_CLI_SECURITY_MATERIALS_HPP_
 
+#include <string>
+
 #include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 
 namespace ot {
@@ -62,14 +65,14 @@ struct SecurityMaterials
 
     // See if any part of credentials is already found depending on the
     // credentials type
-    bool IsAnyFound(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false);
+    bool IsAnyFound(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false) const;
 
     // See if any part of credentials is missing depending on the
     // credentials type
-    bool IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false);
+    bool IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken = false) const;
 
     // See if entire set of credentials is empty
-    bool IsEmpty(bool isCCM);
+    bool IsEmpty(bool isCCM) const;
 };
 
 /**
@@ -90,7 +93,7 @@ Error Init(const Config &aDefaultConfig);
  *
  * @see JobManager::PrepareDtlsConfig()
  */
-Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM);
+Error GetDomainSM(const std::string &aDid, SecurityMaterials &aSM);
 
 /**
  * Finds security materials related to a network. The returned content
@@ -103,7 +106,7 @@ Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM);
  *
  * @see JobManager::PrepareDtlsConfig()
  */
-Error GetNetworkSM(const std::string aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM);
+Error GetNetworkSM(const std::string &aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM);
 
 } // namespace security_material
 

@@ -32,11 +32,22 @@
  */
 
 #include "app/cli/security_materials.hpp"
+
+#include <cstdlib>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "app/cli/console.hpp"
 #include "app/file_util.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
+#include "fmt/core.h"
+#include "fmt/format.h"
 
 #define SM_ERROR_MESSAGE_NO_ROOT_AVAILABLE "ThreadSMRoot value is not available"
 #define SM_ERROR_MESSAGE_PEM_READ_FAILED "Failed to read security data from file {}"
@@ -49,8 +60,8 @@ namespace security_material {
 
 using SMPair = std::pair<std::string, ByteArray *>;
 
-static Error GetNetworkSMImpl(const std::string  aNwkFolder, // a folder to start from
-                              const std::string  aAlias,     // network id or network name
+static Error GetNetworkSMImpl(const std::string &aNwkFolder, // a folder to start from
+                              const std::string &aAlias,     // network id or network name
                               bool               aNeedCert,
                               bool               aNeedPSKc,
                               SecurityMaterials &aSM);
@@ -94,7 +105,7 @@ Error Init(const Config &aDefaultConfig)
     return ERROR_NONE;
 }
 
-Error GetDomainSM(const std::string aDid, SecurityMaterials &aSM)
+Error GetDomainSM(const std::string &aDid, SecurityMaterials &aSM)
 {
     Error               error;
     std::string         domPath;
@@ -151,13 +162,13 @@ exit:
     return error;
 }
 
-Error GetNetworkSM(const std::string aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM)
+Error GetNetworkSM(const std::string &aAlias, bool aNeedCert, bool aNeedPSKc, SecurityMaterials &aSM)
 {
     return GetNetworkSMImpl("nwk/", aAlias, aNeedCert, aNeedPSKc, aSM);
 }
 
-static Error GetNetworkSMImpl(const std::string  aNwkFolder,
-                              const std::string  aAlias,
+static Error GetNetworkSMImpl(const std::string &aNwkFolder,
+                              const std::string &aAlias,
                               bool               aNeedCert,
                               bool               aNeedPSKc,
                               SecurityMaterials &aSM)
@@ -228,19 +239,19 @@ exit:
     return error;
 }
 
-bool SecurityMaterials::IsAnyFound(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/)
+bool SecurityMaterials::IsAnyFound(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/) const
 {
     return (aNeedCert && (mCertificate.size() != 0 || mPrivateKey.size() != 0 || mTrustAnchor.size() != 0)) ||
            (aNeedToken && mCommissionerToken.size() != 0) || (aNeedPSKc && mPSKc.size() != 0);
 }
 
-bool SecurityMaterials::IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/)
+bool SecurityMaterials::IsIncomplete(bool aNeedCert, bool aNeedPSKc, bool aNeedToken /*=false*/) const
 {
     return (aNeedCert && (mCertificate.size() == 0 || mPrivateKey.size() == 0 || mTrustAnchor.size() == 0)) ||
            (aNeedToken && mCommissionerToken.size() == 0) || (aNeedPSKc && mPSKc.size() == 0);
 }
 
-bool SecurityMaterials::IsEmpty(bool isCCM)
+bool SecurityMaterials::IsEmpty(bool isCCM) const
 {
     return isCCM ? mCertificate.size() == 0 && mPrivateKey.size() == 0 && mTrustAnchor.size() == 0 &&
                        mCommissionerToken.size() == 0

@@ -34,16 +34,18 @@
 #ifndef OT_COMM_LIBRARY_SOCKET_HPP_
 #define OT_COMM_LIBRARY_SOCKET_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 
-#include <mbedtls/net_sockets.h>
-
-#include <commissioner/defines.hpp>
-
 #include "common/address.hpp"
+#include "event2/event.h"
+#include "event2/event_struct.h"
+#include "event2/util.h"
 #include "library/event.hpp"
 #include "library/message.hpp"
+#include "mbedtls/net_sockets.h"
 
 namespace ot {
 

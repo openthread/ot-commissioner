@@ -35,11 +35,20 @@
 #define OT_COMM_APP_CLI_INTERPRETER_HPP_
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "app/border_agent.hpp"
 #include "app/cli/console.hpp"
 #include "app/commissioner_app.hpp"
 #include "app/ps/registry.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 
 namespace ot {
 
@@ -179,7 +188,7 @@ private:
      *
      * @see @ref Interpreter::MultiNetCommandContext
      */
-    Error ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRretExpr);
+    Error ReParseMultiNetworkSyntax(const Expression &aExpr, Expression &aRetExpr);
     /**
      * Updates on-screen visualization of the current network
      * selection.

@@ -35,20 +35,23 @@
 #define OT_COMM_LIBRARY_COAP_HPP_
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <map>
 #include <memory>
-#include <queue>
 #include <set>
+#include <string>
 
-#include <fmt/format.h>
-
-#include <commissioner/defines.hpp>
-#include <commissioner/error.hpp>
-
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/address.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
+#include "event2/event.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
 #include "library/endpoint.hpp"
 #include "library/message.hpp"
 #include "library/timer.hpp"
@@ -311,15 +314,15 @@ class OptionValue
 {
 public:
     OptionValue() = default;
-    OptionValue(const ByteArray &aOpaque)
+    explicit OptionValue(const ByteArray &aOpaque)
         : mValue(aOpaque)
     {
     }
-    OptionValue(const std::string &aString)
+    explicit OptionValue(const std::string &aString)
         : mValue(aString.begin(), aString.end())
     {
     }
-    OptionValue(uint32_t aUint32)
+    explicit OptionValue(uint32_t aUint32)
     {
         // Encoding an unsigned integer without preceding zeros.
         while (aUint32 != 0)
@@ -469,13 +472,13 @@ public:
 
     Error SetAccept(ContentFormat aAcceptFormat)
     {
-        return AppendOption(OptionType::kAccept, utils::to_underlying(aAcceptFormat));
+        return AppendOption(OptionType::kAccept, OptionValue{utils::to_underlying(aAcceptFormat)});
     }
     Error GetAccept(ContentFormat &aAcceptFormat) const;
 
     Error SetContentFormat(ContentFormat aContentFormat)
     {
-        return AppendOption(OptionType::kContentFormat, utils::to_underlying(aContentFormat));
+        return AppendOption(OptionType::kContentFormat, OptionValue{utils::to_underlying(aContentFormat)});
     }
     Error GetContentFormat(ContentFormat &aContentFormat) const;
 
@@ -649,7 +652,7 @@ private:
      */
     struct RequestHolder
     {
-        RequestHolder(const RequestPtr aRequest, ResponseHandler aHandler);
+        RequestHolder(const RequestPtr &aRequest, ResponseHandler aHandler);
 
         RequestPtr              mRequest;
         mutable ResponseHandler mHandler;
@@ -673,7 +676,7 @@ private:
         }
         ~RequestsCache() = default;
 
-        void Put(const RequestPtr aRequest, ResponseHandler aHandler);
+        void Put(const RequestPtr &aRequest, ResponseHandler aHandler);
         void Put(const RequestHolder &aRequestHolder);
 
         // Find corresponding request with the response.

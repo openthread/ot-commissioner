@@ -34,11 +34,16 @@
 #ifndef OT_COMM_LIBRARY_UDP_PROXY_HPP_
 #define OT_COMM_LIBRARY_UDP_PROXY_HPP_
 
-#include <commissioner/error.hpp>
+#include <cstdint>
 
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/address.hpp"
+#include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/endpoint.hpp"
+#include "library/message.hpp"
 
 namespace ot {
 
@@ -51,14 +56,14 @@ class CommissionerImpl;
 class ProxyEndpoint : public Endpoint
 {
 public:
-    ProxyEndpoint(coap::CoapSecure &aBrClient)
+    explicit ProxyEndpoint(coap::CoapSecure &aBrClient)
         : mBrClient(aBrClient)
         , mPeerPort(0)
     {
     }
     ~ProxyEndpoint() override = default;
 
-    Error    Send(const ByteArray &aBuf, MessageSubType aSubType) override;
+    Error    Send(const ByteArray &aRequest, MessageSubType aSubType) override;
     Address  GetPeerAddr() const override { return mPeerAddr; }
     uint16_t GetPeerPort() const override { return mPeerPort; }
 

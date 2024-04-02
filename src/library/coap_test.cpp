@@ -31,10 +31,23 @@
  *   This file defines test cases for CoAP implementation.
  */
 
-#include "common/error_macros.hpp"
-#include "library/coap.hpp"
+#include <cstdint>
+#include <memory>
+#include <queue>
+#include <string>
 
-#include <gtest/gtest.h>
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "common/address.hpp"
+#include "common/error_macros.hpp"
+#include "common/utils.hpp"
+#include "event2/event.h"
+#include "event2/event_struct.h"
+#include "event2/util.h"
+#include "gtest/gtest.h"
+#include "library/coap.hpp"
+#include "library/endpoint.hpp"
+#include "library/message.hpp"
 
 namespace ot {
 
@@ -291,7 +304,7 @@ public:
         event_add(&mSendEvent, nullptr);
     }
 
-    ~MockEndpoint() override {}
+    ~MockEndpoint() override = default;
 
     void SetPeer(MockEndpoint *aPeer) { mPeer = aPeer; }
 
