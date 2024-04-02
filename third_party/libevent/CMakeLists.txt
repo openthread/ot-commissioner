@@ -36,6 +36,7 @@ set(EVENT__DISABLE_SAMPLES ON CACHE BOOL "libevent disable samples" FORCE)
 set(EVENT__DISABLE_REGRESS ON CACHE BOOL "libevent disable regression tests" FORCE)
 set(EVENT__DISABLE_TESTS ON CACHE BOOL "libevent disable tests" FORCE)
 set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "libevent disable benchmark" FORCE)
+set(EVENT__HAVE_PIPE2 OFF CACHE BOOL "disable use of pipe2 in libevent" FORCE)
 add_subdirectory(repo)
 
 target_include_directories(event_core
