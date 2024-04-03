@@ -38,14 +38,20 @@
 #define MBEDTLS_ALLOW_PRIVATE_ACCESS
 #endif
 
-#include "library/cose.hpp"
+#include <cstddef>
+#include <cstdint>
 
-#include <mbedtls/bignum.h>
-#include <mbedtls/ecp.h>
-
+#include "cn-cbor/cn-cbor.h"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "library/cbor.hpp"
+#include "library/cose.hpp"
 #include "library/mbedtls_error.hpp"
+#include "mbedtls/bignum.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/pk.h"
 
 namespace ot {
 
@@ -76,9 +82,9 @@ Error Sign1Message::Init(int aCoseInitFlags)
 Error Sign1Message::Serialize(ByteArray &aBuf)
 {
     size_t length;
-    length = COSE_Encode((HCOSE)mSign, nullptr, 0, 0) + 1;
+    length = COSE_Encode(reinterpret_cast<HCOSE>(mSign), nullptr, 0, 0) + 1;
     aBuf.resize(length);
-    length = COSE_Encode((HCOSE)mSign, aBuf.data(), 0, aBuf.size());
+    length = COSE_Encode(reinterpret_cast<HCOSE>(mSign), aBuf.data(), 0, aBuf.size());
     aBuf.resize(length);
 
     return ERROR_NONE;
@@ -116,13 +122,13 @@ exit:
     return error;
 }
 
-Error Sign1Message::Validate(const mbedtls_pk_context &aPubKey)
+Error Sign1Message::Validate(const mbedtls_pk_context &aPublicKey)
 {
     Error                             error;
     const struct mbedtls_ecp_keypair *eckey;
 
     // Accepts only EC keys
-    VerifyOrExit(mbedtls_pk_can_do(&aPubKey, MBEDTLS_PK_ECDSA) && (eckey = mbedtls_pk_ec(aPubKey)) != nullptr,
+    VerifyOrExit(mbedtls_pk_can_do(&aPublicKey, MBEDTLS_PK_ECDSA) && (eckey = mbedtls_pk_ec(aPublicKey)) != nullptr,
                  error = ERROR_INVALID_ARGS("validate COSE SIGN1 message without valid EC public key"));
 
     VerifyOrExit(COSE_Sign0_validate_eckey(mSign, eckey, nullptr),

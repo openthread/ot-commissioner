@@ -33,7 +33,16 @@
 
 #include "registry_entries.hpp"
 
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "app/border_agent.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/utils.hpp"
+#include "nlohmann/json.hpp"
 
 using nlohmann::json;
 
@@ -147,8 +156,8 @@ void to_json(json &aJson, const Network &aValue)
     aJson = json{{JSON_ID, aValue.mId},
                  {JSON_DOM_REF, aValue.mDomainId},
                  {JSON_NAME, aValue.mName},
-                 {JSON_PAN, (std::string)aValue.mPan},
-                 {JSON_XPAN, (std::string)aValue.mXpan},
+                 {JSON_PAN, std::string(aValue.mPan)},
+                 {JSON_XPAN, std::string(aValue.mXpan)},
                  {JSON_CHANNEL, aValue.mChannel},
                  {JSON_MLP, aValue.mMlp},
                  {JSON_CCM, aValue.mCcm}};
@@ -233,7 +242,7 @@ void to_json(json &aJson, const BorderRouter &aValue)
     {
         // Note that UnixTime::operator std::string() does formatting
         // here using UnixTime::kFmtString
-        aJson[JSON_UPDATE_TIMESTAMP] = (std::string)aValue.mAgent.mUpdateTimestamp;
+        aJson[JSON_UPDATE_TIMESTAMP] = std::string(aValue.mAgent.mUpdateTimestamp);
     }
 }
 
@@ -281,7 +290,7 @@ void from_json(const json &aJson, BorderRouter &aValue)
     {
         uint64_t value;
         aJson.at(JSON_ACTIVE_TIMESTAMP).get_to(value);
-        aValue.mAgent.mActiveTimestamp.Decode(value);
+        aValue.mAgent.mActiveTimestamp = Timestamp::Decode(value);
         aValue.mAgent.mPresentFlags |= BorderAgent::kActiveTimestampBit;
     }
     if (aJson.contains(JSON_PARTITION_ID))
@@ -431,10 +440,6 @@ BorderRouter::BorderRouter(BorderRouterId const &aId, NetworkId const &aNetworkI
     : mId{aId}
     , mNetworkId{aNetworkId}
     , mAgent{aAgent}
-{
-}
-
-BorderRouter::~BorderRouter()
 {
 }
 

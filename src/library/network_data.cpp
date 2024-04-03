@@ -31,11 +31,20 @@
  *   The file implements Thread Network Data.
  */
 
-#include <commissioner/network_data.hpp>
+#include "commissioner/network_data.hpp"
 
+#include <cctype>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <iomanip>
+#include <ios>
 #include <sstream>
+#include <string>
 
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
@@ -126,7 +135,7 @@ XpanId::XpanId()
 
 std::string XpanId::str() const
 {
-    return *this;
+    return std::string(*this);
 }
 
 bool XpanId::operator==(const XpanId &aOther) const
@@ -134,12 +143,12 @@ bool XpanId::operator==(const XpanId &aOther) const
     return mValue == aOther.mValue;
 }
 
-bool XpanId::operator!=(const uint64_t aOther) const
+bool XpanId::operator!=(const XpanId &aOther) const
 {
-    return !operator==(aOther);
+    return !(*this == aOther);
 }
 
-bool XpanId::operator<(const XpanId aOther) const
+bool XpanId::operator<(const XpanId &aOther) const
 {
     return mValue < aOther.mValue;
 }

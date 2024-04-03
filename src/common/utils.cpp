@@ -33,9 +33,14 @@
 
 #include "common/utils.hpp"
 
-#include <ctype.h>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
-#include "error_macros.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "common/error_macros.hpp"
 
 namespace ot {
 

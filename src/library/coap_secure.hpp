@@ -34,9 +34,18 @@
 #ifndef OT_COMM_LIBRARY_COAP_SECURE_HPP_
 #define OT_COMM_LIBRARY_COAP_SECURE_HPP_
 
+#include <cstdint>
+#include <memory>
+#include <string>
+
+#include "commissioner/error.hpp"
+#include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/utils.hpp"
+#include "event2/event.h"
 #include "library/coap.hpp"
 #include "library/dtls.hpp"
+#include "library/socket.hpp"
 
 namespace ot {
 

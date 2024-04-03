@@ -34,11 +34,14 @@
 #ifndef _REGISTRY_HPP_
 #define _REGISTRY_HPP_
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include "persistent_storage.hpp"
 #include "registry_entries.hpp"
 #include "app/border_agent.hpp"
-
-#include <vector>
+#include "commissioner/network_data.hpp"
 
 namespace ot {
 namespace commissioner {
@@ -75,7 +78,7 @@ public:
      *
      * @param[in] aStorage persistent storage to be used
      */
-    Registry(PersistentStorage *aStorage);
+    explicit Registry(PersistentStorage *aStorage);
 
     /**
      * Registry constructor with default PersistentStorage impl
@@ -83,7 +86,7 @@ public:
      *
      * @param[in] aName PersistentStorageJson file name
      */
-    Registry(std::string const &aName);
+    explicit Registry(std::string const &aName);
 
     /**
      * Registry destructor
@@ -125,7 +128,7 @@ public:
      * It is expected that user becomes aware of the border router raw id from
      * 'br list' results.
      */
-    Status GetBorderRouter(const BorderRouterId aRawId, BorderRouter &aBr);
+    Status GetBorderRouter(BorderRouterId aRawId, BorderRouter &aBr);
 
     /**
      * Get border routers belonging to the specified network.
@@ -133,7 +136,7 @@ public:
      * @param[in] aXpan network's XPAN ID
      * @param[out] aRetValue resultant array of @ref BorderRouter records
      */
-    Status GetBorderRoutersInNetwork(const XpanId aXpan, BorderRouterArray &aRetValue);
+    Status GetBorderRoutersInNetwork(XpanId aXpan, BorderRouterArray &aRetValue);
 
     /**
      * Get networks of the domain
@@ -193,7 +196,7 @@ public:
     /**
      * Set current network.
      */
-    Status SetCurrentNetwork(const XpanId aXpan);
+    Status SetCurrentNetwork(const XpanId &aXpan);
 
     /**
      * Set current network by border router specified.
@@ -229,7 +232,7 @@ public:
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetNetworkByXpan(const XpanId aXpan, Network &aRetValue);
+    Status GetNetworkByXpan(const XpanId &aXpan, Network &aRetValue);
 
     /**
      * Get network with specified name
@@ -268,7 +271,7 @@ public:
      * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetDomainNameByXpan(const XpanId aXpan, std::string &aName);
+    Status GetDomainNameByXpan(const XpanId &aXpan, std::string &aName);
 
     /**
      * Remove border router record.
@@ -279,7 +282,7 @@ public:
      * @return
      * @li @ref REG_SUCCESS if successfully deleted record
      */
-    Status DeleteBorderRouterById(const BorderRouterId aRouterId);
+    Status DeleteBorderRouterById(const BorderRouterId &aRouterId);
 
     /**
      * Remove border router records corresponding to the network aliases list along with the corresponding networks.

@@ -33,9 +33,18 @@
 #ifndef OT_COMM_APP_COMMISSIONER_APP_MOCK_HPP_
 #define OT_COMM_APP_COMMISSIONER_APP_MOCK_HPP_
 
-#include "gmock/gmock.h"
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "app/commissioner_app.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "common/address.hpp"
+#include "gmock/gmock-function-mocker.h"
 
 using namespace ::ot::commissioner;
 
@@ -44,6 +53,7 @@ class CommissionerAppMock : public ::ot::commissioner::CommissionerApp
     using Error = ::ot::commissioner::Error;
 
 public:
+    CommissionerAppMock()          = default;
     virtual ~CommissionerAppMock() = default;
     MOCK_METHOD(std::string, OnJoinerRequest, (const ByteArray &), (override));
     MOCK_METHOD(void, OnJoinerConnected, (const ByteArray &, Error), (override));

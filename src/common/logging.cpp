@@ -31,7 +31,11 @@
  *   This file includes wrapper of mbedtls.
  */
 
-#include "logging.hpp"
+#include <memory>
+#include <string>
+
+#include "commissioner/commissioner.hpp"
+#include "common/logging.hpp"
 
 namespace ot {
 

@@ -35,11 +35,17 @@
 #include "app/file_util.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <string>
 
-#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
@@ -73,7 +79,7 @@ Error WriteFile(const std::string &aData, const std::string &aFilename)
     fputs(aData.c_str(), f);
 
 exit:
-    if (f != NULL)
+    if (f != nullptr)
     {
         fclose(f);
     }
@@ -107,7 +113,7 @@ Error ReadFile(std::string &aData, const std::string &aFilename)
     }
 
 exit:
-    if (f != NULL)
+    if (f != nullptr)
     {
         fclose(f);
     }

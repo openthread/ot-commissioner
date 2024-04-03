@@ -30,27 +30,43 @@
  * @file Interpreter unit tests
  */
 
-#include "gmock/gmock.h"
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include <fmt/format.h>
+#include <unistd.h>
+
+#include "app/border_agent.hpp"
+#include "app/border_agent_functions_mock.hpp"
 
 #define private public
 
-#include "app/border_agent_functions_mock.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/commissioner_app.hpp"
 #include "app/commissioner_app_mock.hpp"
 #include "app/file_util.hpp"
-#include "app/ps/persistent_storage_json.hpp"
+#include "app/ps/persistent_storage.hpp"
 #include "app/ps/registry.hpp"
 #include "app/ps/registry_entries.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "fmt/core.h"
+#include "gmock/gmock-matchers.h"
+#include "gmock/gmock-spec-builders.h"
+#include "gtest/gtest.h"
+#include "nlohmann/json.hpp"
 
 using namespace ot::commissioner;
 using namespace ot::commissioner::persistent_storage;
 
 using testing::_;
 using testing::DoAll;
-using testing::Mock;
 using testing::Return;
 using testing::ReturnRef;
 using testing::StrEq;
@@ -83,7 +99,7 @@ public:
         // Minimum test setup: create config file
         const std::string configFile = "./config";
         auto              error      = WriteFile("{\"ThreadSMRoot\": \"./\"}", configFile);
-        ASSERT_EQ(error.mCode, ErrorCode::kNone);
+        ASSERT_EQ(error.GetCode(), ErrorCode::kNone);
 
         ASSERT_NE(ctx.mDefaultCommissionerObject, nullptr);
 
@@ -93,7 +109,7 @@ public:
                       Return(Error{})));
 
         auto result = ctx.mInterpreter.Init("./config", "");
-        ASSERT_EQ(result.mCode, ErrorCode::kNone);
+        ASSERT_EQ(result.GetCode(), ErrorCode::kNone);
 
         ctx.mRegistry = ctx.mInterpreter.mRegistry.get();
 
@@ -124,7 +140,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               RegistryStatus::kSuccess);
     BorderRouter br;
-    br.mNetworkId = 0;
+    br.mNetworkId = NetworkId{0};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     std::string             command;
@@ -134,7 +150,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
 
     command = "start --nwk all";
     expr    = ctx.mInterpreter.ParseExpression(command);
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
@@ -143,7 +159,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
 
     command = "start --nwk this";
     expr    = ctx.mInterpreter.ParseExpression(command);
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
@@ -152,7 +168,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
 
     command = "start --nwk other";
     expr    = ctx.mInterpreter.ParseExpression(command);
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
@@ -161,7 +177,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
 
     command = "start --nwk net1 net2";
     expr    = ctx.mInterpreter.ParseExpression(command);
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
@@ -170,7 +186,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
 
     command = "start --dom domain1";
     expr    = ctx.mInterpreter.ParseExpression(command);
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
@@ -186,7 +202,7 @@ TEST_F(InterpreterTestSuite, MNSV_TwoGroupNwkAliasesFail)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all other");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
@@ -199,13 +215,13 @@ TEST_F(InterpreterTestSuite, MNSV_ThisResolvesWithCurrentSet)
                                              "", 0, 0x1F | BorderAgent::kDomainNameBit}),
               RegistryStatus::kSuccess);
     BorderRouter br;
-    br.mNetworkId = 0;
+    br.mNetworkId = NetworkId{0};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
@@ -221,7 +237,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisUnresolvesWithCurrentUnset)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(nids.size(), 0);
 }
@@ -245,7 +261,7 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
@@ -255,7 +271,7 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     nids.clear();
 
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
@@ -280,13 +296,13 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         RegistryStatus::kSuccess);
     BorderRouter br;
-    br.mNetworkId = 0;
+    br.mNetworkId = NetworkId{0};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
@@ -296,7 +312,7 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
     nids.clear();
 
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
@@ -324,7 +340,7 @@ TEST_F(InterpreterTestSuite, MNSV_TwoDomSwitchesFail)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain1 --dom domain2");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
@@ -341,7 +357,7 @@ TEST_F(InterpreterTestSuite, MNSV_UnexistingDomainResolveFails)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain2");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
@@ -363,7 +379,7 @@ TEST_F(InterpreterTestSuite, MNSV_ExistingDomainResolves)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain1");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
     EXPECT_EQ(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
@@ -375,7 +391,8 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
     InitContext(ctx);
 
     NetworkId nid;
-    ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net1", 1, 0, 0xAB, "", 0}, nid),
+    ASSERT_EQ(ctx.mRegistry->mStorage->Add(
+                  Network{NetworkId{EMPTY_ID}, DomainId{EMPTY_ID}, "net1", XpanId{1}, 0, 0xAB, "", 0}, nid),
               PersistentStorage::Status::kSuccess);
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
@@ -387,14 +404,15 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk ab");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kNone);
     EXPECT_EQ(nids.size(), 1);
     EXPECT_EQ(nids[0], XpanId{1});
     ctx.mInterpreter.mContext.Cleanup();
 
     // create ambiguity by adding another network with the same PAN ID
-    ASSERT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "net2", 2, 0, 0xAB, "", 0}, nid),
+    ASSERT_EQ(ctx.mRegistry->mStorage->Add(
+                  Network{NetworkId{EMPTY_ID}, DomainId{EMPTY_ID}, "net2", XpanId{2}, 0, 0xAB, "", 0}, nid),
               PersistentStorage::Status::kSuccess);
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
@@ -404,7 +422,7 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
 
     // the same lookup must fail
     expr = ctx.mInterpreter.ParseExpression("start --nwk ab");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kRegistryError);
 }
 
@@ -426,7 +444,7 @@ TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 net1");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(nids.size(), 1);
 }
@@ -449,7 +467,7 @@ TEST_F(InterpreterTestSuite, MNSV_GroupAndIndividualNwkAliasesMustFail)
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 all");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
 }
 
@@ -468,13 +486,13 @@ TEST_F(InterpreterTestSuite, MNSV_DomThisResolvesWithRespectToSelection)
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         RegistryStatus::kSuccess);
     BorderRouter br;
-    br.mNetworkId = 0;
+    br.mNetworkId = NetworkId{0};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
     XpanIdArray             nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom this");
-    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(nids.size(), 1);
     EXPECT_EQ(nids[0], XpanId{1});
@@ -505,7 +523,7 @@ TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
                                        0, 0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
         RegistryStatus::kSuccess);
     BorderRouter br;
-    br.mNetworkId = 2;
+    br.mNetworkId = NetworkId{2};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
     XpanId nid;
     ASSERT_EQ(ctx.mRegistry->GetCurrentNetworkXpan(nid), RegistryStatus::kSuccess);
@@ -553,10 +571,10 @@ TEST_F(InterpreterTestSuite, MNSV_EmptyNwkOrDomMustFail)
 
     Interpreter::Expression expr, ret;
     expr = ctx.mInterpreter.ParseExpression("start --nwk");
-    EXPECT_NE(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_NE(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
 
     expr = ctx.mInterpreter.ParseExpression("start --dom");
-    EXPECT_NE(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).mCode, ErrorCode::kNone);
+    EXPECT_NE(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
 }
 
 // Import/Export Syntax Validation test group
@@ -642,7 +660,7 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     }\n\
 }";
 
-    EXPECT_EQ(WriteFile(jsonStr, "./json.json").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile(jsonStr, "./json.json").GetCode(), ErrorCode::kNone);
 
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
     expr       = ctx.mInterpreter.ParseExpression("opdataset set active --import ./json.json");
@@ -939,7 +957,7 @@ TEST_F(InterpreterTestSuite, PC_StartLegacySyntaxErrorFails)
         RegistryStatus::kSuccess);
 
     BorderRouter br;
-    br.mNetworkId = 0;
+    br.mNetworkId = NetworkId{0};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, Start(_, _, _))
@@ -1095,7 +1113,7 @@ TEST_F(InterpreterTestSuite, PC_Token)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_)).WillOnce(Return(Error{}));
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
     expr  = ctx.mInterpreter.ParseExpression("token set ./token");
@@ -1153,7 +1171,7 @@ TEST_F(InterpreterTestSuite, PC_TokenWithCCM)
     EXPECT_CALL(*pcaMock, SetToken(_)).WillOnce(Return(Error{}));
     // note: again, we do not expect GetToken() here, same reason
 
-    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
     expr  = ctx.mInterpreter.ParseExpression("token set ./token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
@@ -1205,7 +1223,7 @@ TEST_F(InterpreterTestSuite, PC_TokenWithNonCCM)
     // note: we do not expect GetToken() here as no default config
     //       update to happen with a network selected
 
-    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
     expr  = ctx.mInterpreter.ParseExpression("token set ./token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
@@ -1237,7 +1255,7 @@ TEST_F(InterpreterTestSuite, PC_TokenWithNone)
     // GetToken() to be called on default commissioner instance
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
 
-    EXPECT_EQ(WriteFile("123aef", "./token").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
     expr  = ctx.mInterpreter.ParseExpression("token set ./token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
@@ -1803,7 +1821,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     EXPECT_TRUE(value.HasNoError());
 
     EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
-    EXPECT_EQ(nwk.mPan, 0x0001);
+    EXPECT_EQ(nwk.mPan.mValue, 0x0001);
 
     EXPECT_EQ(system("rm -f ./aods.json"), 0);
     EXPECT_NE(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
@@ -2883,7 +2901,7 @@ TEST_F(InterpreterTestSuite, MNI_MultiEntryImportExplicitNetworkPass)
   }\n\
 }";
     const std::string mepdsFileName            = "./mepds.json";
-    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).GetCode(), ErrorCode::kNone);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
@@ -2965,7 +2983,7 @@ TEST_F(InterpreterTestSuite, MNI_MultiEntryImportImplicitNetworkPass)
   }\n\
 }";
     const std::string mepdsFileName            = "./mepds.json";
-    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).GetCode(), ErrorCode::kNone);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
@@ -3026,7 +3044,7 @@ TEST_F(InterpreterTestSuite, MNI_SingleEntryImportExplicitNetworkPass)
     }\n\
 }";
     const std::string mepdsFileName            = "./mepds.json";
-    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).GetCode(), ErrorCode::kNone);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
@@ -3085,7 +3103,7 @@ TEST_F(InterpreterTestSuite, MNI_SingleEntryImportImplicitNetworkPass)
     }\n\
 }";
     const std::string mepdsFileName            = "./mepds.json";
-    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).mCode, ErrorCode::kNone);
+    ASSERT_EQ(WriteFile(multiEntryPendingDataset, mepdsFileName).GetCode(), ErrorCode::kNone);
 
     ASSERT_NE(ctx.mRegistry, nullptr);
     ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},

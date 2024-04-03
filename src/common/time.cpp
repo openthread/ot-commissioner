@@ -33,10 +33,10 @@
 
 #include "time.hpp"
 
-#include <time.h>
-
+#include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 namespace ot {
 

@@ -34,14 +34,27 @@
 #include "library/coap.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <list>
+#include <memory>
+#include <string>
 
-#include <ctype.h>
-#include <memory.h>
-
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
+#include "event2/event.h"
+#include "fmt/core.h"
+#include "library/endpoint.hpp"
+#include "library/message.hpp"
 #include "library/openthread/random.hpp"
+#include "library/timer.hpp"
 
 namespace ot {
 
@@ -191,22 +204,22 @@ bool Message::IsTokenEqual(const Message &aMessage) const
     return GetToken() == aMessage.GetToken();
 }
 
-Error Message::AppendOption(OptionType aNumber, const OptionValue &aValue)
+Error Message::AppendOption(OptionType aType, const OptionValue &aValue)
 {
     Error error;
 
-    VerifyOrExit(IsValidOption(aNumber, aValue), error = ERROR_INVALID_ARGS("invalid CoAP option {}", aNumber));
+    VerifyOrExit(IsValidOption(aType, aValue), error = ERROR_INVALID_ARGS("invalid CoAP option {}", aType));
 
-    if (aNumber == OptionType::kUriPath)
+    if (aType == OptionType::kUriPath)
     {
         std::string uriPath = aValue.GetStringValue();
         SuccessOrExit(error = NormalizeUriPath(uriPath));
-        mOptions[aNumber] = mOptions[aNumber].GetStringValue() + uriPath;
+        mOptions[aType] = OptionValue{mOptions[aType].GetStringValue() + uriPath};
     }
     else
     {
         // We don't allow multiple options of the same type.
-        mOptions.emplace(aNumber, aValue);
+        mOptions.emplace(aType, aValue);
     }
 
 exit:
@@ -258,7 +271,7 @@ Error Message::SetUriPath(const std::string &aUriPath)
     std::string NormalizedUriPath = aUriPath;
 
     SuccessOrExit(error = NormalizeUriPath(NormalizedUriPath));
-    SuccessOrExit(error = AppendOption(OptionType::kUriPath, NormalizedUriPath));
+    SuccessOrExit(error = AppendOption(OptionType::kUriPath, OptionValue{NormalizedUriPath}));
 
 exit:
     return error;
@@ -474,7 +487,7 @@ Error Message::Deserialize(OptionType      &aOptionNumber,
     VerifyOrExit(valueLength + extend <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of a CoAP option"));
 
     aOptionNumber = utils::from_underlying<OptionType>(aLastOptionNumber + delta);
-    aOptionValue  = ByteArray{aBuf.begin() + extend, aBuf.begin() + extend + valueLength};
+    aOptionValue  = OptionValue{ByteArray{aBuf.begin() + extend, aBuf.begin() + extend + valueLength}};
 
     aOffset += length + valueLength;
 
@@ -482,7 +495,7 @@ exit:
     return error;
 }
 
-Coap::RequestHolder::RequestHolder(const RequestPtr aRequest, ResponseHandler aHandler)
+Coap::RequestHolder::RequestHolder(const RequestPtr &aRequest, ResponseHandler aHandler)
     : mRequest(aRequest)
     , mHandler(aHandler)
     , mRetransmissionCount(0)
@@ -672,7 +685,6 @@ exit:
     {
         LOG_INFO(LOG_REGION_COAP, "server(={}) handle request failed: {}", static_cast<void *>(this), error.ToString());
     }
-    return;
 }
 
 void Coap::HandleResponse(Response &aResponse)
@@ -926,7 +938,7 @@ void Coap::ResponsesCache::Eliminate()
     }
 }
 
-void Coap::RequestsCache::Put(const RequestPtr aRequest, ResponseHandler aHandler)
+void Coap::RequestsCache::Put(const RequestPtr &aRequest, ResponseHandler aHandler)
 {
     Put({aRequest, aHandler});
 }
@@ -1022,7 +1034,7 @@ Error Message::Serialize(ByteArray &aBuf) const
             SuccessOrExit(error = SplitUriPath(uriPathSegments, value.GetStringValue()));
             for (const auto &segment : uriPathSegments)
             {
-                SuccessOrExit(error = Serialize(number, segment, lastOptionNumber, aBuf));
+                SuccessOrExit(error = Serialize(number, OptionValue{segment}, lastOptionNumber, aBuf));
                 lastOptionNumber = utils::to_underlying(number);
             }
         }
@@ -1033,7 +1045,7 @@ Error Message::Serialize(ByteArray &aBuf) const
         }
     }
 
-    if (mPayload.size() > 0)
+    if (!mPayload.empty())
     {
         aBuf.push_back(kPayloadMarker);
         aBuf.insert(aBuf.end(), mPayload.begin(), mPayload.end());
@@ -1045,7 +1057,7 @@ exit:
 
 Error Message::SplitUriPath(std::list<std::string> &aUriPathList, const std::string &aUriPath)
 {
-    auto uri = aUriPath;
+    const auto &uri = aUriPath;
 
     size_t begin = 0;
     while (true)

@@ -33,10 +33,19 @@
 
 #include "app/commissioner_app.hpp"
 
-#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "app/file_util.hpp"
 #include "app/json.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -527,7 +536,7 @@ Error CommissionerApp::SetExtendedPanId(const ByteArray &aExtendedPanId)
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
-    activeDataset.mExtendedPanId = utils::Decode<uint64_t>(aExtendedPanId);
+    activeDataset.mExtendedPanId = XpanId{utils::Decode<uint64_t>(aExtendedPanId)};
     activeDataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
 
     SuccessOrExit(error = mCommissioner->SetActiveDataset(activeDataset));
@@ -1036,7 +1045,7 @@ bool CommissionerApp::JoinerKey::operator<(const JoinerKey &aOther) const
     return mType < aOther.mType || (mType == aOther.mType && mId < aOther.mId);
 }
 
-CommissionerDataset CommissionerApp::MakeDefaultCommissionerDataset()
+CommissionerDataset CommissionerApp::MakeDefaultCommissionerDataset() const
 {
     CommissionerDataset dataset;
 

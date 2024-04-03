@@ -33,8 +33,11 @@
 
 #include "semaphore.hpp"
 
-#include <errno.h>
 #include <fcntl.h>
+#include <semaphore.h>
+#include <string>
+
+#include "app/ps/semaphore_posix.hpp"
 
 namespace ot {
 
@@ -46,10 +49,10 @@ namespace semaphore {
 SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem)
 {
     std::string semName = "Global\\" + aName;
-    aSem.platform       = NULL;
+    aSem.platform       = nullptr;
 
-    aSem.platform = CreateSemaphoreA(NULL, 1, 1, semName.c_str());
-    if (aSem.platform == NULL)
+    aSem.platform = CreateSemaphoreA(nullptr, 1, 1, semName.c_str());
+    if (aSem.platform == nullptr)
     {
         return kError;
     }
@@ -60,13 +63,13 @@ SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem)
 SemaphoreStatus SemaphoreClose(Semaphore &aSem)
 {
     CloseHandle(aSem.platform);
-    aSem.platform = NULL;
+    aSem.platform = nullptr;
     return kSuccess;
 }
 
 SemaphoreStatus SemaphorePost(Semaphore &aSem)
 {
-    if (ReleaseSemaphore(aSem.platform, 1, NULL) == 0)
+    if (ReleaseSemaphore(aSem.platform, 1, nullptr) == 0)
     {
         return kError;
     }
@@ -87,7 +90,7 @@ SemaphoreStatus SemaphoreWait(Semaphore &aSem)
 SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem)
 {
     std::string semName = "/" + aName;
-    aSem.mPlatform      = NULL;
+    aSem.mPlatform      = nullptr;
 
     aSem.mPlatform = sem_open(semName.c_str(), O_CREAT, S_IWUSR | S_IRUSR, 1);
     if (aSem.mPlatform == SEM_FAILED)
@@ -101,7 +104,7 @@ SemaphoreStatus SemaphoreOpen(std::string const &aName, Semaphore &aSem)
 SemaphoreStatus SemaphoreClose(Semaphore &aSem)
 {
     sem_close(aSem.mPlatform);
-    aSem.mPlatform = NULL;
+    aSem.mPlatform = nullptr;
     return kSuccess;
 }
 

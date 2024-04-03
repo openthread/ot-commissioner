@@ -33,9 +33,8 @@
 
 #include "library/openthread/random.hpp"
 
+#include <cstdint>
 #include <random>
-
-#include <mbedtls/ctr_drbg.h>
 
 namespace ot {
 

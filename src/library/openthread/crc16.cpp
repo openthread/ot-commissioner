@@ -33,6 +33,8 @@
 
 #include "library/openthread/crc16.hpp"
 
+#include <cstdint>
+
 namespace ot {
 
 namespace commissioner {

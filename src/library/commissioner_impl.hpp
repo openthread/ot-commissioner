@@ -29,15 +29,22 @@
 #ifndef OT_COMM_LIBRARY_COMMISSIONER_IMPL_HPP_
 #define OT_COMM_LIBRARY_COMMISSIONER_IMPL_HPP_
 
-#include <atomic>
-#include <memory>
+#include <chrono>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <string>
+#include <vector>
 
-#include <commissioner/commissioner.hpp>
-
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "common/error_macros.hpp"
+#include "common/time.hpp"
+#include "event2/event.h"
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
-#include "library/dtls.hpp"
-#include "library/event.hpp"
 #include "library/joiner_session.hpp"
 #include "library/timer.hpp"
 #include "library/tlv.hpp"
@@ -240,7 +247,7 @@ private:
 
     static Error MakeChannelMask(ByteArray &aBuf, uint32_t aChannelMask);
 
-    void HandleRlyRx(const coap::Request &aRequest);
+    void HandleRlyRx(const coap::Request &aRlyRx);
 
     void HandleJoinerSessionTimer(Timer &aTimer);
 

@@ -34,26 +34,31 @@
 #ifndef OT_COMM_LIBRARY_DTLS_HPP_
 #define OT_COMM_LIBRARY_DTLS_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
-#include <list>
+#include <memory>
 #include <queue>
+#include <string>
+#include <utility>
 #include <vector>
 
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/entropy.h>
-#include <mbedtls/net_sockets.h>
-#include <mbedtls/ssl.h>
-#include <mbedtls/ssl_cookie.h>
-#include <mbedtls/timing.h>
-
-#include <commissioner/commissioner.hpp>
-#include <commissioner/defines.hpp>
-
-#include "common/utils.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "common/address.hpp"
+#include "common/time.hpp"
+#include "event2/event.h"
 #include "library/endpoint.hpp"
-#include "library/event.hpp"
+#include "library/message.hpp"
 #include "library/socket.hpp"
 #include "library/timer.hpp"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/pk.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/ssl_cookie.h"
+#include "mbedtls/x509_crt.h"
 
 namespace ot {
 

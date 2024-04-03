@@ -42,6 +42,7 @@ endif()
 add_subdirectory(fmtlib/repo)
 
 if (OT_COMM_APP)
+    set(JSON_BuildTests OFF CACHE BOOL "Disable compiling json tests" FORCE)
     add_subdirectory(json/repo)
 endif()
 

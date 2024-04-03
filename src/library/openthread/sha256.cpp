@@ -33,6 +33,10 @@
 
 #include "library/openthread/sha256.hpp"
 
+#include <cstdint>
+
+#include "mbedtls/sha256.h"
+
 namespace ot {
 
 namespace commissioner {

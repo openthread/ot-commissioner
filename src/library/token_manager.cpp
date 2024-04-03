@@ -35,14 +35,30 @@
 
 #include "library/token_manager.hpp"
 
-#include <mbedtls/x509_crt.h>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
 
-#include "common/logging.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "common/error_macros.hpp"
+#include "common/utils.hpp"
+#include "event2/event.h"
+#include "library/cbor.hpp"
+#include "library/coap.hpp"
 #include "library/cose.hpp"
 #include "library/cwt.hpp"
+#include "library/dtls.hpp"
 #include "library/mbedtls_error.hpp"
 #include "library/tlv.hpp"
 #include "library/uri.hpp"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/pk.h"
+#include "mbedtls/x509_crt.h"
 
 namespace ot {
 
@@ -304,7 +320,7 @@ Error TokenManager::MakeTokenRequest(ByteArray                &aBuf,
     uint8_t   tokenBuf[kMaxTokenRequestSize];
 
     // Use the commissioner Id as kid(truncated to kMaxCoseKeyIdLength)
-    const ByteArray kid = {aId.begin(), aId.begin() + std::min(aId.size(), (size_t)kMaxCoseKeyIdLength)};
+    const ByteArray kid = {aId.begin(), aId.begin() + std::min(aId.size(), static_cast<size_t>(kMaxCoseKeyIdLength))};
 
     VerifyOrExit(mbedtls_pk_can_do(&aPublicKey, MBEDTLS_PK_ECDSA),
                  error = ERROR_INVALID_ARGS("the public key is not a ECDSA key"));

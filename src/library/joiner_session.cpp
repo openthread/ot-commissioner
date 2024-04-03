@@ -33,10 +33,31 @@
 
 #include "library/joiner_session.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "common/address.hpp"
+#include "common/error_macros.hpp"
 #include "common/logging.hpp"
+#include "common/time.hpp"
+#include "common/utils.hpp"
+#include "event2/event.h"
+#include "library/coap.hpp"
 #include "library/commissioner_impl.hpp"
+#include "library/dtls.hpp"
+#include "library/message.hpp"
+#include "library/socket.hpp"
 #include "library/tlv.hpp"
 #include "library/uri.hpp"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/ssl.h"
 
 namespace ot {
 
@@ -247,7 +268,7 @@ JoinerSession::RelaySocket::RelaySocket(JoinerSession &aJoinerSession,
 }
 
 JoinerSession::RelaySocket::RelaySocket(RelaySocket &&aOther)
-    : Socket(std::move(aOther))
+    : Socket(std::move(static_cast<Socket &&>(aOther)))
     , mJoinerSession(aOther.mJoinerSession)
     , mPeerAddr(std::move(aOther.mPeerAddr))
     , mPeerPort(std::move(aOther.mPeerPort))

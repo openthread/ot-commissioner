@@ -33,12 +33,26 @@
 
 #include "library/commissioner_safe.hpp"
 
+#include <cstdint>
 #include <future>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "common/error_macros.hpp"
 #include "common/logging.hpp"
-#include "library/coap.hpp"
-#include "library/cose.hpp"
-#include "library/openthread/bloom_filter.hpp"
+#include "common/utils.hpp"
+#include "event2/event.h"
+#include "event2/thread.h"
+#include "event2/util.h"
+#include "library/commissioner_impl.hpp"
 
 namespace ot {
 

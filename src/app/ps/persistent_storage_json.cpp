@@ -32,8 +32,22 @@
  */
 
 #include "persistent_storage_json.hpp"
+
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <string>
+#include <vector>
+
+#include "app/border_agent.hpp"
 #include "app/file_util.hpp"
+#include "app/ps/persistent_storage.hpp"
+#include "app/ps/registry_entries.hpp"
+#include "app/ps/semaphore.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/utils.hpp"
+#include "nlohmann/json.hpp"
 
 namespace ot {
 namespace commissioner {
@@ -60,7 +74,6 @@ using SemaphoreStatus = ot::os::semaphore::SemaphoreStatus;
 
 PersistentStorageJson::PersistentStorageJson(std::string const &aFileName)
     : mFileName(aFileName)
-    , mCache()
     , mStorageLock()
 {
     SemaphoreOpen("thrcomm_json_storage", mStorageLock);
@@ -353,13 +366,13 @@ PersistentStorage::Status PersistentStorageJson::Lookup(Network const &aValue, s
 {
     std::function<bool(Network const &)> pred = [](Network const &) { return true; };
 
-    pred = [aValue](Network const &el) {
+    pred = [&aValue](Network const &el) {
         bool aRet = (aValue.mCcm < 0 || aValue.mCcm == el.mCcm) &&
                     (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
                     (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) &&
                     (aValue.mName.empty() || (aValue.mName == el.mName)) &&
                     (aValue.mXpan.mValue == XpanId::kEmptyXpanId || aValue.mXpan == el.mXpan) &&
-                    (aValue.mPan.mValue == PanId::kEmptyPanId || (aValue.mPan == el.mPan)) &&
+                    (aValue.mPan.mValue == PanId::kEmptyPanId || (aValue.mPan.mValue == el.mPan.mValue)) &&
                     (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) &&
                     (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));
 
@@ -458,13 +471,13 @@ PersistentStorage::Status PersistentStorageJson::LookupAny(Network const &aValue
 {
     std::function<bool(Network const &)> pred = [](Network const &) { return true; };
 
-    pred = [aValue](Network const &el) {
+    pred = [&aValue](Network const &el) {
         bool aRet = (aValue.mCcm < 0 || aValue.mCcm == el.mCcm) ||
                     (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) ||
                     (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) ||
                     (aValue.mName.empty() || (aValue.mName == el.mName)) ||
                     (aValue.mXpan.mValue == XpanId::kEmptyXpanId || aValue.mXpan == el.mXpan) ||
-                    (aValue.mPan.mValue == PanId::kEmptyPanId || (aValue.mPan == el.mPan)) ||
+                    (aValue.mPan.mValue == PanId::kEmptyPanId || (aValue.mPan.mValue == el.mPan.mValue)) ||
                     (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) ||
                     (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));
 

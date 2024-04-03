@@ -37,17 +37,34 @@
 #define MBEDTLS_ALLOW_PRIVATE_ACCESS
 #endif
 
-#include "library/dtls.hpp"
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <string>
 
-#include <mbedtls/debug.h>
-#include <mbedtls/error.h>
-#include <mbedtls/platform.h>
-
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
+#include "event2/event.h"
+#include "library/dtls.hpp"
 #include "library/mbedtls_error.hpp"
+#include "library/message.hpp"
 #include "library/openthread/sha256.hpp"
+#include "library/socket.hpp"
+#include "library/timer.hpp"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/debug.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/pk.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include "mbedtls/ssl_cookie.h"
+#include "mbedtls/x509_crt.h"
 
 namespace ot {
 
@@ -165,14 +182,14 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     mCipherSuites.clear();
 
     // PSK
-    if (aConfig.mPSK.size() != 0)
+    if (!aConfig.mPSK.empty())
     {
         mPSK = aConfig.mPSK;
         mCipherSuites.push_back(MBEDTLS_TLS_ECJPAKE_WITH_AES_128_CCM_8);
     }
 
     // X509
-    if (aConfig.mCaChain.size() != 0 || aConfig.mOwnCert.size() != 0 || aConfig.mOwnKey.size() != 0)
+    if (!aConfig.mCaChain.empty() || !aConfig.mOwnCert.empty() || !aConfig.mOwnKey.empty())
     {
         if (int fail = mbedtls_x509_crt_parse(&mCaChain, &aConfig.mCaChain[0], aConfig.mCaChain.size()))
         {

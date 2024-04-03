@@ -33,16 +33,33 @@
 
 #include "library/commissioner_impl.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
+#include "common/address.hpp"
+#include "common/error_macros.hpp"
 #include "common/logging.hpp"
+#include "common/time.hpp"
+#include "common/utils.hpp"
+#include "event2/event.h"
 #include "library/coap.hpp"
-#include "library/cose.hpp"
 #include "library/dtls.hpp"
+#include "library/joiner_session.hpp"
 #include "library/openthread/bloom_filter.hpp"
 #include "library/openthread/pbkdf2_cmac.hpp"
 #include "library/openthread/sha256.hpp"
+#include "library/timer.hpp"
+#include "library/tlv.hpp"
 #include "library/uri.hpp"
-
-#include "common/utils.hpp"
 
 #define CCM_NOT_IMPLEMENTED "CCM features not implemented"
 
@@ -493,7 +510,7 @@ exit:
     }
 }
 
-void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aDataset)
+void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aActiveDataset)
 {
     Error         error;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
@@ -502,27 +519,27 @@ void CommissionerImpl::SetActiveDataset(ErrorHandler aHandler, const ActiveOpera
         aHandler(HandleStateResponse(aResponse, aError));
     };
 
-    VerifyOrExit(aDataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit,
+    VerifyOrExit(aActiveDataset.mPresentFlags & ActiveOperationalDataset::kActiveTimestampBit,
                  error = ERROR_INVALID_ARGS("Active Timestamp is mandatory for an Active Operational Dataset"));
 
     // TLVs affect connectivity are not allowed.
-    VerifyOrExit((aDataset.mPresentFlags & ActiveOperationalDataset::kChannelBit) == 0,
+    VerifyOrExit((aActiveDataset.mPresentFlags & ActiveOperationalDataset::kChannelBit) == 0,
                  error = ERROR_INVALID_ARGS("Channel cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
-    VerifyOrExit((aDataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0,
+    VerifyOrExit((aActiveDataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0,
                  error = ERROR_INVALID_ARGS("PAN ID cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
-    VerifyOrExit((aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0,
+    VerifyOrExit((aActiveDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit) == 0,
                  error = ERROR_INVALID_ARGS("Mesh-Local Prefix cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
-    VerifyOrExit((aDataset.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit) == 0,
+    VerifyOrExit((aActiveDataset.mPresentFlags & ActiveOperationalDataset::kNetworkMasterKeyBit) == 0,
                  error = ERROR_INVALID_ARGS("Network Master Key cannot be set with Active Operational Dataset, "
                                             "try setting with Pending Operational Dataset instead"));
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtActiveSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
-    SuccessOrExit(error = EncodeActiveOperationalDataset(request, aDataset));
+    SuccessOrExit(error = EncodeActiveOperationalDataset(request, aActiveDataset));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
@@ -596,7 +613,7 @@ exit:
     }
 }
 
-void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aDataset)
+void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset)
 {
     Error         error;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
@@ -605,18 +622,18 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
         aHandler(HandleStateResponse(aResponse, aError));
     };
 
-    VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kActiveTimestampBit,
+    VerifyOrExit(aPendingDataset.mPresentFlags & PendingOperationalDataset::kActiveTimestampBit,
                  error = ERROR_INVALID_ARGS("Active Timestamp is mandatory for a Pending Operational Dataset"));
 
-    VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kPendingTimestampBit,
+    VerifyOrExit(aPendingDataset.mPresentFlags & PendingOperationalDataset::kPendingTimestampBit,
                  error = ERROR_INVALID_ARGS("Pending Timestamp is mandatory for a Pending Operational Dataset"));
-    VerifyOrExit(aDataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
+    VerifyOrExit(aPendingDataset.mPresentFlags & PendingOperationalDataset::kDelayTimerBit,
                  error = ERROR_INVALID_ARGS("Delay Timer is mandatory for a Pending Operational Dataset"));
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPendingSet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerSessionId, GetSessionId()}));
-    SuccessOrExit(error = EncodePendingOperationalDataset(request, aDataset));
+    SuccessOrExit(error = EncodePendingOperationalDataset(request, aPendingDataset));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
@@ -1471,7 +1488,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto extendedPanId = tlvSet[tlv::Type::kExtendedPanId])
     {
-        dataset.mExtendedPanId = utils::Decode<uint64_t>(extendedPanId->GetValue());
+        dataset.mExtendedPanId = XpanId{utils::Decode<uint64_t>(extendedPanId->GetValue())};
         dataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
     }
 

@@ -34,12 +34,14 @@
 #ifndef OT_COMM_COMMON_UTILS_HPP_
 #define OT_COMM_COMMON_UTILS_HPP_
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <type_traits>
 
-#include <assert.h>
-
-#include <commissioner/defines.hpp>
-#include <commissioner/error.hpp>
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 
 #define ASSERT(aCondition)             \
     do                                 \

@@ -31,28 +31,49 @@
  *   The file implements CLI interpreter.
  */
 
-#include <fcntl.h>
-
-#include <event2/event-config.h>
-#include <event2/event.h>
-#include <event2/event_struct.h>
-#include <event2/util.h>
-#include <mdns/mdns.h>
-
-#include <sstream>
+#include <algorithm>
+#include <cctype>
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
+#include <map>
+#include <memory>
+#include <string>
 #include <thread>
+#include <vector>
 
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "app/border_agent.hpp"
 #include "app/br_discover.hpp"
+#include "app/cli/console.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/commissioner_app.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
 #include "app/mdns_handler.hpp"
 #include "app/ps/registry.hpp"
+#include "app/ps/registry_entries.hpp"
 #include "app/sys_logger.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
+#include "event2/event.h"
+#include "event2/event_struct.h"
+#include "event2/util.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "mdns/mdns.h"
+#include "nlohmann/json.hpp"
 
 #define KEYWORD_NETWORK "--nwk"
 #define KEYWORD_DOMAIN "--dom"
@@ -153,8 +174,8 @@ Interpreter::NetworkSelectionComparator::~NetworkSelectionComparator()
 
         if (status == RegistryStatus::kSuccess && mStartWith.mValue != nwk.mXpan.mValue)
         {
-            Console::Write(nwk.mXpan == XpanId::kEmptyXpanId ? WARN_NETWORK_SELECTION_DROPPED
-                                                             : WARN_NETWORK_SELECTION_CHANGED,
+            Console::Write(nwk.mXpan.mValue == XpanId::kEmptyXpanId ? WARN_NETWORK_SELECTION_DROPPED
+                                                                    : WARN_NETWORK_SELECTION_CHANGED,
                            Console::Color::kYellow);
         }
     }
@@ -375,7 +396,7 @@ Error Interpreter::UpdateNetworkSelectionInfo(bool onStart /*=false*/)
 
     VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == Registry::Status::kSuccess,
                  error = ERROR_REGISTRY_ERROR(RUNTIME_CUR_NETWORK_FAILED));
-    if (onStart && nwk.mXpan != XpanId::kEmptyXpanId)
+    if (onStart && nwk.mXpan.mValue != XpanId::kEmptyXpanId)
     {
         Console::Write(fmt::format(FMT_STRING("Network selection recalled from previous session.\n"
                                               "Restored to [{}:'{}']"),
@@ -817,7 +838,7 @@ void Interpreter::PrintOrExport(const Value &aValue)
 
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
 {
-    std::string nidHex = XpanId(aNid);
+    std::string nidHex = std::string(XpanId(aNid));
     PrintNetworkMessage(nidHex, aMessage, aColor);
 }
 
@@ -1202,12 +1223,12 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         }
         else
         {
-            for (auto iter = json.begin(); iter != json.end(); ++iter)
+            for (const auto &jsonObject : json)
             {
                 BorderAgent ba;
                 try
                 {
-                    BorderAgentFromJson(ba, *iter);
+                    BorderAgentFromJson(ba, jsonObject);
                 } catch (std::exception &e)
                 {
                     ExitNow(value = ERROR_BAD_FORMAT("incorrect border agent JSON format: {}", e.what()));
@@ -1440,7 +1461,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         auto mdnsCancelEventQueue = [](evutil_socket_t aSocket, short aWhat, void *aArg) {
             (void)aSocket;
             (void)aWhat;
-            event_base *ev_base = (event_base *)aArg;
+            event_base *ev_base = static_cast<event_base *>(aArg);
             event_base_loopbreak(ev_base);
         };
         // Attach cancel pipe to event loop. When bytes written to the
@@ -2047,7 +2068,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
         else
         {
             SuccessOrExit(value = aCommissioner->GetPanId(panid));
-            value = std::to_string(panid);
+            value = std::string(panid);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "pskc"))
@@ -2112,10 +2133,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             {
                 if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) != 0)
                 {
-                    std::ostringstream panIdStream;
-                    panIdStream << "0x" << std::hex << std::setfill('0') << std::setw(4) << std::uppercase
-                                << dataset.mPanId;
-                    nwkAliases.push_back(panIdStream.str());
+                    nwkAliases.push_back(fmt::format(FMT_STRING("0x{:04X}"), dataset.mPanId.mValue));
                 }
                 else if ((dataset.mPresentFlags & ActiveOperationalDataset::kNetworkNameBit) != 0)
                 {
