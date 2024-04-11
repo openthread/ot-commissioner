@@ -31,10 +31,8 @@
  *   The file implements JSON-based Thread networks/domains registry.
  */
 
-#include <algorithm>
 #include <cassert>
 #include <string>
-#include <vector>
 
 #include "app/border_agent.hpp"
 #include "app/ps/persistent_storage.hpp"

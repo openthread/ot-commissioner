@@ -295,7 +295,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     RegistryStatus    status   = mInterpreter.mRegistry->GetBorderRoutersInNetwork(aNid, brs);
 
     VerifyOrExit(status == RegistryStatus::kSuccess,
-                 error = ERROR_REGISTRY_ERROR("br lookup failed with status={}", status));
+                 error = ERROR_REGISTRY_ERROR("br lookup failed with status={}", static_cast<int>(status)));
 
     // review the network BRs connection modes that may require
     // certain supported type of credentials
@@ -326,7 +326,8 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
     status = mInterpreter.mRegistry->GetDomainNameByXpan(aNid, domainName);
     if (status != RegistryStatus::kSuccess)
     {
-        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", XpanId(aNid).str(), status);
+        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", XpanId(aNid).str(),
+                  static_cast<int>(status));
     }
 
     aConfig.mEnableCcm = isCCM;
@@ -441,7 +442,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     RegistryStatus status = mInterpreter.mRegistry->GetBorderRoutersInNetwork(aNid, brs);
 
     VerifyOrExit(status == RegistryStatus::kSuccess,
-                 error = ERROR_REGISTRY_ERROR("br lookup failed with status={}", status));
+                 error = ERROR_REGISTRY_ERROR("br lookup failed with status={}", static_cast<int>(status)));
     if (brs.size() == 1)
     {
         // looks like not much of a choice

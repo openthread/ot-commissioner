@@ -33,14 +33,8 @@
 
 #include "library/coap.hpp"
 
-#include <algorithm>
 #include <cctype>
-#include <chrono>
-#include <cstddef>
-#include <cstdint>
 #include <cstring>
-#include <list>
-#include <memory>
 #include <string>
 
 #include "commissioner/defines.hpp"
@@ -50,7 +44,6 @@
 #include "common/time.hpp"
 #include "common/utils.hpp"
 #include "event2/event.h"
-#include "fmt/core.h"
 #include "library/endpoint.hpp"
 #include "library/message.hpp"
 #include "library/openthread/random.hpp"
@@ -1355,7 +1348,7 @@ auto fmt::formatter<ot::commissioner::coap::OptionType>::format(ot::commissioner
         name = "kSize1";
         break;
     default:
-        name = "unknown";
+        name = fmt::format(FMT_STRING("unknown({})"), static_cast<int>(optionType));
     }
     return formatter<string_view>::format(name, ctx);
 }

@@ -786,7 +786,7 @@ private:
 
 } // namespace ot
 
-/** Makes `OptionType` formattable as a string. */
+/** Makes `coap::OptionType` formattable as a string. */
 template <> struct fmt::formatter<ot::commissioner::coap::OptionType> : formatter<string_view>
 {
     auto format(ot::commissioner::coap::OptionType optionType, format_context &ctx) -> decltype(ctx.out());

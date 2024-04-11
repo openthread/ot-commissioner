@@ -675,7 +675,7 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
                      error = status == RegistryStatus::kNotFound
                                  ? ERROR_REGISTRY_ERROR("domain '{}' not found", mContext.mDomAliases[0])
                                  : ERROR_REGISTRY_ERROR("domain '{}' failed to resolve with status={}",
-                                                        mContext.mDomAliases.front(), status));
+                                                        mContext.mDomAliases.front(), static_cast<int>(status)));
     }
     else
     {
@@ -1055,7 +1055,7 @@ Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
     SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
     VerifyOrExit((status = mRegistry->GetCurrentNetwork(curNwk)) == RegistryStatus::kSuccess,
-                 value = ERROR_REGISTRY_ERROR(RUNTIME_CUR_NETWORK_FAILED " with status={}", status));
+                 value = ERROR_REGISTRY_ERROR(RUNTIME_CUR_NETWORK_FAILED " with status={}", static_cast<int>(status)));
 
     if (CaseInsensitiveEqual(aExpr[1], "request"))
     {

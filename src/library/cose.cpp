@@ -316,7 +316,8 @@ Error MakeCoseKey(ByteArray &aEncodedCoseKey, const mbedtls_pk_context &aKey, co
         ec2Curve = kKeyEC2CurveP521;
         break;
     default:
-        ExitNow(error = ERROR_INVALID_ARGS("make COSE key with invalid EC2 curve group ID {}", eckey->grp.id));
+        ExitNow(error = ERROR_INVALID_ARGS("make COSE key with invalid EC2 curve group ID {}",
+                                           static_cast<int>(eckey->grp.id)));
     }
     SuccessOrExit(error = coseKey.Put(kKeyEC2Curve, ec2Curve));
 
