@@ -56,9 +56,11 @@ using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, c
  * @param[in] aBorderAgentHandler  The handler of a single Border Agent response.
  * @param[in] aTimeout             The time to wait for mDNS responses. Any
  *                                 response not within the interval is ignored.
+ * @param[in] aNetIf               The specified network interface for mDNS binding.
+ *
  *
  */
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout);
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf);
 
 } // namespace commissioner
 

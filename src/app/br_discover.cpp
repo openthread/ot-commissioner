@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <thread>
+#include <sys/socket.h>
 
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -38,7 +39,7 @@ namespace ot {
 
 namespace commissioner {
 
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout)
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf)
 {
     static constexpr size_t             kDefaultBufferSize = 1024 * 16;
     static constexpr mdns_record_type_t kMdnsQueryType     = MDNS_RECORDTYPE_PTR;
@@ -51,6 +52,10 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 
     int socket = mdns_socket_open_ipv4();
     VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
+
+    if (aNetIf != "" && setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, &aNetIf[0], sizeof(aNetIf)) < 0) {
+         ExitNow(error = ERROR_IO_ERROR("failed to bind network interface: {}", aNetIf));
+    }
 
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
     {

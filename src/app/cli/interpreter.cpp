@@ -1793,8 +1793,14 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
         {
             SuccessOrExit(value = ParseInteger(timeout, aExpr[2]));
         }
+        std::string netIf = "";
 
-        SuccessOrExit(value = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout)));
+        if (aExpr.size() == 4)
+        {
+            netIf = aExpr[3];
+        }
+
+        SuccessOrExit(value = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout), netIf));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
