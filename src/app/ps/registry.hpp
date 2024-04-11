@@ -38,9 +38,9 @@
 #include <string>
 #include <vector>
 
-#include "persistent_storage.hpp"
-#include "registry_entries.hpp"
 #include "app/border_agent.hpp"
+#include "app/ps/persistent_storage.hpp"
+#include "app/ps/registry_entries.hpp"
 #include "commissioner/network_data.hpp"
 
 namespace ot {
