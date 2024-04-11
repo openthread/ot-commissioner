@@ -53,8 +53,9 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
     int socket = mdns_socket_open_ipv4();
     VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
-    if (aNetIf != "" && setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, &aNetIf[0], sizeof(aNetIf)) < 0) {
-         ExitNow(error = ERROR_IO_ERROR("failed to bind network interface: {}", aNetIf));
+    if (aNetIf != "" && setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, &aNetIf[0], sizeof(aNetIf)) < 0)
+    {
+         ExitNow(error = ERROR_SOCKET_BIND_ERROR("failed to bind network interface: {}", aNetIf));
     }
 
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)

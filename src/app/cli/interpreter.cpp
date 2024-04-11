@@ -1788,6 +1788,7 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
     if (CaseInsensitiveEqual(aExpr[1], "discover"))
     {
         uint64_t timeout = 4000;
+        std::string netIf = "";
 
         if (aExpr.size() >= 3)
         {
