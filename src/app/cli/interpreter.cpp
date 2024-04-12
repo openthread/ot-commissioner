@@ -45,8 +45,8 @@
 #include <vector>
 
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "app/border_agent.hpp"
