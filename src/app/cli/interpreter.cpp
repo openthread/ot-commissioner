@@ -1437,29 +1437,29 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
 
-        for (auto it = mContext.mCommandKeys.begin(); it != mContext.mCommandKeys.end(); ++it)
+        auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--timeout");
+        if (it != mContext.mCommandKeys.end())
         {
-            if (*it == "--timeout")
+            if (++it != mContext.mCommandKeys.end())
             {
-                if (++it != mContext.mCommandKeys.end())
-                {
-                    SuccessOrExit(value = ParseInteger(scanTimeout, *it));
-                }
-                else
-                {
-                    ExitNow(value = ERROR_INVALID_ARGS("Missing {} value", *--it));
-                }
+                SuccessOrExit(value = ParseInteger(scanTimeout, it[0]));
             }
-            else if (*it == "--netif")
+            else
             {
-                if (++it != mContext.mCommandKeys.end())
-                {
-                    netIf = *it;
-                }
-                else
-                {
-                    ExitNow(value = ERROR_INVALID_ARGS("Missing {} value", *--it));
-                }
+                ExitNow(value = ERROR_INVALID_ARGS("Missing --timeout value")); // Simplified
+            }
+        }
+
+        it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--netif");
+        if (it != mContext.mCommandKeys.end())
+        {
+            if (++it != mContext.mCommandKeys.end())
+            {
+                netIf = it[0];
+            }
+            else
+            {
+                ExitNow(value = ERROR_INVALID_ARGS("Missing --netif value")); // Simplified
             }
         }
 
