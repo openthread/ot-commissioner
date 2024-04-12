@@ -1435,7 +1435,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
 
         auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--timeout");
 
-        if (it != mContext.mCommandKeys.end()) {
+        if (it != mContext.mCommandKeys.end())
+        {
             try
             {
               scanTimeout = stol(mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it) + 1]);
@@ -1447,7 +1448,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
 
         it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--netif");
 
-        if (it != mContext.mCommandKeys.end()) {
+        if (it != mContext.mCommandKeys.end())
+        {
             netIf = mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it) + 1];
         }
 
@@ -1455,7 +1457,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         mdnsSocket = mdns_socket_open_ipv4();
         VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
-        if (!netIf.empty() && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size()) < 0) {
+        if (!netIf.empty() && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size()) < 0)
+        {
             ExitNow(value = ERROR_SOCKET_BIND_ERROR("failed to bind network interface: {}", netIf));
         }
 
