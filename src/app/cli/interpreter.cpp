@@ -1446,7 +1446,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             }
             else
             {
-                ExitNow(value = ERROR_INVALID_ARGS("Missing --timeout value")); // Simplified
+                ExitNow(value = ERROR_INVALID_ARGS("Missing --timeout value"));
             }
         }
 
@@ -1459,7 +1459,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             }
             else
             {
-                ExitNow(value = ERROR_INVALID_ARGS("Missing --netif value")); // Simplified
+                ExitNow(value = ERROR_INVALID_ARGS("Missing --netif value"));
             }
         }
 
