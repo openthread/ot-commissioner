@@ -250,8 +250,9 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    std::shared_ptr<JobManager> mJobManager = nullptr;
-    std::shared_ptr<Registry>   mRegistry   = nullptr;
+    std::shared_ptr<JobManager> mJobManager                  = nullptr;
+    std::shared_ptr<Registry>   mRegistry                    = nullptr;
+    std::string                 mThreadAdministratorPasscode = "";
 
     bool mShouldExit = false;
 
