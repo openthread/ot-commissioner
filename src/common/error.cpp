@@ -86,6 +86,8 @@ static std::string ErrorCodeToString(ErrorCode code)
         return "REGISTRY_ERROR";
     case ErrorCode::kUnknown:
         return "UNKNOWN";
+    case ErrorCode::kSocketBindError:
+        return "SOCKET_BIND_ERROR";
 
     default:
         VerifyOrDie(false);

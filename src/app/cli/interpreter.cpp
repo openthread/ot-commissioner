@@ -1433,28 +1433,30 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
 
-        if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--timeout")
-        {
+        auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--timeout");
+
+        if (it != mContext.mCommandKeys.end()) {
             try
             {
-                scanTimeout = stol(mContext.mCommandKeys[1]);
+              scanTimeout = stol(mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it) + 1]);
             } catch (...)
             {
-                ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", aExpr[3]));
+                ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it)]));
             }
         }
 
-        if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--netif")
-        {
-            netIf = mContext.mCommandKeys[1];
+        it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--netif");
+
+        if (it != mContext.mCommandKeys.end()) {
+            netIf = mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it) + 1];
         }
 
         // Open IPv4 mDNS socket
         mdnsSocket = mdns_socket_open_ipv4();
         VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
-        if (netIf != "" && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, &netIf[0], sizeof(netIf)) < 0) {
-          ExitNow(value = ERROR_IO_ERROR("failed to bind network interface: {}", netIf));
+        if (!netIf.empty() && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size()) < 0) {
+            ExitNow(value = ERROR_SOCKET_BIND_ERROR("failed to bind network interface: {}", netIf));
         }
 
         fdgMdnsSocket.mFD = mdnsSocket;

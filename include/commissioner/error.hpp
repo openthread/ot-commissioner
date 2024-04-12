@@ -161,6 +161,11 @@ enum class ErrorCode : int
      * The error is out of the address space of OT Commissioner.
      */
     kUnknown = 19,
+
+    /**
+     * The error occurs when attempting to bind a network interface to an mDNS socket."
+     */
+    kSocketBindError = 20,
 };
 
 /**
