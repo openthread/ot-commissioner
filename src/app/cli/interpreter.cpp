@@ -213,7 +213,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
            "br add <json-file-path>\n"
            "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"
-           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>]\n"},
+           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>] [--netif <network-interface>]\n"},
     {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
@@ -1421,6 +1421,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         const std::string                  kServiceName    = "_meshcop._udp.local";
 
         uint32_t                                  scanTimeout = 10000;
+        std::string                               netIf = "";
         int                                       mdnsSocket  = -1;
         FDGuard                                   fdgMdnsSocket;
         std::thread                               selectThread;
@@ -1443,9 +1444,19 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             }
         }
 
+        if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--netif")
+        {
+            netIf = mContext.mCommandKeys[1];
+        }
+
         // Open IPv4 mDNS socket
         mdnsSocket = mdns_socket_open_ipv4();
         VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
+
+        if (netIf != "" && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, &netIf[0], sizeof(netIf)) < 0) {
+          ExitNow(value = ERROR_IO_ERROR("failed to bind network interface: {}", netIf));
+        }
+
         fdgMdnsSocket.mFD = mdnsSocket;
 
         //  Initialize event library
