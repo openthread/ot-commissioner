@@ -213,7 +213,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
            "br add <json-file-path>\n"
            "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"
-           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>] [--netif <network-interface>]\n"},
+           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>] "
+           "[--netif <network-interface>]\n"},
     {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
@@ -1421,7 +1422,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         const std::string                  kServiceName    = "_meshcop._udp.local";
 
         uint32_t                                  scanTimeout = 10000;
-        std::string                               netIf = "";
+        std::string                               netIf       = "";
         int                                       mdnsSocket  = -1;
         FDGuard                                   fdgMdnsSocket;
         std::thread                               selectThread;
@@ -1446,15 +1447,20 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                     {
                         ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", *it));
                     }
-                } else {
+                }
+                else
+                {
                     ExitNow(value = ERROR_INVALID_ARGS("Missing {} value", *--it));
                 }
-            } else if (*it == "--netif")
+            }
+            else if (*it == "--netif")
             {
                 if (++it != mContext.mCommandKeys.end())
                 {
                     netIf = *it;
-                } else {
+                }
+                else
+                {
                     ExitNow(value = ERROR_INVALID_ARGS("Missing {} value", *--it));
                 }
             }

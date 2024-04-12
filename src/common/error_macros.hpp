@@ -137,10 +137,10 @@
     {                                                                          \
         ErrorCode::kUnknown, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
     }
-#define ERROR_SOCKET_BIND_ERROR(aFormat, ...)                                            \
-    Error                                                                                \
-    {                                                                                    \
-        ErrorCode::kSocketBindError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__)   \
+#define ERROR_SOCKET_BIND_ERROR(aFormat, ...)                                          \
+    Error                                                                              \
+    {                                                                                  \
+        ErrorCode::kSocketBindError, fmt::format(FMT_STRING((aFormat)), ##__VA_ARGS__) \
     }
 
 #endif // ERROR_MACROS_HPP_
