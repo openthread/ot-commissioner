@@ -112,6 +112,8 @@
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
+#define SO_BINDTODEVICE 25
+
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
 namespace ot {
