@@ -1443,13 +1443,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             {
                 if (++it != mContext.mCommandKeys.end())
                 {
-                    try
-                    {
-                        scanTimeout = stol(*it);
-                    } catch (...)
-                    {
-                        ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", *it));
-                    }
+                    SuccessOrExit(value = ParseInteger(scanTimeout, *it));
                 }
                 else
                 {
