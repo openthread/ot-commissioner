@@ -162,10 +162,6 @@ enum class ErrorCode : int
      */
     kUnknown = 19,
 
-    /**
-     * The error occurs when attempting to bind a network interface to an mDNS socket."
-     */
-    kSocketBindError = 20,
 };
 
 /**
