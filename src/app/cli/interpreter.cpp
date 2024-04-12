@@ -1433,24 +1433,31 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
 
-        auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--timeout");
-
-        if (it != mContext.mCommandKeys.end())
+        for (auto it = mContext.mCommandKeys.begin(); it != mContext.mCommandKeys.end(); ++it)
         {
-            try
+            if (*it == "--timeout")
             {
-              scanTimeout = stol(mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it) + 1]);
-            } catch (...)
+                if (++it != mContext.mCommandKeys.end())
+                {
+                    try
+                    {
+                        scanTimeout = stol(*it);
+                    } catch (...)
+                    {
+                        ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", *it));
+                    }
+                } else {
+                    ExitNow(value = ERROR_INVALID_ARGS("Missing {} value", *--it));
+                }
+            } else if (*it == "--netif")
             {
-                ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it)]));
+                if (++it != mContext.mCommandKeys.end())
+                {
+                    netIf = *it;
+                } else {
+                    ExitNow(value = ERROR_INVALID_ARGS("Missing {} value", *--it));
+                }
             }
-        }
-
-        it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--netif");
-
-        if (it != mContext.mCommandKeys.end())
-        {
-            netIf = mContext.mCommandKeys[std::distance(mContext.mCommandKeys.begin(), it) + 1];
         }
 
         // Open IPv4 mDNS socket
