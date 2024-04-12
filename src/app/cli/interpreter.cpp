@@ -1466,7 +1466,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
 
         if (!netIf.empty() && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size()) < 0)
         {
-            ExitNow(value = ERROR_SOCKET_BIND_ERROR("failed to bind network interface: {}: {}", netIf, strerror(errno)));
+            ExitNow(value = ERROR_SOCKET_BIND_ERROR("failed to bind network interface {}: {}", netIf, strerror(errno)));
         }
 
         fdgMdnsSocket.mFD = mdnsSocket;
