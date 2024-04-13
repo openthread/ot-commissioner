@@ -37,4 +37,12 @@ public interface FragmentCallback {
       @Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc);
 
   void onMeshcopResult(int result);
+
+  /** Called when GetAdminPasscode is started. */
+  void onGetAdminPasscodeStarted(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow);
+
+  /** Called when the user inputted the passcode for a given Border Router device. */
+  void onAdminPasscodeReceived(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow, String passcode, int epskcPort);
+
+  void onCredentialsRetrieved();
 }

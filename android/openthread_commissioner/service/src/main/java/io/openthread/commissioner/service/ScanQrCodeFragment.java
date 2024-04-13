@@ -153,11 +153,7 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
             + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
 
     DialogInterface.OnClickListener listener =
-        new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int id) {
-            joinerInfoCallback.onJoinerInfoReceived(null);
-          }
-        };
+            (dialog, id) -> joinerInfoCallback.onJoinerInfoReceived(null);
 
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder

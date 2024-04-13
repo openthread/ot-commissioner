@@ -35,6 +35,8 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -46,15 +48,14 @@ public class CameraSourceView extends ViewGroup {
 
   private static final String TAG = CameraSourceView.class.getSimpleName();
 
-  private SurfaceView surfaceView;
+  private final SurfaceView surfaceView;
   private boolean cameraStarted = false;
   private boolean surfaceAvailable;
 
-  Context context;
+  private final Context context;
   private CameraSource cameraSource;
-  private BarcodeDetector barcodeDetector;
 
-  public CameraSourceView(Context context, AttributeSet attrs) {
+    public CameraSourceView(Context context, AttributeSet attrs) {
     super(context, attrs);
 
     this.context = context;
@@ -65,7 +66,7 @@ public class CameraSourceView extends ViewGroup {
 
   public void initializeBarcodeDetectorAndCamera(Detector.Processor<Barcode> barcodeProcessor) {
 
-    barcodeDetector = new BarcodeDetector.Builder(context).build();
+      BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
     barcodeDetector.setProcessor(barcodeProcessor);
 
     cameraSource =
@@ -80,7 +81,6 @@ public class CameraSourceView extends ViewGroup {
   /**
    * Attempts to start the camera source.
    *
-   * @throws IOException if the camera doesn't work
    * @throws SecurityException if app doesn't have permission to access camera
    */
   @RequiresPermission(Manifest.permission.CAMERA)
@@ -132,17 +132,17 @@ public class CameraSourceView extends ViewGroup {
 
     @RequiresPermission(Manifest.permission.CAMERA)
     @Override
-    public void surfaceCreated(SurfaceHolder surface) {
+    public void surfaceCreated(@NonNull SurfaceHolder surface) {
       surfaceAvailable = true;
       startCamera();
     }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder surface) {
+    public void surfaceDestroyed(@NonNull SurfaceHolder surface) {
       surfaceAvailable = false;
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {}
   }
 }
