@@ -378,6 +378,23 @@ Error CommissionerSafe::SetPendingDataset(const PendingOperationalDataset &aData
     return pro.get_future().get();
 }
 
+Error CommissionerSafe::SetRawPendingDataset(const ByteArray &aPendingDataset)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro](Error aError) { pro.set_value(aError); };
+
+    PendingOperationalDataset dataset;
+    Error                     error;
+
+    SuccessOrExit(error = CommissionerImpl::DecodePendingOperationalDataset(dataset, aPendingDataset));
+
+    SetPendingDataset(wait, dataset);
+    error = pro.get_future().get();
+
+exit:
+    return error;
+}
+
 void CommissionerSafe::SetSecurePendingDataset(ErrorHandler                     aHandler,
                                                uint32_t                         aMaxRetrievalTimer,
                                                const PendingOperationalDataset &aDataset)

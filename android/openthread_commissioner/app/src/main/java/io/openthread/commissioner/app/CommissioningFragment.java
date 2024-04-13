@@ -59,7 +59,7 @@ public class CommissioningFragment extends Fragment
   ImageView errorImage;
 
   private final FragmentCallback fragmentCallback;
-  private final ThreadNetworkInfoHolder networkInfoHolder;
+  private final BorderAgentInfo borderAgentInfo;
   private final byte[] pskc;
   private final JoinerDeviceInfo joinerDeviceInfo;
 
@@ -68,11 +68,11 @@ public class CommissioningFragment extends Fragment
 
   public CommissioningFragment(
       FragmentCallback fragmentCallback,
-      ThreadNetworkInfoHolder networkInfoHolder,
+      BorderAgentInfo borderAgentInfo,
       byte[] pskc,
       JoinerDeviceInfo joinerDeviceInfo) {
     this.fragmentCallback = fragmentCallback;
-    this.networkInfoHolder = networkInfoHolder;
+    this.borderAgentInfo = borderAgentInfo;
     this.pskc = pskc;
     this.joinerDeviceInfo = joinerDeviceInfo;
   }
@@ -124,8 +124,6 @@ public class CommissioningFragment extends Fragment
   }
 
   private void startMeshcop() {
-    BorderAgentInfo borderAgentInfo = networkInfoHolder.getBorderAgents().get(0);
-
     showInProgress("Petitioning...");
 
     commissionFuture =
