@@ -31,7 +31,7 @@ set -e
 
 # Bootstrap with CCM dependencies.
 readonly WITH_CCM="${WITH_CCM:-1}"
-readonly MIN_CMAKE_VERSION="3.10.1"
+readonly MIN_CMAKE_VERSION="3.20.1"
 
 ## Match the version to see if current version is greater than or euqal to required version.
 ## Args: $1 current version
