@@ -48,6 +48,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 set_property(SOURCE commissioner.i PROPERTY CPLUSPLUS ON)
 
+# Tells SWIG compiler to rebuild the java library when any of the dependencies are updated
+set_property(SOURCE commissioner.i PROPERTY USE_SWIG_DEPENDENCIES ON)
+
 set(UseSWIG_TARGET_NAME_PREFERENCE LEGACY)
 
 swig_add_library(commissioner-java
