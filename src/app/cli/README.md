@@ -743,7 +743,7 @@ Each advanced command always sends associative `MGMT_*_(GET|SET).req` requests.
 ```shell
 > help br
 usage:
-br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>]
+br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>] [--netif <network-interface>]
 br add <json-file-path>
 br list [--nwk <network-alias-list> | --dom <domain-name>]
 br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)

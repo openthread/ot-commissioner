@@ -45,6 +45,7 @@
 #include <vector>
 
 #include <fcntl.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -110,6 +111,8 @@
 #define NETWORK_STR "network"
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
+
+#define SO_BINDTODEVICE 25
 
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
@@ -213,7 +216,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
     {"br", "br list [--nwk <network-alias-list> | --dom <domain-name>]\n"
            "br add <json-file-path>\n"
            "br delete (<br-record-id> | --nwk <network-alias-list> | --dom <domain-name>)\n"
-           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>]\n"},
+           "br scan [--nwk <network-alias-list> | --dom <domain-name>] [--export <json-file-path>] [--timeout <ms>] "
+           "[--netif <network-interface>]\n"},
     {"domain", "domain list [--dom <domain-name>]"},
     {"network", "network save <network-data-file>\n"
                 "network sync\n"
@@ -1421,6 +1425,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         const std::string                  kServiceName    = "_meshcop._udp.local";
 
         uint32_t                                  scanTimeout = 10000;
+        std::string                               netIf       = "";
         int                                       mdnsSocket  = -1;
         FDGuard                                   fdgMdnsSocket;
         std::thread                               selectThread;
@@ -1432,20 +1437,41 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
 
-        if (mContext.mCommandKeys.size() == 2 && mContext.mCommandKeys[0] == "--timeout")
+        auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--timeout");
+        if (it != mContext.mCommandKeys.end())
         {
-            try
+            if (++it != mContext.mCommandKeys.end())
             {
-                scanTimeout = stol(mContext.mCommandKeys[1]);
-            } catch (...)
+                SuccessOrExit(value = ParseInteger(scanTimeout, it[0]));
+            }
+            else
             {
-                ExitNow(value = ERROR_INVALID_ARGS("Imparsable timeout value '{}'", aExpr[3]));
+                ExitNow(value = ERROR_INVALID_ARGS("Missing --timeout value"));
+            }
+        }
+
+        it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--netif");
+        if (it != mContext.mCommandKeys.end())
+        {
+            if (++it != mContext.mCommandKeys.end())
+            {
+                netIf = it[0];
+            }
+            else
+            {
+                ExitNow(value = ERROR_INVALID_ARGS("Missing --netif value"));
             }
         }
 
         // Open IPv4 mDNS socket
         mdnsSocket = mdns_socket_open_ipv4();
         VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
+
+        if (!netIf.empty() && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size()) < 0)
+        {
+            ExitNow(value = ERROR_INVALID_ARGS("failed to bind network interface {}: {}", netIf, strerror(errno)));
+        }
+
         fdgMdnsSocket.mFD = mdnsSocket;
 
         //  Initialize event library
