@@ -161,7 +161,6 @@ enum class ErrorCode : int
      * The error is out of the address space of OT Commissioner.
      */
     kUnknown = 19,
-
 };
 
 /**
