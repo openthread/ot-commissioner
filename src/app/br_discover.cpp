@@ -35,6 +35,8 @@
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
+#define SO_BINDTODEVICE 25
+
 namespace ot {
 
 namespace commissioner {
