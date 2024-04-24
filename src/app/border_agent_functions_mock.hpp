@@ -45,7 +45,7 @@ class BorderAgentFunctionsMock
 public:
     virtual ~BorderAgentFunctionsMock() = default;
 
-    MOCK_METHOD(Error, DiscoverBorderAgent, (BorderAgentHandler, size_t, const std::string));
+    MOCK_METHOD(Error, DiscoverBorderAgent, (BorderAgentHandler, size_t, const std::string&));
 };
 
 void SetBorderAgentFunctionsMock(ot::commissioner::BorderAgentFunctionsMock *ptr);
