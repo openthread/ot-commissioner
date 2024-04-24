@@ -29,8 +29,8 @@
 #include "br_discover.hpp"
 
 #include <chrono>
-#include <thread>
 #include <sys/socket.h>
+#include <thread>
 
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -55,7 +55,11 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 
     if (!aNetIf.empty() && setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, &aNetIf[0], sizeof(aNetIf)) < 0)
     {
+<<<<<<< HEAD
          ExitNow(error = ERROR_SOCKET_BIND_ERROR("failed to bind network interface {}: {}", aNetIf, strerror(errno)));
+=======
+        ExitNow(error = ERROR_SOCKET_BIND_ERROR("failed to bind network interface {}: {}", aNetIf, strerror(errno)));
+>>>>>>> a6d0658 (Update src/app/br_discover.cpp)
     }
 
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
