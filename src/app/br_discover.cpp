@@ -29,13 +29,15 @@
 #include "br_discover.hpp"
 
 #include <chrono>
+#ifdef __linux__
 #include <sys/socket.h>
+#else // __NetBSD__ || __FreeBSD__ || __APPLE__
+#include <netinet/in.h>
+#endif
 #include <thread>
 
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
-
-#define SO_BINDTODEVICE 25
 
 namespace ot {
 
@@ -49,16 +51,19 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 
     Error   error;
     uint8_t buf[kDefaultBufferSize];
+    int     rval = 0;
 
     auto begin = std::chrono::system_clock::now();
 
     int socket = mdns_socket_open_ipv4();
     VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
-    if (!aNetIf.empty() && setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, &aNetIf[0], sizeof(aNetIf)) < 0)
-    {
-        ExitNow(error = ERROR_INVALID_ARGS("failed to bind network interface {}: {}", aNetIf, strerror(errno)));
-    }
+#ifdef __linux__
+    rval = setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, aNetIf.c_str(), aNetIf.size());
+#else  // __NetBSD__ || __FreeBSD__ || __APPLE__
+    rval = setsockopt(socket, IPPROTO_IPV6, IP_BOUND_IF, aNetIf.c_str(), aNetIf.size());
+#endif // __linux__
+    VerifyOrDie(rval == 0);
 
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
     {
