@@ -43,9 +43,9 @@ void ClearBorderAgentFunctionsMock()
     gBorderAgentFunctionsMock = nullptr;
 }
 
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout)
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf)
 {
-    return gBorderAgentFunctionsMock->DiscoverBorderAgent(aBorderAgentHandler, aTimeout);
+    return gBorderAgentFunctionsMock->DiscoverBorderAgent(aBorderAgentHandler, aTimeout, aNetIf);
 }
 
 } // namespace commissioner
