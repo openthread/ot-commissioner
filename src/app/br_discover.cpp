@@ -58,12 +58,15 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
     int socket = mdns_socket_open_ipv4();
     VerifyOrExit(socket >= 0, error = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
+    if (!aNetIf.empty())
+    {
 #ifdef __linux__
-    rval = setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, aNetIf.c_str(), aNetIf.size());
+        rval = setsockopt(socket, SOL_SOCKET, SO_BINDTODEVICE, aNetIf.c_str(), aNetIf.size());
 #else  // __NetBSD__ || __FreeBSD__ || __APPLE__
-    rval = setsockopt(socket, IPPROTO_IPV6, IP_BOUND_IF, aNetIf.c_str(), aNetIf.size());
+        rval = setsockopt(socket, IPPROTO_IPV6, IP_BOUND_IF, aNetIf.c_str(), aNetIf.size());
 #endif // __linux__
-    VerifyOrDie(rval == 0);
+        VerifyOrDie(rval == 0);
+    }
 
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
     {
