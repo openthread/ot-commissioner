@@ -65,7 +65,8 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
 #else  // __NetBSD__ || __FreeBSD__ || __APPLE__
         rval = setsockopt(socket, IPPROTO_IPV6, IP_BOUND_IF, aNetIf.c_str(), aNetIf.size());
 #endif // __linux__
-        VerifyOrDie(rval == 0);
+        VerifyOrExit(rval == 0,
+                     error = ERROR_INVALID_ARGS("failed to bind network interface {}: {}", aNetIf, strerror(errno)));
     }
 
     if (mdns_query_send(socket, kMdnsQueryType, kServiceName, strlen(kServiceName), buf, sizeof(buf)) != 0)
