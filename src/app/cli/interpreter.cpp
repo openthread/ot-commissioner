@@ -45,7 +45,11 @@
 #include <vector>
 
 #include <fcntl.h>
+#ifdef __linux__
 #include <sys/socket.h>
+#else // __NetBSD__ || __FreeBSD__ || __APPLE__
+#include <netinet/in.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -111,8 +115,6 @@
 #define NETWORK_STR "network"
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
-
-#define SO_BINDTODEVICE 25
 
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
@@ -1436,6 +1438,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         std::vector<BorderAgentOrErrorMsg>        borderAgents;
         nlohmann::json                            baJson;
         char                                      mdnsSendBuffer[kMdnsBufferSize];
+        int                                       rval = 0;
 
         auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--timeout");
         if (it != mContext.mCommandKeys.end())
@@ -1467,9 +1470,15 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         mdnsSocket = mdns_socket_open_ipv4();
         VerifyOrExit(mdnsSocket >= 0, value = ERROR_IO_ERROR("failed to open mDNS IPv4 socket"));
 
-        if (!netIf.empty() && setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size()) < 0)
+        if (!netIf.empty())
         {
-            ExitNow(value = ERROR_INVALID_ARGS("failed to bind network interface {}: {}", netIf, strerror(errno)));
+#ifdef __linux__
+            rval = setsockopt(mdnsSocket, SOL_SOCKET, SO_BINDTODEVICE, netIf.c_str(), netIf.size());
+#else  // __NetBSD__ || __FreeBSD__ || __APPLE__
+            rval = setsockopt(mdnsSocket, IPPROTO_IPV6, IP_BOUND_IF, netIf.c_str(), netIf.size());
+#endif // __linux__
+            VerifyOrExit(rval == 0,
+                         value = ERROR_INVALID_ARGS("failed to bind network interface {}: {}", netIf, strerror(errno)));
         }
 
         fdgMdnsSocket.mFD = mdnsSocket;
