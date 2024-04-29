@@ -264,14 +264,21 @@ inline bool operator!=(const ErrorCode &aErrorCode, const Error &aError)
     return !(aErrorCode == aError);
 }
 
+std::string ErrorCodeToString(ErrorCode code);
+
 /**
  * Allows pretty-print in unit tests.
  *
  * See https://google.github.io/googletest/advanced.html#teaching-googletest-how-to-print-your-values
  */
-inline void PrintTo(const Error &error, std::ostream *os)
+inline void PrintTo(const Error &aError, std::ostream *os)
 {
-    *os << error.ToString();
+    *os << aError.ToString();
+}
+
+inline void PrintTo(ErrorCode aErrorCode, std::ostream *os)
+{
+    *os << ErrorCodeToString(aErrorCode);
 }
 
 } // namespace commissioner

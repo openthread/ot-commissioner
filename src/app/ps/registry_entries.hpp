@@ -138,20 +138,20 @@ struct Network
     NetworkId    mId;       /**< unique mId in registry */
     DomainId     mDomainId; /**< reference to the domain the network belongs to */
     std::string  mName;     /**< network name */
-    XpanId       mXpan;     /**< Extended PAN_ID */
+    uint64_t     mXpan;     /**< Extended PAN_ID */
     unsigned int mChannel;  /**< network channel */
-    PanId        mPan;      /**< PAN_ID */
+    uint16_t     mPan;      /**< PAN_ID */
     std::string  mMlp;      /**< Mesh-local prefix */
     int          mCcm;      /**< Commercial commissioning mode;<0 not set,
                              * 0 false, >0 true */
 
-    Network(NetworkId const   &aId,
-            DomainId const    &aDomainId,
-            std::string const &aName,
-            XpanId const      &aXpan,
+    Network(const NetworkId   &aId,
+            const DomainId    &aDomainId,
+            const std::string &aName,
+            uint64_t           aXpan,
             unsigned int       aChannel,
             uint16_t           aPan,
-            std::string const &aMlp,
+            const std::string &aMlp,
             int                aCcm);
     Network();
 };

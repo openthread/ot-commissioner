@@ -285,9 +285,9 @@ PersistentStorage::Status PersistentStorageJson::Get(BorderRouterId const &aId, 
                 aRetValue.mAgent.mNetworkName = nwk.mName;
                 aRetValue.mAgent.mPresentFlags |= BorderAgent::kNetworkNameBit;
             }
-            if (nwk.mXpan.mValue != XpanId::kEmptyXpanId)
+            if (nwk.mXpan != 0)
             {
-                aRetValue.mAgent.mExtendedPanId = nwk.mXpan.mValue;
+                aRetValue.mAgent.mExtendedPanId = nwk.mXpan;
                 aRetValue.mAgent.mPresentFlags |= BorderAgent::kExtendedPanIdBit;
             }
             if (nwk.mDomainId.mId != EMPTY_ID)
@@ -371,8 +371,7 @@ PersistentStorage::Status PersistentStorageJson::Lookup(Network const &aValue, s
                     (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) &&
                     (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) &&
                     (aValue.mName.empty() || (aValue.mName == el.mName)) &&
-                    (aValue.mXpan.mValue == XpanId::kEmptyXpanId || aValue.mXpan == el.mXpan) &&
-                    (aValue.mPan.mValue == PanId::kEmptyPanId || (aValue.mPan.mValue == el.mPan.mValue)) &&
+                    (aValue.mXpan == 0 || aValue.mXpan == el.mXpan) && (aValue.mPan == 0 || (aValue.mPan == el.mPan)) &&
                     (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) &&
                     (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));
 
@@ -476,8 +475,7 @@ PersistentStorage::Status PersistentStorageJson::LookupAny(Network const &aValue
                     (aValue.mId.mId == EMPTY_ID || (el.mId.mId == aValue.mId.mId)) ||
                     (aValue.mDomainId.mId == EMPTY_ID || (el.mDomainId.mId == aValue.mDomainId.mId)) ||
                     (aValue.mName.empty() || (aValue.mName == el.mName)) ||
-                    (aValue.mXpan.mValue == XpanId::kEmptyXpanId || aValue.mXpan == el.mXpan) ||
-                    (aValue.mPan.mValue == PanId::kEmptyPanId || (aValue.mPan.mValue == el.mPan.mValue)) ||
+                    (aValue.mXpan == 0 || aValue.mXpan == el.mXpan) || (aValue.mPan == 0 || (aValue.mPan == el.mPan)) ||
                     (aValue.mMlp.empty() || CaseInsensitiveEqual(aValue.mMlp, el.mMlp)) ||
                     (aValue.mChannel == 0 || (aValue.mChannel == el.mChannel));
 

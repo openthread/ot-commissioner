@@ -623,9 +623,9 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     Interpreter::Value value = ctx.mJobManager.CollectJobsValue();
     nlohmann::json     json  = nlohmann::json::parse(value.ToString());
 
-    EXPECT_TRUE(json.contains(XpanId{1}.str()));
-    EXPECT_TRUE(json.contains(XpanId{2}.str()));
-    EXPECT_FALSE(json.contains(XpanId{3}.str()));
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_FALSE(json.contains("0x0000000000000003"));
     ctx.mJobManager.CleanupJobs();
 
     // "active" command
@@ -633,12 +633,12 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     ctx.mJobManager.RunJobs();
     value = ctx.mJobManager.CollectJobsValue();
     json  = nlohmann::json::parse(value.ToString());
-    EXPECT_TRUE(json.contains(XpanId{1}.str()));
-    EXPECT_TRUE(json.contains(XpanId{2}.str()));
-    EXPECT_TRUE(json.contains(XpanId{3}.str()));
-    EXPECT_TRUE(json[XpanId{1}.str()]);
-    EXPECT_TRUE(json[XpanId{2}.str()]);
-    EXPECT_FALSE(json[XpanId{3}.str()]);
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_TRUE(json.contains("0x0000000000000003"));
+    EXPECT_TRUE(json["0x0000000000000001"]);
+    EXPECT_TRUE(json["0x0000000000000002"]);
+    EXPECT_FALSE(json["0x0000000000000003"]);
     ctx.mJobManager.CleanupJobs();
 
     // "sessionid" command
@@ -650,10 +650,10 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     ctx.mJobManager.RunJobs();
     value = ctx.mJobManager.CollectJobsValue();
     json  = nlohmann::json::parse(value.ToString());
-    EXPECT_TRUE(json.contains(XpanId{1}.str()));
-    EXPECT_TRUE(json.contains(XpanId{2}.str()));
-    EXPECT_EQ(json[XpanId{1}.str()], 0);
-    EXPECT_EQ(json[XpanId{2}.str()], 1);
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_EQ(json["0x0000000000000001"], 0);
+    EXPECT_EQ(json["0x0000000000000002"], 1);
     ctx.mJobManager.CleanupJobs();
 
     // "opdataset get active" command
@@ -673,12 +673,12 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     ctx.mJobManager.RunJobs();
     value = ctx.mJobManager.CollectJobsValue();
     json  = nlohmann::json::parse(value.ToString());
-    EXPECT_TRUE(json.contains(XpanId{1}.str()));
-    EXPECT_TRUE(json.contains(XpanId{2}.str()));
-    EXPECT_TRUE(json[XpanId{1}.str()].contains("PanId"));
-    EXPECT_TRUE(json[XpanId{2}.str()].contains("PanId"));
-    EXPECT_STREQ("0x0001", json[XpanId{1}.str()]["PanId"].get<std::string>().c_str());
-    EXPECT_STREQ("0x0002", json[XpanId{2}.str()]["PanId"].get<std::string>().c_str());
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_TRUE(json["0x0000000000000001"].contains("PanId"));
+    EXPECT_TRUE(json["0x0000000000000002"].contains("PanId"));
+    EXPECT_STREQ("0x0001", json["0x0000000000000001"]["PanId"].get<std::string>().c_str());
+    EXPECT_STREQ("0x0002", json["0x0000000000000002"]["PanId"].get<std::string>().c_str());
     ctx.mJobManager.CleanupJobs();
 
     // "opdataset set securitypolicy" command
@@ -692,10 +692,10 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     ctx.mJobManager.RunJobs();
     value = ctx.mJobManager.CollectJobsValue();
     json  = nlohmann::json::parse(value.ToString());
-    EXPECT_TRUE(json.contains(XpanId{1}.str()));
-    EXPECT_TRUE(json.contains(XpanId{2}.str()));
-    EXPECT_TRUE(json[XpanId{1}.str()]);
-    EXPECT_TRUE(json[XpanId{2}.str()]);
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_TRUE(json["0x0000000000000001"]);
+    EXPECT_TRUE(json["0x0000000000000002"]);
     ctx.mJobManager.CleanupJobs();
 
     // "stop" command
@@ -705,9 +705,9 @@ TEST_F(JobManagerTestSuite, BuildFinalResultString)
     ctx.mJobManager.RunJobs();
     value = ctx.mJobManager.CollectJobsValue();
     json  = nlohmann::json::parse(value.ToString());
-    EXPECT_TRUE(json.contains(XpanId{1}.str()));
-    EXPECT_TRUE(json.contains(XpanId{2}.str()));
-    EXPECT_TRUE(json[XpanId{1}.str()]);
-    EXPECT_TRUE(json[XpanId{2}.str()]);
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_TRUE(json["0x0000000000000001"]);
+    EXPECT_TRUE(json["0x0000000000000002"]);
     ctx.mJobManager.CleanupJobs();
 }

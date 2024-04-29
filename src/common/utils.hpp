@@ -42,6 +42,7 @@
 
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
+#include "common/error_macros.hpp"
 
 #define ASSERT(aCondition)             \
     do                                 \
@@ -187,6 +188,33 @@ Error Hex(ByteArray &aBuf, const std::string &aHexStr);
 std::string ToLower(const std::string &aStr);
 
 bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs);
+
+/**
+ * Returns the Hex string of an integer with zero paddings.
+ *
+ * For example, it returns "0xface" for integer 0xface.
+ */
+template <typename T> std::string Hex(T aInteger)
+{
+    return std::string("0x") + Hex(Encode(aInteger));
+}
+
+template <typename T> Error ParseInteger(T &aInteger, const std::string &aStr)
+{
+    Error    error;
+    uint64_t integer;
+    char    *endPtr = nullptr;
+
+    integer = strtoull(aStr.c_str(), &endPtr, 0);
+
+    VerifyOrExit(endPtr != nullptr && endPtr == aStr.c_str() + aStr.length(),
+                 error = ERROR_INVALID_ARGS("{} is not a valid integer", aStr));
+
+    aInteger = integer;
+
+exit:
+    return error;
+}
 
 } // namespace utils
 

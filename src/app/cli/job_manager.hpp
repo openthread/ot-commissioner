@@ -45,7 +45,6 @@ namespace commissioner {
 
 using CommissionerAppPtr = std::shared_ptr<CommissionerApp>;
 using RegistryStatus     = ot::commissioner::persistent_storage::Registry::Status;
-using ot::commissioner::XpanId;
 using ot::commissioner::persistent_storage::BorderRouter;
 
 class JobManager
@@ -61,7 +60,7 @@ public:
      *
      * @see JobManager::CreateJob()
      */
-    Error PrepareJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
+    Error PrepareJobs(const Interpreter::Expression &aExpr, const std::vector<uint64_t> &aNids, bool aGroupAlias);
     /**
      * Run all prepared jobs.
      *
@@ -118,7 +117,7 @@ public:
      * It is expected mImportFile contains a JSON object where the
      * imported part is a value of a map entry under aNid key.
      */
-    Error AppendImport(XpanId aXpanId, Interpreter::Expression &aExpr);
+    Error AppendImport(uint64_t aXpanId, Interpreter::Expression &aExpr);
     /**
      * Make a well-thought choice from border routers belonging to a
      * given network identified by aNid XPAN ID.
@@ -129,12 +128,12 @@ public:
      * If in non-CCM mode, a BR with most highly avaliable and Thread-active
      * interface becomes the choice.
      */
-    Error MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br);
+    Error MakeBorderRouterChoice(uint64_t aNid, BorderRouter &br);
 
 private:
     friend class JobManagerTestSuite;
 
-    using CommissionerPool = std::map<XpanId, CommissionerAppPtr>;
+    using CommissionerPool = std::map<uint64_t, CommissionerAppPtr>;
     using JobPool          = std::vector<Job *>;
     /**
      * Wait for all job threads to join.
@@ -143,11 +142,11 @@ private:
     /**
      * A flavor of JobManager::PrepareJobs() for `start' command specifically.
      */
-    Error PrepareStartJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
+    Error PrepareStartJobs(const Interpreter::Expression &aExpr, const std::vector<uint64_t> &aNids, bool aGroupAlias);
     /**
      * A flavor of JobManager::PrepareJobs() for `stop' command specifically.
      */
-    Error PrepareStopJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias);
+    Error PrepareStopJobs(const Interpreter::Expression &aExpr, const std::vector<uint64_t> &aNids, bool aGroupAlias);
     /**
      * Updates DTLS parts of Config for the given network.
      *
@@ -173,15 +172,15 @@ private:
      * connection must restart to adopt the most recent connection
      * information.
      */
-    Error PrepareDtlsConfig(const XpanId aNid, Config &aConfig);
+    Error PrepareDtlsConfig(uint64_t aNid, Config &aConfig);
     /**
      * Creates @ref Job object and places the job into @ref JobManager::mJobPool.
      */
-    Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, XpanId aXpanId);
+    Error CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId);
 
-    void ErrorMsg(XpanId aNid, std::string aMessage);
-    void WarningMsg(XpanId aNid, std::string aMessage);
-    void InfoMsg(XpanId aNid, std::string aMessage);
+    void ErrorMsg(uint64_t aNid, std::string aMessage);
+    void WarningMsg(uint64_t aNid, std::string aMessage);
+    void InfoMsg(uint64_t aNid, std::string aMessage);
 
     /**
      * Pool of @ref Job objects prepared per command execution. The

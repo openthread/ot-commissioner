@@ -156,8 +156,8 @@ void to_json(json &aJson, const Network &aValue)
     aJson = json{{JSON_ID, aValue.mId},
                  {JSON_DOM_REF, aValue.mDomainId},
                  {JSON_NAME, aValue.mName},
-                 {JSON_PAN, std::string(aValue.mPan)},
-                 {JSON_XPAN, std::string(aValue.mXpan)},
+                 {JSON_PAN, utils::Hex(aValue.mPan)},
+                 {JSON_XPAN, utils::Hex(aValue.mXpan)},
                  {JSON_CHANNEL, aValue.mChannel},
                  {JSON_MLP, aValue.mMlp},
                  {JSON_CCM, aValue.mCcm}};
@@ -165,15 +165,16 @@ void to_json(json &aJson, const Network &aValue)
 
 void from_json(const json &aJson, Network &aValue)
 {
+    std::string hexStr;
+
     aJson.at(JSON_ID).get_to(aValue.mId);
     aJson.at(JSON_DOM_REF).get_to(aValue.mDomainId);
     aJson.at(JSON_NAME).get_to(aValue.mName);
 
-    std::string hexStr;
     aJson.at(JSON_PAN).get_to(hexStr);
-    SuccessOrThrow(aValue.mPan.FromHex(hexStr));
+    SuccessOrThrow(utils::ParseInteger(aValue.mPan, hexStr));
     aJson.at(JSON_XPAN).get_to(hexStr);
-    SuccessOrThrow(aValue.mXpan.FromHex(hexStr));
+    SuccessOrThrow(utils::ParseInteger(aValue.mXpan, hexStr));
 
     aJson.at(JSON_CHANNEL).get_to(aValue.mChannel);
     aJson.at(JSON_MLP).get_to(aValue.mMlp);
@@ -407,14 +408,14 @@ Domain::Domain()
 {
 }
 
-Network::Network(NetworkId const   &aId,
-                 DomainId const    &aDomainId,
-                 std::string const &aName,
-                 XpanId const      &aXpan,
-                 unsigned int const aChannel,
-                 uint16_t const     aPan,
-                 std::string const &aMlp,
-                 int const          aCcm)
+Network::Network(const NetworkId   &aId,
+                 const DomainId    &aDomainId,
+                 const std::string &aName,
+                 uint64_t           aXpan,
+                 unsigned int       aChannel,
+                 uint16_t           aPan,
+                 const std::string &aMlp,
+                 int                aCcm)
     : mId(aId)
     , mDomainId(aDomainId)
     , mName(aName)
@@ -427,7 +428,7 @@ Network::Network(NetworkId const   &aId,
 }
 
 Network::Network()
-    : Network(EMPTY_ID, EMPTY_ID, "", XpanId{}, 0, 0, "", -1)
+    : Network(EMPTY_ID, EMPTY_ID, "", 0, 0, 0, "", -1)
 {
 }
 

@@ -1488,7 +1488,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto extendedPanId = tlvSet[tlv::Type::kExtendedPanId])
     {
-        dataset.mExtendedPanId = XpanId{utils::Decode<uint64_t>(extendedPanId->GetValue())};
+        dataset.mExtendedPanId = extendedPanId->GetValue();
         dataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
     }
 
@@ -1627,7 +1627,7 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request            
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, aDataset.mExtendedPanId.mValue}));
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kExtendedPanId, aDataset.mExtendedPanId}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kMeshLocalPrefixBit)
@@ -1647,7 +1647,7 @@ Error CommissionerImpl::EncodeActiveOperationalDataset(coap::Request            
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit)
     {
-        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kPanId, aDataset.mPanId.mValue}));
+        SuccessOrExit(error = AppendTlv(aRequest, {tlv::Type::kPanId, aDataset.mPanId}));
     }
 
     if (aDataset.mPresentFlags & ActiveOperationalDataset::kPSKcBit)

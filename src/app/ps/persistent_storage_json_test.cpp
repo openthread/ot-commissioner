@@ -115,17 +115,14 @@ TEST(PSJson, AddNetwork)
 
     NetworkId newId;
 
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, 0xFFF1, "2000:aaa1::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1ll, 11, 0xFFF1, "2000:aaa1::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, 0xFFF2, "2000:aaa2::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2ll, 11, 0xFFF2, "2000:aaa2::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 1);
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, 0xFFF3, "2000:aaa3::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3ll, 11, 0xFFF3, "2000:aaa3::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 2);
 
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
@@ -199,9 +196,8 @@ TEST(PSJson, DelNetwork)
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
     NetworkId newId;
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, 0xFFF1, "2000:aaa1::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1ll, 11, 0xFFF1, "2000:aaa1::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
 
     EXPECT_TRUE(psj.Del(NetworkId(0)) == PersistentStorage::Status::kSuccess);
@@ -645,17 +641,14 @@ TEST(PSJson, LookupNetwork)
 
     // Populate storage with initial data
     NetworkId newId;
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", XpanId{0xFFFFFFFFFFFFFFF1ll}, 11, 0xFFF1, "2000:aaa1::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1ll, 11, 0xFFF1, "2000:aaa1::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 0);
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", XpanId{0xFFFFFFFFFFFFFFF2ll}, 11, 0xFFF2, "2000:aaa2::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2ll, 11, 0xFFF2, "2000:aaa2::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 1);
-    EXPECT_TRUE(
-        psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", XpanId{0xFFFFFFFFFFFFFFF3ll}, 11, 0xFFF3, "2000:aaa3::0/8", 1},
-                newId) == PersistentStorage::Status::kSuccess);
+    EXPECT_TRUE(psj.Add(Network{EMPTY_ID, EMPTY_ID, "nwk3", 0xFFFFFFFFFFFFFFF3ll, 11, 0xFFF3, "2000:aaa3::0/8", 1},
+                        newId) == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(newId.mId == 2);
 
     // The test
