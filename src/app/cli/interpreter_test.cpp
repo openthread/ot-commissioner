@@ -1629,7 +1629,7 @@ TEST_F(InterpreterTestSuite, PC_BorderagentDiscover)
     BorderAgentFunctionsMock bafm;
     SetBorderAgentFunctionsMock(&bafm);
 
-    EXPECT_CALL(bafm, DiscoverBorderAgent(_, _)).WillOnce(Return(Error{}));
+    EXPECT_CALL(bafm, DiscoverBorderAgent(_, _, _)).WillOnce(Return(Error{}));
 
     Interpreter::Expression expr;
     Interpreter::Value      value;
