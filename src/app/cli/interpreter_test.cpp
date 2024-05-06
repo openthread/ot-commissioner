@@ -97,8 +97,8 @@ public:
     void InitContext(TestContext &ctx)
     {
         // Minimum test setup: create config file
-        const std::string configFile = "./config";
-        auto              error      = WriteFile("{\"ThreadSMRoot\": \"./\"}", configFile);
+        const std::string configFile = "./tmp/config";
+        auto              error      = WriteFile("{\"ThreadSMRoot\": \"./tmp\"}", configFile);
         ASSERT_EQ(error.GetCode(), ErrorCode::kNone);
 
         ASSERT_NE(ctx.mDefaultCommissionerObject, nullptr);
@@ -108,13 +108,19 @@ public:
                 DoAll(WithArg<0>([&](std::shared_ptr<CommissionerApp> &a) { a = ctx.mDefaultCommissionerObject; }),
                       Return(Error{})));
 
-        auto result = ctx.mInterpreter.Init("./config", "");
+        auto result = ctx.mInterpreter.Init("./tmp/config", "");
         ASSERT_EQ(result.GetCode(), ErrorCode::kNone);
 
         ctx.mRegistry = ctx.mInterpreter.mRegistry.get();
 
         // Add formal default PSKc
         ctx.mInterpreter.mJobManager->mDefaultConf.mPSKc = {'1', '0'};
+    }
+
+    void SetUp() override
+    {
+        ASSERT_TRUE(system("rm -rf tmp") == 0);
+        ASSERT_TRUE(system("mkdir -p tmp") == 0);
     }
 };
 
@@ -660,10 +666,10 @@ TEST_F(InterpreterTestSuite, IESV_SingleImportFileMustPass)
     }\n\
 }";
 
-    EXPECT_EQ(WriteFile(jsonStr, "./json.json").GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(WriteFile(jsonStr, "./tmp/json.json").GetCode(), ErrorCode::kNone);
 
     EXPECT_CALL(*commissionerAppMock, SetActiveDataset(_)).WillOnce(Return(Error{}));
-    expr       = ctx.mInterpreter.ParseExpression("opdataset set active --import ./json.json");
+    expr       = ctx.mInterpreter.ParseExpression("opdataset set active --import ./tmp/json.json");
     auto value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 }
@@ -1113,10 +1119,10 @@ TEST_F(InterpreterTestSuite, PC_Token)
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("123aef", "./tmp/token").GetCode(), ErrorCode::kNone);
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, SetToken(_)).WillOnce(Return(Error{}));
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
-    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    expr  = ctx.mInterpreter.ParseExpression("token set ./tmp/token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 }
@@ -1129,7 +1135,7 @@ TEST_F(InterpreterTestSuite, PC_TokenWithCCM)
     // prepare CCM network record
     const std::string  kDomainName  = "domain1";
     const std::string  kNetworkName = "net1";
-    const std::string  kSmPath      = "./dom/" + kDomainName + "/";
+    const std::string  kSmPath      = "./tmp/dom/" + kDomainName + "/";
     XpanId             xpanCcm{1};
     BorderAgent::State baStateCcm{BorderAgent::State::ConnectionMode::kX509Connection, 0, 0, 0, 0};
 
@@ -1164,15 +1170,15 @@ TEST_F(InterpreterTestSuite, PC_TokenWithCCM)
     EXPECT_EQ(ctx.mInterpreter.mRegistry->SetCurrentNetwork(xpanCcm), RegistryStatus::kSuccess);
     expr  = ctx.mInterpreter.ParseExpression("token request 127.0.0.1 2001");
     value = ctx.mInterpreter.Eval(expr);
-    EXPECT_TRUE(value.HasNoError());
+    EXPECT_TRUE(value.HasNoError()) << "value is " << value.ToString();
 
     const ByteArray token = {'1', '2', '3', 'a', 'e', 'f'};
 
     EXPECT_CALL(*pcaMock, SetToken(_)).WillOnce(Return(Error{}));
     // note: again, we do not expect GetToken() here, same reason
 
-    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
-    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    EXPECT_EQ(WriteFile("123aef", "./tmp/token").GetCode(), ErrorCode::kNone);
+    expr  = ctx.mInterpreter.ParseExpression("token set ./tmp/token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 }
@@ -1185,7 +1191,7 @@ TEST_F(InterpreterTestSuite, PC_TokenWithNonCCM)
     // prepare non-CCM network record
     const std::string  kDomainName  = "DefaultDomain";
     const std::string  kNetworkName = "net2";
-    const std::string  kSmPath      = "./nwk/" + kNetworkName + "/";
+    const std::string  kSmPath      = "./tmp/nwk/" + kNetworkName + "/";
     XpanId             xpanNonCcm{2};
     BorderAgent::State baStateNonCcm{BorderAgent::State::ConnectionMode::kPSKcConnection, 0, 0, 0, 0};
 
@@ -1223,8 +1229,8 @@ TEST_F(InterpreterTestSuite, PC_TokenWithNonCCM)
     // note: we do not expect GetToken() here as no default config
     //       update to happen with a network selected
 
-    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
-    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    EXPECT_EQ(WriteFile("123aef", "./tmp/token").GetCode(), ErrorCode::kNone);
+    expr  = ctx.mInterpreter.ParseExpression("token set ./tmp/token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 }
@@ -1255,8 +1261,8 @@ TEST_F(InterpreterTestSuite, PC_TokenWithNone)
     // GetToken() to be called on default commissioner instance
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetToken()).WillOnce(ReturnRef(token));
 
-    EXPECT_EQ(WriteFile("123aef", "./token").GetCode(), ErrorCode::kNone);
-    expr  = ctx.mInterpreter.ParseExpression("token set ./token");
+    EXPECT_EQ(WriteFile("123aef", "./tmp/token").GetCode(), ErrorCode::kNone);
+    expr  = ctx.mInterpreter.ParseExpression("token set ./tmp/token");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 }
@@ -1823,17 +1829,14 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
     EXPECT_EQ(nwk.mPan.mValue, 0x0001);
 
-    EXPECT_EQ(system("rm -f ./aods.json"), 0);
-    EXPECT_NE(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
-
-    expr  = ctx.mInterpreter.ParseExpression("opdataset get active --export ./aods.json");
+    expr  = ctx.mInterpreter.ParseExpression("opdataset get active --export ./tmp/aods.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
     ctx.mInterpreter.PrintOrExport(value);
-    EXPECT_EQ(PathExists("./aods.json").GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(PathExists("./tmp/aods.json").GetCode(), ErrorCode::kNone);
 
     std::string jsonStr;
-    EXPECT_EQ(ReadFile(jsonStr, "./aods.json").GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(ReadFile(jsonStr, "./tmp/aods.json").GetCode(), ErrorCode::kNone);
     nlohmann::json json = nlohmann::json::parse(jsonStr);
     EXPECT_TRUE(json.contains("PanId"));
     EXPECT_STREQ("0x0001", json.at("PanId").get<std::string>().c_str());
@@ -2109,7 +2112,7 @@ TEST_F(InterpreterTestSuite, PC_BrScanExport)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    std::string jsonFileName = "./br-list.json";
+    std::string jsonFileName = "./tmp/br-list.json";
 
     EXPECT_EQ(system(fmt::format("rm -rf {}", jsonFileName).c_str()), 0);
     EXPECT_NE(PathExists(jsonFileName).GetCode(), ErrorCode::kNone);
@@ -2139,8 +2142,7 @@ TEST_F(InterpreterTestSuite, PC_BrScanExportDirAbsent)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    std::string jsonFileName = "./tmpdir/br-list.json";
-    ASSERT_EQ(system("rm -rf ./tmpdir"), 0);
+    std::string jsonFileName = "./tmp/br-list.json";
     expr  = ctx.mInterpreter.ParseExpression(std::string("br scan --timeout 1 --export ") + jsonFileName);
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
@@ -2198,23 +2200,23 @@ TEST_F(InterpreterTestSuite, PC_BrAddNoMandatoryFail)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    EXPECT_EQ(WriteFile(brJsonNoAddr, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonNoAddr, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonNoPort, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonNoPort, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonNoVersion, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonNoVersion, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonNoState, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonNoState, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 }
@@ -2267,23 +2269,23 @@ n]";
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    EXPECT_EQ(WriteFile(brJsonNwkName, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonNwkName, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonNwkNameZeroXPan, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonNwkNameZeroXPan, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonDomainName, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonDomainName, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonDomainNameZeroXPan, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonDomainNameZeroXPan, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 }
@@ -2349,18 +2351,18 @@ TEST_F(InterpreterTestSuite, PC_BrAddInterObjectInconsistencyFail)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    EXPECT_EQ(WriteFile(brJsonSameAddr, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonSameAddr, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonSameXPanDifferentNwkNames, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonSameXPanDifferentNwkNames, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 
-    EXPECT_EQ(WriteFile(brJsonSameXPanDifferentDomains, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJsonSameXPanDifferentDomains, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_FALSE(value.HasNoError());
 }
@@ -2417,8 +2419,8 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
     Interpreter::Expression expr;
     Interpreter::Value      value;
 
-    EXPECT_EQ(WriteFile(brJson, "./json.json"), Error{});
-    expr  = ctx.mInterpreter.ParseExpression("br add ./json.json");
+    EXPECT_EQ(WriteFile(brJson, "./tmp/json.json"), Error{});
+    expr  = ctx.mInterpreter.ParseExpression("br add ./tmp/json.json");
     value = ctx.mInterpreter.Eval(expr);
     EXPECT_TRUE(value.HasNoError());
 
