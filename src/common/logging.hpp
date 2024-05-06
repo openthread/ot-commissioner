@@ -51,6 +51,7 @@
 #define LOG_REGION_JOB_MANAGER "job-manager"
 #define LOG_REGION_JOB "job"
 #define LOG_REGION_SECURITY_MATERIALS "security-materials"
+#define LOG_REGION_DIAG "meshdiag"
 
 #define LOG(aLevel, aRegion, aFmt, ...)                                     \
     do                                                                      \
