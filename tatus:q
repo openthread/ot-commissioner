@@ -1,0 +1,1662 @@
+[33mcommit 58f9c06dc68a856e6efbfca8267b746f9c19e35e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdiag-command-5[m[33m)[m
+Author: lezhan <lezhan@google.com>
+Date:   Mon May 6 09:38:47 2024 +0000
+
+    [diag] enable DIAG_GET request command into commissioner
+
+[33mcommit 79d1ddc614d1ef00fcb03e89161497926d5884c9[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: ZhangLe2016 <156590889+ZhangLe2016@users.noreply.github.com>
+Date:   Tue Apr 30 00:18:02 2024 +0800
+
+    [cli] remove definition of `SO_BINDTODEVICE` from interpreter module (#263)
+    
+    A previously introduced macro `SO_BINDOTDEVICE`, intended to pass the
+    pre-commit code checks, which is conflicted with an definition in
+    header file named <sys/socket.h>. So we need remove the macro from the
+    interpreter module. To ensure the pre-commit code checks pass, we need
+    to include the appropriate header file and call `setsocketopt` with
+    OS-specific parameters.
+
+[33mcommit 3d33a42935a1cf8415ca388ac00e3796978599f7[m
+Author: ZhangLe2016 <156590889+ZhangLe2016@users.noreply.github.com>
+Date:   Tue Apr 30 00:15:38 2024 +0800
+
+    [cli] update `borderagent discover` to allow network interface selection for mDNS binding (#259)
+    
+    Within the OTBR practice application, the BR host will have several
+    interfaces. When users want to discover the border agent using mDNS,
+    they'll need to choose the specific interface the border agent is
+    bound to.
+    
+    This change introduces a new option for the CLI command `borderagent
+    dicover`. Users can now specify a network interface using the syntax
+    `borderagent discover <timeout> <network interface>`. The chosen
+    interface will be used for mDNS binding through socket options.
+
+[33mcommit 4543bd1b5f0a9930a17224ae3cbc5c50915cb711[m
+Author: ZhangLe2016 <156590889+ZhangLe2016@users.noreply.github.com>
+Date:   Mon Apr 22 21:23:46 2024 +0800
+
+    [cli] update `br scan` to allow network interface selection for mDNS binding (#260)
+    
+    Within the OTBR practice application, the BR host will have several
+    interfaces. When users want to discover the border router using mDNS,
+    they will need to choose the specific interface.
+    
+    This change introduces a new option for the CLI command `br
+    scan`. User can now specify a network interface using the syntax `br
+    scan --netif <network interface>`. The chosen interface will be used
+    for mDNS binding through socket options.
+
+[33mcommit 744d599d40749a07ec077c0fdc7daa70935897dc[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Tue Apr 16 00:31:57 2024 +0800
+
+    [build] update cmake to 3.20.1 (#262)
+    
+    Updates cmake to 3.20.1 which adds support for USE_SWIG_DEPENDENCIES.
+    
+    USE_SWIG_DEPENDENCIES is needed to tell SWIG compiler to rebuild the
+    java library when the dependencies are changed. For example, we
+    currently have a problem that the java library is not updated even a
+    new API is added to commissioner.hpp.
+
+[33mcommit 0d6cfccdece8220dcbd09c3644a4a4d15ffe7147[m
+Author: Rongli Sun <rongli@google.com>
+Date:   Fri Apr 12 12:51:34 2024 +0800
+
+    [cli] support Thread Administrator Passcode configuration (#256)
+
+[33mcommit 9f1b740b8ac3ba192cfc6d5005ad0164cbeafb27[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Thu Apr 11 23:18:06 2024 +0800
+
+    [modules] update fmtlib to 1.2.1 to resolve build warnings (#258)
+
+[33mcommit cc2edbfbad8c6385df44a45e9c2df0fb5f277d65[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Tue Apr 9 08:01:09 2024 +0800
+
+    [android] make gradle rootProject.name match the project dir (#254)
+    
+    To fix the gradle error on some platforms:
+    ```
+    java.lang.IllegalStateException: Module entity with name: openthread_commissioner.app should be available
+    ```
+
+[33mcommit 37936d1988f5b9602587349c61e7cec7016f04ae[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Thu Apr 4 00:49:20 2024 +0800
+
+    [style] add clang-tidy format (#252)
+
+[33mcommit 7c936cb1632a569332ca1bcaa4f0e268f7dd38d2[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Wed Apr 3 01:15:58 2024 +0800
+
+    [android] optimize image size with optimage (#251)
+    
+    Use https://github.com/sk-/optimage to perform lossless image size
+    optimization to make the app smaller.
+
+[33mcommit cf6b6c0888da25b3cc165cbf44f4acac56d09b6e[m
+Author: ZhangLe2016 <156590889+ZhangLe2016@users.noreply.github.com>
+Date:   Wed Apr 3 01:14:02 2024 +0800
+
+    [build] fix issue when executing `build-commissioner-libs.sh` multiple times (#250)
+    
+    When developers run the `build-commissioner-libs.sh` script multiple
+    times, they might see the following error during compiling the
+    libevent:
+    
+    error: call to undeclared function 'pipe2'; ISO C99 and later do not
+    support implicit function declarations ...
+    
+    In fact, we did not use pip2 in libevent. We can turn it off by using
+    the macro EVENT_HAVE-PIPE2=0
+
+[33mcommit c7c1934cc5f14386c414df9c1cbfbb3cbc7c88d1[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Wed Apr 3 01:11:59 2024 +0800
+
+    [build] support mbedtls 3.x (#249)
+    
+    Support building with mbedtls 3.x which is required for different
+    platforms.
+
+[33mcommit f63ec7354622ff4ccace3cecae40db96f3c525f7[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Tue Apr 2 00:03:31 2024 +0800
+
+    [style] update formatter to clang-format-14 (#248)
+    
+    clang-format-14 is used by openthread and ot-br-posix, so just follow
+    it.
+
+[33mcommit de8e82c947598600229ead5d1ec7ff8d7c8389a5[m[33m ([m[1;31mmybranch/main[m[33m)[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Sat Mar 30 01:58:22 2024 +0800
+
+    [build] upgrade to gradle 8.2.2 (#245)
+    
+    The gradle version is too old that it doesn't build with java 17.
+    This commit upgrades gradle to 8.2.2 as suggested by Android studio.
+    The changes in this commit are auto-generated when apply the suggested
+    version by Android studio.
+
+[33mcommit cbd275374fb71356dd931ec9edf20c1aaea663bb[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Sat Mar 30 01:56:24 2024 +0800
+
+    [docs] update the Android build guide to set up NDK (#244)
+
+[33mcommit 5eea3b07907f76bb94ca4d2a87bb30650d0e00f4[m
+Author: Markus Becker <Markus.Becker@tridonic.com>
+Date:   Thu Oct 26 11:15:47 2023 +0200
+
+    [docs] fix typo in reenroll (#240)
+
+[33mcommit acb3371f6c5eb2c9b1f7fbaf34c5d8f49378871e[m[33m ([m[1;33mtag: [m[1;33mthread-reference-20230622[m[33m)[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Thu Jun 22 21:33:16 2023 -0700
+
+    [tests] properly configure operational dataset (#238)
+
+[33mcommit 66479c67f9079de33a60bc49e344c475ae2bc6ed[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Fri Jun 16 11:37:31 2023 -0700
+
+    [tests] properly configure operational dataset (#236)
+
+[33mcommit 3a7a1cbb93152309a2f7e6299377521da059213a[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Fri Jun 16 10:54:05 2023 -0700
+
+    [github-actions] change ubuntu 18.04 to 20.04 (#237)
+
+[33mcommit 82874291a965a6a798dc1667618a6de86177d50c[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Wed Oct 12 10:15:57 2022 -0700
+
+    [github-actions] migrate to `actions/checkout@v3` (#234)
+
+[33mcommit 33840cf5f1984c8422f763299263d6d3fdae3033[m
+Author: canisLupus1313 <85344032+canisLupus1313@users.noreply.github.com>
+Date:   Tue Oct 11 17:30:13 2022 +0200
+
+    [thci] change python format string to format function (#232)
+    
+    Change format string introduced in python 3 to python 2
+    compatible 'format' function.
+
+[33mcommit 4150464c60c7a0991656a0b71da6b08ae7b957f4[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Tue Oct 11 00:24:36 2022 +0800
+
+    [ci] fix cannot find Threads on Android (#233)
+    
+    `pthread` is already included in Android glibc implementation
+    (`bionic`), so there is no necessary to find the thread libs
+    separately.
+
+[33mcommit 6d142e8dfb9fa7985f9f416f9f6f6ae260ec6763[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Thu Aug 4 22:23:18 2022 +0800
+
+    [build] fix Android builds (#231)
+    
+    1. `android/sdk/ndk-bundle` was moved to `android/sdk/ndk/$API`
+    2. macos-10.15 was deprecated by macos-12
+
+[33mcommit 42311f762079e8c624703c1a7018718362d03abb[m
+Author: Abtin Keshavarzian <abtink@google.com>
+Date:   Wed Jun 29 11:47:33 2022 -0700
+
+    [test] update leader start in `test_native_commissioner()` (#229)
+    
+    This commit increases the wait time for leader start. This is to
+    address the changes in behavior in Thread spec related to the
+    number of MLE Parent Request messages that device needs to send in
+    the first attach attempt before it can become leader.  The new design
+    requires a device to send a total of six Parent Request messages,
+    first two to routers followed by four to routers and REEDs, each
+    having its own corresponding wait time.
+
+[33mcommit b52e58df5f4dfd5d4f2573668654d217755dc146[m
+Author: Abtin Keshavarzian <abtink@google.com>
+Date:   Fri Apr 8 11:27:00 2022 -0700
+
+    [test] increase wait time for leader start (#228)
+    
+    This commit increases the wait time for leader start. This is to
+    address the changes in behavior in Thread spec related to the
+    number of MLE Parent Request messages that device needs to send in
+    the first attach attempt before it can become leader.  The new design
+    requires a device to send a total of six Parent Request messages,
+    first two to routers followed by four to routers and REEDs, each
+    having its own corresponding wait time.
+
+[33mcommit c139fd711823683690c402e896445a34b771f7ae[m
+Author: Eduardo Montoya <edmont@users.noreply.github.com>
+Date:   Wed Feb 16 19:13:01 2022 +0100
+
+    [thci] flush logs in between tests (#227)
+    
+    Make sure Commissioner logs are clean at the beginning of each test.
+
+[33mcommit ea21171cd0114e1b7553db3f108a99144ff692d5[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Wed Jan 19 01:08:50 2022 +0800
+
+    [test] remove Catch2 (#224)
+    
+    Remove Catch2 and use googletest exclusively.
+
+[33mcommit cb1a9514cd12e15347119948b00391d0eb9c9a27[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Wed Jan 19 01:06:01 2022 +0800
+
+    [testing] replace `masterkey` with `networkkey` (#226)
+
+[33mcommit c79a1f9d4f74bd30549b54b23a9cce11b8a9c151[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Wed Jan 19 01:05:23 2022 +0800
+
+    [cli] remove usages of keyword `goto` (#225)
+
+[33mcommit 7730019c69b7e8bf93a4464543eaa2d79725ef2d[m
+Author: Kangping <wgtdkp@google.com>
+Date:   Thu Dec 2 14:52:50 2021 +0800
+
+    [cli] remove ThreadSMRoot from non-ccm-config.json template (#220)
+
+[33mcommit 0b2a74fc85b4e9722cfd3f3f84cd108ccc9607b6[m
+Author: Michał Szablowski <56074162+doublemis1@users.noreply.github.com>
+Date:   Sun Oct 17 02:43:39 2021 +0200
+
+    [thci] convert MLR string to PlatfromDiagnosticsPacket (#219)
+    
+    Thread Harness expects the MLR log in PlatfromDiagnosticsPacket class.
+
+[33mcommit 5f39c84745fc48fd87a7ddf542eb43d8af1d936a[m
+Author: Mikhail Pridushchenko <mikhail.pridushchenko@gmail.com>
+Date:   Fri Aug 27 19:32:55 2021 +0300
+
+    [ccm] commercial commissioning enhancements (#202)
+    
+    This commit adds changes on multi-network syntax and import/export
+    syntax support for the commissioner application.
+
+[33mcommit e67e6d6f1d002ee4aade2c3dc418ae47b50c31ca[m
+Author: Yakun Xu <xyk@google.com>
+Date:   Thu Aug 26 14:26:10 2021 +0800
+
+    [script] add build script (#200)
+
+[33mcommit 5bf54fa0e03aa7239bf01054e57c9dbf0666a001[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jul 7 02:35:18 2021 +0800
+
+    [android] bootstrap before building (#216)
+
+[33mcommit 676410bd4141da0e6a048b9af60cf8be39b172c5[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Jun 21 23:10:33 2021 +0800
+
+    [dataset] avoid setting session ID or Border Agent Locator (#212)
+    
+    Commissioner Session ID and Border Agent Locator in the Commissioner
+    Dataset are read-only.  Current implementation rejects setting the
+    Commissioner Dataset if any of the fields is present, but it is not
+    convenient for the caller to manually clear out those fields. This
+    commit change the implementation to always clear out the Commissioner
+    Session ID and Border Agent Locator fields before sending the
+    MGMT_COMM_SET.req message to the border agent.
+
+[33mcommit 1e713b3a056caa4cf62a8a855c826951b9888e0e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Jun 19 04:33:31 2021 +0800
+
+    [cli] fix "borderagent" command documentation (#211)
+    
+    This commit adds the CLI documentation of the borderagent discover
+    command.  Also fixes a bug for the borderagent get locator command
+    that the locator is not pulled to the commissioner.
+
+[33mcommit 4ba3360e8f9b9213c71f5580d5cbe9e4952a93e6[m[33m ([m[1;31morigin/cert[m[33m)[m
+Author: Simon Lin <simonlin@google.com>
+Date:   Fri Jun 11 12:22:12 2021 +0800
+
+    [thci] enhance for Thread 1.2 (#205)
+
+[33mcommit f52de54f95da86a7017c06f995dea1b2bb4549b3[m
+Author: Simon Lin <simonlin@google.com>
+Date:   Fri Jun 11 02:06:10 2021 +0800
+
+    [cert] dump MLR.rsp payload for 1.2 certification (#209)
+
+[33mcommit 79ad31db6086ffb6348c765e16b320c445f4927b[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jun 1 12:50:49 2021 +0800
+
+    [cli] support default config without specifying a config file (#203)
+    
+    This commit includes two small enhancements:
+    
+    1. Support starting the commissioner-cli without specifying a
+       configuration file.
+       a. pskc is set to all-one.
+       b. log messages are printed to syslog (/var/log/syslog).
+    2. Add sys logger support.
+
+[33mcommit ae90be02f5d64999699daad07b6786879bd89e75[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri May 21 11:53:36 2021 +0800
+
+    [api] add API for getting commissioner version (#199)
+    
+    This commit adds a new commissioner API that returns the commissioner
+    version.  Also add git revision to the version string.
+
+[33mcommit 6c23a85999427d2915dd18cb793588c01b2e8e14[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu May 13 01:19:06 2021 +0800
+
+    [mdns] accept only A records for IPv4 sockets (#198)
+    
+    Since we are discovering MeshCoP (_meshcop._udp) services in IPv4
+    address space, we should always prefer the A record. This commit
+    rejects AAAA records received in a IPv4 socket.
+
+[33mcommit 21372faa7d1b2f8c819ab6761ef0a07b099d64a7[m
+Author: Yakun Xu <xyk@google.com>
+Date:   Thu May 6 02:13:47 2021 +0800
+
+    [test] native commissioner (#201)
+
+[33mcommit cea03001ddb3493647a183c7796d560b5a6c0fc5[m
+Author: Yakun Xu <xyk@google.com>
+Date:   Fri Apr 23 22:40:15 2021 +0800
+
+    [test] add timeout for calling ot-ctl (#183)
+
+[33mcommit 2a81ae0fa2e6d6a287c6d61a0da46a258b762247[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Apr 22 02:04:19 2021 +0800
+
+    [udp-proxy] track Mesh-Local prefix in UdpProxyClient (#188)
+    
+    Previous implementation requires the caller of the Commissioner
+    library to set Mesh-Local prefix before initiating MGMT commands. it
+    is error-prone and breaks backward compatibility: we need to first
+    fetch the Active Operational Dataset and set the Mesh-Local Prefix to
+    the commissioner library before sending other MGMT_* commands.
+    
+    This commit refactors the UDP Proxy to have it manage the Mesh-Local
+    prefix inside the ProxyClient class.
+    1. The Mesh-Local prefix is lazily requested from the Border Agent
+       before sending the first MGMT command (if no Mesh-Local prefix is
+       cached).
+    2. The cached Mesh-Local prefix is cleared when the commissioner
+       receives MGMT_DATASET_CHANGED.ntf so that the latest Mesh-Local
+       prefix will be fetched before next MGMT command.
+    3. The cached Mesh-Local prefix is cleared when the commissioner is
+       disconnected.
+    
+    In this way, the user doesn't need to be aware of the Mesh-Local
+    prefix and no changes are required.
+
+[33mcommit e6cf6bbbd2e93db25c9bcae9edf9a3155ecde311[m
+Author: Yakun Xu <xyk@google.com>
+Date:   Wed Apr 21 13:32:00 2021 +0800
+
+    [border-agent] use dynamic port (#191)
+
+[33mcommit 26702ffef695e9ec41bdae579238b9600385557c[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Apr 20 12:34:43 2021 +0800
+
+    [cmake] install with static library dependencies (#194)
+    
+    This commit includes the following changes:
+    - Install static library dependencies
+    - Install commissioner-common: applications need to link against both
+      commissioner and commissioner-common.
+    - Remove unused linking of ncurses.
+
+[33mcommit d06a215e313523967b7fe2fd19c271776da171b0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Apr 20 12:31:49 2021 +0800
+
+    [joiner-session] invoke OnJoinerRequest for the first joiner message (#196)
+    
+    Current implementation invokes OnJoinerRequest for every joiner
+    message exchanges. This will result in the user be notified multiple
+    times for the same joiner connection.
+    
+    This commits changes to invoke OnJoinerRequest for the first message
+    of a joiner connection.
+
+[33mcommit 1b5dd47875fdd52e86dd6334973c36fa9e1ba899[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Apr 14 22:25:47 2021 +0800
+
+    [coap] set request URI for only response message (#190)
+
+[33mcommit f9dc23fbcbcfc85e22ef8d115fed8e50c637a127[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Mon Apr 12 22:12:44 2021 -0700
+
+    [bootstrap] add `brew update` (#189)
+
+[33mcommit 6e766ce28eb1519ef49b76d27e7c3d6985b07a9e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Apr 12 22:03:26 2021 +0800
+
+    [coap] return unexpected coap response code as error (#176)
+
+[33mcommit 89af74f34223799a3dd9015f6bcc1bd7530708a8[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Apr 12 22:00:58 2021 +0800
+
+    [github-actions] add gcc-10 and clang-10 build tests (#184)
+
+[33mcommit 27c35fb75bc7410c7bdb74387cc848ca8ead5542[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Apr 12 22:00:15 2021 +0800
+
+    [mgmt] send MGMT_COMMISSIONER_GET/SET.req with UDP proxy (#187)
+
+[33mcommit f41edbdb7b13103f54bfce6d3423b32e5d6ad5f0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Apr 7 02:51:32 2021 +0800
+
+    [dataset] relax dataset response check (#186)
+    
+    - The Pending Dataset check is wrong: the bitwise or (| ) should be
+      bitwise and (&)
+    
+    - Both Pending and Active Dataset Get response checks are too strict.
+    
+    The Commissioner CLI always sends MGMT_ACTIVE/PENDING_GET.req for all
+    TLVs even when only a single TLV is requested by the user and thus
+    current implementation is working.
+
+[33mcommit 767efc70335552323b804c39889b34469c480688[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Apr 6 13:43:49 2021 +0800
+
+    [meshcop] use UDP proxy for MGMT commands (#185)
+
+[33mcommit b151bb5c66c9e54fac64c531cd571e45bb8794a9[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Mar 30 08:18:25 2021 +0800
+
+    [cmake] fix building error on Raspberry Pi 3B (#182)
+    
+    Make Warning as `error` optional and default to `OFF`.
+
+[33mcommit cf118e9f75d7d7a555b89c4949e745954745d9a0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Mar 22 23:53:07 2021 +0800
+
+    [bootstrap] add option to skip CCM dependencies (#178)
+
+[33mcommit 51d1c7755c785913e74774678fe3a8ecffee02cd[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Mar 19 22:53:20 2021 +0800
+
+    [tests] add debug logging (#177)
+
+[33mcommit c6d76cf3cafbce3d45ea5fd280bcb666f11d1570[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Mar 10 13:27:13 2021 +0800
+
+    [tests] fix CCM unit tests (#172)
+    
+    The issue is not revealed in GitHub Actions because assert is disabled
+    in Release mode.  This commit also adds Debug mode build to GitHub
+    Action flows.
+
+[33mcommit f5b5f0310f16352b894b7224dfde7f1eae2e80ad[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Mon Mar 8 22:01:14 2021 -0800
+
+    [git] reflect branch rename from 'master' to 'main' (#171)
+
+[33mcommit 1dbd7efbfee3379818051112411aa7e1fcf1a3f8[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Mar 9 01:02:46 2021 +0800
+
+    [border-agent] add the discriminator TXT entry (#170)
+
+[33mcommit bcd99ab9bd19a55dffa36bf76eab3be05c8758a1[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Mar 5 00:02:38 2021 +0800
+
+    [IOP] merge changes from IOP14 (#169)
+
+[33mcommit ce6b1180459d2533f730b3effee626efee16b9a3[m[33m ([m[1;33mtag: [m[1;33mv0.0.1[m[33m)[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Dec 10 13:17:54 2020 +0800
+
+    [github-action] create APK artifacts on master branch (#162)
+
+[33mcommit 275b8965aff8190b0cde6dda13f2a653123652a0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Dec 10 09:36:34 2020 +0800
+
+    [github-action] build and upload Android APK as artifacts (#161)
+
+[33mcommit 95917b013eb309cef2fc470e1bba77e2ce4f91ff[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Dec 8 02:14:17 2020 +0800
+
+    [android-release/0.0.1] initial Commissioner Android App (#158)
+    
+    This commit adds the initial OT Commissioner Android App:
+    
+    - Commission new Joiner Device with Thread 1.1 MeshCoP
+      - Scan Thread Network by mDNS
+      - Scan Joiner QR code
+      - do 1.1 MeshCoP
+    - setup GitHub Action builds
+      - nightly build with testing (only database tests for this initial PR)
+      - release build
+    - prettify Java code
+    
+    For testing, we didn't include integration tests against OTBR. Because
+    Android emulator doesn't support multicast (link) and it is also not
+    feasible to test QR code scanning given the emulator has no camera.
+
+[33mcommit f6beb7b7e48ab04ac7c1d7c1900b90839518ab8a[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Nov 10 12:26:21 2020 +0800
+
+    [coap] fix retransmission of confirmable CoAP requests (#150)
+    
+    This commit has two fixes to the CoAP retransmission of confirmable
+    requests:
+    
+    - Stop the retransmission timer when all requests are cleared.
+    
+    - Start the retransmission timer when there are queueing requests that
+      are waiting for responses.
+
+[33mcommit 0c8b0ff05f10d27cf0d7822254315d588e73944a[m
+Author: IHIDCHAOS <IHIDCHAOS@gmail.com>
+Date:   Tue Nov 10 02:39:31 2020 +0800
+
+    [openwrt] add Makefile (#160)
+
+[33mcommit 9976ee490966ef73c3ec44bcc8c983d4d15eb61e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Nov 3 11:32:12 2020 +0800
+
+    [script] remove unused bootstrap dependencies (#155)
+    
+    This commit cleans stale dependencies that is no longer required to
+    build the default OT Commissioner library and CLI.
+
+[33mcommit 66a982fc2da959007eda6b0909b24b2d20f01eb0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Nov 3 05:54:18 2020 +0800
+
+    [script] downgrade to clang-format-9 (#159)
+    
+    This commit downgrades clang-format to 9.0 given that llvm@10 is not
+    available in brew repository. Instead of failing the bootstrap script,
+    we changed to tolerate failure of installing clang-format.
+
+[33mcommit 4beb6cb822a4b074fa5250128ba87c31d613ca05[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Oct 22 23:23:26 2020 +0800
+
+    [swig] revert changes to the minimum SWIG version (#153)
+    
+    This commit reverts changes of downgrading minimum SWIG version to 3.0.
+    
+    We downgraded the minimum version for easy installation of SWIG on old
+    Linux distributions. But the incoming Commissioner Android App relies
+    on the Java methods generated by SWIG 4.0. Unfortunately, we didn't
+    have a GH job to test the SWIG-generated Java code for now, but it
+    will come with the Android App.
+
+[33mcommit 71a3696aed862a24329526d505e8e64a48e89cf9[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Oct 20 01:17:30 2020 +0800
+
+    [scripts] misc fixes in bootstrap script (#152)
+    
+    This commit includes misc updates/fixes for bootstrapping:
+    - downgrade required SWIG version to 3.0 since this is the default
+      version that package tools have for Linux;
+    - install SWIG in the bootstrap script;
+    - install python3 setup tools instead of python2 since it is
+      deprecated;
+
+[33mcommit 705c8714724e26d8d4300850a3e0ddfd8f0d6e76[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Oct 13 12:10:10 2020 +0800
+
+    [swig] map Java byte to uin8_t for only the ByteArray class (#151)
+    
+    This commit helps SWIG to map Java byte to/from C++ uint8_t when it is
+    used for std::vector<uint8_t>.
+    
+    SWIG by default maps Java short to/from C++ uint8_t because Java byte
+    is a signed integer that cannot hold all values of uint8_t. But when
+    it comes to a byte array, it doesn't matter whether it is signed or
+    unsigned and we'd like to map uint8_t to/from Java byte because they
+    have the same width.
+
+[33mcommit e7d58d9c30e010b22f798fb4e954ec9a632e8a08[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Oct 12 00:47:30 2020 +0800
+
+    [library] correct state when sending keep alive failed (#149)
+
+[33mcommit 5cfcb390c5c0a7896974fcb6fb906b0733109cc1[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Wed Oct 7 21:18:36 2020 -0700
+
+    [clang-format] update to clang-format-10 (#147)
+
+[33mcommit 95b77d581b982159cf701505d04484e90151cbac[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Sep 28 02:24:12 2020 +0800
+
+    [java] ignore async GetRawActiveDataset API for java binding (#146)
+    
+    We currently supports only the sync version of all OT Commissioner APIs.
+
+[33mcommit 99372e440c65cc41cd04a809cb6de2c24d54a99e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Sep 24 23:28:29 2020 +0800
+
+    [active-dataset] returns raw Active Operational Dataset TLVs (#142)
+    
+    Parsing the Active Operational Dataset into struct
+    ActiveOperationalDataset is for manipulating each field of the dataset
+    and the commissioner app doesn't need to write a decoder by their
+    own. But the commissioner app may store or transfer Active Operational
+    Dataset as a byte array. It would be convenient to have the raw TLV
+    format of the dataset so that the commissioner app doesn't need to
+    write an encoder by their own.
+    
+    This commit adds a new APIs (GetRawActiveDataset(...)) to return raw
+    Active Operational Dataset.
+
+[33mcommit 8e204b04ee06524274dc5a30b7cc1ef645b5d4ca[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Sep 22 13:27:30 2020 +0800
+
+    [doc] remove build & configuration instructions from CLI readme (#144)
+
+[33mcommit ad96e6f6f5b1915844ba4481bf8d0b66af91175e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Aug 1 13:50:14 2020 +0800
+
+    [tests] add CCM tests (#141)
+    
+    This commit increases code coverage of CLI application:
+    - Add CCM tests to cover CLI commands.
+    - group CCM features together.
+    - remove duplicate error checking in commissioner_app.
+
+[33mcommit ab49a7f29d341a7c5156def47f601e34b7c0c6d0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Aug 1 13:48:26 2020 +0800
+
+    [java] output generated java source files to given directory (#140)
+    
+    This commit adds a new option OT_COMM_JAVA_BINDING_OUTDIR to allow the
+    user specify the output directory of auto-generated java files. This
+    eases integration with Android applications.
+
+[33mcommit 91130bf0682734d7660df14ec75cdd8cc721317c[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Jul 30 11:19:45 2020 +0800
+
+    [cmake] lower minimum cmake version (#139)
+    
+    This commit:
+    
+    - changes the minimum required CMake version from 3.13.1 to 3.10.1
+      since many platforms (ubuntu, android studio) have 3.10.X as the
+      default CMake version
+    
+    - submodule mdns is updated to support this change
+    
+    - avoid inclusion of unnecessary third parties
+
+[33mcommit e1b987023a8bb64328b97c2cbd5247073b069908[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Jul 30 02:29:27 2020 +0800
+
+    [tests] add unittests for common/utils.cpp (#131)
+
+[33mcommit b25e68ccf0d64127a6ce587d32a83b7661ff8cdb[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jul 28 11:25:24 2020 +0800
+
+    [cli] fix signal handling (#138)
+    
+    Synchronization primitives (std::mutex, std::future) in namespace std
+    are used to synchronize calls to the commissioner API. Unfortunately,
+    those synchronization primitives are not signal-safe and will result
+    in deadlock.
+    
+    This commit fixes this by using a dedicated thread to wait for the
+    signal.
+
+[33mcommit 2b562d0480bf058c24d58bde2a137e055f36b34a[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Jul 27 13:12:19 2020 +0800
+
+    [api] rename API AbortRequests to CancelRequests (#135)
+
+[33mcommit c936ffb7897c5f29f643c2fe47db60ad571ab6fa[m
+Author: kangping <wgtdkp@google.com>
+Date:   Mon Jul 27 13:11:26 2020 +0800
+
+    [tests] enhance mDNS discover tests (#129)
+    
+    This commit enhances the mDNS discovery tests
+    - A full list of TXT values defined by Thread 1.2 ( and 1.1)
+    - Fix the State bitmap format
+
+[33mcommit 052958e7fc05eddad2666c42e7dd5e8494d7ff0b[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Jul 25 13:00:52 2020 +0800
+
+    [tests] add more testcases for error string (#132)
+
+[33mcommit 1c17cb09bbab6c0c50ecc191db7fd672de42c77f[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Jul 25 13:00:10 2020 +0800
+
+    [scripts] remove unnecessary commands in bootstrap script (#136)
+    
+    This commit removes the commands to enable IPv6 forwarding which is
+    not necessary for ot-commissioner.
+
+[33mcommit f53b8cfbc33149b65816b7d8079649193035b718[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Jul 24 23:35:52 2020 +0800
+
+    [tests] add more negative tests for Address (#130)
+
+[33mcommit a1fd6e78c1629eb1d45573b28e55f7f31b7af9e5[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Jul 24 23:34:10 2020 +0800
+
+    [tests] add CLI options tests (#134)
+    
+    Test commit adds CLI options test to cover code in src/cli/main.cpp.
+
+[33mcommit 45572807efd7f1f7308acee2ba9e986d1739e653[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Jul 24 23:33:49 2020 +0800
+
+    [cli] remove unused CLI color definition (#133)
+
+[33mcommit be49d75482b5a1db433d28905710aae0706e0821[m
+Author: Moandor <moandor.y@gmail.com>
+Date:   Wed Jul 22 23:53:49 2020 +0800
+
+    [test] replace ot-br with ot-daemon in integration tests (#127)
+    
+    This removes the dependency of ot-br in integration tests.
+
+[33mcommit 81b07828629566de41f1ff9fd7f07d25ea8a8d3f[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jul 21 01:10:51 2020 +0800
+
+    [event] fix ading user triggered events (#128)
+    
+    This commit has two small fixes:
+    
+    - Add a timeout value for the async call event so that the event loop
+      will not exit because of no events.
+    
+    - User triggered event struct (with fd equals -1) should not listen on
+      READ, WRITE events.
+
+[33mcommit 3dcf26d1dffd9232bf6ceb03ada0e40d973ae838[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Jul 11 01:14:02 2020 +0800
+
+    [ccm] add compile-time option to exclude CCM features (#112)
+    
+    This commit adds a CMake option OT_COMM_CCM and feature switch
+    OT_COMM_CONFIG_CCM_ENABLE to turn off Commercial Commissioning Mode
+    support. It has the benefits of increasing code coverage and remove
+    unnecessary dependencies (cn-cbor, COSE-C) when CCM features is not
+    needed.
+
+[33mcommit f0d82141756356eb663eae59dd0cab2ff8ce2e78[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Jul 10 08:14:20 2020 +0800
+
+    [logging] misc logging enhance / fix (#124)
+    
+    This commit includes a fix and enhancement to logging messages:
+    - replace commissioning session with joiner session
+    - log DTLS data length
+
+[33mcommit 4feb61c8f6c969843b940c67dd22b836f0d321e6[m
+Author: Moandor <moandor.y@gmail.com>
+Date:   Wed Jul 8 14:14:51 2020 +0800
+
+    [test] use provided openthread repo for otbr (#125)
+    
+    When running tests, this makes the otbr to be built with openthread
+    provided by environment variables so changes from openthread PRs can
+    be correctly applied.  Also changes killall -9 to killall to prevent
+    the loss of coverage data.
+
+[33mcommit 8aa0bd093a7a659f10790aa02b9acf5bf0b3dc7e[m
+Author: Moandor <moandor.y@gmail.com>
+Date:   Tue Jul 7 00:01:44 2020 +0800
+
+    [test] enable custom OpenThread path (#123)
+    
+    This allows users to specify a custom OpenThread directory so that we
+    can include external commissioner tests as a part of OpenThread CI.
+
+[33mcommit fb17c4966cd1226a7be21281d24cc1566b745a70[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Jun 25 04:00:39 2020 +0800
+
+    [mdns] remove stale, empty multicast_dns source file (#122)
+    
+    This commit removes the stale src/library/multicast_dns.cpp source
+    file. The mDNS discovery of border agent has been moved to
+    src/app/border_agent.cpp.
+
+[33mcommit 9df1ab19c081c0465a5ef2fd6fb132a5b8aff04f[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jun 23 01:13:23 2020 +0800
+
+    [socket] fix deleting socket event when reconnect or rebind (#121)
+    
+    The Connect and Bind methods are reentrant, we should delete the
+    associated event struct if it has already been added to the event
+    loop.
+
+[33mcommit 66c7889e03d16f8b43df24ce1ca2acc31e445590[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Jun 19 11:26:11 2020 +0800
+
+    [api] add missing header for definition of size_t (#120)
+    
+    size_t is not defined in some raspberry pi devices with gcc 6.
+    
+    This commit includes <stddef.h> for definition of size_t.
+
+[33mcommit 3c6dc1268a45534e75709478a6aef07ff05ff87e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jun 17 13:10:47 2020 +0800
+
+    [java] initial support of Java binding (#97)
+    
+    This commit provides initial support of Java binding with SWIG.
+    
+    - separate configuration of Commissioner to Commissioner::Init, this
+      is required by the java binding to work.
+    
+    - new CMake target commissioner-java which generate java binding of
+      native ot-commissioner library.
+
+[33mcommit d42f757bd8a348ca704d0dcaec0c22e0aa37b207[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jun 16 01:40:15 2020 +0800
+
+    [cli] fix CLI commands output (#119)
+    
+    - fixes the output of the help command (it gave no command list)
+    - returns INVALID_COMMAND for invalid commands.
+
+[33mcommit d6e4087990c76dc4f23974b728a788c2ab94f3d9[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jun 16 01:38:36 2020 +0800
+
+    [code] address LGTM.com comments (#117)
+    
+    * remove meaningless unsigned comparison to zero
+    * remove unused python imports
+    * add TODO to URI path option unittest
+
+[33mcommit adef9d74a724bc324e03bbd177db77a852ce5f07[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jun 16 01:37:49 2020 +0800
+
+    [error] add unittest for Error class (#116)
+    
+    - add unittest for Error class
+    - return "OK" as non-error string
+
+[33mcommit cc537582761dceaa99d4cbab9ea0d20b233e9870[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Jun 13 01:24:02 2020 +0800
+
+    [coap] fix coap message option encoding length counting (#118)
+
+[33mcommit a557224986c8a4d8cbc1809765d4b376594cd156[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Jun 12 03:17:06 2020 +0800
+
+    [dtls] handle events when disconnected (#115)
+    
+    This commit fixes DTLS events handling when the session is
+    disconnected. Previous implementation has the assumption that the
+    underlying socket will be closed when the session is disconnected. But
+    now, the socket now may be open in this case.
+    
+    This commit ignores the incoming data when the DTLS session is
+    disconnected.
+
+[33mcommit 2050cd810b1a2180969220ade912983ec0fe7b17[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jun 10 12:31:40 2020 +0800
+
+    [coaps] remove use of Socket::Reset() (#114)
+
+[33mcommit 49c4773156a0e9b4a7320b0bbce32190ef42ec6b[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jun 10 01:55:12 2020 +0800
+
+    [cmake] reset version to 0.1.0 (#111)
+
+[33mcommit f870cbe29d8d62b564b75221442955214d8f736c[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jun 10 01:54:35 2020 +0800
+
+    [error] add error message to the Error class (#45)
+    
+    This commit adds readable message to `Error` class and requires the
+    message when creating an error. The error message provides much more
+    descriptive information to user about the failure, and will also be
+    useful for logging and debugging.
+
+[33mcommit 5520a6b2d6627439fd838b719963c6f1603db1eb[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Jun 9 01:31:35 2020 +0800
+
+    [socket] remove Socket::Reset() API (#110)
+    
+    The DtlsSession was trying to reset the Socket when disconnected but
+    it shouldn't. Because the socket is not connected/bound by
+    DtlsSession, so it should not be reset by DtlsSession as well.
+    
+    This commit:
+    
+    - removes resetting socket in DtlsSession::Disconnect() and remove
+      Socket::Reset().
+    
+    - Frees socket fd when before connecting and binding to allow multiple
+      calls to Connect and Bind.
+
+[33mcommit f9360e7339f4305cf0bed3c48b27e8c9f6f256c1[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jun 3 13:02:38 2020 +0800
+
+    [ccm] fix setting Commissioner Token (#107)
+    
+    This commit addresses the issue that the Commissioner Token will be
+    cleared when failed to set it by re-extracting the Token into a CBOR
+    object after accepting the signed raw token.
+
+[33mcommit 9500402fd31be4becb1b49d90c4232892245b6cd[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jun 3 01:11:25 2020 +0800
+
+    [tests] fix integration tests with otbr (#108)
+    
+    This commit updates to the new radio-url model.
+
+[33mcommit f4e71d2de9dffca8df97e7ba268b0c5c20486c6b[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue May 26 06:54:13 2020 +0800
+
+    [tests] fix integration tests with OTBR 0.2 (#106)
+
+[33mcommit f46d2b8e2bb95a927d9eeefa555bc301183799a0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed May 13 07:03:36 2020 +0800
+
+    [code] remove throws (#105)
+    
+    This commit removes all throws but keep only SuccessOrThrow in
+    json.cpp, since the json library uses exception exclusively.
+    
+    By searching throw in src, it gives only one match in json.cpp (called
+    by SuccessOrThrow).
+
+[33mcommit 3fe261a4267f57f311dcc101861f9bb263269517[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue May 12 12:07:01 2020 +0800
+
+    [api] remove API 'start' and 'stop' (#98)
+    
+    This commit removes start and stop APIs that are specific to the event
+    loop thread.
+
+[33mcommit d5e5876f7681c4effae95245f2c820162220a0a1[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue May 12 06:29:42 2020 +0800
+
+    [continuous-integration] remove Travis CI (#104)
+
+[33mcommit 560e6025d30390999ead96f1f3deda78bf5e5ee1[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat May 9 15:08:38 2020 +0800
+
+    [github-actions] add GitHub Actions (#96)
+
+[33mcommit 8fc48c01db4a3890382b5c4748aafc82a86ea364[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri May 8 12:44:46 2020 +0800
+
+    [doc] change copyright authors to OpenThread Commissioner Authors (#103)
+
+[33mcommit bc29955d3e762b26e9f51dbd0f6600ada5ffdd8d[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri May 8 12:39:35 2020 +0800
+
+    [joiner] validate joiner PSKd (#101)
+    
+    This commit adds validation of joiner PSKd to force it conform to the
+    Thread Spec. It also changes PSKd from ByteArray to std::string since
+    PSKd can be only digits and uppercase chars.
+
+[33mcommit 72300ecff1eba5aeadfb95ca4c18896eb262b86d[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri May 8 02:18:01 2020 +0800
+
+    [api] refactor commissioner handlers (#95)
+    
+    This commit refactors commissioner handlers to use a
+    CommissionerHandler interface for handling all commissioner events. An
+    application should implement the CommisssionerHandler interface to
+    handle those events.
+    
+    Change summary:
+    
+    - use CommissionerHandler interface to handle commissioner events.
+    
+    - add OnJoinerConnected to handle joiner DTLS connection event. This
+      addresses issue #28.
+    
+    - add OnKeepAliveResponse to notify whether the commissioner was
+      rejected or not.
+    
+    - remove JoinerType and JoinerInfo from public library interface.
+    
+    This commit supports Java binding of the commissioner library.
+
+[33mcommit 199d04bce049154df59daf3ea9779ecc5a50fc15[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu May 7 04:52:59 2020 +0800
+
+    [logging] add region tag to log messages (#102)
+    
+    - add region tag to log messages
+    - fix mixed logging format
+    - rename commissioning session to joiner session
+
+[33mcommit 5cd57aed4d7641d13cd7c183aa9eeb39e427f462[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu May 7 04:51:08 2020 +0800
+
+     [tests] fix unit tests not found by catch2 (#87)
+    
+    - Fix catch2 cannot find test cases in linked libraries by defining
+      commissioner-common-test and commissioner-app-test as OBJECT
+      targets.
+    
+    - Cleanup empty unit test files.
+
+[33mcommit bcd97b7e0c83849793502b731d8452702e42f8b0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed May 6 13:02:00 2020 +0800
+
+    [api] propagate Commissioner construction errors (#99)
+
+[33mcommit 08ff8d5afa7d73b110e7284f1822ba7d89232300[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue May 5 23:34:27 2020 +0800
+
+    [utils] rename ASSERT to VerifyOrDie (#100)
+
+[33mcommit 6f0f129725d0c4bc2e866477b9c0be5feecd57ee[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue May 5 01:47:33 2020 +0800
+
+    [app] clear network data when stopped (#86)
+    
+    This commit clears data associated with the connected Thread Network
+    when the commissioner is stopped (disconnected from the Thread
+    Network).
+
+[33mcommit 01de363a76c5771522c24d8fc5d77ccaa3a188ec[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sun May 3 14:35:42 2020 +0800
+
+    [third-party] use libevent 2.1.11-stable (#94)
+    
+    This commit set the version of libevent to 2.1.11-stable.
+    
+    The latest libevent master introduced pthread features
+    (pthread_mutexattr_setprotocol) that are not supported on Android 5
+    (API level = 21).
+
+[33mcommit 0a2f51ee52f27f68155b4dff1970dd9e38d64c97[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sun May 3 14:32:51 2020 +0800
+
+    [code] include C++ standard headers before C standard headers (#89)
+
+[33mcommit 715151f309469c73620c4aa0f7a8083db9766b31[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri May 1 05:35:28 2020 +0800
+
+    [border-agent] fix format of TXT values in mDNS response (#93)
+
+[33mcommit 5264b3defe2deca0c251aee52f8ee175207dc22e[m
+Author: Matthias Deimbacher <deimi.kbc@gmail.com>
+Date:   Thu Apr 30 01:30:27 2020 +0200
+
+    [border-agent] fix logging typo (#91)
+
+[33mcommit f97112297112eb1edc715eaa04c77bb76cd8c88a[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Apr 30 06:49:54 2020 +0800
+
+    [logging] make FileLogger thread safe (#88)
+    
+    - Make concurrent call to FileLogger::Log(...) safe.
+    - Refactor FileLogger to return Error when construction failed.
+
+[33mcommit db8c71faee2c59dac973e201b434ba49a2bfb220[m
+Author: Matthias Deimbacher <deimi.kbc@gmail.com>
+Date:   Wed Apr 29 01:29:36 2020 +0200
+
+    [border-agent] fix fmt usage (#90)
+    
+    ":X" is not supported for string type and will throw an exception.
+
+[33mcommit e0d4694a8259ba9b5081bf560c34ff6879da7fc5[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Apr 29 02:54:59 2020 +0800
+
+    [meshcop] include KEK TLV for only JOIN_FIN.rsp message (#84)
+    
+    This commit ensures that the KEK TLV is only included on JOIN_FIN.rsp
+    messages.
+
+[33mcommit dfcaec4586be2a48e078b5ff36af2ea52ba3d9df[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Apr 28 00:07:27 2020 +0800
+
+    [event-loop] break event loop from inside (#83)
+    
+    We were directly calling event_base_loopbreak to stop the event loop
+    running in background thread from user thread. It has a problem that
+    if `event_base_loopbreak` is called even before the event loop has
+    been started (`event_base_loop` has not been called), the event loop
+    will not break (because it has not been started yet). This will result
+    in dead loop when we stop immediately after starting the commissioner.
+    
+    This commit fixes this issue by sending `event_base_loopbreak` to the
+    event loop and breaks it from inside the event loop. This makes sure
+    that the event loop has been started when `event_base_loopbreak` is
+    actually executed.
+    
+    This commit also replaces `std::shared_ptr<std::thread>` with
+    `std::thread` and use `std::thread::joinable` to uniquely identifies
+    whether the event loop thread is actively running and joinable.
+
+[33mcommit 733982468dd1794bed86815fc2b24acfbfe47664[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Thu Apr 23 16:45:40 2020 -0700
+
+    [docs] apply prettier changes (#82)
+
+[33mcommit 1b8d3a06fc392e2c91cc5e552a0efe72e2e647dd[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Thu Apr 23 16:45:26 2020 -0700
+
+    [pretty] add markdown support (#82)
+
+[33mcommit 861cee0b23fd85388317aed8590d1ca709066d8a[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Apr 25 00:10:56 2020 +0800
+
+    [app] push Commissioner Dataset when connected (#75)
+    
+    Instead of pull Commissioner Dataset from the Thread Network, This PR
+    pushes a default Commissioner Dataset to the Thread Network when
+    connected.
+    
+    This changes the CLI command network pull to network sync.
+
+[33mcommit 17e7e1c1ae5fea0598402e6dce04398961914667[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Thu Apr 23 18:30:49 2020 -0700
+
+    [pretty] fix yapf version to 0.29.0 (#81)
+    
+    v0.30.0 (released on 2020-04-23) introduces formatting changes that
+    are not compatible with v0.29.0.
+
+[33mcommit 6b7566cfcb339e5efe830257e193a7e1c6d60109[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Apr 23 01:42:46 2020 +0800
+
+    [travis] use GNU make for Mac OS X (#80)
+
+[33mcommit 56db67961effdfe71d843f4e647974f4e589c6aa[m
+Author: Matthias Deimbacher <deimi.kbc@gmail.com>
+Date:   Wed Apr 22 19:41:08 2020 +0200
+
+    [provisioning-url] move matching to application layer (#73)
+
+[33mcommit 35c77d0197416c6500e9444a9964a8647df4084b[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Apr 23 01:36:05 2020 +0800
+
+    [tests] group unit test files with unit source files (#56)
+
+[33mcommit a1e015506be8f4d4ec29d454828f57440e265502[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Apr 22 12:53:53 2020 +0800
+
+    [code] include header file with path (#79)
+    
+    This commit changes:
+    
+    - include header file with path, so a header within ot-commissioner
+      can be uniquely identified.
+    
+    - use #include "..." for commissioner headers and #include "<...>" for
+      library headers.
+
+[33mcommit dda865be485d4b9498aff7743678d2239897c6b2[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Apr 22 02:35:24 2020 +0800
+
+    [mdns] move mDNS out of the commissioner library (#53)
+    
+    This commit moves discovery with mDNS out of the Commissioner library:
+    
+    It is better for the mobile App/OS to use native mDNS service rather
+    than the one provided by this library. We still keep the border agent
+    discover command for the CLI App.
+
+[33mcommit a224dfd13b90cbd0e95f0ed7bc85ff179967c6ca[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Apr 21 12:24:57 2020 +0800
+
+    [config] refine commissioner configuration and logger (#74)
+    
+    This commit refines the configuration and logger:
+    
+    - Defines a new Logger abstract class to easily customize an
+      application-provided logger.
+    
+    - Throw exception when parsing Network Data and Config from json file
+      failed and convert it to the commissioner Error. This give the
+      chance to return user-friendly error message for the configuration
+      file (or Network Data file) when #45 is merged.
+    
+    - Separate file utility to file_util.cpp.
+    
+    - Separate file logging to file_logger.cpp.
+    
+    - Initialize CommissionerApp directly with Config and remove the
+      intermediate AppConfig. This enable unit tests for CommissionerApp.
+
+[33mcommit d82e4ad09e47066b2bfad4fd55eddd48948e4855[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Apr 21 12:06:04 2020 +0800
+
+    [mbedtls] remove redundant compile definitions (#65)
+
+[33mcommit 5894654255c841f6d8bed9eec8c35952509f0f29[m
+Author: Carlos Gomes Martinho <carlos.gomes_martinho@siemens.com>
+Date:   Mon Apr 20 21:35:33 2020 +0200
+
+    [cn-cbor] upgrade cn-cbor (#77)
+
+[33mcommit 8a6b00a91c1fba7819d9ea71837ed23561093e74[m
+Author: Carlos Gomes Martinho <carlos.gomes_martinho@siemens.com>
+Date:   Mon Apr 20 21:34:31 2020 +0200
+
+    [code] use nullptr instead of NULL (#76)
+
+[33mcommit 4f63a0f9bbfe9db2106ea8decf784a4399ef67a2[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Apr 17 14:56:26 2020 +0800
+
+    [doc] update stale cli readme (#72)
+
+[33mcommit 53cf7f3f5280804b9dff24e1e730a88cee9c30c7[m
+Author: Matthias Deimbacher <deimi.kbc@gmail.com>
+Date:   Wed Apr 15 20:22:47 2020 +0200
+
+    [cli] fix incomplete help text for joiner command (#69)
+    
+    Added missing parameter for provisioning-url to help text.
+
+[33mcommit 4b514a26d39ecb6b261da7b620facdfdaa0bb2dd[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Apr 10 23:54:06 2020 +0800
+
+    [build] add native cn-cbor library (#66)
+
+[33mcommit 243aeb582e4754b30bff1f0118d7ec7be13c4edb[m
+Author: Carlos Gomes Martinho <kmartinho8@gmail.com>
+Date:   Fri Apr 10 07:51:17 2020 +0200
+
+    [cn-cbor] upgrade and track master branch (#64)
+
+[33mcommit 3832085f843ede816e1d0b1911f2f8220bb9e59e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Apr 10 08:10:56 2020 +0800
+
+    [cli] fix help doc of the 'opdataset set securitypolicy' command (#62)
+
+[33mcommit 88d1c0548c8ed9f28f260fb7362037e58437be5d[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Apr 10 04:07:15 2020 +0800
+
+    [code] add project name and file path to header guards (#61)
+
+[33mcommit 3740b93fcf6b6220241eb8cafd6652ee2e58c991[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Apr 9 03:00:01 2020 +0800
+
+    [socket] add missing header guard (#59)
+
+[33mcommit 5807ba8be7c671b77ce3b30c5266b150f960278e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Apr 9 02:57:50 2020 +0800
+
+    [build] refine CMake files (#52)
+    
+    This commit refines CMake files:
+    - avoid setting `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS` in project root directory.
+    - add mbedtls and libevent wrappers to inherit include directories.
+    - specify target sources separately and include header files as well.
+    - follow openthread/openthread CMake style.
+
+[33mcommit e65dba4a428ba8949b00d2a7fd017b68013ecba4[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Apr 8 13:28:41 2020 +0800
+
+    [config] comment out PSKc for default CCM config file (#58)
+    
+    The CCM Commissioner supports using PSKc for establishing commissioner
+    session, but it should not be recommended by default.
+
+[33mcommit 31c82656f30e14da7ebdfe12ae5f64ffd6cf96e4[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Apr 4 13:49:32 2020 +0800
+
+    [error] make error unignorable (#34)
+    
+    This commit makes error unignorable by applying warn_unused_result
+    attribute.
+    
+    When a type is annotated with warn_unused_result attribute, any
+    function returns the object of this type must explicitly check (or
+    ignore) the return value to get rid of the warning/error.
+
+[33mcommit e8952bf52125d30a091e00f52357378fa5a35b7e[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Apr 4 13:43:48 2020 +0800
+
+    [dtls] refine DTLS state and error handling (#33)
+    
+    This commit refines DTLS state and error handling:
+    
+    - return Error::kSecurity for DTLS errors (return
+      Error::kTransportFailed for net error)
+    
+    - unify error casting from mbedtls result
+    
+    - remove State::kDisconnecting state to simplify state transition
+
+[33mcommit 41f611d8ab61fdf3752cd4cc3380967009a0ff33[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sun Mar 29 12:32:33 2020 +0800
+
+    [script] install cmake dependencies (#49)
+
+[33mcommit dac6b05ef8c2cde55289bb2debec4896b3036c51[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sun Mar 29 00:24:08 2020 +0800
+
+    [network-data] fix bit mask (#50)
+
+[33mcommit 590a08b07b2ec2611c4e4387bdfa636fe57ffa37[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sun Mar 29 00:15:39 2020 +0800
+
+    [build] fix linking and installing shared libraries (#48)
+    
+    This commit fixes problem with linking and installing shared
+    libraries:
+    
+    - explicitly enbale/disable building shared or static lievent and
+      mbedtls libraries.
+    
+    - install dependent shared libraries along with libcommissioner.so.
+
+[33mcommit 78c4a6a28163551b42842f2c3333e9d8b5b729f9[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Mar 25 23:36:48 2020 +0800
+
+    [build] enable building shared libraries (#43)
+    
+    This commit enables building shared libraries with builtin CMake
+    option -DBUILD_SHARED_LIBS=ON. Shared libraries are required by Java
+    JNI.
+
+[33mcommit 012ecefffb7b55870093244cddb1fa99af2563c2[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Mar 25 13:09:25 2020 +0800
+
+    [tests] workaround of openthread simulation flash creating issue (#44)
+
+[33mcommit 037185556ec2d5ef82624af6d38a9433b7134ba0[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Mar 19 03:23:20 2020 +0800
+
+    [log] add compile-time variadic arguments checking (#39)
+    
+    This commit enables compile-time variadic arguments checking for
+    logging APIs and fixes existing bugs.
+    
+    The compile-time checking feature of fmtlib requires C++14, so travis
+    jobs building with C++14 are also added.
+
+[33mcommit 3b0cd4797a0203618b80ed0f49b76c7287f8af66[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Mar 18 23:54:08 2020 +0800
+
+    [petition] return ID of existing active commissioner if one exists (#36)
+    
+    This commit returns the commissioner ID when petition failed due to an
+    existing active commissioner in the Thread Network.
+
+[33mcommit 46f2dca17b166a9243f4749c6fe6c920f84767ba[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Mar 18 07:13:24 2020 +0800
+
+    [script] apply suggestions by shellcheck (#26)
+
+[33mcommit f48655c56731f18f4780b4aa1a49aad3f291f226[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Tue Mar 17 08:12:14 2020 -0700
+
+    [script] sync make-pretty scripts from openthread (#38)
+    
+    - Also reformat files.
+
+[33mcommit 67bb45fae74a2ea7b2f2bf3eb649e3b2138f70ed[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Mar 17 01:24:58 2020 +0800
+
+    [code] avoid static objects with non-trivial destructor (#35)
+    
+    This commit removes eliminates static objects with non-trivial
+    destructor. This is to resolve the out-of-order destruction issue of
+    those static object which may leading to bad access to already
+    destructed objects.
+
+[33mcommit 1c6d936fe2077efcdb8b6fb513bc3f5e7ecd5b40[m
+Author: kangping <wgtdkp@google.com>
+Date:   Sat Mar 14 13:21:40 2020 +0800
+
+    [tests] enhance integration test setup for OTBR (#25)
+    
+    This commit enhances integration test for OTBR by:
+    - supporing an env var to skip building OTBR from source.
+    - reduce git clone cost by option --depth=1.
+    - change tmp dir to /tmp/test-ot-commissioner to keep current dir
+      clean.
+    - Add file descriptions.
+    
+    Those changes enable reusing the integration test script in
+    ot-br-posix project.
+
+[33mcommit 8b8ad472e6c723a28e7ed13aaa60b7735dc794c7[m
+Author: Carlos Gomes Martinho <carlos.gomes_martinho@siemens.com>
+Date:   Sun Mar 8 04:33:32 2020 +0100
+
+    [build] add headers and cmake and allow shared lib (#23)
+
+[33mcommit a24fc8068343f0a74bc8904d043fc14fa6ed516e[m
+Author: Jonathan Hui <jonhui@google.com>
+Date:   Wed Mar 4 10:32:37 2020 -0800
+
+    [build] allow downstream to change the default build flags (#22)
+    
+    * build: allow downstream to change the default build flags
+    
+    * chore: only append warning flags not clear them out
+    
+    * build: do not use cpp extensions
+
+[33mcommit ed31d3e045ad9dbafc3a3a4479c22cc70f2e4521[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Mar 4 15:09:24 2020 +0800
+
+    [script] install latest CMake with pip (#19)
+
+[33mcommit b17121d3c6f4b57d7c7676023639dbafa765edcc[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Mar 3 14:55:04 2020 +0800
+
+    [scripts] make shallow clone of submodules (#24)
+
+[33mcommit 920a8b1c49ca1b4396cd8dfbd8ac17df58a0f8eb[m
+Author: Carlos Gomes Martinho <carlos.gomes_martinho@siemens.com>
+Date:   Tue Mar 3 07:42:33 2020 +0100
+
+    [code] apply constexpr to more constants (#21)
+
+[33mcommit 5326434f017dfdafb959b9c2f78487839d63409d[m
+Author: Xiao Ma <xiaom@google.com>
+Date:   Tue Mar 3 06:54:14 2020 +0900
+
+    [cbor] fix potential "-Wnon-virtual-dtor" warning (#5)
+
+[33mcommit af0c02bff2d590848dc0945dd81cfbf0034cca45[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Mar 3 01:05:42 2020 +0800
+
+    [test] fix integration test (#20)
+    
+    Reflect OpenThread platform name change from posix to simulation.
+
+[33mcommit 74ad419dffbf9770e2efe2735f83ac13f55d00b1[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Feb 27 13:23:22 2020 +0800
+
+    [build] add cmake option to disable building CLI App (#18)
+
+[33mcommit 69ec41695288c75ad93ac0406f90d136fd9c6ef0[m
+Author: Carlos Gomes Martinho <carlos.gomes_martinho@siemens.com>
+Date:   Wed Feb 26 18:56:35 2020 +0100
+
+    [code] use enum class and some constexpr (#16)
+    
+    * refactor: use enum class and some constexpr
+    
+    * refactor: more constexpr
+    
+    * style: run clang-format
+
+[33mcommit f2509565e647d704e58921d6b4b1cb65ec4d9103[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Feb 27 01:55:26 2020 +0800
+
+    [api] add commissioning handler (#11)
+
+[33mcommit 428aa01608b2e61379dcbe5a64596738843fc8be[m
+Author: kangping <wgtdkp@google.com>
+Date:   Tue Feb 25 02:00:58 2020 +0800
+
+    [tools] add commissioner THCI fixes from IOP12 and latest tests (#14)
+    
+    This commit includes commissioner THCI fixes from IOP12 and latest
+    tests:
+    
+    - set tty column to 4096. A commissioner command may exceed the tty
+      column limit (256) set by OpenThread_Wpanctl;
+    
+    - Fix forever-loop in _expect(...) and _command(...);
+
+[33mcommit cc8ca12d994bce071d9b50a105c78f2c312637e8[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Feb 20 00:39:54 2020 +0800
+
+    [tests] update coverage (#15)
+
+[33mcommit 777cc34c35328c8e4d415aa25b833c1aab9cce70[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Feb 19 02:29:52 2020 +0800
+
+    [app] fix CommissionerApp destruction (#8)
+    
+    This commit fixes the bug that CommissionerApp trying to stop the
+    internal commissioner member. This will result in segment fault if
+    creating the CommissionerApp instance failed (mCommissioner is null).
+
+[33mcommit 62f2d601a086417eb888538e43c751119601a72a[m
+Author: kangping <wgtdkp@google.com>
+Date:   Fri Feb 14 12:40:26 2020 +0800
+
+    [tools] fix Commissioner THCI dependency on pexpect (#3)
+
+[33mcommit 90b7093900c734b85044de72a8e406ac9a11a4ec[m
+Author: Carlos Gomes Martinho <kmartinho8@gmail.com>
+Date:   Thu Feb 13 15:02:43 2020 +0100
+
+    [config] fix typo EnabledCcm instead of EnableCcm (#13)
+
+[33mcommit 1f40e815e725f61e0d4c8e203de0d29c8d79c607[m
+Author: kangping <wgtdkp@google.com>
+Date:   Thu Feb 13 14:11:17 2020 +0800
+
+    [tests] remove 1.2 CCM integration tests before dependencies becoming public (#2)
+
+[33mcommit 933dea166e54842413701cc8759054871e01f160[m
+Author: kangping <wgtdkp@google.com>
+Date:   Wed Jan 8 17:28:02 2020 +0800
+
+    init commit
