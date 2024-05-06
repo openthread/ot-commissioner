@@ -688,7 +688,7 @@ void CommissionerImpl::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRlo
         aRloc = kLeaderAloc16;
     }
     mProxyClient.SendRequest(request, onResponse, aRloc, kDefaultMmPort);
-    LOG_DEBUG(LOG_REGION_DIAG, "sent DIAG_GET.req");
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
 
 exit:
     if (error != ErrorCode::kNone)
