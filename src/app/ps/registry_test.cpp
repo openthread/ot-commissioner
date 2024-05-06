@@ -32,21 +32,17 @@
  */
 
 #include <gtest/gtest.h>
-
-#include "registry.hpp"
-
-#include <vector>
-
 #include <unistd.h>
 
 #include "app/cli/console.hpp"
+#include "app/ps/registry.hpp"
 
 #define INFO(str) Console::Write(str)
 
 using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner;
 
-const char json_path[] = "./registry_test.json";
+const char json_path[] = "./tmp/registry_test.json";
 
 TEST(RegJson, CreateEmptyRegistry)
 {

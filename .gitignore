@@ -48,6 +48,9 @@ Makefile.in
 /build
 cmake-build-*
 
+# Test
+/tmp
+
 #tools
 .vscode
 .idea
