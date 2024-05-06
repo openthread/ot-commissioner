@@ -244,7 +244,7 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagIpv6Address:
             return (length % 16 == 0) && (length / 16 >= 1 && length / 16 <= 15);
         case Type::kNetworkDiagMacCounters:
-            return length <= 36;
+            return length >= 36;
         case Type::kNetworkDiagBatteryLevel:
             return length == 1;
         case Type::kNetworkDiagSupplyVoltage:
@@ -266,23 +266,23 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagVersion:
             return length == 2;
         case Type::kNetworkDiagVendorName:
-            return length <= 4;
+            return length >= 4;
         case Type::kNetworkDiagVendorModel:
-            return length <= 4;
+            return length >= 4;
         case Type::kNetworkDiagVendorSWVersion:
-            return length <= 2;
+            return length >= 2;
         case Type::kNetworkDiagChild:
-            return length <= 43;
+            return length >= 43;
         case Type::kNetworkDiagChildIpv6Address:
             return (length % 16 == 0) && (length / 16 >= 1 && length / 16 <= 15);
         case Type::kNetworkDiagRouterNeighbor:
-            return length <= 24;
+            return length >= 24;
         case Type::kNetworkDiagAnswer:
             return length == 2;
         case Type::kNetworkDiagQueryID:
             return length == 2;
         case Type::kNetworkDiagMleCounters:
-            return length <= 66;
+            return length >= 66;
         default:
             return false;
         }
