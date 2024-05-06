@@ -76,6 +76,15 @@ static const char *const kJoinFin             = "/c/jf";
 static const char *const kJoinApp             = "/c/ja";
 
 /*
+ * Thread diagnostic URIs
+ */
+
+static const char *const kDiagGet      = "/d/dg";
+static const char *const kDiagGetQuery = "/d/dq";
+static const char *const kDiagGetAns   = "/d/da";
+static const char *const kDiagRst      = "/d/dr";
+
+/*
  * Thread Network Layer URIs
  */
 static const char *const kMlr = "/n/mr";
