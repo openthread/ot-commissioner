@@ -1901,6 +1901,129 @@ exit:
     return error;
 }
 
+ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagExtMacAddress))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagMacAddress))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagMode))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagTimeout))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTimeout);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagConnectivity))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagConnectivity);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagRoute64))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagLeaderData))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagNetworkData))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagNetworkData);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagIpv6Address))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagMacCounters))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacCounters);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagBatteryLevel))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagBatteryLevel);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagSupplyVoltage))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagSupplyVoltage);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagChildTable))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagChannelPages))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChannelPages);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagMaxChildTimeout))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMaxChildTimeout);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagIDevIDCert))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIDevIDCert);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagEui64))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagVersion))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVersion);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagVendorName))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorName);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagVendorModel))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorModel);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagVendorSWVersion))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorSWVersion);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagThreadStackVersion))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagThreadStackVersion);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagChild))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChild);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagChildIpv6Address))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagRouterNeighbor))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRouterNeighbor);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagAnswer))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagAnswer);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagQueryID))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagQueryID);
+    }
+    if (aDiagTlvFlags & (1 << (uint8_t)tlv::Type::kNetworkDiagMleCounters))
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMleCounters);
+    }
+    return tlvTypes;
+}
+
 ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
 {
     ByteArray tlvTypes;
