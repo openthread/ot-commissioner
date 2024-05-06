@@ -226,9 +226,15 @@ bool Tlv::IsValid() const
         {
         // Network disgnostic layer TLVs
         case Type::kNetworkDiagExtMacAddress:
+<<<<<<< HEAD
             return length == 8;
         case Type::kNetworkDiagMacAddress:
             return length == 2;
+=======
+            return length >= 8;
+        case Type::kNetworkDiagMacAddress:
+            return length >= 2;
+>>>>>>> 20da654 ([tlv] add new tlvs for network diagnostic)
         case Type::kNetworkDiagMode:
             return length == 1;
         case Type::kNetworkDiagTimeout:
