@@ -63,6 +63,7 @@ enum class Scope : uint8_t
     kMeshCoP = 0,
     kThread,
     kMeshLink,
+    kNetworkDiag,
 };
 
 enum class Type : uint8_t
@@ -139,6 +140,38 @@ enum class Type : uint8_t
     kCommissionerPenSignature = 70,
     kDiscoveryRequest         = 128,
     kDiscoveryResponse        = 129,
+
+    // TMF Network Diagnositcs TLVs
+    kNetworkDiagExtMacAddress           = 0,
+    kNetworkDiagMacAddress              = 1,
+    kNetworkDiagMode                    = 2,
+    kNetworkDiagTimeout                 = 3,
+    kNetworkDiagConnectivity            = 4,
+    kNetworkDiagRoute64                 = 5,
+    kNetworkDiagLeaderData              = 6,
+    kNetworkDiagNetworkData             = 7,
+    kNetworkDiagIpv6Address             = 8,
+    kNetworkDiagMacCounters             = 9,
+    kNetworkDiagBatteryLevel            = 14,
+    kNetworkDiagSupplyVoltage           = 15,
+    kNetworkDiagChildTable              = 16,
+    kNetworkDiagChannelPages            = 17,
+    kNetworkDiagTypeList                = 18,
+    kNetworkDiagMaxChildTimeout         = 19,
+    kNetworkDiagLDevIDSubjectPubKeyInfo = 20,
+    kNetworkDiagIDevIDCert              = 21,
+    kNetworkDiagEui64                   = 23,
+    kNetworkDiagVersion                 = 24,
+    kNetworkDiagVendorName              = 25,
+    kNetworkDiagVendorModel             = 26,
+    kNetworkDiagVendorSWVersion         = 27,
+    kNetworkDiagThreadStackVersion      = 28,
+    kNetworkDiagChild                   = 29,
+    kNetworkDiagChildIpv6Address        = 30,
+    kNetworkDiagRouterNeighbor          = 31,
+    kNetworkDiagAnswer                  = 32,
+    kNetworkDiagQueryID                 = 33,
+    kNetworkDiagMleCounters             = 34,
 };
 
 using TlvPtr      = std::shared_ptr<Tlv>;

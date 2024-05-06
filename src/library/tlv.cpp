@@ -220,6 +220,71 @@ bool Tlv::IsValid() const
     {
         return false;
     }
+    else if (mScope == Scope::kNetworkDiag)
+    {
+        switch (mType)
+        {
+        // Network disgnostic layer TLVs
+        case Type::kNetworkDiagExtMacAddress:
+            return length == 8;
+        case Type::kNetworkDiagMacAddress:
+            return length == 2;
+        case Type::kNetworkDiagMode:
+            return length == 1;
+        case Type::kNetworkDiagTimeout:
+            return length == 4;
+        case Type::kNetworkDiagRoute64:
+            return length >= 4;
+        case Type::kNetworkDiagLeaderData:
+            return length == 8;
+        case Type::kNetworkDiagNetworkData:
+            return true;
+        case Type::kNetworkDiagIpv6Address:
+            return (length % 16 == 0) && (length / 16 >= 1 && length / 16 <= 15);
+        case Type::kNetworkDiagMacCounters:
+            return length <= 36;
+        case Type::kNetworkDiagBatteryLevel:
+            return length == 1;
+        case Type::kNetworkDiagSupplyVoltage:
+            return length == 2;
+        case Type::kNetworkDiagChildTable:
+            return true; // list of 0 or more child entry data
+        case Type::kNetworkDiagChannelPages:
+            return length >= 1; // 1 or more 8-bit integers
+        case Type::kNetworkDiagTypeList:
+            return length >= 1; // 1 or more 8-bit integers
+        case Type::kNetworkDiagMaxChildTimeout:
+            return length == 4;
+        case Type::kNetworkDiagLDevIDSubjectPubKeyInfo:
+            return true;
+        case Type::kNetworkDiagIDevIDCert:
+            return true;
+        case Type::kNetworkDiagEui64:
+            return length == 8;
+        case Type::kNetworkDiagVersion:
+            return length == 2;
+        case Type::kNetworkDiagVendorName:
+            return length <= 4;
+        case Type::kNetworkDiagVendorModel:
+            return length <= 4;
+        case Type::kNetworkDiagVendorSWVersion:
+            return length <= 2;
+        case Type::kNetworkDiagChild:
+            return length <= 43;
+        case Type::kNetworkDiagChildIpv6Address:
+            return (length % 16 == 0) && (length / 16 >= 1 && length / 16 <= 15);
+        case Type::kNetworkDiagRouterNeighbor:
+            return length <= 24;
+        case Type::kNetworkDiagAnswer:
+            return length == 2;
+        case Type::kNetworkDiagQueryID:
+            return length == 2;
+        case Type::kNetworkDiagMleCounters:
+            return length <= 66;
+        default:
+            return false;
+        }
+    }
 
     switch (mType)
     {
