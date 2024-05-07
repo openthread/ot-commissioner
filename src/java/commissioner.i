@@ -168,6 +168,7 @@ namespace commissioner {
                                                     const std::vector<std::string> &aMulticastAddrList,
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
+    %ignore Commissioner::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags);
 
     // Remove operators and move constructor of Error, XpanId, PanId.
     %ignore Error::operator=(const Error &aError);
