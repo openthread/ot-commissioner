@@ -211,8 +211,6 @@ private:
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);
     static ByteArray GetPendingOperationalDatasetTlvs(uint16_t aDatasetFlags);
 
-    static ByteArray GetDiagTypeListTlvs(uint64_t aDiagTlvFlags);
-
     static Error DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload);
     static Error DecodePendingOperationalDataset(PendingOperationalDataset &aDataset, const coap::Response &aResponse);
     static Error DecodeChannelMask(ChannelMask &aChannelMask, const ByteArray &aBuf);
