@@ -1146,6 +1146,31 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Synchronously command a Thread device to query diagnostic TLV data.
+     *
+     * This method requests a Thread device to request a set of diagnostic data by sending DIAG_GET.req message.
+     * It will not return until errors happened, timeouted or succeed.
+     * @param[in, out] aHandler       A handler of all errors; Guaranteed to be called.
+     * @param[in]      aRloc          The RLOC of dest Thread device.
+     * @param[in]      aQueryId       An identifier of diagnostic TLVs (29, 30, 31) for query.
+     *
+     */
+    virtual void CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId) = 0;
+
+    /**
+     * @brief Synchronously command a Thread device to request a set of diagnostic TLV(s) data.
+     *
+     * This method requests a Thread device to request a set of diagnostic data by sending DIAG_GET.req message.
+     * It will not return until errors happened, timeouted or succeed.
+     * @param[in]      aRloc          The RLOC of dest Thread device.
+     * @param[in]      aQueryId       An identifier of diagnostic TLVs (29, 30, 31) for query.
+     *
+     * @return Error::kNone: if @p aQueryId is an available diagnostic TLV ID for query, the message &
+     *         ACK has been successfully processed; Otherwise; failed;
+     */
+    virtual Error CommandDiagGetQuery(uint16_t aRloc, uint16_t aQueryId) = 0;
 };
 
 } // namespace commissioner

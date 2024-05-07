@@ -183,6 +183,9 @@ public:
 
     Error SetToken(const ByteArray &aSignedToken) override;
 
+    void  CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId) override;
+    Error CommandDiagGetQuery(uint16_t aRloc, uint16_t aQueryId) override;
+
 private:
     using AsyncRequest = std::function<void()>;
 

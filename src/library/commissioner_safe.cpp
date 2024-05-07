@@ -549,6 +549,19 @@ Error CommissionerSafe::SetToken(const ByteArray &aSignedToken)
     return pro.get_future().get();
 }
 
+void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId)
+{
+    PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aRloc, aQueryId); });
+}
+
+Error CommissionerSafe::CommandDiagGetQuery(uint16_t aRloc, uint16_t aQueryId)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro](Error error) { pro.set_value(error); };
+    CommandDiagGetQuery(wait, aRloc, aQueryId);
+    return pro.get_future().get();
+}
+
 void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
 {
     auto commissionerSafe = reinterpret_cast<CommissionerSafe *>(aContext);

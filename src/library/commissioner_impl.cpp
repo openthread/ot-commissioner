@@ -653,6 +653,45 @@ exit:
     }
 }
 
+void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId)
+{
+    Error         error;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+    exit:
+        aHandler(error);
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGetQuery));
+    VerifyOrExit(IsDiagQueryId(aQueryId), error = ERROR_INVALID_ARGS("tlv id is not available for query"));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagQueryID, aQueryId, tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+    if (aRloc == 0)
+    {
+        aRloc = kLeaderAloc16;
+    }
+    mProxyClient.SendRequest(request, onResponse, aRloc, kDefaultMmPort);
+    LOG_DEBUG(LOG_REGION_DIAG, "sent DIAG_GET.qry");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
