@@ -196,8 +196,8 @@ public:
 
     struct event_base *GetEventBase() { return mEventBase; }
 
-    void  CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId) override;
-    Error CommandDiagGetQuery(uint16_t, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
+    void CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags, uint32_t aTimeout) override;
+    Error CommandDiagGetQuery(uint16_t, uint64_t, uint32_t) override { return ERROR_UNIMPLEMENTED(""); }
 
 private:
     using AsyncRequest = std::function<void()>;
@@ -254,6 +254,9 @@ private:
 
     void HandleJoinerSessionTimer(Timer &aTimer);
 
+    void      HandleDiagGetAnswer(const coap::Request &aRequest);
+    ByteArray GetDiagAnsTlvsData() const;
+
 private:
     State    mState;
     uint16_t mSessionId; ///< The Commissioner Session ID.
@@ -269,6 +272,9 @@ private:
     Config mConfig;
 
     Timer mKeepAliveTimer;
+    Timer mDiagAnsTimer;
+
+    ByteArray mDiagAnsTlvs;
 
     coap::CoapSecure mBrClient;
 
@@ -277,6 +283,7 @@ private:
 
     coap::Resource mResourceUdpRx;
     coap::Resource mResourceRlyRx;
+    coap::Resource mResourceDiagAns;
 
     ProxyClient mProxyClient;
 

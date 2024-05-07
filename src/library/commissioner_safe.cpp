@@ -549,17 +549,26 @@ Error CommissionerSafe::SetToken(const ByteArray &aSignedToken)
     return pro.get_future().get();
 }
 
-void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId)
+void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler,
+                                           uint16_t     aRloc,
+                                           uint64_t     aDiagTlvFlags,
+                                           uint32_t     aTimeout)
 {
-    PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aRloc, aQueryId); });
+    PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aRloc, aDiagTlvFlags, aTimeout); });
 }
 
-Error CommissionerSafe::CommandDiagGetQuery(uint16_t aRloc, uint16_t aQueryId)
+Error CommissionerSafe::CommandDiagGetQuery(uint16_t aRloc, uint64_t aDiagTlvFlags, uint32_t aTimeout)
 {
     std::promise<Error> pro;
     auto                wait = [&pro](Error error) { pro.set_value(error); };
-    CommandDiagGetQuery(wait, aRloc, aQueryId);
-    return pro.get_future().get();
+    CommandDiagGetQuery(wait, aRloc, aDiagTlvFlags, aTimeout);
+    std::future<Error> fut = pro.get_future();
+
+    if (fut.wait_for(std::chrono::seconds(10)) == std::future_status::timeout)
+    {
+        return ERROR_TIMEOUT("request to 10 timeout");
+    }
+    return fut.get();
 }
 
 void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)

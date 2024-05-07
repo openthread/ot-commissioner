@@ -147,6 +147,7 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mCommissionerHandler(aHandler)
     , mEventBase(aEventBase)
     , mKeepAliveTimer(mEventBase, [this](Timer &aTimer) { SendKeepAlive(aTimer); })
+    , mDiagAnsTimer(mEventBase, [this](Timer &aTimer) { GetDiagAnsTlvsData(); })
     , mBrClient(mEventBase)
     , mJoinerSessionTimer(mEventBase, [this](Timer &aTimer) { HandleJoinerSessionTimer(aTimer); })
     , mResourceUdpRx(uri::kUdpRx, [this](const coap::Request &aRequest) { mProxyClient.HandleUdpRx(aRequest); })
@@ -160,12 +161,14 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mResourcePanIdConflict(uri::kMgmtPanidConflict,
                              [this](const coap::Request &aRequest) { HandlePanIdConflict(aRequest); })
     , mResourceEnergyReport(uri::kMgmtEdReport, [this](const coap::Request &aRequest) { HandleEnergyReport(aRequest); })
+    , mResourceDiagAns(uri::kDiagGetAns, [this](const coap::Request &aRequest) { HandleDiagGetAnswer(aRequest); })
 {
     SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
     SuccessOrDie(mBrClient.AddResource(mResourceRlyRx));
     SuccessOrDie(mProxyClient.AddResource(mResourceDatasetChanged));
     SuccessOrDie(mProxyClient.AddResource(mResourcePanIdConflict));
     SuccessOrDie(mProxyClient.AddResource(mResourceEnergyReport));
+    SuccessOrDie(mProxyClient.AddResource(mResourceDiagAns));
 }
 
 Error CommissionerImpl::Init(const Config &aConfig)
@@ -653,7 +656,10 @@ exit:
     }
 }
 
-void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId)
+void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler,
+                                           uint16_t     aRloc,
+                                           uint64_t     aDiagTlvFlags,
+                                           uint32_t     aTimeout)
 {
     Error         error;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
@@ -669,8 +675,8 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kDiagGetQuery));
-    VerifyOrExit(IsDiagQueryId(aQueryId), error = ERROR_INVALID_ARGS("tlv id is not available for query"));
-    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagQueryID, aQueryId, tlv::Scope::kNetworkDiag}));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlvs(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
@@ -682,14 +688,43 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc
     {
         aRloc = kLeaderAloc16;
     }
+
+    LOG_INFO(LOG_REGION_DIAG, "sending DIAG_GET.qry");
+    // clear the buffer of received messages
+    mDiagAnsTlvs.clear();
     mProxyClient.SendRequest(request, onResponse, aRloc, kDefaultMmPort);
     LOG_DEBUG(LOG_REGION_DIAG, "sent DIAG_GET.qry");
+    mDiagAnsTimer.Start((Duration)aTimeout * 1000);
 
 exit:
     if (error != ErrorCode::kNone)
     {
         aHandler(error);
     }
+}
+
+void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
+{
+    Error error;
+
+    std::string peerAddr = aRequest.GetEndpoint()->GetPeerAddr().ToString();
+    LOG_INFO(LOG_REGION_DIAG, "received DIAG_GET.ans from {}", peerAddr);
+
+    mProxyClient.SendEmptyChanged(aRequest);
+    // multiple TMF messages recevied by DIAG_GET.ans are merged into a mDiagAnsTlvs
+    mDiagAnsTlvs.insert(mDiagAnsTlvs.end(), aRequest.GetPayload().begin(), aRequest.GetPayload().end());
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        LOG_WARN(LOG_REGION_DIAG, "handle MGMT_ED_REPORT.ans from {} failed: {}", peerAddr, error.ToString());
+    }
+}
+
+ByteArray CommissionerImpl::GetDiagAnsTlvsData() const
+{
+    mCommissionerHandler.OnDiagAnswerMessage(mDiagAnsTlvs);
+    return mDiagAnsTlvs;
 }
 
 #if OT_COMM_CONFIG_CCM_ENABLE

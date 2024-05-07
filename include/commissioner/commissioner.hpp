@@ -267,6 +267,13 @@ public:
      */
     virtual void OnDatasetChanged() {}
 
+    /**
+     * This function notifies the TMF messages collected by DIAG_GET.ans command.
+     *@param[in] aDiagAnsMsg   A list of diagnostic Tlvs data
+     *
+     */
+    virtual void OnDiagAnswerMessage(const ByteArray &aDiagAnsMsg) { (void)aDiagAnsMsg; }
+
     virtual ~CommissionerHandler() = default;
 };
 
@@ -1148,29 +1155,35 @@ public:
     static std::string GetVersion(void);
 
     /**
-     * @brief Synchronously command a Thread device to query diagnostic TLV data.
+     * @brief Asynchronously query diagnostic messages from a Thread device.
      *
-     * This method requests a Thread device to request a set of diagnostic data by sending DIAG_GET.req message.
+     * This method sends DIAG_GET.qry command to Thread device to query diagnostic TLVs.
      * It will not return until errors happened, timeouted or succeed.
      * @param[in, out] aHandler       A handler of all errors; Guaranteed to be called.
      * @param[in]      aRloc          The RLOC of dest Thread device.
-     * @param[in]      aQueryId       An identifier of diagnostic TLVs (29, 30, 31) for query.
-     *
+     * @param[in]      aDiagTlvFlags  Diagnostic TLVs flags indicate which TLVs are wanted.
+     * @param[in]      aTimeout       The wait time after sending the DIAG_GET.qry command is
+     *                                for collecting the answer messages; In seconds.
      */
-    virtual void CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aRloc, uint16_t aQueryId) = 0;
+    virtual void CommandDiagGetQuery(ErrorHandler aHandler,
+                                     uint16_t     aRloc,
+                                     uint64_t     aDiagTlvFlags,
+                                     uint32_t     aTimeout) = 0;
 
     /**
-     * @brief Synchronously command a Thread device to request a set of diagnostic TLV(s) data.
+     * @brief Synchronously query diagnostic messages from a Thread device.
      *
-     * This method requests a Thread device to request a set of diagnostic data by sending DIAG_GET.req message.
+     * This method sends DIAG_GET.qry command to Thread device to query diagnostic TLVs.
      * It will not return until errors happened, timeouted or succeed.
      * @param[in]      aRloc          The RLOC of dest Thread device.
-     * @param[in]      aQueryId       An identifier of diagnostic TLVs (29, 30, 31) for query.
+     * @param[in]      aDiagTlvFlags  Diagnostic TLVs flags indicate which TLVs are wanted.
+     * @param[in]      aTimeout       The wait time after sending the DIAG_GET.qry command is
+     *                                for collecting the answer messages; In seconds.
      *
-     * @return Error::kNone: if @p aQueryId is an available diagnostic TLV ID for query, the message &
-     *         ACK has been successfully processed; Otherwise; failed;
+     * @return Error::kNone: if @p aDiagTlvFlags is an available type list of diagnostic TLVs for query,
+     *         the message & ACK has been successfully processed; Otherwise; failed;
      */
-    virtual Error CommandDiagGetQuery(uint16_t aRloc, uint16_t aQueryId) = 0;
+    virtual Error CommandDiagGetQuery(uint16_t aRloc, uint64_t aDiagTlvFlags, uint32_t aTimeout) = 0;
 };
 
 } // namespace commissioner
