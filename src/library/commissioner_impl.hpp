@@ -251,6 +251,17 @@ private:
 
     void HandleJoinerSessionTimer(Timer &aTimer);
 
+    bool IsDiagQueryId(uint16_t aQueryId) const
+    {
+        if ((aQueryId == (uint16_t)tlv::Type::kNetworkDiagChild) ||
+            (aQueryId == (uint16_t)tlv::Type::kNetworkDiagChildIpv6Address) ||
+            (aQueryId == (uint16_t)tlv::Type::kNetworkDiagRouterNeighbor))
+        {
+            return true;
+        }
+        return false;
+    };
+
 private:
     State    mState;
     uint16_t mSessionId; ///< The Commissioner Session ID.
