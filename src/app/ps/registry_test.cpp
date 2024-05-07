@@ -46,7 +46,7 @@ using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner::utils;
 using namespace ot::commissioner;
 
-const char json_path[] = "./registry_test.json";
+const char json_path[] = "./tmp/registry_test.json";
 
 TEST(RegJson, CreateEmptyRegistry)
 {

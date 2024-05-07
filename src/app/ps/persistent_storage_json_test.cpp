@@ -31,46 +31,59 @@
  *   The file implements unit tests for JSON-based persistent storage
  */
 
+#include <cstdlib>
+#include <fstream>
 #include <gtest/gtest.h>
 
 #include "persistent_storage_json.hpp"
 #include "app/border_agent.hpp"
 
-#include <fstream>
-
 using namespace ot::commissioner::persistent_storage;
 using namespace ot::commissioner;
 
-TEST(PSJson, CreateDefaultIfNotExists)
+class PersistentStorageJsonTestSuite : public testing::Test
 {
-    PersistentStorageJson psj("./test_ps.json");
+public:
+    PersistentStorageJsonTestSuite()          = default;
+    virtual ~PersistentStorageJsonTestSuite() = default;
+
+    void SetUp() override
+    {
+        ASSERT_TRUE(system("rm -rf tmp") == 0);
+        ASSERT_TRUE(system("mkdir -p tmp") == 0);
+    }
+};
+
+TEST(PersistentStorageJsonTestSuite, CreateDefaultIfNotExists)
+{
+    PersistentStorageJson psj("./tmp/test_ps.json");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, ReadEmptyFile)
+TEST(PersistentStorageJsonTestSuite, ReadEmptyFile)
 {
-    std::ofstream testTmp("./test.tmp");
+    std::ofstream testTmp("./tmp/test.tmp");
     testTmp.close();
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, ReadNonEmptyDefault)
+TEST(PersistentStorageJsonTestSuite, ReadNonEmptyDefault)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, AddRegistrar)
+TEST(PersistentStorageJsonTestSuite, AddRegistrar)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -86,9 +99,9 @@ TEST(PSJson, AddRegistrar)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, AddDomain)
+TEST(PersistentStorageJsonTestSuite, AddDomain)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -104,12 +117,12 @@ TEST(PSJson, AddDomain)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, AddNetwork)
+TEST(PersistentStorageJsonTestSuite, AddNetwork)
 {
     // Make the test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -128,9 +141,9 @@ TEST(PSJson, AddNetwork)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, AddBorderRouter)
+TEST(PersistentStorageJsonTestSuite, AddBorderRouter)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -161,9 +174,9 @@ TEST(PSJson, AddBorderRouter)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, DelRegistrar)
+TEST(PersistentStorageJsonTestSuite, DelRegistrar)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -175,9 +188,9 @@ TEST(PSJson, DelRegistrar)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, DelDomain)
+TEST(PersistentStorageJsonTestSuite, DelDomain)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -189,7 +202,7 @@ TEST(PSJson, DelDomain)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, DelNetwork)
+TEST(PersistentStorageJsonTestSuite, DelNetwork)
 {
     PersistentStorageJson psj("");
 
@@ -210,9 +223,9 @@ TEST(PSJson, DelNetwork)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, DelBorderRouter)
+TEST(PersistentStorageJsonTestSuite, DelBorderRouter)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -224,9 +237,9 @@ TEST(PSJson, DelBorderRouter)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetRegistrarFromEmpty)
+TEST(PersistentStorageJsonTestSuite, GetRegistrarFromEmpty)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -237,9 +250,9 @@ TEST(PSJson, GetRegistrarFromEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetDomainFromEmpty)
+TEST(PersistentStorageJsonTestSuite, GetDomainFromEmpty)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -250,7 +263,7 @@ TEST(PSJson, GetDomainFromEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetNetworkFromEmpty)
+TEST(PersistentStorageJsonTestSuite, GetNetworkFromEmpty)
 {
     PersistentStorageJson psj("");
 
@@ -263,9 +276,9 @@ TEST(PSJson, GetNetworkFromEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetBorderRouterFromEmpty)
+TEST(PersistentStorageJsonTestSuite, GetBorderRouterFromEmpty)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -276,12 +289,12 @@ TEST(PSJson, GetBorderRouterFromEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetRegistrarNotEmpty)
+TEST(PersistentStorageJsonTestSuite, GetRegistrarNotEmpty)
 {
     // Make test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -306,12 +319,12 @@ TEST(PSJson, GetRegistrarNotEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetDomainNotEmpty)
+TEST(PersistentStorageJsonTestSuite, GetDomainNotEmpty)
 {
     // Make test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -334,9 +347,9 @@ TEST(PSJson, GetDomainNotEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetNetworkNotEmpty)
+TEST(PersistentStorageJsonTestSuite, GetNetworkNotEmpty)
 {
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -363,12 +376,12 @@ TEST(PSJson, GetNetworkNotEmpty)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, GetBorderRouterNotEmpty)
+TEST(PersistentStorageJsonTestSuite, GetBorderRouterNotEmpty)
 {
     // Make the test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -408,12 +421,12 @@ TEST(PSJson, GetBorderRouterNotEmpty)
 }
 
 // UPD
-TEST(PSJson, UpdRegistrar)
+TEST(PersistentStorageJsonTestSuite, UpdRegistrar)
 {
     // Make the test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -442,12 +455,12 @@ TEST(PSJson, UpdRegistrar)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, UpdDomain)
+TEST(PersistentStorageJsonTestSuite, UpdDomain)
 {
     // Make the test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -474,10 +487,10 @@ TEST(PSJson, UpdDomain)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, UpdNetwork)
+TEST(PersistentStorageJsonTestSuite, UpdNetwork)
 {
-    unlink("./tmp.json");
-    PersistentStorageJson psj("./tmp.json");
+    unlink("./tmp/tmp.json");
+    PersistentStorageJson psj("./tmp/tmp.json");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -501,12 +514,12 @@ TEST(PSJson, UpdNetwork)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, UpdBorderRouter)
+TEST(PersistentStorageJsonTestSuite, UpdBorderRouter)
 {
     // Make test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -554,12 +567,12 @@ TEST(PSJson, UpdBorderRouter)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, LookupRegistrar)
+TEST(PersistentStorageJsonTestSuite, LookupRegistrar)
 {
     // Make test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 
@@ -630,12 +643,12 @@ TEST(PSJson, LookupRegistrar)
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
 
-TEST(PSJson, LookupNetwork)
+TEST(PersistentStorageJsonTestSuite, LookupNetwork)
 {
     // Make test independent
-    unlink("./test.tmp");
+    unlink("./tmp/test.tmp");
 
-    PersistentStorageJson psj("./test.tmp");
+    PersistentStorageJson psj("./tmp/test.tmp");
 
     EXPECT_TRUE(psj.Open() == PersistentStorage::Status::kSuccess);
 

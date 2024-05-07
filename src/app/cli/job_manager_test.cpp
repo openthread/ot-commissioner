@@ -119,6 +119,12 @@ public:
         EXPECT_EQ(aContext.mJobManager.Init(aContext.mConf).mCode, ErrorCode::kNone);
         aContext.mInterpreter.mRegistry = aContext.mRegistry;
     }
+
+    void SetUp() override
+    {
+        ASSERT_TRUE(system("rm -rf tmp") == 0);
+        ASSERT_TRUE(system("mkdir -p tmp") == 0);
+    }
 };
 
 TEST_F(JobManagerTestSuite, TestInit)
@@ -321,23 +327,22 @@ TEST_F(JobManagerTestSuite, StartCancel)
 
 TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
 {
-    // Remove './nwk' subtree
-    ASSERT_EQ(system("rm -rf ./dom ./nwk"), 0);
+    ASSERT_EQ(system("rm -rf ./tmp/dom ./tmp/nwk"), 0);
 
-    EXPECT_EQ(mkdir("./nwk", 0777), 0);
-    EXPECT_EQ(mkdir("./nwk/0000000000000001", 0777), 0);
-    EXPECT_EQ(mkdir("./nwk/0000000000000002", 0777), 0);
-    EXPECT_EQ(mkdir("./nwk/0000000000000003", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk/0000000000000001", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk/0000000000000002", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk/0000000000000003", 0777), 0);
 
     // Loose credentials for Network 1
-    EXPECT_EQ(WriteFile("1", "./nwk/0000000000000001/ca.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./nwk/0000000000000001/priv.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/0000000000000001/ca.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/0000000000000001/priv.pem").mCode, ErrorCode::kNone);
     // Loose credentials for Network 2
-    EXPECT_EQ(WriteFile("1", "./nwk/0000000000000002/cert.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./nwk/0000000000000002/priv.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/0000000000000002/cert.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/0000000000000002/priv.pem").mCode, ErrorCode::kNone);
     // Loose credentials for Network 3
-    EXPECT_EQ(WriteFile("1", "./nwk/0000000000000003/cert.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./nwk/0000000000000003/ca.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/0000000000000003/cert.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/0000000000000003/ca.pem").mCode, ErrorCode::kNone);
 
     TestContext ctx;
     SetInitialExpectations(ctx);
@@ -399,23 +404,22 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByXPan)
 
 TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
 {
-    // Remove './nwk' subtree
-    ASSERT_EQ(system("rm -rf ./dom ./nwk"), 0);
+    ASSERT_EQ(system("rm -rf ./tmp/dom ./tmp/nwk"), 0);
 
-    EXPECT_EQ(mkdir("./nwk", 0777), 0);
-    EXPECT_EQ(mkdir("./nwk/pan1", 0777), 0);
-    EXPECT_EQ(mkdir("./nwk/pan2", 0777), 0);
-    EXPECT_EQ(mkdir("./nwk/pan3", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk/pan1", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk/pan2", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/nwk/pan3", 0777), 0);
 
     // Loose credentials for Network 1
-    EXPECT_EQ(WriteFile("1", "./nwk/pan1/ca.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./nwk/pan1/priv.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/pan1/ca.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/pan1/priv.pem").mCode, ErrorCode::kNone);
     // Loose credentials for panwork 2
-    EXPECT_EQ(WriteFile("1", "./nwk/pan2/cert.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./nwk/pan2/priv.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/pan2/cert.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/pan2/priv.pem").mCode, ErrorCode::kNone);
     // Loose credentials for panwork 3
-    EXPECT_EQ(WriteFile("1", "./nwk/pan3/cert.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./nwk/pan3/ca.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/pan3/cert.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/nwk/pan3/ca.pem").mCode, ErrorCode::kNone);
 
     TestContext ctx;
     SetInitialExpectations(ctx);
@@ -478,22 +482,22 @@ TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByName)
 TEST_F(JobManagerTestSuite, MalformedCredentialsJobCreateFailsByDomain)
 {
     // Remove SM subtrees
-    ASSERT_EQ(system("rm -rf ./dom ./nwk"), 0);
+    ASSERT_EQ(system("rm -rf ./tmp/dom ./tmp/nwk"), 0);
 
-    EXPECT_EQ(mkdir("./dom", 0777), 0);
-    EXPECT_EQ(mkdir("./dom/domain1", 0777), 0);
-    EXPECT_EQ(mkdir("./dom/domain2", 0777), 0);
-    EXPECT_EQ(mkdir("./dom/domain3", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/dom", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/dom/domain1", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/dom/domain2", 0777), 0);
+    EXPECT_EQ(mkdir("./tmp/dom/domain3", 0777), 0);
 
     // Loose credentials for domain1
-    EXPECT_EQ(WriteFile("1", "./dom/domain1/ca.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./dom/domain1/priv.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/dom/domain1/ca.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/dom/domain1/priv.pem").mCode, ErrorCode::kNone);
     // Loose credentials for domain2
-    EXPECT_EQ(WriteFile("1", "./dom/domain2/cert.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./dom/domain2/priv.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/dom/domain2/cert.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/dom/domain2/priv.pem").mCode, ErrorCode::kNone);
     // Loose credentials for domain 3
-    EXPECT_EQ(WriteFile("1", "./dom/domain3/cert.pem").mCode, ErrorCode::kNone);
-    EXPECT_EQ(WriteFile("1", "./dom/domain3/ca.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/dom/domain3/cert.pem").mCode, ErrorCode::kNone);
+    EXPECT_EQ(WriteFile("1", "./tmp/dom/domain3/ca.pem").mCode, ErrorCode::kNone);
 
     TestContext ctx;
     SetInitialExpectations(ctx);

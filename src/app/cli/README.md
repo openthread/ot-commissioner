@@ -377,7 +377,7 @@ The command `borderagent` provides access to Border Agent information and scans 
 ```shell
 > help borderagent
 usage:
-borderagent discover [<timeout-in-milliseconds>]
+borderagent discover [<timeout-in-milliseconds>] [<specified-network-interface>]
 borderagent get locator
 [done]
 >
