@@ -42,7 +42,7 @@ namespace ot {
 namespace commissioner {
 
 // Returns the std::string representation of the status code.
-static std::string ErrorCodeToString(ErrorCode code)
+std::string ErrorCodeToString(ErrorCode code)
 {
     switch (code)
     {

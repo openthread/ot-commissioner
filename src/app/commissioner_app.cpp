@@ -523,7 +523,7 @@ Error CommissionerApp::GetExtendedPanId(ByteArray &aExtendedPanId) const
 
     VerifyOrExit(mActiveDataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit,
                  error = ERROR_NOT_FOUND("cannot find valid Extended PAN ID in Active Operational Dataset"));
-    aExtendedPanId = utils::Encode(mActiveDataset.mExtendedPanId.mValue);
+    aExtendedPanId = mActiveDataset.mExtendedPanId;
 
 exit:
     return error;
@@ -536,7 +536,7 @@ Error CommissionerApp::SetExtendedPanId(const ByteArray &aExtendedPanId)
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
 
-    activeDataset.mExtendedPanId = XpanId{utils::Decode<uint64_t>(aExtendedPanId)};
+    activeDataset.mExtendedPanId = aExtendedPanId;
     activeDataset.mPresentFlags |= ActiveOperationalDataset::kExtendedPanIdBit;
 
     SuccessOrExit(error = mCommissioner->SetActiveDataset(activeDataset));
@@ -680,7 +680,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::GetPanId(PanId &aPanId)
+Error CommissionerApp::GetPanId(uint16_t &aPanId)
 {
     Error error;
 
@@ -696,7 +696,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::SetPanId(PanId aPanId, MilliSeconds aDelay)
+Error CommissionerApp::SetPanId(uint16_t aPanId, MilliSeconds aDelay)
 {
     Error                     error;
     PendingOperationalDataset pendingDataset;

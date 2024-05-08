@@ -52,7 +52,7 @@ public:
         CommissionerAppPtr       &aCommApp,
         Interpreter::Expression   aExpr,
         Interpreter::JobEvaluator aEval,
-        XpanId                    aXpanId);
+        uint64_t                  aXpanId);
     ~Job() = default;
 
     void Run();

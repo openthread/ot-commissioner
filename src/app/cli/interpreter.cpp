@@ -123,6 +123,8 @@ namespace ot {
 namespace commissioner {
 
 using ot::commissioner::persistent_storage::Network;
+using ot::commissioner::utils::Hex;
+using ot::commissioner::utils::ParseInteger;
 
 namespace {
 /**
@@ -177,10 +179,9 @@ Interpreter::NetworkSelectionComparator::~NetworkSelectionComparator()
         Network        nwk;
         RegistryStatus status = mInterpreter.mRegistry->GetCurrentNetwork(nwk);
 
-        if (status == RegistryStatus::kSuccess && mStartWith.mValue != nwk.mXpan.mValue)
+        if (status == RegistryStatus::kSuccess && mStartWith != nwk.mXpan)
         {
-            Console::Write(nwk.mXpan.mValue == XpanId::kEmptyXpanId ? WARN_NETWORK_SELECTION_DROPPED
-                                                                    : WARN_NETWORK_SELECTION_CHANGED,
+            Console::Write(nwk.mXpan == 0 ? WARN_NETWORK_SELECTION_DROPPED : WARN_NETWORK_SELECTION_CHANGED,
                            Console::Color::kYellow);
         }
     }
@@ -351,23 +352,6 @@ template <typename T> static std::string ToHex(T aInteger)
     return "0x" + utils::Hex(utils::Encode(aInteger));
 };
 
-template <typename T> static Error ParseInteger(T &aInteger, const std::string &aStr)
-{
-    Error    error;
-    uint64_t integer;
-    char    *endPtr = nullptr;
-
-    integer = strtoull(aStr.c_str(), &endPtr, 0);
-
-    VerifyOrExit(endPtr != nullptr && endPtr > aStr.c_str(),
-                 error = ERROR_INVALID_ARGS("{} is not a valid integer", aStr));
-
-    aInteger = integer;
-
-exit:
-    return error;
-}
-
 static inline std::string ToLower(const std::string &aStr)
 {
     return utils::ToLower(aStr);
@@ -404,11 +388,11 @@ Error Interpreter::UpdateNetworkSelectionInfo(bool onStart /*=false*/)
 
     VerifyOrExit(mRegistry->GetCurrentNetwork(nwk) == Registry::Status::kSuccess,
                  error = ERROR_REGISTRY_ERROR(RUNTIME_CUR_NETWORK_FAILED));
-    if (onStart && nwk.mXpan.mValue != XpanId::kEmptyXpanId)
+    if (onStart && nwk.mXpan != 0)
     {
         Console::Write(fmt::format(FMT_STRING("Network selection recalled from previous session.\n"
                                               "Restored to [{}:'{}']"),
-                                   nwk.mXpan.str(), nwk.mName),
+                                   utils::Hex(nwk.mXpan), nwk.mName),
                        Console::Color::kGreen);
     }
 exit:
@@ -549,7 +533,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 
     if (mContext.mNwkAliases.size() > 0 || mContext.mDomAliases.size() > 0)
     {
-        XpanIdArray nids;
+        std::vector<uint64_t> nids;
 
         SuccessOrExit(value = ValidateMultiNetworkSyntax(retExpr, nids));
         if (IsMultiJob(retExpr)) // asynchronous processing required
@@ -574,19 +558,19 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
         // handle single command using selected network
         if (mContext.mImportFiles.size() > 0)
         {
-            XpanId xpan = XpanId();
+            uint64_t xpan = 0;
             if (mContext.mNwkAliases.empty())
             {
                 auto result = mRegistry->GetCurrentNetworkXpan(xpan);
                 if (result != Registry::Status::kSuccess)
                 {
-                    xpan = XpanId();
+                    xpan = 0;
                 }
             }
             else
             {
-                XpanIdArray nwks;
-                StringArray unresolved;
+                std::vector<uint64_t> nwks;
+                StringArray           unresolved;
                 VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, nwks, unresolved) ==
                                  Registry::Status::kSuccess,
                              value = ERROR_INVALID_ARGS("Failed to resolve network alias for import"));
@@ -624,7 +608,7 @@ bool Interpreter::IsInactiveCommissionerAllowed(const Expression &aExpr)
     return IsFeatureSupported(mInactiveCommissionerExecution, aExpr);
 }
 
-Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids)
+Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aExpr, std::vector<uint64_t> &aNids)
 {
     Error error;
     bool  supported;
@@ -846,7 +830,7 @@ void Interpreter::PrintOrExport(const Value &aValue)
 
 void Interpreter::PrintNetworkMessage(uint64_t aNid, std::string aMessage, Console::Color aColor)
 {
-    std::string nidHex = std::string(XpanId(aNid));
+    std::string nidHex = utils::Hex(aNid);
     PrintNetworkMessage(nidHex, aMessage, aColor);
 }
 
@@ -970,7 +954,7 @@ Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
     case 1:
     {
         // starting currently selected network
-        XpanId         nid;
+        uint64_t       nid;
         RegistryStatus status = mRegistry->GetCurrentNetworkXpan(nid);
         VerifyOrExit(status == RegistryStatus::kSuccess,
                      value = ERROR_REGISTRY_ERROR("getting selected network failed"));
@@ -1191,7 +1175,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                 }
                 else
                 {
-                    PrintNetworkMessage(nwk.mXpan.mValue, RUNTIME_LOOKUP_FAILED, COLOR_ALIAS_FAILED);
+                    PrintNetworkMessage(nwk.mXpan, RUNTIME_LOOKUP_FAILED, COLOR_ALIAS_FAILED);
                 }
             }
         }
@@ -1547,8 +1531,8 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
             ExitNow(value = ERROR_CANCELLED("Scan cancelled by user"));
         }
 
-        XpanIdArray xpans;
-        StringArray unresolved;
+        std::vector<uint64_t> xpans;
+        StringArray           unresolved;
         if (!mContext.mNwkAliases.empty())
         {
             VerifyOrExit(mRegistry->GetNetworkXpansByAliases(mContext.mNwkAliases, xpans, unresolved) ==
@@ -1580,8 +1564,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
                      (agentOrError.mBorderAgent.mDomainName == mContext.mDomAliases[0])) ||
                     (!mContext.mNwkAliases.empty() &&
                      (agentOrError.mBorderAgent.mPresentFlags & BorderAgent::kExtendedPanIdBit) &&
-                     (std::find(xpans.begin(), xpans.end(), XpanId(agentOrError.mBorderAgent.mExtendedPanId)) !=
-                      xpans.end())))
+                     (std::find(xpans.begin(), xpans.end(), agentOrError.mBorderAgent.mExtendedPanId) != xpans.end())))
                 {
                     baJson.push_back(ba);
                 }
@@ -1686,9 +1669,9 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
         }
         else
         {
-            StringArray aliases = {aExpr[2]};
-            XpanIdArray xpans;
-            StringArray unresolved;
+            StringArray           aliases = {aExpr[2]};
+            std::vector<uint64_t> xpans;
+            StringArray           unresolved;
             VerifyOrExit(mRegistry->GetNetworkXpansByAliases(aliases, xpans, unresolved) == RegistryStatus::kSuccess,
                          value = ERROR_REGISTRY_ERROR("Failed to resolve extended PAN Id for network '{}'", aExpr[2]));
             VerifyOrExit(xpans.size() == 1, value = ERROR_IO_ERROR("Detected {} networks instead of 1 for alias '{}'",
@@ -1721,8 +1704,8 @@ Interpreter::Value Interpreter::ProcessNetwork(const Expression &aExpr)
                 nwkData += '/';
             }
             nwkData += nwk.mName;
-            json[nwk.mXpan.str()] = nwkData;
-            value                 = json.dump(JSON_INDENT_DEFAULT);
+            json[utils::Hex(nwk.mXpan)] = nwkData;
+            value                       = json.dump(JSON_INDENT_DEFAULT);
         }
     }
     else
@@ -2115,7 +2098,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
     }
     else if (CaseInsensitiveEqual(aExpr[2], "panid"))
     {
-        PanId panid;
+        uint16_t panid;
         if (isSet)
         {
             uint32_t delay;
@@ -2127,7 +2110,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
         else
         {
             SuccessOrExit(value = aCommissioner->GetPanId(panid));
-            value = std::string(panid);
+            value = Hex(panid);
         }
     }
     else if (CaseInsensitiveEqual(aExpr[2], "pskc"))
@@ -2166,7 +2149,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
         ActiveOperationalDataset dataset;
         StringArray              nwkAliases;
         StringArray              unresolved;
-        XpanIdArray              xpans;
+        std::vector<uint64_t>    xpans;
 
         if (isSet)
         {
@@ -2186,13 +2169,13 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             // Get network object for the opdataset object
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit) != 0)
             {
-                xpans.push_back(dataset.mExtendedPanId);
+                xpans.push_back(utils::Decode<uint64_t>(dataset.mExtendedPanId));
             }
             else
             {
                 if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) != 0)
                 {
-                    nwkAliases.push_back(fmt::format(FMT_STRING("0x{:04X}"), dataset.mPanId.mValue));
+                    nwkAliases.push_back(Hex(dataset.mPanId));
                 }
                 else if ((dataset.mPresentFlags & ActiveOperationalDataset::kNetworkNameBit) != 0)
                 {
@@ -2214,8 +2197,9 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             }
             if (mRegistry->GetNetworkByXpan(xpans[0], nwk) != RegistryStatus::kSuccess)
             {
-                Console::Write(fmt::format(FMT_STRING("Failed to find network record by XPAN '{}'"), xpans[0].str()),
-                               Console::Color::kYellow);
+                Console::Write(
+                    fmt::format(FMT_STRING("Failed to find network record by XPAN '{}'"), utils::Hex(xpans[0])),
+                    Console::Color::kYellow);
                 break; /// @todo It is possible that network XPAN ID
                        ///       might have change since the last sync
                        ///       so maybe it is worth to look up for
@@ -2227,13 +2211,14 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
 #define AODS_FIELD_IF_IS_SET(field, defaultValue) \
     (((dataset.mPresentFlags & ActiveOperationalDataset::k##field##Bit) == 0) ? (defaultValue) : (dataset.m##field))
 
-            nwk.mName    = AODS_FIELD_IF_IS_SET(NetworkName, "");
-            nwk.mXpan    = AODS_FIELD_IF_IS_SET(ExtendedPanId, XpanId{});
+            nwk.mName = AODS_FIELD_IF_IS_SET(NetworkName, "");
+            nwk.mXpan =
+                utils::Decode<uint64_t>(AODS_FIELD_IF_IS_SET(ExtendedPanId, ByteArray(kExtendedPanIdLength, 0)));
             nwk.mChannel = AODS_FIELD_IF_IS_SET(Channel, (Channel{0, 0})).mNumber;
-            nwk.mPan     = AODS_FIELD_IF_IS_SET(PanId, PanId{});
+            nwk.mPan     = AODS_FIELD_IF_IS_SET(PanId, 0);
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kPanIdBit) == 0)
             {
-                nwk.mPan = PanId::kEmptyPanId;
+                nwk.mPan = 0;
             }
             else
             {

@@ -31,15 +31,19 @@
  *   The file implements registry test suite.
  */
 
-#include <gtest/gtest.h>
 #include <unistd.h>
+#include <vector>
+
+#include <gtest/gtest.h>
 
 #include "app/cli/console.hpp"
 #include "app/ps/registry.hpp"
+#include "common/utils.hpp"
 
 #define INFO(str) Console::Write(str)
 
 using namespace ot::commissioner::persistent_storage;
+using namespace ot::commissioner::utils;
 using namespace ot::commissioner;
 
 const char json_path[] = "./tmp/registry_test.json";
@@ -87,7 +91,7 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
         EXPECT_TRUE(reg.GetBorderRouter(BorderRouterId{0}, ret_val) == Registry::Status::kSuccess);
         EXPECT_TRUE(ret_val.mNetworkId.mId == 0);
         Network nwk;
-        EXPECT_TRUE(reg.GetNetworkByXpan(XpanId{0}, nwk) == Registry::Status::kSuccess);
+        EXPECT_TRUE(reg.GetNetworkByXpan(0, nwk) == Registry::Status::kSuccess);
         EXPECT_TRUE(nwk.mDomainId.mId == EMPTY_ID);
     }
 
@@ -159,7 +163,7 @@ TEST(RegJson, CreateBorderRouterFromBorderAgent)
         EXPECT_TRUE((val.mAgent.mPresentFlags & (BorderAgent::kAddrBit | BorderAgent::kPortBit)) ==
                     (BorderAgent::kAddrBit | BorderAgent::kPortBit));
         EXPECT_TRUE(val.mAgent.mAddr == "1.1.1.1");
-        INFO(val.mAgent.mNetworkName + " : " + XpanId(val.mAgent.mExtendedPanId).str());
+        INFO(val.mAgent.mNetworkName + " : " + utils::Hex(val.mAgent.mExtendedPanId));
         Network nwk;
         EXPECT_TRUE(reg.GetNetworkByXpan(val.mAgent.mExtendedPanId, nwk) == Registry::Status::kSuccess);
         // Modify explicitly
