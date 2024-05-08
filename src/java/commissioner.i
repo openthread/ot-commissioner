@@ -169,18 +169,12 @@ namespace commissioner {
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
 
-    // Remove operators and move constructor of Error, XpanId, PanId.
+    // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
     %ignore Error::Error(Error &&aError) noexcept;
     %ignore Error::operator=(Error &&aError) noexcept;
     %ignore Error::operator==(const Error &aOther) const;
     %ignore Error::operator!=(const Error &aOther) const;
-    %ignore XpanId::operator==(const XpanId &aOther) const;
-    %ignore XpanId::operator!=(const uint64_t aOther) const;
-    %ignore XpanId::operator<(const XpanId aOther) const;
-    %ignore XpanId::operator std::string() const;
-    %ignore PanId::operator=(uint16_t aValue);
-    %ignore PanId::operator uint16_t() const;
     %ignore operator==(const Error &aError, const ErrorCode &aErrorCode);
     %ignore operator!=(const Error &aError, const ErrorCode &aErrorCode);
     %ignore operator==(const ErrorCode &aErrorCode, const Error &aError);

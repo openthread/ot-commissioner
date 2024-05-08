@@ -74,4 +74,10 @@ if (OT_COMM_TEST)
         ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/json/repo/single_include>
     )
+
+    target_link_libraries(commissioner-ps-test
+        PUBLIC
+        commissioner-common
+        commissioner-app
+    )
 endif (OT_COMM_TEST)

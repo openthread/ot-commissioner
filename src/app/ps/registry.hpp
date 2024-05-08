@@ -136,7 +136,7 @@ public:
      * @param[in] aXpan network's XPAN ID
      * @param[out] aRetValue resultant array of @ref BorderRouter records
      */
-    Status GetBorderRoutersInNetwork(XpanId aXpan, BorderRouterArray &aRetValue);
+    Status GetBorderRoutersInNetwork(uint64_t aXpan, BorderRouterArray &aRetValue);
 
     /**
      * Get networks of the domain
@@ -154,7 +154,7 @@ public:
      * @param[out] aRetValue vector of network XPAN IDs belonging to the domain
      * @note Network XPAN IDs will be appended to the end of the output vector
      */
-    Status GetNetworkXpansInDomain(const std::string &aDomainName, XpanIdArray &aRetValue);
+    Status GetNetworkXpansInDomain(const std::string &aDomainName, std::vector<uint64_t> &aRetValue);
 
     /**
      * Get list of all domains
@@ -191,12 +191,14 @@ public:
      * @param[out] aRetValue list of network XPAN IDs
      * @param[out] aUnresolved list of aliases failed to resolve
      */
-    Status GetNetworkXpansByAliases(const StringArray &aAliases, XpanIdArray &aRetValue, StringArray &aUnresolved);
+    Status GetNetworkXpansByAliases(const StringArray     &aAliases,
+                                    std::vector<uint64_t> &aRetValue,
+                                    StringArray           &aUnresolved);
 
     /**
      * Set current network.
      */
-    Status SetCurrentNetwork(const XpanId &aXpan);
+    Status SetCurrentNetwork(uint64_t aXpan);
 
     /**
      * Set current network by border router specified.
@@ -219,7 +221,7 @@ public:
      *
      * @param [out] aRetValue current network XPAN ID
      */
-    Status GetCurrentNetworkXpan(XpanId &aRetValue);
+    Status GetCurrentNetworkXpan(uint64_t &aRetValue);
 
     /**
      * Get network with specified extended PAN id
@@ -232,7 +234,7 @@ public:
      * @li @ref REG_DATA_INVALID is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetNetworkByXpan(const XpanId &aXpan, Network &aRetValue);
+    Status GetNetworkByXpan(uint64_t aXpan, Network &aRetValue);
 
     /**
      * Get network with specified name
@@ -271,7 +273,7 @@ public:
      * @li @ref REG_AMBUGUITY is more than one network was found
      * @li @ref REG_ERROR on other errors
      */
-    Status GetDomainNameByXpan(const XpanId &aXpan, std::string &aName);
+    Status GetDomainNameByXpan(uint64_t aXpan, std::string &aName);
 
     /**
      * Remove border router record.

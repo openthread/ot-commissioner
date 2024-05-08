@@ -84,7 +84,7 @@ private:
     struct NetworkSelectionComparator
     {
         const Interpreter &mInterpreter;
-        XpanId             mStartWith;
+        uint64_t           mStartWith;
         bool               mSuccess;
 
         NetworkSelectionComparator(const Interpreter &aInterpreter);
@@ -179,7 +179,7 @@ private:
      * resolution of the provided network aliases is checked in the
      * course of execution.
      */
-    Value ValidateMultiNetworkSyntax(const Expression &aExpr, XpanIdArray &aNids);
+    Value ValidateMultiNetworkSyntax(const Expression &aExpr, std::vector<uint64_t> &aNids);
     /**
      * Resolves network aliases into a set of network ids. In the
      * course of resolution, duplicate network ids are compacted if

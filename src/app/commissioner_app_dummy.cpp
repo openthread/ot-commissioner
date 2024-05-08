@@ -303,13 +303,13 @@ Error CommissionerApp::SetNetworkName(const std::string &aNetworkName)
     return Error{};
 }
 
-Error CommissionerApp::GetPanId(PanId &aPanId)
+Error CommissionerApp::GetPanId(uint16_t &aPanId)
 {
     UNUSED(aPanId);
     return Error{};
 }
 
-Error CommissionerApp::SetPanId(PanId aPanId, MilliSeconds aDelay)
+Error CommissionerApp::SetPanId(uint16_t aPanId, MilliSeconds aDelay)
 {
     UNUSED(aPanId);
     UNUSED(aDelay);

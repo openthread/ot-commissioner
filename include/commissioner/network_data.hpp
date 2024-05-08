@@ -53,36 +53,6 @@ static constexpr uint8_t kMlrStatusNotPrimary  = 5;
 static constexpr uint8_t kMlrStatusFailure     = 6;
 
 /**
- * Extended PAN Id wrapper
- */
-struct XpanId
-{
-    static constexpr uint64_t kEmptyXpanId = 0;
-
-    uint64_t mValue;
-
-    XpanId(uint64_t val);
-
-    XpanId();
-
-    std::string str() const;
-
-    bool operator==(const XpanId &aOther) const;
-
-    bool operator!=(const XpanId &aOther) const;
-    bool operator<(const XpanId &aOther) const;
-
-    explicit operator std::string() const;
-
-    /**
-     * Decodes hexadecimal string.
-     */
-    Error FromHex(const std::string &aInput);
-};
-
-typedef std::vector<XpanId> XpanIdArray;
-
-/**
  * @brief The Commissioner Dataset of the Thread Network Data.
  *
  * Each data field of Commissioner Dataset is optional. The field is
@@ -250,26 +220,6 @@ enum SecurityPolicyFlags
 };
 
 /**
- * A PAN identifier.
- */
-struct PanId
-{
-    static constexpr uint64_t kEmptyPanId = 0;
-
-    uint16_t mValue;
-    explicit PanId(uint16_t aValue);
-    PanId(const PanId &aOther) = default;
-    PanId();
-
-    PanId   &operator=(const PanId &aValue) = default;
-    PanId   &operator=(uint16_t aValue);
-    explicit operator uint16_t() const;
-    explicit operator std::string() const;
-
-    Error FromHex(const std::string &aInput);
-};
-
-/**
  * @brief The Active Operational Dataset of the Thread Network Data.
  *
  * Each data field except `mActiveTimestamp` is optional. The field is
@@ -283,13 +233,13 @@ struct PanId
 struct ActiveOperationalDataset
 {
     Timestamp      mActiveTimestamp;
+    ByteArray      mExtendedPanId;
+    uint16_t       mPanId;
+    std::string    mNetworkName;
     Channel        mChannel;
     ChannelMask    mChannelMask;
-    XpanId         mExtendedPanId;
     ByteArray      mMeshLocalPrefix;
     ByteArray      mNetworkMasterKey;
-    std::string    mNetworkName;
-    PanId          mPanId;
     ByteArray      mPSKc;
     SecurityPolicy mSecurityPolicy;
 
