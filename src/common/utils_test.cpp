@@ -118,6 +118,29 @@ TEST(UtilsTest, HexEncodingDecoding_DecodingHexStringWithInvalidCharactersShould
     EXPECT_EQ(utils::Hex(buf, "00010g"), ErrorCode::kInvalidArgs);
 }
 
+TEST(UtilsTest, ParseInteger_HexStringShouldSuccess)
+{
+    int value;
+
+    EXPECT_EQ(utils::ParseInteger(value, "0xface"), ErrorCode::kNone);
+    EXPECT_EQ(value, 0xface);
+}
+
+TEST(UtilsTest, ParseInteger_DecimalStringShouldSuccess)
+{
+    int value;
+
+    EXPECT_EQ(utils::ParseInteger(value, "65535"), ErrorCode::kNone);
+    EXPECT_EQ(value, 65535);
+}
+
+TEST(UtilsTest, ParseInteger_IntegerWithTrailingNonDigitsShouldFail)
+{
+    int value;
+
+    EXPECT_EQ(utils::ParseInteger(value, "0xfacegg"), ErrorCode::kInvalidArgs);
+}
+
 } // namespace commissioner
 
 } // namespace ot

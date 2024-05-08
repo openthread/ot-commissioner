@@ -75,7 +75,7 @@ test_select_identify() {
     send_command_to_commissioner "network select thread1"
     send_command_to_commissioner "network identify" "thread1"
 
-    send_command_to_commissioner "network select 2222222222222222"
+    send_command_to_commissioner "network select 0x2222222222222222"
     send_command_to_commissioner "network identify" "thread2"
 
     send_command_to_commissioner "network select none"
@@ -151,10 +151,10 @@ test_start_stop_mn_all() {
     commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
 
     send_command_to_commissioner "start --nwk all"
-    send_command_to_commissioner "active --nwk all" 'DEAD00BEEF00CAFE.*true'
-    send_command_to_commissioner "sessionid --nwk all" 'DEAD00BEEF00CAFE": \d*'
-    send_command_to_commissioner "opdataset get active --nwk all" 'DEAD00BEEF00CAFE": {'
-    send_command_to_commissioner "commdataset get --nwk all" 'DEAD00BEEF00CAFE": {'
+    send_command_to_commissioner "active --nwk all" '0xdead00beef00cafe.*true'
+    send_command_to_commissioner "sessionid --nwk all" '0xdead00beef00cafe": \d*'
+    send_command_to_commissioner "opdataset get active --nwk all" '0xdead00beef00cafe": {'
+    send_command_to_commissioner "commdataset get --nwk all" '0xdead00beef00cafe": {'
     send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk all"
     send_command_to_commissioner "opdataset get pending --nwk all"
     send_command_to_commissioner "stop --nwk all"
@@ -179,12 +179,12 @@ test_start_stop_mn_other() {
     mdns_hosts_map_addresses
     commissioner_mdns_scan_import ${CUR_DIR}/etc/br_scan_initial
 
-    send_command_to_commissioner "network select 2222222222222222"
+    send_command_to_commissioner "network select 0x2222222222222222"
     send_command_to_commissioner "start --nwk other"
     send_command_to_commissioner "active --nwk other" '1111111111111111": false'
-    send_command_to_commissioner "sessionid --nwk other" 'DEAD00BEEF00CAFE": \d*'
-    send_command_to_commissioner "opdataset get active --nwk other" 'DEAD00BEEF00CAFE": {'
-    send_command_to_commissioner "commdataset get --nwk other" 'DEAD00BEEF00CAFE": {'
+    send_command_to_commissioner "sessionid --nwk other" '0xdead00beef00cafe": \d*'
+    send_command_to_commissioner "opdataset get active --nwk other" '0xdead00beef00cafe": {'
+    send_command_to_commissioner "commdataset get --nwk other" '0xdead00beef00cafe": {'
     send_command_to_commissioner "opdataset set securitypolicy 1000 ff --nwk other"
     send_command_to_commissioner "opdataset get pending --nwk other"
     send_command_to_commissioner "stop --nwk other"
@@ -212,10 +212,10 @@ test_start_stop_mn_dom() {
 
     set -x
     send_command_to_commissioner "start --dom TestDomainName"
-    send_command_to_commissioner "active --dom TestDomainName" '2222222222222222": false'
-    send_command_to_commissioner "sessionid --dom TestDomainName" 'DEAD00BEEF00CAFE": \d*'
-    send_command_to_commissioner "opdataset get active --dom TestDomainName" 'DEAD00BEEF00CAFE": {'
-    send_command_to_commissioner "commdataset get --dom TestDomainName" 'DEAD00BEEF00CAFE": {'
+    send_command_to_commissioner "active --dom TestDomainName" '0x2222222222222222": false'
+    send_command_to_commissioner "sessionid --dom TestDomainName" '0xdead00beef00cafe": \d*'
+    send_command_to_commissioner "opdataset get active --dom TestDomainName" '0xdead00beef00cafe": {'
+    send_command_to_commissioner "commdataset get --dom TestDomainName" '0xdead00beef00cafe": {'
     send_command_to_commissioner "opdataset set securitypolicy 1000 ff --dom TestDomainName"
     send_command_to_commissioner "opdataset get pending --dom TestDomainName"
     send_command_to_commissioner "stop --dom TestDomainName"

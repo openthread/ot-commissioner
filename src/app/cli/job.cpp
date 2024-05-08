@@ -54,7 +54,7 @@ void Job::Wait()
     mJobThread.join();
     if (!mValue.HasNoError())
     {
-        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", XpanId(mXpanId).str(), GetCommandString(),
+        LOG_DEBUG(LOG_REGION_JOB, "{}: job '{}' failed: {}", utils::Hex(mXpanId), GetCommandString(),
                   mValue.ToString());
     }
 }
@@ -79,12 +79,12 @@ Job::Job(Interpreter              &aInterpreter,
          CommissionerAppPtr       &aCommApp,
          Interpreter::Expression   aExpr,
          Interpreter::JobEvaluator aEval,
-         XpanId                    aXpanId)
+         uint64_t                  aXpanId)
     : mInterpreter(aInterpreter)
     , mCommissioner(aCommApp)
     , mExpr(aExpr)
     , mEval(aEval)
-    , mXpanId(aXpanId.mValue)
+    , mXpanId(aXpanId)
 {
 }
 

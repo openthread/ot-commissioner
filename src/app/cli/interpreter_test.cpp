@@ -56,6 +56,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "common/utils.hpp"
 #include "fmt/core.h"
 #include "gmock/gmock-matchers.h"
 #include "gmock/gmock-spec-builders.h"
@@ -63,6 +64,7 @@
 #include "nlohmann/json.hpp"
 
 using namespace ot::commissioner;
+using namespace ot::commissioner::utils;
 using namespace ot::commissioner::persistent_storage;
 
 using testing::_;
@@ -152,7 +154,7 @@ TEST_F(InterpreterTestSuite, MNSV_ValidSyntaxPass)
     std::string             command;
     Interpreter::Expression expr;
     Interpreter::Expression ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
 
     command = "start --nwk all";
     expr    = ctx.mInterpreter.ParseExpression(command);
@@ -206,7 +208,7 @@ TEST_F(InterpreterTestSuite, MNSV_TwoGroupNwkAliasesFail)
     InitContext(ctx);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -225,7 +227,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisResolvesWithCurrentSet)
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -241,7 +243,7 @@ TEST_F(InterpreterTestSuite, MNSV_ThisUnresolvesWithCurrentUnset)
               RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -265,12 +267,12 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     // No current network selected
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -279,8 +281,8 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherSameWithCurrentUnselected)
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -306,12 +308,12 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk all");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -320,8 +322,8 @@ TEST_F(InterpreterTestSuite, MNSV_AllOtherDifferWithCurrentSelected)
     expr = ctx.mInterpreter.ParseExpression("start --nwk other");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_EQ(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
+    EXPECT_EQ(std::find(nids.begin(), nids.end(), 1), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 2), nids.end());
     ctx.mInterpreter.mContext.Cleanup();
     ctx.mInterpreter.mJobManager->CleanupJobs();
     ret.clear();
@@ -344,7 +346,7 @@ TEST_F(InterpreterTestSuite, MNSV_TwoDomSwitchesFail)
         RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain1 --dom domain2");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -361,7 +363,7 @@ TEST_F(InterpreterTestSuite, MNSV_UnexistingDomainResolveFails)
         RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain2");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -383,12 +385,12 @@ TEST_F(InterpreterTestSuite, MNSV_ExistingDomainResolves)
         RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom domain1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
-    EXPECT_NE(std::find(nids.begin(), nids.end(), XpanId{1}), nids.end());
-    EXPECT_EQ(std::find(nids.begin(), nids.end(), XpanId{2}), nids.end());
+    EXPECT_NE(std::find(nids.begin(), nids.end(), 1), nids.end());
+    EXPECT_EQ(std::find(nids.begin(), nids.end(), 2), nids.end());
 }
 
 TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
@@ -397,9 +399,9 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
     InitContext(ctx);
 
     NetworkId nid;
-    ASSERT_EQ(ctx.mRegistry->mStorage->Add(
-                  Network{NetworkId{EMPTY_ID}, DomainId{EMPTY_ID}, "net1", XpanId{1}, 0, 0xAB, "", 0}, nid),
-              PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(
+        ctx.mRegistry->mStorage->Add(Network{NetworkId{EMPTY_ID}, DomainId{EMPTY_ID}, "net1", 1, 0, 0xAB, "", 0}, nid),
+        PersistentStorage::Status::kSuccess);
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net1", 1, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain1", 0, 0, "",
@@ -408,18 +410,18 @@ TEST_F(InterpreterTestSuite, MNSV_AmbiguousNwkResolutionFails)
 
     // lookup by PAN ID must succeed
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk ab");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_EQ(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).mError.GetCode(), ErrorCode::kNone);
     EXPECT_EQ(nids.size(), 1);
-    EXPECT_EQ(nids[0], XpanId{1});
+    EXPECT_EQ(nids[0], 1);
     ctx.mInterpreter.mContext.Cleanup();
 
     // create ambiguity by adding another network with the same PAN ID
-    ASSERT_EQ(ctx.mRegistry->mStorage->Add(
-                  Network{NetworkId{EMPTY_ID}, DomainId{EMPTY_ID}, "net2", XpanId{2}, 0, 0xAB, "", 0}, nid),
-              PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(
+        ctx.mRegistry->mStorage->Add(Network{NetworkId{EMPTY_ID}, DomainId{EMPTY_ID}, "net2", 2, 0, 0xAB, "", 0}, nid),
+        PersistentStorage::Status::kSuccess);
     ASSERT_EQ(
         ctx.mRegistry->Add(BorderAgent{"127.0.0.2", 20001, ByteArray{}, "1.1", BorderAgent::State{0, 0, 0, 0, 0},
                                        "net2", 2, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, "domain2", 0, 0, "",
@@ -448,7 +450,7 @@ TEST_F(InterpreterTestSuite, MNSV_SameResolutionFromTwoAliasesCollapses)
         RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 net1");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -471,7 +473,7 @@ TEST_F(InterpreterTestSuite, MNSV_GroupAndIndividualNwkAliasesMustFail)
         RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --nwk 1 all");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_FALSE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
@@ -496,12 +498,12 @@ TEST_F(InterpreterTestSuite, MNSV_DomThisResolvesWithRespectToSelection)
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start --dom this");
     EXPECT_EQ(ctx.mInterpreter.ReParseMultiNetworkSyntax(expr, ret).GetCode(), ErrorCode::kNone);
     EXPECT_TRUE(ctx.mInterpreter.ValidateMultiNetworkSyntax(ret, nids).HasNoError());
     EXPECT_EQ(nids.size(), 1);
-    EXPECT_EQ(nids[0], XpanId{1});
+    EXPECT_EQ(nids[0], 1);
 }
 
 TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
@@ -531,12 +533,12 @@ TEST_F(InterpreterTestSuite, MNSV_NoAliasesResolvesToThisNwk)
     BorderRouter br;
     br.mNetworkId = NetworkId{2};
     ASSERT_EQ(ctx.mRegistry->SetCurrentNetwork(br), RegistryStatus::kSuccess);
-    XpanId nid;
+    uint64_t nid;
     ASSERT_EQ(ctx.mRegistry->GetCurrentNetworkXpan(nid), RegistryStatus::kSuccess);
-    ASSERT_EQ(nid, XpanId{3});
+    ASSERT_EQ(nid, 3);
 
     Interpreter::Expression expr, ret;
-    XpanIdArray             nids;
+    std::vector<uint64_t>   nids;
     expr = ctx.mInterpreter.ParseExpression("start");
 
     CommissionerAppMockPtr pcaMock{new CommissionerAppMock()};
@@ -1133,17 +1135,17 @@ TEST_F(InterpreterTestSuite, PC_TokenWithCCM)
     InitContext(ctx);
 
     // prepare CCM network record
-    const std::string  kDomainName  = "domain1";
-    const std::string  kNetworkName = "net1";
-    const std::string  kSmPath      = "./tmp/dom/" + kDomainName + "/";
-    XpanId             xpanCcm{1};
+    const std::string kDomainName  = "domain1";
+    const std::string kNetworkName = "net1";
+    const std::string kSmPath      = "./tmp/dom/" + kDomainName + "/";
+    uint64_t          xpanCcm      = 1;
+
     BorderAgent::State baStateCcm{BorderAgent::State::ConnectionMode::kX509Connection, 0, 0, 0, 0};
 
-    ASSERT_EQ(
-        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baStateCcm, kNetworkName, xpanCcm.mValue,
-                                       "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, kDomainName, 0, 0, "", 0,
-                                       0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-        RegistryStatus::kSuccess);
+    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baStateCcm, kNetworkName, xpanCcm,
+                                             "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, kDomainName, 0, 0, "", 0,
+                                             0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
+              RegistryStatus::kSuccess);
 
     // prepare fake SM for the CCM network
     std::vector<std::pair<std::string, std::string>> smFiles = {{"ca", kSmPath + "ca.pem"},
@@ -1189,17 +1191,18 @@ TEST_F(InterpreterTestSuite, PC_TokenWithNonCCM)
     InitContext(ctx);
 
     // prepare non-CCM network record
-    const std::string  kDomainName  = "DefaultDomain";
-    const std::string  kNetworkName = "net2";
-    const std::string  kSmPath      = "./tmp/nwk/" + kNetworkName + "/";
-    XpanId             xpanNonCcm{2};
+    const std::string kDomainName  = "DefaultDomain";
+    const std::string kNetworkName = "net2";
+    const std::string kSmPath      = "./tmp/nwk/" + kNetworkName + "/";
+    uint64_t          xpanNonCcm   = 2;
+
     BorderAgent::State baStateNonCcm{BorderAgent::State::ConnectionMode::kPSKcConnection, 0, 0, 0, 0};
 
-    ASSERT_EQ(ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baStateNonCcm, kNetworkName,
-                                             xpanNonCcm.mValue, "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{},
-                                             kDomainName, 0, 0, "", 0,
-                                             0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
-              RegistryStatus::kSuccess);
+    ASSERT_EQ(
+        ctx.mRegistry->Add(BorderAgent{"127.0.0.1", 20001, ByteArray{}, "1.1", baStateNonCcm, kNetworkName, xpanNonCcm,
+                                       "", "", Timestamp{0, 0, 0}, 0, "", ByteArray{}, kDomainName, 0, 0, "", 0,
+                                       0x1F | BorderAgent::kDomainNameBit | BorderAgent::kExtendedPanIdBit}),
+        RegistryStatus::kSuccess);
     // prepare fake SM for the non-CCM network
     std::vector<std::pair<std::string, std::string>> smFiles = {
         {"ca", kSmPath + "ca.pem"}, {"key", kSmPath + "priv.pem"}, {"cert", kSmPath + "cert.pem"}};
@@ -1505,8 +1508,8 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithDomain)
     {
         EXPECT_TRUE(false) << "Failed to parse value: " << e.what();
     }
-    EXPECT_TRUE(json.contains("0000000000000001"));
-    EXPECT_STREQ("domain1/net1", json.at("0000000000000001").get<std::string>().c_str());
+    EXPECT_TRUE(json.contains("0x0000000000000001"));
+    EXPECT_STREQ("domain1/net1", json.at("0x0000000000000001").get<std::string>().c_str());
 }
 
 TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithoutDomain)
@@ -1546,8 +1549,8 @@ TEST_F(InterpreterTestSuite, PC_NetworkIdentifyWithoutDomain)
     {
         EXPECT_TRUE(false) << "Failed to parse value: " << e.what();
     }
-    EXPECT_TRUE(json.contains("0000000000000002"));
-    EXPECT_STREQ("net2", json.at("0000000000000002").get<std::string>().c_str());
+    EXPECT_TRUE(json.contains("0x0000000000000002"));
+    EXPECT_STREQ("net2", json.at("0x0000000000000002").get<std::string>().c_str());
 }
 
 TEST_F(InterpreterTestSuite, PC_NetworkIdentifyUnset)
@@ -1804,16 +1807,17 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     InitContext(ctx);
 
     NetworkId nwk_id;
-    EXPECT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "", XpanId{1}, 0, 0, "", 0}, nwk_id),
+    EXPECT_EQ(ctx.mRegistry->mStorage->Add(Network{EMPTY_ID, EMPTY_ID, "", 1, 0, 0, "", 0}, nwk_id),
               PersistentStorage::Status::kSuccess);
     Network nwk;
     EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
-    EXPECT_EQ((std::string)nwk.mPan, "0x0000");
+    EXPECT_EQ(utils::Hex(nwk.mPan), "0x0000");
 
     EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetActiveDataset(_, _))
         .Times(2)
         .WillRepeatedly(DoAll(WithArg<0>([](ActiveOperationalDataset &a) {
-                                  a.mExtendedPanId = XpanId{1}, a.mPanId = 1;
+                                  a.mExtendedPanId = ByteArray{0, 0, 0, 0, 0, 0, 0, 1};
+                                  a.mPanId         = 1;
                                   a.mPresentFlags =
                                       ActiveOperationalDataset::kPanIdBit | ActiveOperationalDataset::kExtendedPanIdBit;
                               }),
@@ -1827,7 +1831,7 @@ TEST_F(InterpreterTestSuite, PC_OpdatasetGetActive)
     EXPECT_TRUE(value.HasNoError());
 
     EXPECT_EQ(ctx.mRegistry->mStorage->Get(nwk_id, nwk), PersistentStorage::Status::kSuccess);
-    EXPECT_EQ(nwk.mPan.mValue, 0x0001);
+    EXPECT_EQ(nwk.mPan, 0x0001);
 
     expr  = ctx.mInterpreter.ParseExpression("opdataset get active --export ./tmp/aods.json");
     value = ctx.mInterpreter.Eval(expr);
@@ -2369,24 +2373,13 @@ TEST_F(InterpreterTestSuite, PC_BrAddInterObjectInconsistencyFail)
 
 TEST_F(InterpreterTestSuite, PC_BrAdd)
 {
-#define XPAN_1234 "1234"
 #define XPAN_1235 "0x1235"
-#define XPAN_1236 "0000000000001236"
-#define XPAN_1237 "00000000000001237" // length > 16
+#define XPAN_1236 "0x0000000000001236"
 
     TestContext ctx;
     InitContext(ctx);
 
     std::string brJson = "[\n\
-    {\n\
-        \"Addr\": \"1234::5678\",\n\
-        \"Port\": 2000,\n\
-        \"ThreadVersion\": \"th1.2\",\n\
-        \"State\": 0,\n\
-        \"NetworkName\": \"net1\",\n\
-        \"ExtendedPanId\": \"" XPAN_1234 "\",\n\
-        \"DomainName\": \"dom1\"\n\
-    },\n\
     {\n\
         \"Addr\": \"1234::5679\",\n\
         \"Port\": 2001,\n\
@@ -2426,28 +2419,24 @@ TEST_F(InterpreterTestSuite, PC_BrAdd)
 
     BorderRouterArray brs;
     EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllBorderRouters(brs), RegistryStatus::kSuccess);
-    EXPECT_EQ(brs.size(), 4);
+    EXPECT_EQ(brs.size(), 3);
 
     NetworkArray nwks;
     EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllNetworks(nwks), RegistryStatus::kSuccess);
-    EXPECT_EQ(nwks.size(), 3);
+    EXPECT_EQ(nwks.size(), 2);
 
     DomainArray doms;
     EXPECT_EQ(ctx.mInterpreter.mRegistry->GetAllDomains(doms), RegistryStatus::kSuccess);
     EXPECT_EQ(doms.size(), 2);
 
-    Network nwk;
-    XpanId  xpan;
-    EXPECT_EQ(xpan.FromHex(XPAN_1234).GetCode(), ErrorCode::kNone);
-    EXPECT_EQ(ctx.mInterpreter.mRegistry->GetNetworkByXpan(0x1234, nwk), RegistryStatus::kSuccess);
-    EXPECT_EQ(nwk.mXpan, xpan);
-    EXPECT_EQ(xpan.FromHex(XPAN_1235).GetCode(), ErrorCode::kNone);
+    Network  nwk;
+    uint64_t xpan;
+    EXPECT_EQ(utils::ParseInteger(xpan, "0x1235").GetCode(), ErrorCode::kNone);
     EXPECT_EQ(ctx.mInterpreter.mRegistry->GetNetworkByXpan(0x1235, nwk), RegistryStatus::kSuccess);
     EXPECT_EQ(nwk.mXpan, xpan);
-    EXPECT_EQ(xpan.FromHex(XPAN_1236).GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(utils::ParseInteger(xpan, "0x0000000000001236").GetCode(), ErrorCode::kNone);
     EXPECT_EQ(ctx.mInterpreter.mRegistry->GetNetworkByXpan(0x1236, nwk), RegistryStatus::kSuccess);
     EXPECT_EQ(nwk.mXpan, xpan);
-    EXPECT_EQ(xpan.FromHex(XPAN_1237).GetCode(), ErrorCode::kBadFormat);
 }
 
 TEST_F(InterpreterTestSuite, PC_BrListPositive)
@@ -2626,7 +2615,7 @@ TEST_F(InterpreterTestSuite, PC_BrDeleteExplicitSelectedFails)
                                              "", 0, 0x3F | BorderAgent::kDomainNameBit}),
               RegistryStatus::kSuccess);
 
-    EXPECT_EQ(ctx.mRegistry->SetCurrentNetwork(XpanId{2}), RegistryStatus::kSuccess);
+    EXPECT_EQ(ctx.mRegistry->SetCurrentNetwork(2), RegistryStatus::kSuccess);
 
     Interpreter::Expression expr;
     Interpreter::Value      value;

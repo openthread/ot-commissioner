@@ -117,7 +117,7 @@ void JobManager::SetImportFile(const std::string &importFile)
     mImportFile = importFile;
 }
 
-Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, XpanId aXpanId)
+Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
 {
     Interpreter::JobEvaluator eval;
     auto                      mapItem = Interpreter::mJobEvaluatorMap.find(utils::ToLower(aExpr[0]));
@@ -133,7 +133,9 @@ Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter
     return ERROR_NONE;
 }
 
-Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
+Error JobManager::PrepareJobs(const Interpreter::Expression &aExpr,
+                              const std::vector<uint64_t>   &aNids,
+                              bool                           aGroupAlias)
 {
     Error error;
 
@@ -191,7 +193,9 @@ exit:
     return error;
 }
 
-Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
+Error JobManager::PrepareStartJobs(const Interpreter::Expression &aExpr,
+                                   const std::vector<uint64_t>   &aNids,
+                                   bool                           aGroupAlias)
 {
     Error error = ERROR_NONE;
 
@@ -248,7 +252,9 @@ exit:
     return error;
 }
 
-Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr, const XpanIdArray &aNids, bool aGroupAlias)
+Error JobManager::PrepareStopJobs(const Interpreter::Expression &aExpr,
+                                  const std::vector<uint64_t>   &aNids,
+                                  bool                           aGroupAlias)
 {
     Error error = ERROR_NONE;
 
@@ -282,7 +288,7 @@ exit:
     return error;
 }
 
-Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
+Error JobManager::PrepareDtlsConfig(uint64_t aNid, Config &aConfig)
 {
     Error             error;
     std::string       domainName;
@@ -321,12 +327,12 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
 
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::kSuccess,
-                 error = ERROR_NOT_FOUND("network not found by XPAN '{}'", aNid.str()));
+                 error = ERROR_NOT_FOUND("network not found by XPAN '{}'", utils::Hex(aNid)));
     isCCM  = nwk.mCcm > 0;
     status = mInterpreter.mRegistry->GetDomainNameByXpan(aNid, domainName);
     if (status != RegistryStatus::kSuccess)
     {
-        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", XpanId(aNid).str(),
+        LOG_DEBUG(LOG_REGION_JOB_MANAGER, "{}: domain resolution failed with status={}", utils::Hex(aNid),
                   static_cast<int>(status));
     }
 
@@ -355,8 +361,8 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
                     ///        loading. Therefore, any other connection
                     ///        mode is considered a wrong configuration of
                     ///        border router, and respectively ignored.
-                    LOG_DEBUG(LOG_REGION_JOB_MANAGER, "loading PSKc ignored for CCM network [{}:'{}']", aNid.str(),
-                              nwk.mName);
+                    LOG_DEBUG(LOG_REGION_JOB_MANAGER, "loading PSKc ignored for CCM network [{}:'{}']",
+                              utils::Hex(aNid), nwk.mName);
                 }
                 goto update;
             }
@@ -369,7 +375,7 @@ Error JobManager::PrepareDtlsConfig(const XpanId aNid, Config &aConfig)
         }
     }
 
-    error = security_material::GetNetworkSM(nwk.mXpan.str(), needCert, needPSKc, dtlsConfig);
+    error = security_material::GetNetworkSM(utils::Hex(nwk.mXpan), needCert, needPSKc, dtlsConfig);
     if (ERROR_NONE != error)
     {
         LOG_STR(DEBUG, LOG_REGION_JOB_MANAGER, error.GetMessage());
@@ -427,13 +433,13 @@ update:
 #undef UPDATE_IF_SET
     if (dtlsConfig.IsIncomplete(needCert, needPSKc, isCCM))
     {
-        error = ERROR_SECURITY("incomplete DTLS configuration for the network [{}:'{}']", aNid.str(), nwk.mName);
+        error = ERROR_SECURITY("incomplete DTLS configuration for the network [{}:'{}']", utils::Hex(aNid), nwk.mName);
     }
 exit:
     return error;
 }
 
-Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
+Error JobManager::MakeBorderRouterChoice(uint64_t aNid, BorderRouter &br)
 {
     Error          error;
     BRArray        brs;
@@ -451,7 +457,7 @@ Error JobManager::MakeBorderRouterChoice(const XpanId aNid, BorderRouter &br)
     }
     status = mInterpreter.mRegistry->GetNetworkByXpan(aNid, nwk);
     VerifyOrExit(status == RegistryStatus::kSuccess,
-                 error = ERROR_NOT_FOUND("network not found by XPAN '{}'", aNid.str()));
+                 error = ERROR_NOT_FOUND("network not found by XPAN '{}'", utils::Hex(aNid)));
     if (nwk.mCcm > 0) // Dealing with domain network
     {
         // - try to find active and connectable Primary BBR
@@ -534,7 +540,7 @@ exit:
     return error;
 }
 
-Error JobManager::AppendImport(XpanId aXpanId, Interpreter::Expression &aExpr)
+Error JobManager::AppendImport(uint64_t aXpanId, Interpreter::Expression &aExpr)
 {
     Error       error;
     std::string jsonStr;
@@ -543,13 +549,13 @@ Error JobManager::AppendImport(XpanId aXpanId, Interpreter::Expression &aExpr)
 
     SuccessOrExit(error = JsonFromFile(jsonStr, mImportFile));
     jsonSrc = Json::parse(jsonStr);
-    if (aXpanId == XpanId()) // must be single command
+    if (aXpanId == 0) // must be single command
     {
         json = jsonSrc;
     }
-    else if (jsonSrc.count(aXpanId.str()) > 0)
+    else if (jsonSrc.count(utils::Hex(aXpanId)) > 0)
     {
-        json = jsonSrc[aXpanId.str()];
+        json = jsonSrc[utils::Hex(aXpanId)];
     }
     jsonStr = json.dump(JSON_INDENT_DEFAULT);
     if (utils::ToLower(aExpr[0]) == "opdataset")
@@ -667,14 +673,14 @@ Interpreter::Value JobManager::CollectJobsValue()
 {
     Interpreter::Value value;
     nlohmann::json     json;
-    XpanId             xpan;
+    uint64_t           xpan;
 
     for (const auto &job : mJobPool)
     {
         ASSERT(job->IsStopped());
         if (job->GetValue().HasNoError())
         {
-            xpan = XpanId{job->GetXpanId()};
+            xpan = job->GetXpanId();
             try
             {
                 std::string valueStr = job->GetValue().ToString();
@@ -688,7 +694,7 @@ Interpreter::Value JobManager::CollectJobsValue()
                     // nothing but [done] is printed; we need to see a
                     // distinguished result per network
                 }
-                json[xpan.str()] = nlohmann::json::parse(valueStr);
+                json[utils::Hex(xpan)] = nlohmann::json::parse(valueStr);
             } catch (std::exception &e)
             {
                 ErrorMsg(xpan, e.what());
@@ -696,7 +702,7 @@ Interpreter::Value JobManager::CollectJobsValue()
         }
         else // produce error messages immediately before printing value
         {
-            ErrorMsg(XpanId{job->GetXpanId()}, job->GetValue().ToString());
+            ErrorMsg(job->GetXpanId(), job->GetValue().ToString());
         }
     }
     value = json.dump(JSON_INDENT_DEFAULT);
@@ -719,13 +725,13 @@ void JobManager::StopCommissionerPool()
 Error JobManager::GetSelectedCommissioner(CommissionerAppPtr &aCommissioner)
 {
     Error          error = ERROR_NONE;
-    XpanId         nid;
+    uint64_t       nid;
     RegistryStatus status;
 
     status = mInterpreter.mRegistry->GetCurrentNetworkXpan(nid);
     VerifyOrExit(RegistryStatus::kSuccess == status, error = ERROR_REGISTRY_ERROR("getting selected network failed"));
 
-    if (nid.mValue != XpanId::kEmptyXpanId)
+    if (nid != 0)
     {
         auto entry = mCommissionerPool.find(nid);
         if (entry != mCommissionerPool.end())
@@ -761,19 +767,19 @@ bool JobManager::IsClean()
     return mJobPool.size() == 0 && mImportFile.size() == 0;
 }
 
-void JobManager::ErrorMsg(XpanId aNid, std::string aMessage)
+void JobManager::ErrorMsg(uint64_t aNid, std::string aMessage)
 {
-    mInterpreter.PrintNetworkMessage(aNid.mValue, aMessage, Console::Color::kRed);
+    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kRed);
 }
 
-void JobManager::WarningMsg(XpanId aNid, std::string aMessage)
+void JobManager::WarningMsg(uint64_t aNid, std::string aMessage)
 {
-    mInterpreter.PrintNetworkMessage(aNid.mValue, aMessage, Console::Color::kMagenta);
+    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kMagenta);
 }
 
-void JobManager::InfoMsg(XpanId aNid, std::string aMessage)
+void JobManager::InfoMsg(uint64_t aNid, std::string aMessage)
 {
-    mInterpreter.PrintNetworkMessage(aNid.mValue, aMessage, Console::Color::kDefault);
+    mInterpreter.PrintNetworkMessage(aNid, aMessage, Console::Color::kDefault);
 }
 
 } // namespace commissioner
