@@ -29,32 +29,17 @@
 package io.openthread.commissioner.service;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import java.util.concurrent.CompletableFuture;
+import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public interface ThreadCommissionerService {
 
-  // This method returns Credential of a given Thread Network.
-  // If the Commissioner Service doesn't possess the Network
-  // Credentials already, it will fetch the Credentials from
-  // a Border Agent (assisting device) using the Thread
-  // Commissioning protocol.
-  //
-  // The pskc is used to securely connect to the Border Agent device.
-  // If no pskc is given, the user will be asked to input it.
-  // The Network Credentials will be saved in the Commissioner
-  // Service before returning.
-  CompletableFuture<ThreadNetworkCredential> fetchThreadNetworkCredential(
-      @NonNull BorderAgentInfo borderAgentInfo, @Nullable byte[] pskc);
-
-  // This method returns Credential of a given Thread Network stored in the database on the phone.
-  CompletableFuture<ThreadNetworkCredential> getThreadNetworkCredential(
+  /** Returns Credential of a given Thread Network stored in the database on the phone. */
+  ListenableFuture<ThreadNetworkCredentials> getThreadNetworkCredentials(
       @NonNull BorderAgentInfo borderAgentInfo);
 
-  // This method deletes Credential of a given Thread Network stored in the database on the phone.
-  CompletableFuture<Void> deleteThreadNetworkCredential(@NonNull BorderAgentInfo borderAgentInfo);
-
-  CompletableFuture<Void> commissionJoinerDevice(
+  /** Securely adds a new Thread joiner device into the Thread network via MeshCoP. */
+  ListenableFuture<Void> commissionJoinerDevice(
       @NonNull BorderAgentInfo borderAgentInfo,
       @NonNull byte[] pskc,
       @NonNull JoinerDeviceInfo joinerDeviceInfo);

@@ -56,9 +56,6 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
   private static final String KEY_JOINER_EUI64 = "eui";
   private static final String KEY_JOINER_PSKD = "cc";
 
-  // intent request code to handle updating play services if needed.
-  private static final int RC_HANDLE_GMS = 9001;
-
   // permission request codes need to be < 256
   private static final int RC_HANDLE_CAMERA_PERM = 2;
 

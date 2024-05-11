@@ -39,6 +39,7 @@ import android.view.View;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
 
 public class FetchCredentialDialogFragment extends DialogFragment
     implements DialogInterface.OnClickListener {
@@ -50,12 +51,14 @@ public class FetchCredentialDialogFragment extends DialogFragment
 
   BorderAgentInfo borderAgentInfo;
   byte[] pskc;
-  private ThreadNetworkCredential credential;
+  private ThreadNetworkCredentials credentials;
 
   public interface CredentialListener {
+
     void onCancelClick(FetchCredentialDialogFragment fragment);
 
-    void onConfirmClick(FetchCredentialDialogFragment fragment, ThreadNetworkCredential credential);
+    void onConfirmClick(
+        FetchCredentialDialogFragment fragment, ThreadNetworkCredentials credentials);
   }
 
   public FetchCredentialDialogFragment(
@@ -105,7 +108,7 @@ public class FetchCredentialDialogFragment extends DialogFragment
   @Override
   public void onClick(DialogInterface dialogInterface, int which) {
     if (which == DialogInterface.BUTTON_POSITIVE) {
-      credentialListener.onConfirmClick(this, credential);
+      credentialListener.onConfirmClick(this, credentials);
     } else {
       stopFetching();
       credentialListener.onCancelClick(this);

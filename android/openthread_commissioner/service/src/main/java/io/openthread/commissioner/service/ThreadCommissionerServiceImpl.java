@@ -32,6 +32,14 @@ import android.os.ConditionVariable;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.google.android.gms.threadnetwork.ThreadBorderAgent;
+import com.google.android.gms.threadnetwork.ThreadNetwork;
+import com.google.android.gms.threadnetwork.ThreadNetworkClient;
+import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
+import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.openthread.commissioner.ByteArray;
 import io.openthread.commissioner.ChannelMask;
 import io.openthread.commissioner.Commissioner;
@@ -43,14 +51,15 @@ import io.openthread.commissioner.ErrorCode;
 import java.math.BigInteger;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class ThreadCommissionerServiceImpl extends CommissionerHandler
     implements ThreadCommissionerService {
 
   public interface IntermediateStateCallback {
+
     void onPetitioned();
 
     void onJoinerRequest(@NonNull byte[] joinerId);
@@ -60,93 +69,64 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
 
   private static final int SECONDS_WAIT_FOR_JOINER = 60;
 
+  private final ThreadNetworkClient threadNetworkClient;
+  private final Executor executor;
   @Nullable private IntermediateStateCallback intermediateStateCallback;
-
-  @NonNull private BorderAgentDatabase borderAgentDatabase = BorderAgentDatabase.getDatabase();
 
   @Nullable private JoinerDeviceInfo curJoinerInfo;
   private ConditionVariable curJoinerCommissioned = new ConditionVariable();
 
-  public ThreadCommissionerServiceImpl(
+  public static ThreadCommissionerServiceImpl newInstance(
       @Nullable IntermediateStateCallback intermediateStateCallback) {
+    return new ThreadCommissionerServiceImpl(
+        ThreadNetwork.getClient(CommissionerServiceApp.getContext()),
+        Executors.newSingleThreadExecutor(),
+        intermediateStateCallback);
+  }
+
+  private ThreadCommissionerServiceImpl(
+      ThreadNetworkClient threadNetworkClient,
+      Executor executor,
+      @Nullable IntermediateStateCallback intermediateStateCallback) {
+    this.threadNetworkClient = threadNetworkClient;
+    this.executor = executor;
     this.intermediateStateCallback = intermediateStateCallback;
   }
 
   @Override
-  public CompletableFuture<Void> commissionJoinerDevice(
+  public ListenableFuture<Void> commissionJoinerDevice(
       @NonNull BorderAgentInfo borderAgentInfo,
       @NonNull byte[] pskc,
       @NonNull JoinerDeviceInfo joinerDeviceInfo) {
-    CompletableFuture<Void> future =
-        CompletableFuture.runAsync(
-            () -> {
-              try {
-                doCommissionJoinerDevice(
-                    borderAgentInfo, pskc, joinerDeviceInfo, SECONDS_WAIT_FOR_JOINER);
-              } catch (ThreadCommissionerException e) {
-                throw new CompletionException(e);
-              }
-            });
-    return future;
+    return Futures.submitAsync(
+        () -> {
+          try {
+            doCommissionJoinerDevice(
+                borderAgentInfo, pskc, joinerDeviceInfo, SECONDS_WAIT_FOR_JOINER);
+            return Futures.immediateVoidFuture();
+          } catch (ThreadCommissionerException ex) {
+            return Futures.immediateFailedFuture(ex);
+          }
+        },
+        executor);
   }
 
   @Override
-  public CompletableFuture<ThreadNetworkCredential> fetchThreadNetworkCredential(
-      @NonNull BorderAgentInfo borderAgentInfo, @Nullable byte[] pskc) {
-    return getThreadNetworkCredential(borderAgentInfo)
-        .thenApply(
-            credential -> {
-              if (credential != null) {
-                return credential;
-              }
-
-              try {
-                byte[] activeDataset = doFetchActiveDataset(borderAgentInfo, pskc);
-                return new ThreadNetworkCredential(activeDataset);
-              } catch (ThreadCommissionerException e) {
-                throw new CompletionException(e);
-              }
-            });
-  }
-
-  @Override
-  public CompletableFuture<ThreadNetworkCredential> getThreadNetworkCredential(
+  public ListenableFuture<ThreadNetworkCredentials> getThreadNetworkCredentials(
       @NonNull BorderAgentInfo borderAgentInfo) {
-    return getBorderAgentRecord(borderAgentInfo)
-        .thenApply(
-            borderAgentRecord -> {
-              if (borderAgentRecord == null
-                  || borderAgentRecord.getActiveOperationalDataset() == null) {
-                return null;
-              }
-              return new ThreadNetworkCredential(borderAgentRecord.getActiveOperationalDataset());
-            });
+    return FluentFuture.from(
+            CommissionerUtils.toListenableFuture(
+                threadNetworkClient.getCredentialsByBorderAgent(
+                    ThreadBorderAgent.newBuilder(borderAgentInfo.id).build())))
+        .transform(result -> result.getCredentials(), MoreExecutors.directExecutor());
   }
 
-  CompletableFuture<BorderAgentRecord> getBorderAgentRecord(
-      @NonNull BorderAgentInfo borderAgentInfo) {
-    return borderAgentDatabase.getBorderAgent(borderAgentInfo.discriminator);
-  }
-
-  @Override
-  public CompletableFuture<Void> deleteThreadNetworkCredential(
-      @NonNull BorderAgentInfo borderAgentInfo) {
-    return borderAgentDatabase.deleteBorderAgent(borderAgentInfo.discriminator);
-  }
-
-  // This method adds given Thread Network Credential into database on the phone.
-  private CompletableFuture<Void> addThreadNetworkCredential(
-      @NonNull BorderAgentInfo borderAgentInfo,
-      @NonNull byte[] pskc,
-      @Nullable ThreadNetworkCredential networkCredential) {
-    BorderAgentRecord borderAgentRecord =
-        new BorderAgentRecord(
-            borderAgentInfo.discriminator,
-            borderAgentInfo.networkName,
-            borderAgentInfo.extendedPanId,
-            pskc,
-            networkCredential == null ? null : networkCredential.getEncoded());
-    return borderAgentDatabase.insertBorderAgent(borderAgentRecord);
+  /** Adds given Thread Network Credential into database on the phone. */
+  private ListenableFuture<Void> addThreadNetworkCredentials(
+      BorderAgentInfo borderAgentInfo, ThreadNetworkCredentials credentials) {
+    return CommissionerUtils.toListenableFuture(
+        threadNetworkClient.addCredentials(
+            ThreadBorderAgent.newBuilder(borderAgentInfo.id).build(), credentials));
   }
 
   private void doCommissionJoinerDevice(
@@ -177,8 +157,13 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
           nativeCommissioner.petition(
               existingCommissionerId, borderAgentInfo.host.getHostAddress(), borderAgentInfo.port));
 
-      // Save PSKc for current Border Agent once we have successfully connected to it.
-      addThreadNetworkCredential(borderAgentInfo, pskc, null).get();
+      // Retrieves active dataset and saves it to GMS Core
+      ByteArray rawActiveDataset = new ByteArray();
+      throwIfFail(nativeCommissioner.getRawActiveDataset(rawActiveDataset, 0xFFFF));
+      ThreadNetworkCredentials credentials =
+          ThreadNetworkCredentials.fromActiveOperationalDataset(
+              CommissionerUtils.getByteArray(rawActiveDataset));
+      addThreadNetworkCredentials(borderAgentInfo, credentials).get();
 
       if (intermediateStateCallback != null) {
         intermediateStateCallback.onPetitioned();
@@ -235,8 +220,6 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
               getBorderAgentAddress(borderAgentInfo),
               borderAgentInfo.port));
 
-      addThreadNetworkCredential(borderAgentInfo, pskc, null).get();
-
       if (intermediateStateCallback != null) {
         intermediateStateCallback.onPetitioned();
       }
@@ -245,10 +228,6 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
       ByteArray rawActiveDataset = new ByteArray();
       throwIfFail(nativeCommissioner.getRawActiveDataset(rawActiveDataset, 0xFFFF));
       return CommissionerUtils.getByteArray(rawActiveDataset);
-    } catch (InterruptedException e) {
-      throw new ThreadCommissionerException(ErrorCode.kUnknown, e.getMessage());
-    } catch (ExecutionException e) {
-      throw new ThreadCommissionerException(ErrorCode.kUnknown, e.getMessage());
     } finally {
       nativeCommissioner.resign();
     }
@@ -320,7 +299,7 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
 
   @Override
   public void onDatasetChanged() {
-    Log.d(TAG, "Thread Network Dataset chanaged");
+    Log.d(TAG, "Thread Network Dataset changed");
   }
 
   private ByteArray getCurJoinerId() {

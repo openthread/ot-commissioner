@@ -35,27 +35,28 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class BorderAgentInfo implements Parcelable {
-  public String discriminator;
+
+  public byte[] id;
   public String networkName;
   public byte[] extendedPanId;
   public InetAddress host;
   public int port;
 
   public BorderAgentInfo(
-      @NonNull String discriminator,
+      @NonNull byte[] id,
       @NonNull String networkName,
       @NonNull byte[] extendedPanId,
       @NonNull InetAddress host,
       @NonNull int port) {
-    this.discriminator = discriminator;
+    this.id = id.clone();
     this.networkName = networkName;
-    this.extendedPanId = extendedPanId;
+    this.extendedPanId = extendedPanId.clone();
     this.host = host;
     this.port = port;
   }
 
   protected BorderAgentInfo(Parcel in) {
-    discriminator = in.readString();
+    id = in.createByteArray();
     networkName = in.readString();
     extendedPanId = in.createByteArray();
     try {
@@ -67,7 +68,7 @@ public class BorderAgentInfo implements Parcelable {
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
-    dest.writeString(discriminator);
+    dest.writeByteArray(id);
     dest.writeString(networkName);
     dest.writeByteArray(extendedPanId);
     dest.writeByteArray(host.getAddress());
@@ -77,10 +78,6 @@ public class BorderAgentInfo implements Parcelable {
   @Override
   public int describeContents() {
     return 0;
-  }
-
-  public boolean equals(BorderAgentInfo other) {
-    return this.discriminator.equals(other.discriminator);
   }
 
   public static final Creator<BorderAgentInfo> CREATOR =
