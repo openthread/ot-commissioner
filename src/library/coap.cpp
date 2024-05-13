@@ -653,7 +653,7 @@ void Coap::HandleRequest(const Request &aRequest)
     {
         LOG_INFO(LOG_REGION_COAP, "server(={}) found cached CoAP response for resource {}", static_cast<void *>(this),
                  uriPath);
-        ExitNow(error = Send(*response));
+        VerifyOrExit(aRequest.IsConfirmable(), error = SendAck(aRequest));
     }
 
     resource = mResources.find(uriPath);
