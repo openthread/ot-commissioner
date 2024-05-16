@@ -29,6 +29,9 @@
 package io.openthread.commissioner.service;
 
 import androidx.annotation.Nullable;
+import androidx.concurrent.futures.CallbackToFutureAdapter;
+import com.google.android.gms.tasks.Task;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.openthread.commissioner.ByteArray;
 
 public class CommissionerUtils {
@@ -75,5 +78,28 @@ public class CommissionerUtils {
 
   public static String getHexString(ByteArray byteArray) {
     return getHexString(getByteArray(byteArray));
+  }
+
+  /** Converts a {@link Task} to a {@link ListenableFuture}. */
+  public static <T> ListenableFuture<T> toListenableFuture(Task<T> task) {
+    return CallbackToFutureAdapter.getFuture(
+        completer -> {
+          task.addOnCompleteListener(
+              completedTask -> {
+                if (completedTask.isCanceled()) {
+                  completer.setCancelled();
+                } else if (completedTask.isSuccessful()) {
+                  completer.set(completedTask.getResult());
+                } else {
+                  Exception e = completedTask.getException();
+                  if (e != null) {
+                    completer.setException(e);
+                  } else {
+                    throw new IllegalStateException();
+                  }
+                }
+              });
+          return "toListenableFuture";
+        });
   }
 }

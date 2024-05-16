@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Vector;
 
 public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
+
   private Vector<ThreadNetworkInfoHolder> networks;
 
   private LayoutInflater inflater;
@@ -68,10 +69,10 @@ public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
     new Handler(Looper.getMainLooper()).post(() -> notifyDataSetChanged());
   }
 
-  public void removeBorderAgent(String lostBorderAgentDisciminator) {
+  public void removeBorderAgent(byte[] lostBorderAgentId) {
     for (ThreadNetworkInfoHolder networkInfoHolder : networks) {
       for (BorderAgentInfo borderAgent : networkInfoHolder.getBorderAgents()) {
-        if (borderAgent.discriminator.equals(lostBorderAgentDisciminator)) {
+        if (Arrays.equals(borderAgent.id, lostBorderAgentId)) {
           networkInfoHolder.getBorderAgents().remove(borderAgent);
           if (networkInfoHolder.getBorderAgents().isEmpty()) {
             networks.remove(networkInfoHolder);
@@ -119,7 +120,7 @@ public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
   }
 
   @Override
-  public void onBorderAgentLost(String discriminator) {
-    removeBorderAgent(discriminator);
+  public void onBorderAgentLost(byte[] borderAgentId) {
+    removeBorderAgent(borderAgentId);
   }
 }
