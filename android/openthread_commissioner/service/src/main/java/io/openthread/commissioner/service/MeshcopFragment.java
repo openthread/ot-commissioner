@@ -40,8 +40,11 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import java.util.concurrent.CompletableFuture;
+import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public class MeshcopFragment extends Fragment
     implements ThreadCommissionerServiceImpl.IntermediateStateCallback {
@@ -55,18 +58,17 @@ public class MeshcopFragment extends Fragment
   ImageView doneImage;
   ImageView errorImage;
 
-  @NonNull private FragmentCallback meshcopCallback;
+  @NonNull private final FragmentCallback meshcopCallback;
 
-  @NonNull private ThreadNetworkInfoHolder networkInfoHolder;
+  @NonNull private final ThreadNetworkInfoHolder networkInfoHolder;
 
-  @NonNull private byte[] pskc;
+  @NonNull private final byte[] pskc;
 
-  @NonNull private JoinerDeviceInfo joinerDeviceInfo;
+  @NonNull private final JoinerDeviceInfo joinerDeviceInfo;
 
-  private ThreadCommissionerServiceImpl commissionerService =
-      new ThreadCommissionerServiceImpl(this);
-
-  private CompletableFuture<Void> commissionFuture;
+  private final ThreadCommissionerServiceImpl commissionerService =
+      ThreadCommissionerServiceImpl.newInstance(this);
+  private ListenableFuture<Void> commissionFuture;
 
   public MeshcopFragment(
       @NonNull FragmentCallback meshcopCallback,
@@ -127,25 +129,21 @@ public class MeshcopFragment extends Fragment
     showInProgress("Petitioning...");
 
     commissionFuture =
-        commissionerService
-            .commissionJoinerDevice(borderAgentInfo, pskc, joinerDeviceInfo)
-            .thenRun(
-                () -> {
-                  new Handler(Looper.getMainLooper())
-                      .post(
-                          () -> {
-                            showCommissionDone(true, "Commission Succeed");
-                          });
-                })
-            .exceptionally(
-                ex -> {
-                  new Handler(Looper.getMainLooper())
-                      .post(
-                          () -> {
-                            showCommissionDone(false, ex.getMessage());
-                          });
-                  return null;
-                });
+        commissionerService.commissionJoinerDevice(borderAgentInfo, pskc, joinerDeviceInfo);
+    FluentFuture.from(commissionFuture)
+        .addCallback(
+            new FutureCallback<Void>() {
+              @Override
+              public void onSuccess(Void result) {
+                showCommissionDone(true, "Commission Succeed");
+              }
+
+              @Override
+              public void onFailure(Throwable t) {
+                showCommissionDone(false, t.getMessage());
+              }
+            },
+            ContextCompat.getMainExecutor(getActivity()));
   }
 
   private void stopMeshcop() {

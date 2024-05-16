@@ -28,6 +28,7 @@
 
 package io.openthread.commissioner.service;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,17 +40,22 @@ import android.widget.ListView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.FutureCallback;
 import io.openthread.commissioner.ByteArray;
 import io.openthread.commissioner.Commissioner;
 import io.openthread.commissioner.Error;
 import io.openthread.commissioner.ErrorCode;
-import java.util.concurrent.ExecutionException;
 
 public class SelectNetworkFragment extends Fragment
     implements InputNetworkPasswordDialogFragment.PasswordDialogListener,
         FetchCredentialDialogFragment.CredentialListener,
         View.OnClickListener {
+
   private static final String TAG = SelectNetworkFragment.class.getSimpleName();
 
   private FragmentCallback networkInfoCallback;
@@ -192,35 +198,51 @@ public class SelectNetworkFragment extends Fragment
     return CommissionerUtils.getByteArray(pskc);
   }
 
-  private void gotoFetchingCredential(BorderAgentInfo borderAgentInfo, byte[] pskc) {
-    new FetchCredentialDialogFragment(borderAgentInfo, pskc, SelectNetworkFragment.this)
-        .show(getParentFragmentManager(), FetchCredentialDialogFragment.class.getSimpleName());
-  }
-
   @Override
   public void onClick(View view) {
-    try {
-      BorderAgentInfo selectedBorderAgent = selectedNetwork.getBorderAgents().get(0);
-      ThreadCommissionerServiceImpl commissionerService = new ThreadCommissionerServiceImpl(null);
-
-      // TODO(wgtdkp): we could be blocked here.
-      BorderAgentRecord borderAgentRecord =
-          commissionerService.getBorderAgentRecord(selectedBorderAgent).get();
-
-      if (borderAgentRecord != null && borderAgentRecord.getPskc() != null) {
-        networkInfoCallback.onNetworkSelected(selectedNetwork, borderAgentRecord.getPskc());
-      } else {
-        // Ask the user to input Commissioner password.
-        new InputNetworkPasswordDialogFragment(SelectNetworkFragment.this)
-            .show(
-                getParentFragmentManager(),
-                InputNetworkPasswordDialogFragment.class.getSimpleName());
-      }
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    BorderAgentInfo selectedBorderAgent = selectedNetwork.getBorderAgents().get(0);
+    if (selectedBorderAgent.id == null) {
+      showAlertDialog("Invalid Border Router: no \"id\" associated");
+      return;
     }
+
+    ThreadCommissionerServiceImpl commissionerService =
+        ThreadCommissionerServiceImpl.newInstance(null);
+
+    FluentFuture.from(commissionerService.getThreadNetworkCredentials(selectedBorderAgent))
+        .addCallback(
+            new FutureCallback<ThreadNetworkCredentials>() {
+              @Override
+              public void onSuccess(ThreadNetworkCredentials credentials) {
+                if (credentials != null) {
+                  networkInfoCallback.onNetworkSelected(selectedNetwork, credentials.getPskc());
+                } else {
+                  // Ask the user to input Commissioner password.
+                  new InputNetworkPasswordDialogFragment(SelectNetworkFragment.this)
+                      .show(
+                          getParentFragmentManager(),
+                          InputNetworkPasswordDialogFragment.class.getSimpleName());
+                }
+              }
+
+              @Override
+              public void onFailure(Throwable t) {
+                Log.e(TAG, "Failed to retrieve Thread network credentials from GMS", t);
+                showAlertDialog(t.getMessage());
+              }
+            },
+            ContextCompat.getMainExecutor(getActivity()));
+  }
+
+  private void showAlertDialog(String message) {
+    new MaterialAlertDialogBuilder(getActivity(), R.style.ThreadNetworkAlertTheme)
+        .setMessage(message)
+        .setPositiveButton(
+            "OK",
+            ((dialog, which) -> {
+              networkInfoCallback.onMeshcopResult(Activity.RESULT_CANCELED);
+            }))
+        .show();
   }
 
   @Override
@@ -230,7 +252,7 @@ public class SelectNetworkFragment extends Fragment
 
   @Override
   public void onConfirmClick(
-      FetchCredentialDialogFragment fragment, ThreadNetworkCredential credential) {
+      FetchCredentialDialogFragment fragment, ThreadNetworkCredentials credentials) {
     // TODO:
   }
 }

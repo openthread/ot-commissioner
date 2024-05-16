@@ -10,4 +10,19 @@
     <style name="title_text" parent="TextAppearance.AppCompat.Title" />
     <style name="info_text" parent="TextAppearance.AppCompat.Medium" />
     <style name="mini_info_text" parent="TextAppearance.AppCompat.Small" />
+
+    <style name="ThreadNetworkAlertTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+    </style>
+
+    <style name="ThreadNetworkDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog.Centered">
+        <item name="materialAlertDialogTitleTextStyle">@style/ThreadNetworkDialogTitleStyle</item>
+    </style>
+
+    <style name="ThreadNetworkDialogTitleStyle" parent="@style/MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textAppearance">?attr/textAppearanceSubtitle1</item>
+        <item name="android:maxLines">3</item>
+        <item name="android:singleLine">false</item>
+    </style>
 </resources>

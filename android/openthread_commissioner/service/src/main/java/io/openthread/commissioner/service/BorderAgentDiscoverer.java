@@ -34,6 +34,7 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -47,7 +48,7 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
   private static final String TAG = BorderAgentDiscoverer.class.getSimpleName();
 
   private static final String SERVICE_TYPE = "_meshcop._udp";
-  private static final String KEY_DISCRIMINATOR = "discriminator";
+  private static final String KEY_ID = "id";
   private static final String KEY_NETWORK_NAME = "nn";
   private static final String KEY_EXTENDED_PAN_ID = "xp";
 
@@ -62,9 +63,10 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
   private boolean isScanning = false;
 
   public interface BorderAgentListener {
+
     void onBorderAgentFound(BorderAgentInfo borderAgentInfo);
 
-    void onBorderAgentLost(String discriminator);
+    void onBorderAgentLost(byte[] id);
   }
 
   @RequiresPermission(permission.INTERNET)
@@ -182,10 +184,10 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
 
   @Override
   public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
-    String discriminator = getBorderAgentDiscriminator(nsdServiceInfo);
-    if (discriminator != null) {
-      Log.d(TAG, "a Border Agent service is gone");
-      borderAgentListener.onBorderAgentLost(discriminator);
+    byte[] id = getBorderAgentId(nsdServiceInfo);
+    if (id != null) {
+      Log.d(TAG, "a Border Agent service is gone: " + nsdServiceInfo.getServiceName());
+      borderAgentListener.onBorderAgentLost(id);
     }
   }
 
@@ -199,40 +201,29 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
     Log.d(TAG, "stop discovering Border Agent failed: " + errorCode);
   }
 
+  @Nullable
   private BorderAgentInfo getBorderAgentInfo(NsdServiceInfo serviceInfo) {
     Map<String, byte[]> attrs = serviceInfo.getAttributes();
-
-    // Use the host address as default discriminator.
-    String discriminator = serviceInfo.getHost().getHostAddress();
-
-    if (attrs.containsKey(KEY_DISCRIMINATOR)) {
-      discriminator = new String(attrs.get(KEY_DISCRIMINATOR));
-    }
+    byte[] id = getBorderAgentId(serviceInfo);
 
     if (!attrs.containsKey(KEY_NETWORK_NAME) || !attrs.containsKey(KEY_EXTENDED_PAN_ID)) {
       return null;
     }
 
     return new BorderAgentInfo(
-        discriminator,
+        id,
         new String(attrs.get(KEY_NETWORK_NAME)),
         attrs.get(KEY_EXTENDED_PAN_ID),
         serviceInfo.getHost(),
         serviceInfo.getPort());
   }
 
-  private String getBorderAgentDiscriminator(NsdServiceInfo serviceInfo) {
+  @Nullable
+  private byte[] getBorderAgentId(NsdServiceInfo serviceInfo) {
     Map<String, byte[]> attrs = serviceInfo.getAttributes();
-
-    if (attrs.containsKey(KEY_DISCRIMINATOR)) {
-      return new String(attrs.get(KEY_DISCRIMINATOR));
+    if (attrs.containsKey(KEY_ID)) {
+      return attrs.get(KEY_ID).clone();
     }
-
-    if (serviceInfo.getHost() != null) {
-      // Use the host address as default discriminator.
-      return serviceInfo.getHost().getHostAddress();
-    }
-
     return null;
   }
 }
