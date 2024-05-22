@@ -124,7 +124,7 @@ static constexpr uint16_t kDefaultAeUdpPort = 1001;
 static constexpr uint16_t kDefaultNmkpUdpPort = 1002;
 
 /**
- * The default management UDP Port used by TMF transaction Thread devices if not specified.
+ * The default management UDP Port used by TMF transaction in Thread devices.
  */
 static constexpr uint16_t kDefaultMmPort = 61631;
 
