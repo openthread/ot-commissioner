@@ -71,7 +71,7 @@ public:
 
     void SetPeerAddr(const Address &aPeerAddr) { mPeerAddr = aPeerAddr; }
     void SetPeerPort(uint16_t aPeerPort) { mPeerPort = aPeerPort; }
-    void SetSockPort(uint16_t aSockPort) { mSockPort = mSockPort; }
+    void SetSockPort(uint16_t aSockPort) { mSockPort = aSockPort; }
 
 private:
     coap::CoapSecure &mBrClient;
