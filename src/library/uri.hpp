@@ -78,7 +78,6 @@ static const char *const kJoinApp             = "/c/ja";
 /*
  * Thread diagnostic URIs
  */
-
 static const char *const kDiagGet      = "/d/dg";
 static const char *const kDiagGetQuery = "/d/dq";
 static const char *const kDiagGetAns   = "/d/da";
