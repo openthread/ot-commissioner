@@ -73,7 +73,6 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
     Error         error;
     coap::Request udpTx{coap::Type::kNonConfirmable, coap::Code::kPost};
     ByteArray     udpPayload;
-    uint16_t      sockPort;
 
     (void)aSubType;
 
@@ -82,8 +81,8 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
 
     VerifyOrExit(mBrClient.IsConnected(), error = ERROR_INVALID_STATE("not connected to the border agent"));
 
-    sockPort = (mSockPort == 0) ? mBrClient.GetDtlsSession().GetLocalPort() : GetSockPort();
-    utils::Encode<uint16_t>(udpPayload, sockPort);
+    // set the source port to default mamagement port for UDP_Tx message
+    utils::Encode<uint16_t>(udpPayload, kDefaultMmPort);
     utils::Encode<uint16_t>(udpPayload, GetPeerPort());
     udpPayload.insert(udpPayload.end(), aRequest.begin(), aRequest.end());
 
@@ -153,6 +152,7 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
     Error       error;
     Address     peerAddr;
     uint16_t    peerPort;
+    uint16_t    destPort;
     tlv::TlvPtr srcAddr  = nullptr;
     tlv::TlvPtr udpEncap = nullptr;
 
@@ -165,9 +165,14 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
 
     peerPort = utils::Decode<uint16_t>(udpEncap->GetValue());
 
+    // get the dest port from the UDP_Rx message
+    destPort = utils::Decode<uint16_t>(&udpEncap->GetValue()[2], sizeof(uint16_t));
+    VerifyOrExit(destPort == kDefaultMmPort,
+                 ERROR_UNIMPLEMENTED("dropping UDP_RX.ntf message to port {}: only port {} is supported", destPort,
+                                     kDefaultMmPort));
+
     mEndpoint.SetPeerAddr(peerAddr);
     mEndpoint.SetPeerPort(peerPort);
-    mEndpoint.SetSockPort(peerPort);
 
     mCoap.Receive({udpEncap->GetValue().begin() + 4, udpEncap->GetValue().end()});
 
