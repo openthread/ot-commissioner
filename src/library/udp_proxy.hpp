@@ -59,6 +59,7 @@ public:
     explicit ProxyEndpoint(coap::CoapSecure &aBrClient)
         : mBrClient(aBrClient)
         , mPeerPort(0)
+        , mSockPort(0)
     {
     }
     ~ProxyEndpoint() override = default;
@@ -66,14 +67,17 @@ public:
     Error    Send(const ByteArray &aRequest, MessageSubType aSubType) override;
     Address  GetPeerAddr() const override { return mPeerAddr; }
     uint16_t GetPeerPort() const override { return mPeerPort; }
+    uint16_t GetSockPort() const { return mSockPort; }
 
     void SetPeerAddr(const Address &aPeerAddr) { mPeerAddr = aPeerAddr; }
     void SetPeerPort(uint16_t aPeerPort) { mPeerPort = aPeerPort; }
+    void SetSockPort(uint16_t aSockPort) { mSockPort = mSockPort; }
 
 private:
     coap::CoapSecure &mBrClient;
     Address           mPeerAddr;
     uint16_t          mPeerPort;
+    uint16_t          mSockPort;
 };
 
 // The UDP proxy CoAP client that sends CoAP requests encapsulated

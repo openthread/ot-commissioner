@@ -73,6 +73,7 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
     Error         error;
     coap::Request udpTx{coap::Type::kNonConfirmable, coap::Code::kPost};
     ByteArray     udpPayload;
+    uint16_t      sockPort;
 
     (void)aSubType;
 
@@ -81,7 +82,8 @@ Error ProxyEndpoint::Send(const ByteArray &aRequest, MessageSubType aSubType)
 
     VerifyOrExit(mBrClient.IsConnected(), error = ERROR_INVALID_STATE("not connected to the border agent"));
 
-    utils::Encode<uint16_t>(udpPayload, mBrClient.GetDtlsSession().GetLocalPort());
+    sockPort = (mSockPort == 0) ? mBrClient.GetDtlsSession().GetLocalPort() : GetSockPort();
+    utils::Encode<uint16_t>(udpPayload, sockPort);
     utils::Encode<uint16_t>(udpPayload, GetPeerPort());
     udpPayload.insert(udpPayload.end(), aRequest.begin(), aRequest.end());
 
@@ -165,6 +167,7 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
 
     mEndpoint.SetPeerAddr(peerAddr);
     mEndpoint.SetPeerPort(peerPort);
+    mEndpoint.SetSockPort(peerPort);
 
     mCoap.Receive({udpEncap->GetValue().begin() + 4, udpEncap->GetValue().end()});
 
