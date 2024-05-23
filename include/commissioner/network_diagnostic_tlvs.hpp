@@ -34,7 +34,6 @@
 #ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
 #define OT_COMM_NETWORK_DIAG_TLVS_HPP_
 
-#include <algorithm>
 #include <cstdint>
 #include <set>
 
@@ -80,9 +79,9 @@ enum class NetworkDiagTlvType : uint8_t
 };
 
 /**
- * @brief Set of TLV types commonly used in diagnostic get requests and queries.
+ * @brief Set of TLV types allowed in a Diagnostic Get Request.
  */
-static const std::set<NetworkDiagTlvType> kCommonDiagnosticTlvs = {
+static const std::set<NetworkDiagTlvType> kDiagnosticGetRequestTlvs = {
     NetworkDiagTlvType::kNetworkDiagExtMacAddress,
     NetworkDiagTlvType::kNetworkDiagMacAddress,
     NetworkDiagTlvType::kNetworkDiagMode,
@@ -109,24 +108,38 @@ static const std::set<NetworkDiagTlvType> kCommonDiagnosticTlvs = {
     NetworkDiagTlvType::kNetworkDiagMleCounters};
 
 /**
- * @brief Set of TLV types allowed in a Diagnostic Get Request.
- */
-static const std::set<NetworkDiagTlvType> kDiagnosticGetRequestTlvs = kCommonDiagnosticTlvs;
-
-/**
  * @brief Set of TLV types allowed in a Diagnostic Get Query.
  */
-static const std::set<NetworkDiagTlvType> kDiagnosticGetQueryTlvs = [&kCommonDiagnosticTlvs]() {
-    std::set<NetworkDiagTlvType> result;
-    std::set<NetworkDiagTlvType> additionalTlvs = {
-        NetworkDiagTlvType::kNetworkDiagChild, NetworkDiagTlvType::kNetworkDiagChildIpv6Address,
-        NetworkDiagTlvType::kNetworkDiagRouterNeighbor, NetworkDiagTlvType::kNetworkDiagAnswer,
-        NetworkDiagTlvType::kNetworkDiagQueryID};
-
-    std::set_union(kCommonDiagnosticTlvs.begin(), kCommonDiagnosticTlvs.end(), additionalTlvs.begin(),
-                   additionalTlvs.end(), std::inserter(result, result.begin()));
-    return result;
-}();
+static const std::set<NetworkDiagTlvType> kDiagnosticGetQueryTlvs = {
+    NetworkDiagTlvType::kNetworkDiagExtMacAddress,
+    NetworkDiagTlvType::kNetworkDiagMacAddress,
+    NetworkDiagTlvType::kNetworkDiagMode,
+    NetworkDiagTlvType::kNetworkDiagTimeout,
+    NetworkDiagTlvType::kNetworkDiagConnectivity,
+    NetworkDiagTlvType::kNetworkDiagRoute64,
+    NetworkDiagTlvType::kNetworkDiagLeaderData,
+    NetworkDiagTlvType::kNetworkDiagNetworkData,
+    NetworkDiagTlvType::kNetworkDiagIpv6Address,
+    NetworkDiagTlvType::kNetworkDiagMacCounters,
+    NetworkDiagTlvType::kNetworkDiagBatteryLevel,
+    NetworkDiagTlvType::kNetworkDiagSupplyVoltage,
+    NetworkDiagTlvType::kNetworkDiagChildTable,
+    NetworkDiagTlvType::kNetworkDiagChannelPages,
+    NetworkDiagTlvType::kNetworkDiagMaxChildTimeout,
+    NetworkDiagTlvType::kNetworkDiagLDevIDSubjectPubKeyInfo,
+    NetworkDiagTlvType::kNetworkDiagIDevIDCert,
+    NetworkDiagTlvType::kNetworkDiagEui64,
+    NetworkDiagTlvType::kNetworkDiagVersion,
+    NetworkDiagTlvType::kNetworkDiagVendorName,
+    NetworkDiagTlvType::kNetworkDiagVendorModel,
+    NetworkDiagTlvType::kNetworkDiagVendorSWVersion,
+    NetworkDiagTlvType::kNetworkDiagThreadStackVersion,
+    NetworkDiagTlvType::kNetworkDiagChild,
+    NetworkDiagTlvType::kNetworkDiagChildIpv6Address,
+    NetworkDiagTlvType::kNetworkDiagRouterNeighbor,
+    NetworkDiagTlvType::kNetworkDiagAnswer,
+    NetworkDiagTlvType::kNetworkDiagQueryID,
+    NetworkDiagTlvType::kNetworkDiagMleCounters};
 
 static const std::set<NetworkDiagTlvType> kDiagnosticGetResetTlvs = {NetworkDiagTlvType::kNetworkDiagMacCounters,
                                                                      NetworkDiagTlvType::kNetworkDiagMleCounters};
