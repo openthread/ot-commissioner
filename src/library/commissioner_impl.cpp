@@ -651,9 +651,10 @@ exit:
     }
 }
 
-void CommissionerImpl::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags)
+void CommissionerImpl::CommandDiagGet(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
 {
     Error         error;
+    Address       dstAddr;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
     auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         Error error;
@@ -671,6 +672,8 @@ void CommissionerImpl::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRlo
     };
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+
+    SuccessOrExit(error = dstAddr.Set(aAddr));
     SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlvs(aDiagTlvFlags),
                                               tlv::Scope::kNetworkDiag}));
@@ -681,11 +684,9 @@ void CommissionerImpl::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRlo
         SuccessOrExit(error = SignRequest(request));
     }
 #endif
-    if (aRloc == 0)
-    {
-        aRloc = kLeaderAloc16;
-    }
-    mProxyClient.SendRequest(request, onResponse, aRloc, kDefaultMmPort);
+
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sending DIAG_GET.req command to {}", aAddr);
+    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
     LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
 
 exit:

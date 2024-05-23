@@ -1148,28 +1148,33 @@ public:
     static std::string GetVersion(void);
 
     /**
-     * @brief Asynchronously command a Thread device to request a set of diagnostic TLV(s) data.
+     * @brief Asynchronously requests diagnostic TLV data from a Thread device.
      *
-     * This method requests a Thread device to request a set of diagnostic data by sending DIAG_GET.req message.
-     * It always returns immediately without waiting for the completion. //TBC by real test
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
      *
-     * @param[in, out] aHandler       A handler of all response and errors; Guaranteed to be called.
-     * @param[in]      aRloc          The RLOC of dest Thread device.
-     * @param[in]      aDiagTlvFlags  Diagnostic TLVs flags indicate which TLVs are wanted.
+     * @param[in, out] aHandler  A handler to process the response or any errors.
+     *                           This handler is guaranteed to be called.
+     * @param[in]     aAddr     Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]     aDiagTlvFlags Bitmask specifying the desired diagnostic TLVs.
      */
-    virtual void CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aaDiagTlvFlags) = 0;
+    virtual void CommandDiagGet(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aaDiagTlvFlags) = 0;
 
     /**
-     * @brief Synchronously command a Thread device to request a set of diagnostic TLV(s) data.
+     * @brief Synchronously requests diagnostic TLV data from a Thread device.
      *
-     * This method requests a Thread device to request a set of diagnostic data by sending DIAG_GET.req message.
-     * It will not return until errors happened, timeouted or succeed.
-     * @param[out] aRawTlvData    A diagnostic TLVs data returned by the leader or other Thread Device.
-     * @param[in]  aRloc          The RLOC of dest Thread device.
-     * @param[in]  aDiagTlvFlags  Diagnostic TLVs flags indicate which TLVs are wanted.
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The method blocks until a response is received, an error occurs, or a timeout is reached.
      *
+     * @param[out] aRawTlvData  Upon success, contains the diagnostic TLV data returned by the device.
+     * @param[in]  aAddr        Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]  aDiagTlvFlags Bitmask specifying the desired diagnostic TLVs.
+     *
+     * @return CHIP_NO_ERROR on success, or an appropriate error code on failure.
      */
-    virtual Error CommandDiagGet(ByteArray &aRawTlvData, uint16_t aRloc, uint64_t aDiagTlvFlags) = 0;
+    virtual Error CommandDiagGet(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
 };
 
 } // namespace commissioner
