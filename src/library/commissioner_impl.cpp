@@ -653,7 +653,6 @@ exit:
     }
 }
 
-/***************************************************************************************************************/
 void CommissionerImpl::CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
                                              const std::string   &aAddr,
                                              uint64_t             aDiagTlvFlags)
@@ -730,7 +729,6 @@ exit:
     }
 }
 
-/***************************************************************************************************************/
 
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
@@ -1532,7 +1530,6 @@ ByteArray CommissionerImpl::GetPendingOperationalDatasetTlvs(uint16_t aDatasetFl
     return tlvTypes;
 }
 
-/************************************************************************************** */
 void CommissionerImpl::DecodeLeaderDataTlv(LeaderData &aLeaderData, const ByteArray &aBuf)
 {
     size_t length = aBuf.size();
@@ -1626,8 +1623,6 @@ Error CommissionerImpl::DecodeChildTableTlv(ChildTable &aChildTableTlv, const By
 exit:
     return error;
 }
-
-/***************************************************************************************************************/
 
 ByteArray CommissionerImpl::GetDiagTlvs(uint64_t aDiagTlvFlags)
 {
@@ -1741,7 +1736,7 @@ Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteA
 exit:
     return error;
 }
-/***************************************************************************************************************/
+
 Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload)
 {
     Error                    error;
