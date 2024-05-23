@@ -169,9 +169,12 @@ namespace commissioner {
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
 
-    %ignore Commissioner::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
+    %ignore Commissioner::CommandDiagGetRequest(Handler<NetDiagTlvs>   aHandler,
                                                 const std::string     &aAddr,
-                                                const DiagTlvTypeList &aDiagTlvTypeList);
+                                                uint64_t              &aDiagTlvFlags);
+    %ignore Commissioner::CommandDiagGetRawData(Handler<ByteArray>     aHandler,
+                                                const std::string     &aAddr,
+                                                uint64_t              &aDiagTlvFlags);
 
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
