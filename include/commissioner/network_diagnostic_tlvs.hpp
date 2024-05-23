@@ -147,7 +147,7 @@ static const std::set<NetworkDiagTlvType> kDiagnosticGetResetTlvs = {NetworkDiag
 /**
  * Type alias of type list
  */
-using DiagTlvTypeList = std::vector<NetworkDiagTlvType>;
+using DiagTlvTypeList = std::vector<ot::commissioner::NetworkDiagTlvType>;
 
 } // namespace commissioner
 
