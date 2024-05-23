@@ -1162,7 +1162,7 @@ public:
      */
     virtual void CommandDiagGetRequest(Handler<ByteArray> aHandler,
                                        const std::string &aAddr,
-                                       uint64_t aaDiagTlvFlags) = 0;
+                                       uint64_t           aaDiagTlvFlags) = 0;
 
     /**
      * @brief Synchronously requests diagnostic TLV data from a Thread device.

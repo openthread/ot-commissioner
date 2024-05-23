@@ -561,7 +561,9 @@ void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
     }
 }
 
-void CommissionerSafe::CommandDiagGetRequest(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+void CommissionerSafe::CommandDiagGetRequest(Handler<ByteArray> aHandler,
+                                             const std::string &aAddr,
+                                             uint64_t           aDiagTlvFlags)
 {
     PushAsyncRequest([=]() { mImpl->CommandDiagGetRequest(aHandler, aAddr, aDiagTlvFlags); });
 }

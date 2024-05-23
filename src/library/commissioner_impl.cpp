@@ -651,7 +651,9 @@ exit:
     }
 }
 
-void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray> aHandler,
+                                             const std::string &aAddr,
+                                             uint64_t           aDiagTlvFlags)
 {
     Error         error;
     Address       dstAddr;
@@ -2009,22 +2011,25 @@ ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildTable), tlv::Type::kNetworkDiagChildTable},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChannelPages), tlv::Type::kNetworkDiagChannelPages},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMaxChildTimeout), tlv::Type::kNetworkDiagMaxChildTimeout},
-        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo), tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo),
+         tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagIDevIDCert), tlv::Type::kNetworkDiagIDevIDCert},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagEui64), tlv::Type::kNetworkDiagEui64},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVersion), tlv::Type::kNetworkDiagVersion},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorName), tlv::Type::kNetworkDiagVendorName},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorModel), tlv::Type::kNetworkDiagVendorModel},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorSWVersion), tlv::Type::kNetworkDiagVendorSWVersion},
-        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagThreadStackVersion), tlv::Type::kNetworkDiagThreadStackVersion},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagThreadStackVersion),
+         tlv::Type::kNetworkDiagThreadStackVersion},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChild), tlv::Type::kNetworkDiagChild},
-        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildIpv6Address), tlv::Type::kNetworkDiagChildIpv6Address},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildIpv6Address),
+         tlv::Type::kNetworkDiagChildIpv6Address},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagRouterNeighbor), tlv::Type::kNetworkDiagRouterNeighbor},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMleCounters), tlv::Type::kNetworkDiagMleCounters}};
 
     for (const auto &pair : flagToTypeMapping)
     {
-        uint64_t flag = pair.first;
+        uint64_t  flag = pair.first;
         tlv::Type type = pair.second;
 
         if (aDiagTlvFlags & flag)
@@ -2035,7 +2040,6 @@ ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
 
     return tlvTypes;
 }
-
 
 void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string &aDstAddr, const std::string &aUriPath)
 {
