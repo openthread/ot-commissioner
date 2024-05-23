@@ -1994,37 +1994,39 @@ ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
     ByteArray tlvTypes;
 
     const std::pair<uint64_t, tlv::Type> flagToTypeMapping[] = {
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagExtMacAddress), tlv::Type::kNetworkDiagExtMacAddress},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMacAddress), tlv::Type::kNetworkDiagMacAddress},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMode), tlv::Type::kNetworkDiagMode},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagTimeout), tlv::Type::kNetworkDiagTimeout},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagConnectivity), tlv::Type::kNetworkDiagConnectivity},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagRoute64), tlv::Type::kNetworkDiagRoute64},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagLeaderData), tlv::Type::kNetworkDiagLeaderData},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagNetworkData), tlv::Type::kNetworkDiagNetworkData},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagIpv6Address), tlv::Type::kNetworkDiagIpv6Address},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMacCounters), tlv::Type::kNetworkDiagMacCounters},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagBatteryLevel), tlv::Type::kNetworkDiagBatteryLevel},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagSupplyVoltage), tlv::Type::kNetworkDiagSupplyVoltage},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildTable), tlv::Type::kNetworkDiagChildTable},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChannelPages), tlv::Type::kNetworkDiagChannelPages},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMaxChildTimeout), tlv::Type::kNetworkDiagMaxChildTimeout},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo), tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagIDevIDCert), tlv::Type::kNetworkDiagIDevIDCert},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagEui64), tlv::Type::kNetworkDiagEui64},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVersion), tlv::Type::kNetworkDiagVersion},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorName), tlv::Type::kNetworkDiagVendorName},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorModel), tlv::Type::kNetworkDiagVendorModel},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorSWVersion), tlv::Type::kNetworkDiagVendorSWVersion},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagThreadStackVersion), tlv::Type::kNetworkDiagThreadStackVersion},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChild), tlv::Type::kNetworkDiagChild},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildIpv6Address), tlv::Type::kNetworkDiagChildIpv6Address},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagRouterNeighbor), tlv::Type::kNetworkDiagRouterNeighbor},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagExtMacAddress), tlv::Type::kNetworkDiagExtMacAddress},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMacAddress), tlv::Type::kNetworkDiagMacAddress},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMode), tlv::Type::kNetworkDiagMode},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagTimeout), tlv::Type::kNetworkDiagTimeout},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagConnectivity), tlv::Type::kNetworkDiagConnectivity},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagRoute64), tlv::Type::kNetworkDiagRoute64},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagLeaderData), tlv::Type::kNetworkDiagLeaderData},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagNetworkData), tlv::Type::kNetworkDiagNetworkData},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagIpv6Address), tlv::Type::kNetworkDiagIpv6Address},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMacCounters), tlv::Type::kNetworkDiagMacCounters},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagBatteryLevel), tlv::Type::kNetworkDiagBatteryLevel},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagSupplyVoltage), tlv::Type::kNetworkDiagSupplyVoltage},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildTable), tlv::Type::kNetworkDiagChildTable},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChannelPages), tlv::Type::kNetworkDiagChannelPages},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMaxChildTimeout), tlv::Type::kNetworkDiagMaxChildTimeout},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo), tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagIDevIDCert), tlv::Type::kNetworkDiagIDevIDCert},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagEui64), tlv::Type::kNetworkDiagEui64},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVersion), tlv::Type::kNetworkDiagVersion},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorName), tlv::Type::kNetworkDiagVendorName},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorModel), tlv::Type::kNetworkDiagVendorModel},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorSWVersion), tlv::Type::kNetworkDiagVendorSWVersion},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagThreadStackVersion), tlv::Type::kNetworkDiagThreadStackVersion},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChild), tlv::Type::kNetworkDiagChild},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildIpv6Address), tlv::Type::kNetworkDiagChildIpv6Address},
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagRouterNeighbor), tlv::Type::kNetworkDiagRouterNeighbor},
         {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMleCounters), tlv::Type::kNetworkDiagMleCounters}};
 
-
-    for (const auto &[flag, type] : flagToTypeMapping)
+    for (const auto &pair : flagToTypeMapping)
     {
+        uint64_t flag = pair.first;
+        tlv::Type type = pair.second;
+
         if (aDiagTlvFlags & flag)
         {
             EncodeTlvType(tlvTypes, type);
