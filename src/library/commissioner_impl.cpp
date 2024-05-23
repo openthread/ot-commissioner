@@ -2020,7 +2020,7 @@ ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
         {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChild), tlv::Type::kNetworkDiagChild},
         {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildIpv6Address), tlv::Type::kNetworkDiagChildIpv6Address},
         {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagRouterNeighbor), tlv::Type::kNetworkDiagRouterNeighbor},
-        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMleCounters), tlv::Type::kNetworkDiagMleCounters}};
+        {1ull << static_cast<uint8_t>(tlv::Type::kNetworkDiagMleCounters), tlv::Type::kNetworkDiagMleCounters}};
 
 
     for (const auto &[flag, type] : flagToTypeMapping)
