@@ -270,7 +270,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
              "diag get leaderdata <dest mesh local address> \n"
              "diag get ipvaddr <dest mesh local address> \n"
              "diag get childtable <dest mesh local address> \n"
-             "diag get eui64 <dest mesh local address> \n"},
+             "diag get eui64 <dest mesh local address> \n"
+             "diag get rawdata <dest mesh local address>"},
     {"bbrdataset", "bbrdataset get trihostname\n"
                    "bbrdataset set trihostname <TRI-hostname>\n"
                    "bbrdataset get reghostname\n"

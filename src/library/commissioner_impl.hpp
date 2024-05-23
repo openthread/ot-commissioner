@@ -227,7 +227,7 @@ private:
     static Error EncodeChannelMask(ByteArray &aBuf, const ChannelMask &aChannelMask);
     // Diagnostic feature in TMF
     static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
-    static void      DecodeLeaderDataTlv(LeaderData &aLeaderDataTlv, const ByteArray &aBuf);
+    static Error     DecodeLeaderDataTlv(LeaderData &aLeaderDataTlv, const ByteArray &aBuf);
     static Error     DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf);
     static void      DecodeModeTlv(Mode &aModeTlv, uint8_t aMode);
     static Error     DecodeChildTableTlv(ChildTable &aChildTableTlv, const ByteArray &aBuf);

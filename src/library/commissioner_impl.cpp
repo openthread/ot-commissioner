@@ -729,7 +729,6 @@ exit:
     }
 }
 
-
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
@@ -1530,15 +1529,20 @@ ByteArray CommissionerImpl::GetPendingOperationalDatasetTlvs(uint16_t aDatasetFl
     return tlvTypes;
 }
 
-void CommissionerImpl::DecodeLeaderDataTlv(LeaderData &aLeaderData, const ByteArray &aBuf)
+Error CommissionerImpl::DecodeLeaderDataTlv(LeaderData &aLeaderData, const ByteArray &aBuf)
 {
     size_t length = aBuf.size();
+    Error  error;
+
+    VerifyOrExit(length == 8, error = ERROR_BAD_FORMAT("incorrect size of LeaderData"));
 
     aLeaderData.mPartitionId       = utils::Decode<uint32_t>(aBuf.data(), 4);
     aLeaderData.mWeighting         = aBuf[length - 4];
     aLeaderData.mDataVersion       = aBuf[length - 3];
     aLeaderData.mStableDataVersion = aBuf[length - 2];
     aLeaderData.mRouterId          = aBuf[length - 1];
+exit:
+    return error;
 }
 
 Error CommissionerImpl::DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf)
