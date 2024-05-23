@@ -233,7 +233,7 @@ private:
     static Error     DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
-    static ByteArray GetDiagTypeListTlv(const DiagTlvTypeList &aDiagTlvFlags);
+    static ByteArray GetDiagTypeListTlv(const DiagTlvTypeList &aDiagTlvTypeList);
 
     void SendPetition(PetitionHandler aHandler);
 
