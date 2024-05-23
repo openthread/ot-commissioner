@@ -561,14 +561,16 @@ void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
     }
 }
 
-void CommissionerSafe::CommandDiagGetRequest(Handler<ByteArray> aHandler,
-                                             const std::string &aAddr,
-                                             uint64_t           aDiagTlvFlags)
+void CommissionerSafe::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
+                                             const std::string     &aAddr,
+                                             const DiagTlvTypeList &aDiagTlvTypeList)
 {
-    PushAsyncRequest([=]() { mImpl->CommandDiagGetRequest(aHandler, aAddr, aDiagTlvFlags); });
+    PushAsyncRequest([=]() { mImpl->CommandDiagGetRequest(aHandler, aAddr, aDiagTlvTypeList); });
 }
 
-Error CommissionerSafe::CommandDiagGetRequest(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags)
+Error CommissionerSafe::CommandDiagGetRequest(ByteArray             &aRawTlvData,
+                                              const std::string     &aAddr,
+                                              const DiagTlvTypeList &aDiagTlvTypeList)
 {
     std::promise<Error> pro;
     auto                wait = [&pro, &aRawTlvData](const ByteArray *rawTlvData, Error error) {
@@ -578,7 +580,7 @@ Error CommissionerSafe::CommandDiagGetRequest(ByteArray &aRawTlvData, const std:
         }
         pro.set_value(error);
     };
-    CommandDiagGetRequest(wait, aAddr, aDiagTlvFlags);
+    CommandDiagGetRequest(wait, aAddr, aDiagTlvTypeList);
     return pro.get_future().get();
 }
 

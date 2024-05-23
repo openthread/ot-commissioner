@@ -43,6 +43,7 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diagnostic_tlvs.hpp>
 
 namespace ot {
 
@@ -1154,15 +1155,15 @@ public:
      * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
      * The response, or any errors encountered, will be delivered to the provided `aHandler`.
      *
-     * @param[in, out] aHandler     A handler to process the response or any errors.
-     *                              This handler is guaranteed to be called.
-     * @param[in]     aAddr         Mesh local address (mesh local prefix + RLOC) of the target Thread device.
-     * @param[in]     aDiagTlvFlags Bitmask specifying the desired diagnostic TLVs.
-     *                              Each bit in the mask corresponds to a specific TLV type.
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
+     * @param[in]     aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]     aDiagTlvTypeList List of diagnostic TLVs type.
+     *                                 kDiagnosticGetRequestTlvs for the set of valid TLV types.
      */
-    virtual void CommandDiagGetRequest(Handler<ByteArray> aHandler,
-                                       const std::string &aAddr,
-                                       uint64_t           aaDiagTlvFlags) = 0;
+    virtual void CommandDiagGetRequest(Handler<ByteArray>     aHandler,
+                                       const std::string     &aAddr,
+                                       const DiagTlvTypeList &aDiagTlvTypeList) = 0;
 
     /**
      * @brief Synchronously requests diagnostic TLV data from a Thread device.
@@ -1171,14 +1172,16 @@ public:
      * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
      * The method blocks until a response is received, an error occurs.
      *
-     * @param[out] aRawTlvData   Upon success, contains the diagnostic TLV data returned by the device.
-     * @param[in]  aAddr         Mesh local address (mesh local prefix + RLOC) of the target Thread device.
-     * @param[in]  aDiagTlvFlags Bitmask for selecting desired diagnostic TLVs.
-     *                           Each bit in the mask corresponds to a specific TLV type.
+     * @param[out] aRawTlvData      Upon success, contains the diagnostic TLV data returned by the device.
+     * @param[in]  aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]  aDiagTlvTypeList List of diagnostic TLVs type.
+     *                              kDiagnosticGetRequestTlvs for the set of valid TLV types.
      *
-     * @return CHIP_NO_ERROR on success, or an appropriate error code on failure.
+     * @return Error::kNone, succeed; Otherwise, failed..
      */
-    virtual Error CommandDiagGetRequest(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
+    virtual Error CommandDiagGetRequest(ByteArray             &aRawTlvData,
+                                        const std::string     &aAddr,
+                                        const DiagTlvTypeList &aDiagTlvTypeList) = 0;
 };
 
 } // namespace commissioner
