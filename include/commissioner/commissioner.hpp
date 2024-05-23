@@ -1149,7 +1149,7 @@ public:
     static std::string GetVersion(void);
 
     /**
-     * @brief Asynchronously requests diagnostic TLV data from a Thread device.
+     * @brief Asynchronously requests diagnostic TLV raw data from a Thread device.
      *
      * This method sends a DIAG_GET.req message to the specified Thread device,
      * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
@@ -1158,30 +1158,59 @@ public:
      * @param[in, out] aHandler        A handler to process the response or any errors.
      *                                 This handler is guaranteed to be called.
      * @param[in]     aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
-     * @param[in]     aDiagTlvTypeList List of diagnostic TLVs type.
-     *                                 kDiagnosticGetRequestTlvs for the set of valid TLV types.
+     * @param[in]     aDiagTlvFlags    Diagnostic TLVs flags indicate which TLVs are wanted.
      */
-    virtual void CommandDiagGetRequest(Handler<ByteArray>     aHandler,
-                                       const std::string     &aAddr,
-                                       const DiagTlvTypeList &aDiagTlvTypeList) = 0;
+    virtual void CommandDiagGetRawData(Handler<ByteArray> aHandler,
+                                       const std::string &aAddr,
+                                       uint64_t           aDiagTlvFlags) = 0;
 
     /**
-     * @brief Synchronously requests diagnostic TLV data from a Thread device.
+     * @brief Synchronously requests diagnostic TLV raw data from a Thread device.
      *
      * This method sends a DIAG_GET.req message to the specified Thread device,
      * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
      * The method blocks until a response is received, an error occurs.
      *
-     * @param[out] aRawTlvData      Upon success, contains the diagnostic TLV data returned by the device.
+     * @param[out] aRawTlvData      Upon success, contains the diagnostic TLV raw data returned by the device.
      * @param[in]  aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
-     * @param[in]  aDiagTlvTypeList List of diagnostic TLVs type.
-     *                              kDiagnosticGetRequestTlvs for the set of valid TLV types.
+     * @param[in]  aDiagTlvFlags    Diagnostic TLVs flags indicate which TLVs are wanted.
      *
      * @return Error::kNone, succeed; Otherwise, failed..
      */
-    virtual Error CommandDiagGetRequest(ByteArray             &aRawTlvData,
-                                        const std::string     &aAddr,
-                                        const DiagTlvTypeList &aDiagTlvTypeList) = 0;
+    virtual Error CommandDiagGetRawData(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
+
+    /**
+     * @brief Asynchronously requests diagnostic TLV decoded data from a Thread device.
+     *
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     *
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
+     * @param[in]     aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]     aDiagTlvFlags    Diagnostic TLVs flags indicate which TLVs are wanted.
+     */
+    virtual void CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                       const std::string   &aAddr,
+                                       uint64_t             aDiagTlvFlags) = 0;
+
+    /**
+     * @brief Synchronously requests diagnostic TLV decoded data from a Thread device.
+     *
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The method blocks until a response is received, an error occurs.
+     *
+     * @param[out] aDiagTlvData     Upon success, contains the diagnostic TLV decoded data returned by the device.
+     * @param[in]  aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]  aDiagTlvFlags    Diagnostic TLVs flags indicate which TLVs are wanted.
+     *
+     * @return Error::kNone, succeed; Otherwise, failed..
+     */
+    virtual Error CommandDiagGetRequest(NetDiagTlvs       &aDiagTlvData,
+                                        const std::string &aAddr,
+                                        uint64_t           aDiagTlvFlags) = 0;
 };
 
 } // namespace commissioner

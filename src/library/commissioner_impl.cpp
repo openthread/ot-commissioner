@@ -32,6 +32,7 @@
  */
 
 #include "library/commissioner_impl.hpp"
+#include <sys/types.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -652,9 +653,31 @@ exit:
     }
 }
 
-void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
-                                             const std::string     &aAddr,
-                                             const DiagTlvTypeList &aDiagTlvTypeList)
+/***************************************************************************************************************/
+void CommissionerImpl::CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                             const std::string   &aAddr,
+                                             uint64_t             aDiagTlvFlags)
+{
+    auto rawDataHandler = [aHandler](const ByteArray *aRawData, Error aError) {
+        Error       error;
+        NetDiagTlvs dataset;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = DecodeNetDiagTlvs(dataset, *aRawData));
+
+        aHandler(&dataset, error);
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+    CommandDiagGetRawData(rawDataHandler, aAddr, aDiagTlvFlags);
+}
+
+void CommissionerImpl::CommandDiagGetRawData(Handler<ByteArray> aHandler,
+                                             const std::string &aAddr,
+                                             uint64_t           aDiagTlvFlags)
 {
     Error         error;
     Address       dstAddr;
@@ -665,6 +688,7 @@ void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
         SuccessOrExit(error = aError);
         SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
 
+        LOG_INFO(LOG_REGION_MESHDIAG, "Accepted DIAG_GET.req data {}", utils::Hex(aResponse->GetPayload()));
         aHandler(&aResponse->GetPayload(), error);
 
     exit:
@@ -675,17 +699,9 @@ void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
     };
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
-    SuccessOrExit(error = dstAddr.Set(aAddr));
     SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
-    for (const auto &eachTlvType : aDiagTlvTypeList)
-    {
-        LOG_ERROR(LOG_REGION_MESHDIAG, "dropping invalid TLV(type={})", utils::to_underlying(eachTlvType));
-        VerifyOrExit((kDiagnosticGetRequestTlvs.count(eachTlvType) > 0),
-                     error = ERROR_INVALID_ARGS("TLV is invalid for request"));
-    }
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
-
-    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlv(aDiagTlvTypeList),
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTlvs(aDiagTlvFlags),
                                               tlv::Scope::kNetworkDiag}));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
@@ -696,7 +712,15 @@ void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
 #endif
 
     LOG_DEBUG(LOG_REGION_MESHDIAG, "sending DIAG_GET.req command to {}", aAddr);
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    if (aAddr.empty())
+    {
+        mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+    }
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
     LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
 
 exit:
@@ -705,6 +729,8 @@ exit:
         aHandler(nullptr, error);
     }
 }
+
+/***************************************************************************************************************/
 
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
@@ -1506,6 +1532,216 @@ ByteArray CommissionerImpl::GetPendingOperationalDatasetTlvs(uint16_t aDatasetFl
     return tlvTypes;
 }
 
+/************************************************************************************** */
+void CommissionerImpl::DecodeLeaderDataTlv(LeaderData &aLeaderData, const ByteArray &aBuf)
+{
+    size_t length = aBuf.size();
+
+    aLeaderData.mPartitionId       = utils::Decode<uint32_t>(aBuf.data(), 4);
+    aLeaderData.mWeighting         = aBuf[length - 4];
+    aLeaderData.mDataVersion       = aBuf[length - 3];
+    aLeaderData.mStableDataVersion = aBuf[length - 2];
+    aLeaderData.mRouterId          = aBuf[length - 1];
+}
+
+Error CommissionerImpl::DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t offset = 0;
+
+    aRoute64Tlv.mIdSequence = aBuf[offset++];
+    ByteArray maskBytes     = {aBuf.begin() + offset, aBuf.begin() + offset + 8};
+    offset += 8;
+    aRoute64Tlv.mMask = maskBytes;
+    error             = DecodeRouteData(aRoute64Tlv.mRouteData, {aBuf.begin() + offset, aBuf.end()});
+    return error;
+}
+
+Error CommissionerImpl::DecodeRouteData(RouteData &aRouteData, const ByteArray &aBuf)
+{
+    Error     error;
+    size_t    length = aBuf.size();
+    RouteData routeData;
+    size_t    offset = 0;
+
+    while (offset < length)
+    {
+        RouteDataEntry entry;
+        entry.mOutgoingLinkQuality  = (aBuf[offset] >> 6) & 0x03;
+        entry.mIncommingLinkQuality = (aBuf[offset] >> 4) & 0x03;
+        entry.mRouteCost            = aBuf[offset] & 0x0F;
+        aRouteData.emplace_back(entry);
+        offset++;
+    }
+exit:
+    return error;
+}
+
+Error CommissionerImpl::DecodeIpv6Address(Ipv6Address &aIpv6Address, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    size_t offset = 0;
+    while (offset < length)
+    {
+        Address address;
+        VerifyOrExit(offset + 16 <= length, error = ERROR_BAD_FORMAT("premature end of Ipv6 Address Entry"));
+        ByteArray addressBytes = {aBuf.begin() + offset, aBuf.begin() + offset + 16};
+        error                  = address.Set(addressBytes);
+        aIpv6Address.emplace_back(address);
+        offset += 16;
+    }
+exit:
+    return error;
+}
+
+void CommissionerImpl::DecodeModeTlv(Mode &aModeTlv, uint8_t aMode)
+{
+    aModeTlv.mIsRxOnWhenIdleMode          = (aMode & 0x01) == 0;
+    aModeTlv.mIsMtd                       = ((aMode >> 1) & 0x01) == 0;
+    aModeTlv.mIsStableNetworkDataRequired = ((aMode >> 3) & 0x01) == 0;
+}
+
+Error CommissionerImpl::DecodeChildTableTlv(ChildTable &aChildTableTlv, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    size_t offset = 0;
+
+    while (offset < length)
+    {
+        ChildEntry entry;
+        VerifyOrExit(offset + 3 <= length, error = ERROR_BAD_FORMAT("premature end of Child Table Entry"));
+        entry.mTimeout             = aBuf[offset++];
+        entry.mIncomingLinkQuality = aBuf[offset++];
+        entry.mChildId             = aBuf[offset++];
+        if (offset >= length)
+        {
+            aChildTableTlv.emplace_back(entry);
+            break;
+        }
+        DecodeModeTlv(entry.mModeData, aBuf[offset++]);
+        aChildTableTlv.emplace_back(entry);
+    }
+exit:
+    return error;
+}
+
+/***************************************************************************************************************/
+
+ByteArray CommissionerImpl::GetDiagTlvs(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    if (aDiagTlvFlags & NetDiagTlvs::kExtMacAddressBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kMacAddressBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kModeBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kRoute64Bit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kLeaderDataBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kIpv6AddressBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kChildTableBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kEui64Bit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
+    }
+
+    return tlvTypes;
+}
+
+Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload)
+{
+    Error       error;
+    tlv::TlvSet tlvSet;
+    NetDiagTlvs dataset;
+    // Clear all data fields
+    dataset.mPresentFlags = 0;
+    SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
+
+    if (auto extMacAddress = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
+    {
+        const ByteArray &value = extMacAddress->GetValue();
+        dataset.mExtMacAddress = value;
+        dataset.mPresentFlags |= NetDiagTlvs::kExtMacAddressBit;
+    }
+
+    if (auto macAddress = tlvSet[tlv::Type::kNetworkDiagMacAddress])
+    {
+        uint16_t value;
+        value               = utils::Decode<uint16_t>(macAddress->GetValue());
+        dataset.mMacAddress = value;
+        dataset.mPresentFlags |= NetDiagTlvs::kMacAddressBit;
+    }
+
+    if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
+    {
+        uint8_t value;
+        value = utils::Decode<uint8_t>(mode->GetValue());
+        DecodeModeTlv(dataset.mMode, value);
+        dataset.mPresentFlags |= NetDiagTlvs::kModeBit;
+    }
+
+    if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
+    {
+        const ByteArray &value = route64->GetValue();
+        SuccessOrExit(error = DecodeRoute64Tlv(dataset.mRoute64, value));
+        dataset.mPresentFlags |= NetDiagTlvs::kRoute64Bit;
+    }
+
+    if (auto leaderData = tlvSet[tlv::Type::kNetworkDiagLeaderData])
+    {
+        const ByteArray &value = leaderData->GetValue();
+        DecodeLeaderDataTlv(dataset.mLeaderData, value);
+        dataset.mPresentFlags |= NetDiagTlvs::kLeaderDataBit;
+    }
+
+    if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
+    {
+        const ByteArray &value = ipv6Addresses->GetValue();
+        DecodeIpv6Address(dataset.mIpv6Addresses, value);
+        dataset.mPresentFlags |= NetDiagTlvs::kIpv6AddressBit;
+    }
+
+    if (auto childTable = tlvSet[tlv::Type::kNetworkDiagChildTable])
+    {
+        const ByteArray &value = childTable->GetValue();
+        SuccessOrExit(error = DecodeChildTableTlv(dataset.mChildTable, value));
+        dataset.mPresentFlags |= NetDiagTlvs::kChildTableBit;
+    }
+
+    if (auto eui64 = tlvSet[tlv::Type::kNetworkDiagEui64])
+    {
+        const ByteArray &value = eui64->GetValue();
+        dataset.mEui64         = value;
+        dataset.mPresentFlags |= NetDiagTlvs::kEui64Bit;
+    }
+
+    aNetDiagTlvs = dataset;
+
+exit:
+    return error;
+}
+/***************************************************************************************************************/
 Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload)
 {
     Error                    error;
@@ -1997,18 +2233,6 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
     {
         tlvTypes.emplace_back(utils::to_underlying(tlv::Type::kNmkpUdpPort));
     }
-    return tlvTypes;
-}
-
-ByteArray CommissionerImpl::GetDiagTypeListTlv(const DiagTlvTypeList &aDiagTlvTypeList)
-{
-    ByteArray tlvTypes;
-
-    for (const auto &eachTlvType : aDiagTlvTypeList)
-    {
-        EncodeTlvType(tlvTypes, static_cast<tlv::Type>(eachTlvType));
-    }
-
     return tlvTypes;
 }
 

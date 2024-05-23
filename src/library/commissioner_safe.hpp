@@ -34,11 +34,16 @@
 #ifndef OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 #define OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 
+#include <cstdint>
 #include <mutex>
+#include <string>
 #include <thread>
 
 #include <commissioner/commissioner.hpp>
 
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/commissioner_impl.hpp"
@@ -140,6 +145,13 @@ public:
 
     void  CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr) override;
     Error CommandDomainReset(const std::string &aDstAddr) override;
+    // Diagnostic feature in TMF
+    void  CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                const std::string   &aAddr,
+                                uint64_t             aDiagTlvFlags) override;
+    Error CommandDiagGetRequest(NetDiagTlvs &aDiagTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    void  CommandDiagGetRawData(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGetRawData(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
 
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,
@@ -182,13 +194,6 @@ public:
     Error RequestToken(ByteArray &aSignedToken, const std::string &aAddr, uint16_t aPort) override;
 
     Error SetToken(const ByteArray &aSignedToken) override;
-
-    void  CommandDiagGetRequest(Handler<ByteArray>     aHandler,
-                                const std::string     &aAddr,
-                                const DiagTlvTypeList &aDiagTlvTypeList) override;
-    Error CommandDiagGetRequest(ByteArray             &aRawTlvData,
-                                const std::string     &aAddr,
-                                const DiagTlvTypeList &aDiagTlvTypeList) override;
 
 private:
     using AsyncRequest = std::function<void()>;

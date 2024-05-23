@@ -825,6 +825,22 @@ exit:
     return error;
 }
 
+// Diagnositc feature in TMF
+Error CommissionerApp::CommandDiagGetRequest(NetDiagTlvs &aTlvs, const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    Error error;
+
+    error = mCommissioner->CommandDiagGetRequest(aTlvs, aAddr, aDiagTlvFlags);
+    return error;
+}
+
+Error CommissionerApp::CommandDiagGetRawData(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    Error error;
+    error = mCommissioner->CommandDiagGetRawData(aRawTlvData, aAddr, aDiagTlvFlags);
+    return error;
+}
+
 Error CommissionerApp::GetTriHostname(std::string &aHostname) const
 {
     Error error;

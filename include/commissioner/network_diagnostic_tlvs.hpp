@@ -28,14 +28,18 @@
 
 /**
  * @file
- *   This file defines the types of Thread Network Diagnostic TLVs (Type-Length-Value) used for network diagnostics.
+ *   This file defines the types of Thread Network Diagnostic TLVs used for network diagnostics.
  */
 
 #ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
 #define OT_COMM_NETWORK_DIAG_TLVS_HPP_
 
 #include <cstdint>
-#include <set>
+#include <stdbool.h>
+#include <vector>
+
+#include "defines.hpp"
+#include "common/address.hpp"
 
 namespace ot {
 
@@ -79,75 +83,112 @@ enum class NetworkDiagTlvType : uint8_t
 };
 
 /**
- * @brief Set of TLV types allowed in a Diagnostic Get Request.
+ * @brief Mode TLV
  */
-static const std::set<NetworkDiagTlvType> kDiagnosticGetRequestTlvs = {
-    NetworkDiagTlvType::kNetworkDiagExtMacAddress,
-    NetworkDiagTlvType::kNetworkDiagMacAddress,
-    NetworkDiagTlvType::kNetworkDiagMode,
-    NetworkDiagTlvType::kNetworkDiagTimeout,
-    NetworkDiagTlvType::kNetworkDiagConnectivity,
-    NetworkDiagTlvType::kNetworkDiagRoute64,
-    NetworkDiagTlvType::kNetworkDiagLeaderData,
-    NetworkDiagTlvType::kNetworkDiagNetworkData,
-    NetworkDiagTlvType::kNetworkDiagIpv6Address,
-    NetworkDiagTlvType::kNetworkDiagMacCounters,
-    NetworkDiagTlvType::kNetworkDiagBatteryLevel,
-    NetworkDiagTlvType::kNetworkDiagSupplyVoltage,
-    NetworkDiagTlvType::kNetworkDiagChildTable,
-    NetworkDiagTlvType::kNetworkDiagChannelPages,
-    NetworkDiagTlvType::kNetworkDiagMaxChildTimeout,
-    NetworkDiagTlvType::kNetworkDiagLDevIDSubjectPubKeyInfo,
-    NetworkDiagTlvType::kNetworkDiagIDevIDCert,
-    NetworkDiagTlvType::kNetworkDiagEui64,
-    NetworkDiagTlvType::kNetworkDiagVersion,
-    NetworkDiagTlvType::kNetworkDiagVendorName,
-    NetworkDiagTlvType::kNetworkDiagVendorModel,
-    NetworkDiagTlvType::kNetworkDiagVendorSWVersion,
-    NetworkDiagTlvType::kNetworkDiagThreadStackVersion,
-    NetworkDiagTlvType::kNetworkDiagMleCounters};
+struct Mode
+{
+    bool mIsRxOnWhenIdleMode          = false;
+    bool mIsMtd                       = false;
+    bool mIsStableNetworkDataRequired = false;
+};
 
 /**
- * @brief Set of TLV types allowed in a Diagnostic Get Query.
+ * @brief Child Entry in Child Table TLV
  */
-static const std::set<NetworkDiagTlvType> kDiagnosticGetQueryTlvs = {
-    NetworkDiagTlvType::kNetworkDiagExtMacAddress,
-    NetworkDiagTlvType::kNetworkDiagMacAddress,
-    NetworkDiagTlvType::kNetworkDiagMode,
-    NetworkDiagTlvType::kNetworkDiagTimeout,
-    NetworkDiagTlvType::kNetworkDiagConnectivity,
-    NetworkDiagTlvType::kNetworkDiagRoute64,
-    NetworkDiagTlvType::kNetworkDiagLeaderData,
-    NetworkDiagTlvType::kNetworkDiagNetworkData,
-    NetworkDiagTlvType::kNetworkDiagIpv6Address,
-    NetworkDiagTlvType::kNetworkDiagMacCounters,
-    NetworkDiagTlvType::kNetworkDiagBatteryLevel,
-    NetworkDiagTlvType::kNetworkDiagSupplyVoltage,
-    NetworkDiagTlvType::kNetworkDiagChildTable,
-    NetworkDiagTlvType::kNetworkDiagChannelPages,
-    NetworkDiagTlvType::kNetworkDiagMaxChildTimeout,
-    NetworkDiagTlvType::kNetworkDiagLDevIDSubjectPubKeyInfo,
-    NetworkDiagTlvType::kNetworkDiagIDevIDCert,
-    NetworkDiagTlvType::kNetworkDiagEui64,
-    NetworkDiagTlvType::kNetworkDiagVersion,
-    NetworkDiagTlvType::kNetworkDiagVendorName,
-    NetworkDiagTlvType::kNetworkDiagVendorModel,
-    NetworkDiagTlvType::kNetworkDiagVendorSWVersion,
-    NetworkDiagTlvType::kNetworkDiagThreadStackVersion,
-    NetworkDiagTlvType::kNetworkDiagChild,
-    NetworkDiagTlvType::kNetworkDiagChildIpv6Address,
-    NetworkDiagTlvType::kNetworkDiagRouterNeighbor,
-    NetworkDiagTlvType::kNetworkDiagAnswer,
-    NetworkDiagTlvType::kNetworkDiagQueryID,
-    NetworkDiagTlvType::kNetworkDiagMleCounters};
-
-static const std::set<NetworkDiagTlvType> kDiagnosticGetResetTlvs = {NetworkDiagTlvType::kNetworkDiagMacCounters,
-                                                                     NetworkDiagTlvType::kNetworkDiagMleCounters};
+struct ChildEntry
+{
+    uint8_t mTimeout             = 0;
+    uint8_t mIncomingLinkQuality = 0;
+    uint8_t mChildId             = 0;
+    Mode    mModeData;
+};
 
 /**
- * Type alias of type list
+ * @brief Child Table TLV
  */
-using DiagTlvTypeList = std::vector<ot::commissioner::NetworkDiagTlvType>;
+using ChildTable = std::vector<ChildEntry>;
+
+/**
+ * @brief IPv6 Address TLV
+ */
+using Ipv6Address = std::vector<Address>;
+
+/**
+ * @brief Leader Data TLV
+ */
+struct LeaderData
+{
+    uint32_t mPartitionId       = 0;
+    uint8_t  mWeighting         = 0;
+    uint8_t  mDataVersion       = 0;
+    uint8_t  mStableDataVersion = 0;
+    uint8_t  mRouterId          = 0;
+};
+
+/**
+ * @brief Route Data Entry of RouteData in Route64 TLV
+ */
+struct RouteDataEntry
+{
+    uint8_t mOutgoingLinkQuality  = 0;
+    uint8_t mIncommingLinkQuality = 0;
+    uint8_t mRouteCost            = 0;
+};
+
+/**
+ * @brief Route Data in Route64 TLV
+ */
+using RouteData = std::vector<RouteDataEntry>;
+
+/**
+ * @brief Route64 TLV
+ */
+struct Route64
+{
+    uint8_t   mIdSequence = 0;
+    ByteArray mMask;
+    RouteData mRouteData;
+};
+
+/**
+ * @brief network diagnostic TLVs in TMF
+ *
+ * Each data field of Diagnostic TLVs is optional. The field is
+ * meaningful only when associative PresentFlags is included in
+ * `mPresentFlags`.
+ */
+struct NetDiagTlvs
+{
+    ByteArray   mExtMacAddress;
+    uint16_t    mMacAddress = 0;
+    Mode        mMode;
+    Route64     mRoute64;
+    LeaderData  mLeaderData;
+    Ipv6Address mIpv6Addresses;
+    ChildTable  mChildTable;
+    ByteArray   mEui64;
+    ByteArray   mTlvTypeList;
+
+    /**
+     * Indicates which fields are included in the dataset.
+     */
+    uint64_t mPresentFlags;
+
+    static constexpr uint64_t kExtMacAddressBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagExtMacAddress));
+    static constexpr uint64_t kMacAddressBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMacAddress));
+    static constexpr uint64_t kModeBit    = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMode));
+    static constexpr uint64_t kRoute64Bit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagRoute64));
+    static constexpr uint64_t kLeaderDataBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagLeaderData));
+    static constexpr uint64_t kIpv6AddressBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagIpv6Address));
+    static constexpr uint64_t kChildTableBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildTable));
+    static constexpr uint64_t kEui64Bit   = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagEui64));
+    static constexpr uint64_t kTlvTypeBit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagTypeList));
+};
 
 } // namespace commissioner
 

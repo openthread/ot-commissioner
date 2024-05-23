@@ -224,6 +224,8 @@ private:
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
+    // Diagnostic feature in TMF
+    Value ProcessDiag(const Expression &aExpr);
 
     Value ProcessStartJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
@@ -232,6 +234,8 @@ private:
     Value ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    // Diagnostic feature in TMF
+    Value ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 

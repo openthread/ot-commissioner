@@ -196,14 +196,16 @@ public:
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
-
-    void  CommandDiagGetRequest(Handler<ByteArray>     aHandler,
-                                const std::string     &aAddr,
-                                const DiagTlvTypeList &aDiagTlvTypeList) override;
-    Error CommandDiagGetRequest(ByteArray &, const std::string &, const DiagTlvTypeList &) override
+    // Diagnostic feature in TMF
+    void  CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                const std::string   &aAddr,
+                                uint64_t             aDiagTlvFlags) override;
+    void  CommandDiagGetRawData(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGetRequest(NetDiagTlvs &, const std::string &, uint64_t) override
     {
         return ERROR_UNIMPLEMENTED("");
     }
+    Error CommandDiagGetRawData(ByteArray &, const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
 
 private:
     using AsyncRequest = std::function<void()>;
@@ -223,6 +225,15 @@ private:
     static Error EncodeActiveOperationalDataset(coap::Request &aRequest, const ActiveOperationalDataset &aDataset);
     static Error EncodePendingOperationalDataset(coap::Request &aRequest, const PendingOperationalDataset &aDataset);
     static Error EncodeChannelMask(ByteArray &aBuf, const ChannelMask &aChannelMask);
+    // Diagnostic feature in TMF
+    static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
+    static void      DecodeLeaderDataTlv(LeaderData &aLeaderDataTlv, const ByteArray &aBuf);
+    static Error     DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf);
+    static void      DecodeModeTlv(Mode &aModeTlv, uint8_t aMode);
+    static Error     DecodeChildTableTlv(ChildTable &aChildTableTlv, const ByteArray &aBuf);
+    static Error     DecodeRouteData(RouteData &aRouteData, const ByteArray &aBuf);
+    static Error     DecodeIpv6Address(Ipv6Address &aIpv6Address, const ByteArray &aBuf);
+    static ByteArray GetDiagTlvs(uint64_t aDiagTlvFlags);
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     static Error     DecodeBbrDataset(BbrDataset &aDataset, const coap::Response &aResponse);
@@ -233,7 +244,6 @@ private:
     static Error     DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
-    static ByteArray GetDiagTypeListTlv(const DiagTlvTypeList &aDiagTlvTypeList);
 
     void SendPetition(PetitionHandler aHandler);
 
