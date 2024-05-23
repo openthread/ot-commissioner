@@ -651,6 +651,50 @@ exit:
     }
 }
 
+void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    Error         error;
+    Address       dstAddr;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+        aHandler(&aResponse->GetPayload(), error);
+
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = dstAddr.Set(aAddr));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlvs(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sending DIAG_GET.req command to {}", aAddr);
+    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(nullptr, error);
+    }
+}
+
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
@@ -1944,6 +1988,52 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
     }
     return tlvTypes;
 }
+
+ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    const std::pair<uint64_t, tlv::Type> flagToTypeMapping[] = {
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagExtMacAddress), tlv::Type::kNetworkDiagExtMacAddress},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMacAddress), tlv::Type::kNetworkDiagMacAddress},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMode), tlv::Type::kNetworkDiagMode},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagTimeout), tlv::Type::kNetworkDiagTimeout},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagConnectivity), tlv::Type::kNetworkDiagConnectivity},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagRoute64), tlv::Type::kNetworkDiagRoute64},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagLeaderData), tlv::Type::kNetworkDiagLeaderData},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagNetworkData), tlv::Type::kNetworkDiagNetworkData},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagIpv6Address), tlv::Type::kNetworkDiagIpv6Address},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMacCounters), tlv::Type::kNetworkDiagMacCounters},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagBatteryLevel), tlv::Type::kNetworkDiagBatteryLevel},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagSupplyVoltage), tlv::Type::kNetworkDiagSupplyVoltage},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildTable), tlv::Type::kNetworkDiagChildTable},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChannelPages), tlv::Type::kNetworkDiagChannelPages},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMaxChildTimeout), tlv::Type::kNetworkDiagMaxChildTimeout},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo), tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagIDevIDCert), tlv::Type::kNetworkDiagIDevIDCert},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagEui64), tlv::Type::kNetworkDiagEui64},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVersion), tlv::Type::kNetworkDiagVersion},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorName), tlv::Type::kNetworkDiagVendorName},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorModel), tlv::Type::kNetworkDiagVendorModel},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagVendorSWVersion), tlv::Type::kNetworkDiagVendorSWVersion},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagThreadStackVersion), tlv::Type::kNetworkDiagThreadStackVersion},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChild), tlv::Type::kNetworkDiagChild},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagChildIpv6Address), tlv::Type::kNetworkDiagChildIpv6Address},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagRouterNeighbor), tlv::Type::kNetworkDiagRouterNeighbor},
+        {1 << static_cast<uint8_t>(tlv::Type::kNetworkDiagMleCounters), tlv::Type::kNetworkDiagMleCounters}};
+
+
+    for (const auto &[flag, type] : flagToTypeMapping)
+    {
+        if (aDiagTlvFlags & flag)
+        {
+            EncodeTlvType(tlvTypes, type);
+        }
+    }
+
+    return tlvTypes;
+}
+
 
 void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string &aDstAddr, const std::string &aUriPath)
 {

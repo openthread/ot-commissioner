@@ -1146,6 +1146,39 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Asynchronously requests diagnostic TLV data from a Thread device.
+     *
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     *
+     * @param[in, out] aHandler     A handler to process the response or any errors.
+     *                              This handler is guaranteed to be called.
+     * @param[in]     aAddr         Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]     aDiagTlvFlags Bitmask specifying the desired diagnostic TLVs.
+     *                              Each bit in the mask corresponds to a specific TLV type.
+     */
+    virtual void CommandDiagGetRequest(Handler<ByteArray> aHandler,
+                                       const std::string &aAddr,
+                                       uint64_t aaDiagTlvFlags) = 0;
+
+    /**
+     * @brief Synchronously requests diagnostic TLV data from a Thread device.
+     *
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The method blocks until a response is received, an error occurs.
+     *
+     * @param[out] aRawTlvData   Upon success, contains the diagnostic TLV data returned by the device.
+     * @param[in]  aAddr         Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]  aDiagTlvFlags Bitmask for selecting desired diagnostic TLVs.
+     *                           Each bit in the mask corresponds to a specific TLV type.
+     *
+     * @return CHIP_NO_ERROR on success, or an appropriate error code on failure.
+     */
+    virtual Error CommandDiagGetRequest(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
 };
 
 } // namespace commissioner

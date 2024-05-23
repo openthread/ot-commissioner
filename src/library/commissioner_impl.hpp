@@ -196,6 +196,9 @@ public:
 
     struct event_base *GetEventBase() { return mEventBase; }
 
+    void  CommandDiagGetRequest(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGetRequest(ByteArray &, const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+
 private:
     using AsyncRequest = std::function<void()>;
 
@@ -224,6 +227,7 @@ private:
     static Error     DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
+    static ByteArray GetDiagTypeListTlvs(uint64_t aDatasetFlags);
 
     void SendPetition(PetitionHandler aHandler);
 
