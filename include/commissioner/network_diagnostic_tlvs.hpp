@@ -34,6 +34,7 @@
 #ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
 #define OT_COMM_NETWORK_DIAG_TLVS_HPP_
 
+#include <algorithm>
 #include <cstdint>
 #include <set>
 
@@ -44,7 +45,7 @@ namespace commissioner {
 /**
  * @brief Enum representing the types of Network Diagnostic TLVs.
  */
-enum class NetworkDiagTlvType : uint8_t 
+enum class NetworkDiagTlvType : uint8_t
 {
     kNetworkDiagExtMacAddress           = 0,  ///< Extended MAC Address TLV
     kNetworkDiagMacAddress              = 1,  ///< MAC Address TLV
@@ -105,8 +106,7 @@ static const std::set<NetworkDiagTlvType> kCommonDiagnosticTlvs = {
     NetworkDiagTlvType::kNetworkDiagVendorModel,
     NetworkDiagTlvType::kNetworkDiagVendorSWVersion,
     NetworkDiagTlvType::kNetworkDiagThreadStackVersion,
-    NetworkDiagTlvType::kNetworkDiagMleCounters
-};
+    NetworkDiagTlvType::kNetworkDiagMleCounters};
 
 /**
  * @brief Set of TLV types allowed in a Diagnostic Get Request.
@@ -116,17 +116,20 @@ static const std::set<NetworkDiagTlvType> kDiagnosticGetRequestTlvs = kCommonDia
 /**
  * @brief Set of TLV types allowed in a Diagnostic Get Query.
  */
-static std::set<NetworkDiagTlvType> kDiagnosticGetQueryTlvs = kCommonDiagnosticTlvs;
-//kDiagnosticGetQueryTlvs.insert(NetworkDiagTlvType::kNetworkDiagChild);
-//kDiagnosticGetQueryTlvs.insert(NetworkDiagTlvType::kNetworkDiagChildIpv6Address);
-//kDiagnosticGetQueryTlvs.insert(NetworkDiagTlvType::kNetworkDiagRouterNeighbor);
-//kDiagnosticGetQueryTlvs.insert(NetworkDiagTlvType::kNetworkDiagAnswer);
-//kDiagnosticGetQueryTlvs.insert(NetworkDiagTlvType::kNetworkDiagQueryID);
+static const std::set<NetworkDiagTlvType> kDiagnosticGetQueryTlvs = [&kCommonDiagnosticTlvs]() {
+    std::set<NetworkDiagTlvType> result;
+    std::set<NetworkDiagTlvType> additionalTlvs = {
+        NetworkDiagTlvType::kNetworkDiagChild, NetworkDiagTlvType::kNetworkDiagChildIpv6Address,
+        NetworkDiagTlvType::kNetworkDiagRouterNeighbor, NetworkDiagTlvType::kNetworkDiagAnswer,
+        NetworkDiagTlvType::kNetworkDiagQueryID};
 
-static const std::set<NetworkDiagTlvType> kDiagnosticGetResetTlvs = {
-    NetworkDiagTlvType::kNetworkDiagMacCounters,
-    NetworkDiagTlvType::kNetworkDiagMleCounters    
-};
+    std::set_union(kCommonDiagnosticTlvs.begin(), kCommonDiagnosticTlvs.end(), additionalTlvs.begin(),
+                   additionalTlvs.end(), std::inserter(result, result.begin()));
+    return result;
+}();
+
+static const std::set<NetworkDiagTlvType> kDiagnosticGetResetTlvs = {NetworkDiagTlvType::kNetworkDiagMacCounters,
+                                                                     NetworkDiagTlvType::kNetworkDiagMleCounters};
 
 /**
  * Type alias of type list
