@@ -676,7 +676,7 @@ void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray> aHandler,
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
     SuccessOrExit(error = dstAddr.Set(aAddr));
     SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
-    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlvs(aDiagTlvFlags),
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlv(aDiagTlvFlags),
                                               tlv::Scope::kNetworkDiag}));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
@@ -1991,7 +1991,7 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
     return tlvTypes;
 }
 
-ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
+ByteArray CommissionerImpl::GetDiagTypeListTlv(uint64_t aDiagTlvFlags)
 {
     ByteArray tlvTypes;
 
