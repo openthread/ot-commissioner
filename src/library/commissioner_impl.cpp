@@ -653,6 +653,39 @@ exit:
     }
 }
 
+void CommissionerImpl::CommandDiagGetReset(ErrorHandler aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags)
+{
+    Error         error;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        aHandler(HandleStateResponse(aResponse, aError, false));
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagRst));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlvs(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+    if (aRloc == 0)
+    {
+        aRloc = kLeaderAloc16;
+    }
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sending DIAG_GET.rst");
+    mProxyClient.SendRequest(request, onResponse, aRloc, kDefaultMmPort);
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.rst");
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
