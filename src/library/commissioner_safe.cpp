@@ -561,6 +561,25 @@ void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
     }
 }
 
+void CommissionerSafe::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags)
+{
+    PushAsyncRequest([=]() { mImpl->CommandDiagGet(aHandler, aRloc, aDiagTlvFlags); });
+}
+
+Error CommissionerSafe::CommandDiagGet(ByteArray &aRawTlvData, uint16_t aRloc, uint64_t aDiagTlvFlags)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro, &aRawTlvData](const ByteArray *rawTlvData, Error error) {
+        if (rawTlvData != nullptr)
+        {
+            aRawTlvData = *rawTlvData;
+        }
+        pro.set_value(error);
+    };
+    CommandDiagGet(wait, aRloc, aDiagTlvFlags);
+    return pro.get_future().get();
+}
+
 void CommissionerSafe::PushAsyncRequest(AsyncRequest &&aAsyncRequest)
 {
     std::lock_guard<std::mutex> _(mInvokeMutex);

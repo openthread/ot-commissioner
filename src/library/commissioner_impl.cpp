@@ -653,6 +653,50 @@ exit:
     }
 }
 
+void CommissionerImpl::CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags)
+{
+    Error         error;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+        aHandler(&aResponse->GetPayload(), error);
+
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlvs(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+    if (aRloc == 0)
+    {
+        aRloc = kLeaderAloc16;
+    }
+    mProxyClient.SendRequest(request, onResponse, aRloc, kDefaultMmPort);
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(nullptr, error);
+    }
+}
+
 #if OT_COMM_CONFIG_CCM_ENABLE
 void CommissionerImpl::SetBbrDataset(ErrorHandler aHandler, const BbrDataset &aDataset)
 {
@@ -1899,6 +1943,47 @@ Error CommissionerImpl::EncodeCommissionerDataset(coap::Request &aRequest, const
 
 exit:
     return error;
+}
+
+ByteArray CommissionerImpl::GetDiagTypeListTlvs(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    const std::pair<uint64_t, tlv::Type> flagToTypeMapping[] = {
+        {1 << (uint8_t)tlv::Type::kNetworkDiagExtMacAddress, tlv::Type::kNetworkDiagExtMacAddress},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagMacAddress, tlv::Type::kNetworkDiagMacAddress},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagMode, tlv::Type::kNetworkDiagMode},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagTimeout, tlv::Type::kNetworkDiagTimeout},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagConnectivity, tlv::Type::kNetworkDiagConnectivity},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagRoute64, tlv::Type::kNetworkDiagRoute64},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagLeaderData, tlv::Type::kNetworkDiagLeaderData},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagNetworkData, tlv::Type::kNetworkDiagNetworkData},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagIpv6Address, tlv::Type::kNetworkDiagIpv6Address},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagMacCounters, tlv::Type::kNetworkDiagMacCounters},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagBatteryLevel, tlv::Type::kNetworkDiagBatteryLevel},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagSupplyVoltage, tlv::Type::kNetworkDiagSupplyVoltage},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagChildTable, tlv::Type::kNetworkDiagChildTable},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagChannelPages, tlv::Type::kNetworkDiagChannelPages},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagMaxChildTimeout, tlv::Type::kNetworkDiagMaxChildTimeout},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo, tlv::Type::kNetworkDiagLDevIDSubjectPubKeyInfo},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagIDevIDCert, tlv::Type::kNetworkDiagIDevIDCert},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagEui64, tlv::Type::kNetworkDiagEui64},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagVersion, tlv::Type::kNetworkDiagVersion},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagVendorName, tlv::Type::kNetworkDiagVendorName},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagVendorModel, tlv::Type::kNetworkDiagVendorModel},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagVendorSWVersion, tlv::Type::kNetworkDiagVendorSWVersion},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagThreadStackVersion, tlv::Type::kNetworkDiagThreadStackVersion},
+        {1 << (uint8_t)tlv::Type::kNetworkDiagMleCounters, tlv::Type::kNetworkDiagMleCounters}};
+
+    for (const auto &[flag, type] : flagToTypeMapping)
+    {
+        if (aDiagTlvFlags & flag)
+        {
+            EncodeTlvType(tlvTypes, type);
+        }
+    }
+
+    return tlvTypes;
 }
 
 ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)

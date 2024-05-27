@@ -183,6 +183,9 @@ public:
 
     Error SetToken(const ByteArray &aSignedToken) override;
 
+    void  CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGet(ByteArray &aRawTlvData, uint16_t aRloc, uint64_t aDiagTlvFlags) override;
+
 private:
     using AsyncRequest = std::function<void()>;
 

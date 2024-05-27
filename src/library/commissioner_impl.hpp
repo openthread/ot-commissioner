@@ -196,6 +196,9 @@ public:
 
     struct event_base *GetEventBase() { return mEventBase; }
 
+    void  CommandDiagGet(Handler<ByteArray> aHandler, uint16_t aRloc, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGet(ByteArray &, uint16_t, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+
 private:
     using AsyncRequest = std::function<void()>;
 
@@ -207,6 +210,8 @@ private:
 
     static ByteArray GetActiveOperationalDatasetTlvs(uint16_t aDatasetFlags);
     static ByteArray GetPendingOperationalDatasetTlvs(uint16_t aDatasetFlags);
+
+    static ByteArray GetDiagTypeListTlvs(uint64_t aDiagTlvFlags);
 
     static Error DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload);
     static Error DecodePendingOperationalDataset(PendingOperationalDataset &aDataset, const coap::Response &aResponse);
