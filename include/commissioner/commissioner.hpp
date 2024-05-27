@@ -1146,6 +1146,30 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Asynchronously reset a set of available diagnostic TLV(s) value.
+     *
+     * This method notifies a Thread device to reset a set of diagnostic value by sending DIAG_GET.rst message.
+     * It always returns immediately without waiting for the completion. //TBC by real test
+     *
+     * @param[in, out] aHandler       A handler of all response and errors; Guaranteed to be called.
+     * @param[in]      aRloc          The RLOC of dest Thread device.
+     * @param[in]      aDiagTlvFlags  Diagnostic TLVs flags indicate which TLVs are wanted.
+     */
+    virtual void CommandDiagGetReset(ErrorHandler aHandler, uint16_t aRloc, uint64_t aaDiagTlvFlags) = 0;
+
+    /**
+     * @brief Synchronously reset a set of available diagnostic TLV(s) value.
+     *
+     * This method notifies a Thread device to reset a set of diagnostic value by sending DIAG_GET.rst message.
+     * It will not return until errors happened, timeouted or succeed.
+     * @param[out] aRawTlvData    A diagnostic TLVs data returned by the leader or other Thread Device.
+     * @param[in]  aRloc          The RLOC of dest Thread device.
+     * @param[in]  aDiagTlvFlags  Diagnostic TLVs flags indicate which TLVs are wanted.
+     *
+     */
+    virtual Error CommandDiagGetReset(uint16_t aRloc, uint64_t aDiagTlvFlags) = 0;
 };
 
 } // namespace commissioner
