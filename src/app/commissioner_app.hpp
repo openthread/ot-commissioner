@@ -226,6 +226,13 @@ public:
     MOCKABLE Error SetPendingDataset(const PendingOperationalDataset &aDataset);
 
     /*
+     * Diag TLV APIs
+     */
+
+    // Always send DIAG_GET.rst.
+    MOCKABLE Error CommandDiagGetReset(uint16_t aRloc, uint64_t aDiagTlvFlags);
+
+    /*
      * BBR Dataset APIs
      */
     MOCKABLE Error GetTriHostname(std::string &aHostname) const;
