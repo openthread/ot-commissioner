@@ -200,6 +200,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
+    {"diag", &Interpreter::ProcessDiag},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -277,6 +278,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "panid conflict <panid>"},
     {"energy", "energy scan <channel-mask> <count> <period> <scan-duration> <dst-addr>\n"
                "energy report [<dst-addr>]"},
+    {"diag", "diag reset [--rloc <rloc>] [--flag <tlvs-flag>]"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -2503,6 +2505,59 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
     else
     {
         value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]);
+    }
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessDiag(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessDiagJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
+    uint16_t rloc = 0;
+    uint64_t flag = 0;
+    Value    value;
+
+    auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--rloc");
+    if (it != mContext.mCommandKeys.end())
+    {
+        if (++it != mContext.mCommandKeys.end())
+        {
+            SuccessOrExit(value = ParseInteger(rloc, it[0]));
+        }
+        else
+        {
+            ExitNow(value = ERROR_INVALID_ARGS("Missing --rloc value"));
+        }
+    }
+
+    it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--flag");
+    if (it != mContext.mCommandKeys.end())
+    {
+        if (++it != mContext.mCommandKeys.end())
+        {
+            SuccessOrExit(value = ParseInteger(flag, it[0]));
+        }
+        else
+        {
+            ExitNow(value = ERROR_INVALID_ARGS("Missing --flag value"));
+        }
+    }
+
+    if (CaseInsensitiveEqual(aExpr[1], "reset"))
+    {
+        VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
+        SuccessOrExit(value = aCommissioner->CommandDiagGetReset(rloc, flag));
     }
 
 exit:
