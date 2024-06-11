@@ -825,6 +825,14 @@ exit:
     return error;
 }
 
+Error CommissionerApp::CommandDiagGet(ByteArray &aRawTlvData, uint16_t aRloc, uint64_t aDiagTlvFlags)
+{
+    Error error;
+    SuccessOrExit(error = mCommissioner->CommandDiagGet(aRawTlvData, aRloc, aDiagTlvFlags));
+exit:
+    return error;
+}
+
 Error CommissionerApp::GetTriHostname(std::string &aHostname) const
 {
     Error error;
