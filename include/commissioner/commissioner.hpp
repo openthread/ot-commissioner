@@ -1146,6 +1146,22 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Asynchronously request mesh local prefix of the Thread Network.
+     *
+     * @param[in, out] aHandler  A handler of all errors; Guaranteed to be called.
+     */
+    virtual void RequestMeshLocalPrefix(Handler<ByteArray> aHandler) = 0;
+
+    /**
+     * @brief Request mesh local prefix of the Thread Network.
+     *
+     * @param[in] aMeshLocalPrefix  A mesh local prefix of the Thread Network.
+     *
+     * @return Error::kNone, succeed; Otherwise, failed.
+     */
+    virtual Error RequestMeshLocalPrefix(ByteArray &aMeshLocalPrefix) = 0;
 };
 
 } // namespace commissioner

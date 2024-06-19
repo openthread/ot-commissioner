@@ -194,6 +194,9 @@ public:
 
     Error SetToken(const ByteArray &aSignedToken) override;
 
+    void  RequestMeshLocalPrefix(Handler<ByteArray> aHandler) override;
+    Error RequestMeshLocalPrefix(ByteArray &) override { return ERROR_UNIMPLEMENTED(""); }
+
     struct event_base *GetEventBase() { return mEventBase; }
 
 private:

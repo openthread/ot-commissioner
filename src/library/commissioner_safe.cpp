@@ -542,6 +542,26 @@ Error CommissionerSafe::RequestToken(ByteArray &aSignedToken, const std::string 
     return pro.get_future().get();
 }
 
+void CommissionerSafe::RequestMeshLocalPrefix(Handler<ByteArray> aHandler)
+{
+    PushAsyncRequest([=]() { mImpl->RequestMeshLocalPrefix(aHandler); });
+}
+
+Error CommissionerSafe::RequestMeshLocalPrefix(ByteArray &aMeshLocalPrefix)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro, &aMeshLocalPrefix](const ByteArray *meshLocalPrefix, Error error) {
+        if (meshLocalPrefix != nullptr)
+        {
+            aMeshLocalPrefix = *meshLocalPrefix;
+        }
+        pro.set_value(error);
+    };
+
+    RequestMeshLocalPrefix(wait);
+    return pro.get_future().get();
+}
+
 Error CommissionerSafe::SetToken(const ByteArray &aSignedToken)
 {
     std::promise<Error> pro;

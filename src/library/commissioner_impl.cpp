@@ -2212,6 +2212,31 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
     }
 }
 
+void CommissionerImpl::RequestMeshLocalPrefix(Handler<ByteArray> aHandler)
+{
+    ByteArray meshLocalPrefix = mProxyClient.GetMeshLocalPrefix();
+
+    auto onMeshLocalPrefixResponse = [=](Error aError) {
+        if (aError == ErrorCode::kNone)
+        {
+            aHandler(&mProxyClient.GetMeshLocalPrefix(), aError);
+        }
+        else
+        {
+            aHandler(nullptr, ERROR_INVALID_STATE("failed to get the mesh local prefix"));
+        }
+    };
+
+    if (meshLocalPrefix.empty())
+    {
+        mProxyClient.FetchMeshLocalPrefix(onMeshLocalPrefixResponse);
+    }
+    else
+    {
+        aHandler(&meshLocalPrefix, ERROR_NONE);
+    }
+}
+
 } // namespace commissioner
 
 } // namespace ot

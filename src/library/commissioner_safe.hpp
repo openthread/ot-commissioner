@@ -183,6 +183,9 @@ public:
 
     Error SetToken(const ByteArray &aSignedToken) override;
 
+    void  RequestMeshLocalPrefix(Handler<ByteArray> aHandler) override;
+    Error RequestMeshLocalPrefix(ByteArray &) override;
+
 private:
     using AsyncRequest = std::function<void()>;
 
