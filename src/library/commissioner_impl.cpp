@@ -70,8 +70,6 @@ namespace commissioner {
 static constexpr uint16_t kLeaderAloc16     = 0xFC00;
 static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 
-static constexpr uint16_t kDefaultMmPort = 61631;
-
 static constexpr uint32_t kMinKeepAliveInterval = 30;
 static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
