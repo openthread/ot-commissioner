@@ -187,11 +187,12 @@ void JoinerSession::HandleJoinFin(const coap::Request &aJoinFin)
 
     if (auto provisioningUrlTlv = tlvSet[tlv::Type::kProvisioningURL])
     {
-        auto vendorDataTlv = tlvSet[tlv::Type::kVendorData];
-        VerifyOrExit(vendorDataTlv != nullptr, error = ERROR_BAD_FORMAT("no valid Vendor Data TLV found"));
-
         provisioningUrl = provisioningUrlTlv->GetValueAsString();
-        vendorData      = vendorDataTlv->GetValue();
+    }
+
+    if (auto vendorDataTlv = tlvSet[tlv::Type::kVendorData])
+    {
+        vendorData = vendorDataTlv->GetValue();
     }
 
     LOG_INFO(LOG_REGION_JOINER_SESSION,
