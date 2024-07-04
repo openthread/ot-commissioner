@@ -131,6 +131,18 @@ TEST(CoapTest, CoapMessageHeader_TokenIsPresent)
     EXPECT_EQ(message->GetToken(), ByteArray{0xfa});
 }
 
+TEST(CoapTest, CoapMessageHeader_TokenLengthIsZero)
+{
+    ByteArray buffer{'`', 0, 0, 1};
+    Error     error;
+    auto      message = Message::Deserialize(error, buffer);
+
+    EXPECT_NE(message, nullptr);
+    EXPECT_EQ(error, ErrorCode::kNone);
+
+    EXPECT_EQ(message->GetToken(), ByteArray{});
+}
+
 TEST(CoapTest, CoapMessageHeader_TokenLengthIsTooLong)
 {
     ByteArray buffer{0x49, 0x00, 0x00, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99};
