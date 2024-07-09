@@ -328,10 +328,13 @@ Error Message::Deserialize(Header &aHeader, const ByteArray &aBuf, size_t &aOffs
     header.mMessageId = aBuf[offset++];
     header.mMessageId = (header.mMessageId << 8) | aBuf[offset++];
 
-    VerifyOrExit(offset + header.mTokenLength <= aBuf.size(),
-                 error = ERROR_BAD_FORMAT("premature end of CoAP message header"));
-    memcpy(header.mToken, &aBuf[offset], std::min(header.mTokenLength, kMaxTokenLength));
-    offset += header.mTokenLength;
+    if (header.mTokenLength != 0)
+    {
+        VerifyOrExit(offset + header.mTokenLength <= aBuf.size(),
+                     error = ERROR_BAD_FORMAT("premature end of CoAP message header"));
+        memcpy(header.mToken, &aBuf[offset], std::min(header.mTokenLength, kMaxTokenLength));
+        offset += header.mTokenLength;
+    }
 
     aHeader = header;
     aOffset = offset;
