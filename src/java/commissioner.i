@@ -43,8 +43,8 @@
 #include <commissioner/commissioner.hpp>
 %}
 
-%include <std_string.i>
 %include <std_shared_ptr.i>
+%include <std_string.i>
 %include <std_vector.i>
 %include <stl.i>
 %include <typemaps.i>
@@ -63,6 +63,7 @@
 %apply signed char { uint8_t };
 %apply const signed char & { const uint8_t & };
 %template(ByteArray) std::vector<uint8_t>;
+
 // Override the typemap of `uint8_t`.
 %apply unsigned char { uint8_t };
 %apply const unsigned char & { const uint8_t & };
@@ -140,7 +141,6 @@ namespace commissioner {
     %ignore Commissioner::GetPendingDataset(Handler<PendingOperationalDataset> aHandler, uint16_t aDatasetFlags);
     %ignore Commissioner::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset);
     %ignore Commissioner::SetSecurePendingDataset(ErrorHandler                     aHandler,
-                                                  const std::string &              aPbbrAddr,
                                                   uint32_t                         aMaxRetrievalTimer,
                                                   const PendingOperationalDataset &aDataset);
     %ignore Commissioner::CommandReenroll(ErrorHandler aHandler, const std::string &aDstAddr);
@@ -164,7 +164,6 @@ namespace commissioner {
                                      uint16_t           aScanDuration,
                                      const std::string &aDstAddr);
     %ignore Commissioner::RegisterMulticastListener(Handler<uint8_t>                aHandler,
-                                                    const std::string &             aPbbrAddr,
                                                     const std::vector<std::string> &aMulticastAddrList,
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
@@ -179,6 +178,8 @@ namespace commissioner {
     %ignore operator!=(const Error &aError, const ErrorCode &aErrorCode);
     %ignore operator==(const ErrorCode &aErrorCode, const Error &aError);
     %ignore operator!=(const ErrorCode &aErrorCode, const Error &aError);
+    %ignore PrintTo(const Error &aError, std::ostream *os);
+    %ignore PrintTo(ErrorCode aErrorCode, std::ostream *os);
 }
 }
 
