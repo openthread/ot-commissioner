@@ -242,7 +242,7 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagNetworkData:
             return true;
         case Type::kNetworkDiagIpv6Address:
-            return (length % 16 == 0) && (length / 16 >= 1 && length / 16 <= 15);
+            return (length % 16 == 0) && (length / 16 >= 1);
         case Type::kNetworkDiagMacCounters:
             return length >= 36;
         case Type::kNetworkDiagBatteryLevel:
