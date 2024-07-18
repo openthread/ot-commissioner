@@ -278,9 +278,9 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagRouterNeighbor:
             return length >= 24;
         case Type::kNetworkDiagAnswer:
-            return length == 2;
+            return length >= 2;
         case Type::kNetworkDiagQueryID:
-            return length == 2;
+            return length >= 2;
         case Type::kNetworkDiagMleCounters:
             return length >= 66;
         default:
