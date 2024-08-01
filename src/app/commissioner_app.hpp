@@ -126,6 +126,8 @@ public:
 
     MOCKABLE void OnDatasetChanged() override;
 
+    MOCKABLE Error Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
+
     MOCKABLE Error Start(std::string       &aExistingCommissionerId,
                          const std::string &aBorderAgentAddr,
                          uint16_t           aBorderAgentPort);

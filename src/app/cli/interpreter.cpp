@@ -207,7 +207,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                "config set admincode <9-digits-thread-administrator-passcode>\n"
                "config get pskc\n"
                "config set pskc <pskc-hex-string>"},
-    {"start", "start <border-agent-addr> <border-agent-port>\n"
+    {"start", "start <border-agent-addr> <border-agent-port> [--connect-only]\n"
               "start [ --nwk <network-alias-list | --dom <domain-alias>]"},
     {"stop", "stop\n"
              "stop [ --nwk <network-alias-list | --dom <domain-alias>]"},
@@ -1007,13 +1007,27 @@ Interpreter::Value Interpreter::ProcessStartJob(CommissionerAppPtr &aCommissione
     Error       error;
     uint16_t    port;
     std::string existingCommissionerId;
+    bool        connectOnly = false;
 
     VerifyOrExit(aExpr.size() >= 3, error = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
     SuccessOrExit(error = ParseInteger(port, aExpr[2]));
-    SuccessOrExit(error = aCommissioner->Start(existingCommissionerId, aExpr[1], port));
+
+    {
+        auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--connect-only");
+
+        if (it != mContext.mCommandKeys.end())
+        {
+            connectOnly = true;
+            error       = aCommissioner->Connect(aExpr[1], port);
+        }
+        else
+        {
+            error = aCommissioner->Start(existingCommissionerId, aExpr[1], port);
+        }
+    }
 
 exit:
-    if (!existingCommissionerId.empty())
+    if (!connectOnly && !existingCommissionerId.empty())
     {
         error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }

@@ -316,10 +316,10 @@ d28443a10126a058aea40366546872656164047818323031392d31322d30315431303a33383a3439
 
 ### Start
 
-To start petitioning as the active Commissioner of a Thread network:
+To start establishing secure session, and petitioning as the active Commissioner of a Thread network by default:
 
 ```shell
-### Petition with Border Agent at [::]:49191
+### Establish secure session and Petition with Border Agent at [::]:49191
 > start :: 49191
 [done]
 >
@@ -329,6 +329,13 @@ To start petitioning as the active Commissioner of a Thread network:
 ### Petition with border agent belonging to the selected network; address, port, and connection mode selected by application according to data in the registry
 > start --nwk this
 [done]
+```
+
+```shell
+### Establish secure session with Border Agent at [192.168.8.2]:49191 without attempt to petition as active commissioner
+> start 192.168.8.2 49191 --connect-only
+[done]
+>
 ```
 
 ### Active
