@@ -202,6 +202,7 @@ private:
 
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
+    Value ProcessState(const Expression &aExpr);
     Value ProcessStop(const Expression &aExpr);
     Value ProcessActive(const Expression &aExpr);
     Value ProcessToken(const Expression &aExpr);

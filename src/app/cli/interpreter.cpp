@@ -200,6 +200,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
+    {"state", &Interpreter::ProcessState},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -207,6 +208,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                "config set admincode <9-digits-thread-administrator-passcode>\n"
                "config get pskc\n"
                "config set pskc <pskc-hex-string>"},
+    {"state", "state"},
     {"start", "start <border-agent-addr> <border-agent-port> [--connect-only]\n"
               "start [ --nwk <network-alias-list | --dom <domain-alias>]"},
     {"stop", "stop\n"
@@ -288,6 +290,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
         Interpreter::StringArray{"start"},
         Interpreter::StringArray{"stop"},
         Interpreter::StringArray{"active"},
+        Interpreter::StringArray{"state"},
         Interpreter::StringArray{"sessionid"},
         Interpreter::StringArray{"bbrdataset", "get"},
         Interpreter::StringArray{"commdataset", "get"},
@@ -936,6 +939,33 @@ Interpreter::Value Interpreter::ProcessConfig(const Expression &aExpr)
     else
     {
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
+    }
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessState(const Expression &)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+
+    switch (commissioner->GetState())
+    {
+    case State::kDisabled:
+        value = std::string("disabled");
+        break;
+    case State::kConnected:
+        value = std::string("connected");
+        break;
+    case State::kPetitioning:
+        value = std::string("petitioning");
+        break;
+    case State::kActive:
+        value = std::string("active");
+        break;
     }
 
 exit:
