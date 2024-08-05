@@ -72,6 +72,7 @@ public:
     MOCK_METHOD(void, OnEnergyReport, (const std::string &, const ChannelMask &, const ByteArray &), (override));
     MOCK_METHOD(void, OnDatasetChanged, (), (override));
 
+    MOCK_METHOD(Error, Connect, (const std::string &, uint16_t));
     MOCK_METHOD(Error, Start, (std::string &, const std::string &, uint16_t));
     MOCK_METHOD(void, Stop, ());
     MOCK_METHOD(void, CancelRequests, ());
