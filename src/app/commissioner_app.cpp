@@ -152,6 +152,11 @@ bool CommissionerApp::IsActive() const
     return mCommissioner->IsActive();
 }
 
+State CommissionerApp::GetState() const
+{
+    return mCommissioner->GetState();
+}
+
 bool CommissionerApp::IsCcmMode() const
 {
     return mCommissioner->IsCcmMode();

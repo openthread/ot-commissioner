@@ -338,6 +338,22 @@ To start establishing secure session, and petitioning as the active Commissioner
 >
 ```
 
+### State
+
+Show the state of the commissioner candidate
+
+- "active": It's now an active commissioner accepted and will periodically sends keep alive messages in background
+- "petitioning": It's attempting to petition as active commissioner
+- "connected": The commissioner candidate has successfully established secure session with border agent
+- "disabled": It's not an active commissioner, nor securely connected with the Border Agent
+
+```shell
+> state
+connected
+[done]
+>
+```
+
 ### Active
 
 Upon success, the Commissioner periodically sends keep alive messages in background. The Commissioner now is in the active state:

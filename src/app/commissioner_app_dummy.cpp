@@ -129,6 +129,11 @@ bool CommissionerApp::IsActive() const
     return false;
 }
 
+State CommissionerApp::GetState() const
+{
+    return State::kDisabled;
+}
+
 Error CommissionerApp::SaveNetworkData(const std::string &aFilename)
 {
     UNUSED(aFilename);

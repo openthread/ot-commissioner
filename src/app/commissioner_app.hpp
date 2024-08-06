@@ -128,6 +128,8 @@ public:
 
     MOCKABLE Error Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
 
+    MOCKABLE State GetState() const;
+
     MOCKABLE Error Start(std::string       &aExistingCommissionerId,
                          const std::string &aBorderAgentAddr,
                          uint16_t           aBorderAgentPort);

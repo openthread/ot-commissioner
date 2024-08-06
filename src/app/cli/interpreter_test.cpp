@@ -949,6 +949,37 @@ TEST_F(InterpreterTestSuite, PC_StartLegacySyntaxSuccess)
     EXPECT_TRUE(value.HasNoError());
 }
 
+TEST_F(InterpreterTestSuite, PC_State)
+{
+    TestContext ctx;
+    InitContext(ctx);
+
+    EXPECT_CALL(*ctx.mDefaultCommissionerObject, GetState())
+        .Times(4)
+        .WillOnce(Return(State::kActive))
+        .WillOnce(Return(State::kPetitioning))
+        .WillOnce(Return(State::kConnected))
+        .WillOnce(Return(State::kDisabled));
+
+    Interpreter::Expression expr;
+    Interpreter::Value      value;
+    expr  = ctx.mInterpreter.ParseExpression("state");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_STREQ("active", value.ToString().c_str());
+
+    expr  = ctx.mInterpreter.ParseExpression("state");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_STREQ("petitioning", value.ToString().c_str());
+
+    expr  = ctx.mInterpreter.ParseExpression("state");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_STREQ("connected", value.ToString().c_str());
+
+    expr  = ctx.mInterpreter.ParseExpression("state");
+    value = ctx.mInterpreter.Eval(expr);
+    EXPECT_STREQ("disabled", value.ToString().c_str());
+}
+
 TEST_F(InterpreterTestSuite, PC_StartLegacyConnectSyntaxErrorFails)
 {
     TestContext ctx;
