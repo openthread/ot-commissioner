@@ -43,6 +43,7 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diagnostic_tlvs.hpp>
 
 namespace ot {
 
@@ -1147,6 +1148,41 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Asynchronously requests diagnostic TLV data from a Thread device.
+     *
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     *
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
+     * @param[in]     aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]     aDiagTlvTypeList List of diagnostic TLVs type.
+     *                                 kDiagnosticGetRequestTlvs for the set of valid TLV types.
+     */
+    virtual void CommandDiagGetRequest(Handler<ByteArray>     aHandler,
+                                       const std::string     &aAddr,
+                                       const DiagTlvTypeList &aDiagTlvTypeList) = 0;
+
+    /**
+     * @brief Synchronously requests diagnostic TLV data from a Thread device.
+     *
+     * This method sends a DIAG_GET.req message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The method blocks until a response is received, an error occurs.
+     *
+     * @param[out] aRawTlvData      Upon success, contains the diagnostic TLV data returned by the device.
+     * @param[in]  aAddr            Mesh local address (mesh local prefix + RLOC) of the target Thread device.
+     * @param[in]  aDiagTlvTypeList List of diagnostic TLVs type.
+     *                              kDiagnosticGetRequestTlvs for the set of valid TLV types.
+     *
+     * @return Error::kNone, succeed; Otherwise, failed..
+     */
+    virtual Error CommandDiagGetRequest(ByteArray             &aRawTlvData,
+                                        const std::string     &aAddr,
+                                        const DiagTlvTypeList &aDiagTlvTypeList) = 0;
 };
 
 } // namespace commissioner

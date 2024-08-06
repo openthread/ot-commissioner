@@ -45,6 +45,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
@@ -657,6 +658,60 @@ exit:
     if (error != ErrorCode::kNone)
     {
         aHandler(error);
+    }
+}
+
+void CommissionerImpl::CommandDiagGetRequest(Handler<ByteArray>     aHandler,
+                                             const std::string     &aAddr,
+                                             const DiagTlvTypeList &aDiagTlvTypeList)
+{
+    Error         error;
+    Address       dstAddr;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+        aHandler(&aResponse->GetPayload(), error);
+
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = dstAddr.Set(aAddr));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
+    for (const auto &eachTlvType : aDiagTlvTypeList)
+    {
+        LOG_ERROR(LOG_REGION_MESHDIAG, "dropping invalid TLV(type={})", utils::to_underlying(eachTlvType));
+        VerifyOrExit((kDiagnosticGetRequestTlvs.count(eachTlvType) > 0),
+                     error = ERROR_INVALID_ARGS("TLV is invalid for request"));
+    }
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTypeListTlv(aDiagTlvTypeList),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sending DIAG_GET.req command to {}", aAddr);
+    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(nullptr, error);
     }
 }
 
@@ -1952,6 +2007,18 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
     {
         tlvTypes.emplace_back(utils::to_underlying(tlv::Type::kNmkpUdpPort));
     }
+    return tlvTypes;
+}
+
+ByteArray CommissionerImpl::GetDiagTypeListTlv(const DiagTlvTypeList &aDiagTlvTypeList)
+{
+    ByteArray tlvTypes;
+
+    for (const auto &eachTlvType : aDiagTlvTypeList)
+    {
+        EncodeTlvType(tlvTypes, static_cast<tlv::Type>(eachTlvType));
+    }
+
     return tlvTypes;
 }
 
