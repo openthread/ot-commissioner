@@ -38,6 +38,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 public class CommissionerActivity extends AppCompatActivity implements FragmentCallback {
+
   private static final String TAG = CommissionerActivity.class.getSimpleName();
 
   public static final String ACTION_COMMISSION_DEVICE =
@@ -45,8 +46,6 @@ public class CommissionerActivity extends AppCompatActivity implements FragmentC
   public static final String ACTION_FETCH_CREDENTIAL =
       "io.openthread.commissioner.action.FETCH_CREDENTIAL";
 
-  public static final String KEY_JOINER_DISCERNER = "JOINER_DISCERNER";
-  public static final String KEY_JOINER_DISCERNER_BIT_LENGTH = "JOINER_DISCERNER_BIT_LENGTH";
   public static final String KEY_JOINER_EUI64 = "JOINER_EUI64";
   public static final String KEY_JOINER_PSKD = "JOINER_PSKD";
 
@@ -65,7 +64,7 @@ public class CommissionerActivity extends AppCompatActivity implements FragmentC
         // TODO(wgtdkp): scan QR code of the joiner device.
         showFragment(new ScanQrCodeFragment(this));
       } else {
-        showFragment(new SelectNetworkFragment(this, joinerDeviceInfo));
+        showFragment(new SelectBorderRouterFragment(this, joinerDeviceInfo));
       }
     } else if (ACTION_FETCH_CREDENTIAL.equals(intent.getAction())) {
       // TODO(wgtdkp):
@@ -110,7 +109,8 @@ public class CommissionerActivity extends AppCompatActivity implements FragmentC
 
   @Override
   public void onJoinerInfoReceived(@Nullable JoinerDeviceInfo joinerDeviceInfo) {
-    showFragment(new SelectNetworkFragment(this, joinerDeviceInfo));
+    //showFragment(new SelectNetworkFragment(this, joinerDeviceInfo));
+    // TODO(wgtdkp): goto commissioning fragment.
   }
 
   @Override
@@ -122,5 +122,30 @@ public class CommissionerActivity extends AppCompatActivity implements FragmentC
   @Override
   public void onMeshcopResult(int result) {
     // TODO(wgtdkp):
+  }
+
+  @Override
+  public void onGetAdminPasscodeStarted(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow) {
+    showFragment(new GetAdminPasscodeFragment(this, borderAgentInfo, adminPasscodeFlow));
+  }
+
+  @Override
+  public void onAdminPasscodeReceived(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow,
+      String passcode,
+      int epskcPort) {
+    if (adminPasscodeFlow == GetAdminPasscodeFragment.FLOW_RETRIEVE_DATASET) {
+      showFragment(
+          new RetrieveDatasetFragment(this, borderAgentInfo, passcode, epskcPort));
+    } else if (adminPasscodeFlow == GetAdminPasscodeFragment.FLOW_SET_DATASET) {
+      showFragment(
+          new SetDatasetFragment(this, borderAgentInfo, passcode, epskcPort));
+    } else {
+      throw new AssertionError("Unknown Admin Passcode flow: " + adminPasscodeFlow);
+    }
+  }
+
+  @Override
+  public void onCredentialsRetrieved() {
+    // TODO:
   }
 }

@@ -34,8 +34,10 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
+
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -45,185 +47,202 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
 
-  private static final String TAG = BorderAgentDiscoverer.class.getSimpleName();
+    private static final String TAG = BorderAgentDiscoverer.class.getSimpleName();
 
-  private static final String SERVICE_TYPE = "_meshcop._udp";
-  private static final String KEY_ID = "id";
-  private static final String KEY_NETWORK_NAME = "nn";
-  private static final String KEY_EXTENDED_PAN_ID = "xp";
+    public static final String MESHCOP_SERVICE_TYPE = "_meshcop._udp";
+    public static final String MESHCOP_E_SERVICE_TYPE = "_meshcop-e._udp";
+    private static final String KEY_ID = "id";
+    private static final String KEY_NETWORK_NAME = "nn";
+    private static final String KEY_EXTENDED_PAN_ID = "xp";
+    private static final String KEY_VENDOR_NAME = "vn";
+    private static final String KEY_MODEL_NAME = "mn";
 
-  private WifiManager.MulticastLock wifiMulticastLock;
-  private NsdManager nsdManager;
-  private BorderAgentListener borderAgentListener;
+    private final WifiManager.MulticastLock wifiMulticastLock;
+    private final NsdManager nsdManager;
 
-  private ExecutorService executor = Executors.newSingleThreadExecutor();
-  private BlockingQueue<NsdServiceInfo> unresolvedServices = new ArrayBlockingQueue<>(256);
-  private AtomicBoolean isResolvingService = new AtomicBoolean(false);
+    private final String serviceType;
+    private final BorderAgentListener borderAgentListener;
 
-  private boolean isScanning = false;
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private BlockingQueue<NsdServiceInfo> unresolvedServices = new ArrayBlockingQueue<>(256);
+    private AtomicBoolean isResolvingService = new AtomicBoolean(false);
 
-  public interface BorderAgentListener {
+    private boolean isScanning = false;
 
-    void onBorderAgentFound(BorderAgentInfo borderAgentInfo);
+    public interface BorderAgentListener {
 
-    void onBorderAgentLost(byte[] id);
-  }
+        void onBorderAgentFound(BorderAgentInfo borderAgentInfo);
 
-  @RequiresPermission(permission.INTERNET)
-  public BorderAgentDiscoverer(Context context, BorderAgentListener borderAgentListener) {
-    WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-    wifiMulticastLock = wifi.createMulticastLock("multicastLock");
+        //void onBorderAgentLost(byte[] id);
 
-    nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
-
-    this.borderAgentListener = borderAgentListener;
-  }
-
-  public void start() {
-    if (isScanning) {
-      Log.w(TAG, "the Border Agent discoverer is already running!");
-      return;
+        default void onBorderAgentLost(boolean isEpskcService, String instanceName) {
+        }
     }
 
-    isScanning = true;
+    @RequiresPermission(permission.INTERNET)
+    public BorderAgentDiscoverer(Context context, String serviceType, BorderAgentListener borderAgentListener) {
+        WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        wifiMulticastLock = wifi.createMulticastLock("multicastLock");
 
-    wifiMulticastLock.setReferenceCounted(true);
-    wifiMulticastLock.acquire();
+        nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
 
-    startResolver();
-    nsdManager.discoverServices(
-        BorderAgentDiscoverer.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this);
-  }
-
-  private void startResolver() {
-    NsdManager.ResolveListener listener =
-        new NsdManager.ResolveListener() {
-          @Override
-          public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-            Log.e(
-                TAG,
-                String.format(
-                    "failed to resolve service %s, error: %d, this=%s",
-                    serviceInfo.toString(), errorCode, this));
-            isResolvingService.set(false);
-          }
-
-          @Override
-          public void onServiceResolved(NsdServiceInfo serviceInfo) {
-            BorderAgentInfo borderAgent = getBorderAgentInfo(serviceInfo);
-            if (borderAgent != null) {
-              Log.d(TAG, "successfully resolved service: " + serviceInfo.toString());
-              Log.d(
-                  TAG,
-                  "successfully resolved service: " + serviceInfo.getHost().getCanonicalHostName());
-              borderAgentListener.onBorderAgentFound(borderAgent);
-            }
-            isResolvingService.set(false);
-          }
-        };
-
-    Log.d(TAG, "mDNS resolve listener is " + listener);
-
-    if (executor.isTerminated()) {
-      executor = Executors.newSingleThreadExecutor();
+        this.serviceType = serviceType;
+        this.borderAgentListener = borderAgentListener;
     }
 
-    executor.submit(
-        () -> {
-          while (true) {
-            if (!isResolvingService.get()) {
-              NsdServiceInfo serviceInfo = unresolvedServices.take();
+    public void start() {
+        if (isScanning) {
+            Log.w(TAG, "the Border Agent discoverer is already running!");
+            return;
+        }
 
-              isResolvingService.set(true);
-              nsdManager.resolveService(serviceInfo, listener);
-            }
-          }
-        });
-  }
+        isScanning = true;
 
-  private void stopResolver() {
-    if (!executor.isTerminated()) {
-      executor.shutdownNow();
-    }
-    isResolvingService.set(false);
-    unresolvedServices.clear();
-  }
+        wifiMulticastLock.setReferenceCounted(true);
+        wifiMulticastLock.acquire();
 
-  public void stop() {
-    if (!isScanning) {
-      Log.w(TAG, "the Border Agent discoverer has already been stopped!");
-      return;
+        startResolver();
+
+        nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, this);
     }
 
-    nsdManager.stopServiceDiscovery(this);
-    stopResolver();
+    private void startResolver() {
+        NsdManager.ResolveListener listener =
+                new NsdManager.ResolveListener() {
+                    @Override
+                    public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                        Log.e(
+                                TAG,
+                                String.format(
+                                        "failed to resolve service %s, error: %d, this=%s",
+                                        serviceInfo.toString(), errorCode, this));
+                        isResolvingService.set(false);
+                    }
 
-    if (wifiMulticastLock != null) {
-      wifiMulticastLock.release();
+                    @Override
+                    public void onServiceResolved(NsdServiceInfo serviceInfo) {
+                        BorderAgentInfo borderAgent = getBorderAgentInfo(serviceInfo);
+                        if (borderAgent != null) {
+                            Log.d(TAG, "successfully resolved service: " + serviceInfo.toString());
+                            Log.d(
+                                    TAG,
+                                    "successfully resolved service: " + serviceInfo.getHost().getCanonicalHostName());
+                            borderAgentListener.onBorderAgentFound(borderAgent);
+                        }
+                        isResolvingService.set(false);
+                    }
+                };
+
+        Log.d(TAG, "mDNS resolve listener is " + listener);
+
+        if (executor.isTerminated()) {
+            executor = Executors.newSingleThreadExecutor();
+        }
+
+        executor.submit(
+                () -> {
+                    while (true) {
+                        if (!isResolvingService.get()) {
+                            NsdServiceInfo serviceInfo = unresolvedServices.take();
+
+                            isResolvingService.set(true);
+                            nsdManager.resolveService(serviceInfo, listener);
+                        }
+                    }
+                });
     }
 
-    isScanning = false;
-  }
-
-  @Override
-  public void onDiscoveryStarted(String serviceType) {
-    Log.d(TAG, "start discovering Border Agent");
-  }
-
-  @Override
-  public void onDiscoveryStopped(String serviceType) {
-    Log.d(TAG, "stop discovering Border Agent");
-  }
-
-  @Override
-  public void onServiceFound(NsdServiceInfo nsdServiceInfo) {
-    Log.d(TAG, "a Border Agent service found");
-
-    unresolvedServices.offer(nsdServiceInfo);
-  }
-
-  @Override
-  public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
-    byte[] id = getBorderAgentId(nsdServiceInfo);
-    if (id != null) {
-      Log.d(TAG, "a Border Agent service is gone: " + nsdServiceInfo.getServiceName());
-      borderAgentListener.onBorderAgentLost(id);
-    }
-  }
-
-  @Override
-  public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-    Log.d(TAG, "start discovering Border Agent failed: " + errorCode);
-  }
-
-  @Override
-  public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-    Log.d(TAG, "stop discovering Border Agent failed: " + errorCode);
-  }
-
-  @Nullable
-  private BorderAgentInfo getBorderAgentInfo(NsdServiceInfo serviceInfo) {
-    Map<String, byte[]> attrs = serviceInfo.getAttributes();
-    byte[] id = getBorderAgentId(serviceInfo);
-
-    if (!attrs.containsKey(KEY_NETWORK_NAME) || !attrs.containsKey(KEY_EXTENDED_PAN_ID)) {
-      return null;
+    private void stopResolver() {
+        if (!executor.isTerminated()) {
+            executor.shutdownNow();
+        }
+        isResolvingService.set(false);
+        unresolvedServices.clear();
     }
 
-    return new BorderAgentInfo(
-        id,
-        new String(attrs.get(KEY_NETWORK_NAME)),
-        attrs.get(KEY_EXTENDED_PAN_ID),
-        serviceInfo.getHost(),
-        serviceInfo.getPort());
-  }
+    public void stop() {
+        if (!isScanning) {
+            Log.w(TAG, "the Border Agent discoverer has already been stopped!");
+            return;
+        }
 
-  @Nullable
-  private byte[] getBorderAgentId(NsdServiceInfo serviceInfo) {
-    Map<String, byte[]> attrs = serviceInfo.getAttributes();
-    if (attrs.containsKey(KEY_ID)) {
-      return attrs.get(KEY_ID).clone();
+        nsdManager.stopServiceDiscovery(this);
+        stopResolver();
+
+        if (wifiMulticastLock != null) {
+            wifiMulticastLock.release();
+        }
+
+        isScanning = false;
     }
-    return null;
-  }
+
+    @Override
+    public void onDiscoveryStarted(String serviceType) {
+        Log.d(TAG, "start discovering Border Agent: " + serviceType);
+    }
+
+    @Override
+    public void onDiscoveryStopped(String serviceType) {
+        Log.d(TAG, "stop discovering Border Agent");
+    }
+
+    @Override
+    public void onServiceFound(NsdServiceInfo nsdServiceInfo) {
+        Log.d(TAG, "a Border Agent service found");
+
+        unresolvedServices.offer(nsdServiceInfo);
+    }
+
+    @Override
+    public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
+        Log.d(TAG, "a Border Agent service is gone: " + nsdServiceInfo.getServiceName());
+
+        borderAgentListener.onBorderAgentLost(
+                serviceType.equals(MESHCOP_E_SERVICE_TYPE), nsdServiceInfo.getServiceName());
+    }
+
+    @Override
+    public void onStartDiscoveryFailed(String serviceType, int errorCode) {
+        Log.d(TAG, "start discovering Border Agent failed: " + errorCode);
+    }
+
+    @Override
+    public void onStopDiscoveryFailed(String serviceType, int errorCode) {
+        Log.d(TAG, "stop discovering Border Agent failed: " + errorCode);
+    }
+
+    @Nullable
+    private BorderAgentInfo getBorderAgentInfo(NsdServiceInfo serviceInfo) {
+        Map<String, byte[]> attrs = serviceInfo.getAttributes();
+        byte[] id = getBorderAgentId(serviceInfo);
+
+        return new BorderAgentInfo(
+                serviceType.equals(MESHCOP_E_SERVICE_TYPE),
+                serviceInfo.getServiceName(),
+                id,
+                getStringAttribute(attrs, KEY_NETWORK_NAME),
+                attrs.get(KEY_EXTENDED_PAN_ID),
+                serviceInfo.getHost(),
+                serviceInfo.getPort(),
+                getStringAttribute(attrs, KEY_VENDOR_NAME),
+                getStringAttribute(attrs, KEY_MODEL_NAME));
+    }
+
+    @Nullable
+    private static String getStringAttribute(Map<String, byte[]> attributes, String key) {
+        byte[] value = attributes.get(key);
+        if (value == null) {
+            return null;
+        }
+        return new String(value);
+    }
+
+    @Nullable
+    private byte[] getBorderAgentId(NsdServiceInfo serviceInfo) {
+        Map<String, byte[]> attrs = serviceInfo.getAttributes();
+        if (attrs.containsKey(KEY_ID)) {
+            return attrs.get(KEY_ID).clone();
+        }
+        return null;
+    }
 }

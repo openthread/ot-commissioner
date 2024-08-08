@@ -135,6 +135,7 @@ public:
 
     void  SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset) override;
     Error SetPendingDataset(const PendingOperationalDataset &) override { return ERROR_UNIMPLEMENTED(""); }
+    Error SetRawPendingDataset(const ByteArray &) override { return ERROR_UNIMPLEMENTED(""); };
 
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
                                     const std::vector<std::string> &aMulticastAddrList,
@@ -195,6 +196,8 @@ public:
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
+
+    static Error DecodePendingOperationalDataset(PendingOperationalDataset &aDataset, const ByteArray &aTlvs);
 
 private:
     using AsyncRequest = std::function<void()>;

@@ -40,22 +40,29 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import io.openthread.commissioner.service.BorderAgentInfo;
 import io.openthread.commissioner.service.FragmentCallback;
+import io.openthread.commissioner.service.GetAdminPasscodeFragment;
 import io.openthread.commissioner.service.JoinerDeviceInfo;
 import io.openthread.commissioner.service.MeshcopFragment;
+import io.openthread.commissioner.service.RetrieveDatasetFragment;
+import io.openthread.commissioner.service.SetDatasetFragment;
 import io.openthread.commissioner.service.ScanQrCodeFragment;
-import io.openthread.commissioner.service.SelectNetworkFragment;
+import io.openthread.commissioner.service.SelectBorderRouterFragment;
 import io.openthread.commissioner.service.ThreadNetworkInfoHolder;
 
 public class MainActivity extends AppCompatActivity implements FragmentCallback {
 
   private static final String TAG = MainActivity.class.getSimpleName();
 
-  @Nullable private ThreadNetworkInfoHolder selectedNetwork;
+  @Nullable
+  private ThreadNetworkInfoHolder selectedNetwork;
 
-  @Nullable private byte[] pskc;
+  @Nullable
+  private byte[] pskc;
 
-  @Nullable private JoinerDeviceInfo joinerDeviceInfo;
+  @Nullable
+  private JoinerDeviceInfo joinerDeviceInfo;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
     gitHash.setText(BuildConfig.GIT_HASH);
 
     if (savedInstanceState == null) {
-      showFragment(new SelectNetworkFragment(this, null), false);
+      showFragment(new SelectBorderRouterFragment(this), false);
     }
   }
 
@@ -153,5 +160,32 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
   @Override
   public void onMeshcopResult(int result) {
     finishCommissioning(result);
+  }
+
+  @Override
+  public void onGetAdminPasscodeStarted(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow) {
+    showFragment(new GetAdminPasscodeFragment(this, borderAgentInfo, adminPasscodeFlow), /* addToBackStack= */ true);
+  }
+
+  @Override
+  public void onAdminPasscodeReceived(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow, String passcode,
+      int epskcPort) {
+    if (adminPasscodeFlow == GetAdminPasscodeFragment.FLOW_RETRIEVE_DATASET) {
+      showFragment(new RetrieveDatasetFragment(this, borderAgentInfo, passcode,
+          epskcPort), /* addToBackStack= */ true);
+    } else if (adminPasscodeFlow == GetAdminPasscodeFragment.FLOW_SET_DATASET) {
+      showFragment(new SetDatasetFragment(this, borderAgentInfo, passcode,
+          epskcPort), /* addToBackStack= */ true);
+    } else {
+      throw new AssertionError("Unknown Admin Passcode flow: " + adminPasscodeFlow);
+    }
+  }
+
+  @Override
+  public void onCredentialsRetrieved() {
+    selectedNetwork = null;
+    pskc = null;
+    joinerDeviceInfo = null;
+    clearFragmentsInBackStack();
   }
 }

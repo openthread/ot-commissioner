@@ -35,27 +35,42 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class BorderAgentInfo implements Parcelable {
-
-  public byte[] id;
-  public String networkName;
-  public byte[] extendedPanId;
+  public final boolean isEpskcService;
+  public final String instanceName;
+  public final byte[] id;
+  public final String networkName;
+  public final byte[] extendedPanId;
   public InetAddress host;
   public int port;
 
+  public final String vendorName;
+
+  public final String modelName;
+
   public BorderAgentInfo(
-      @NonNull byte[] id,
-      @NonNull String networkName,
-      @NonNull byte[] extendedPanId,
-      @NonNull InetAddress host,
-      @NonNull int port) {
-    this.id = id.clone();
+      boolean isEpskcService,
+      String instanceName,
+      byte[] id,
+      String networkName,
+      byte[] extendedPanId,
+      InetAddress host,
+      int port,
+      String vendorName,
+      String modelName) {
+    this.isEpskcService = isEpskcService;
+    this.instanceName = instanceName;
+    this.id = id == null ? null : id.clone();
     this.networkName = networkName;
-    this.extendedPanId = extendedPanId.clone();
+    this.extendedPanId = extendedPanId == null ? null : extendedPanId.clone();
     this.host = host;
     this.port = port;
+    this.vendorName = vendorName;
+    this.modelName = modelName;
   }
 
   protected BorderAgentInfo(Parcel in) {
+    isEpskcService = in.readInt() != 0;
+    instanceName = in.readString();
     id = in.createByteArray();
     networkName = in.readString();
     extendedPanId = in.createByteArray();
@@ -64,15 +79,21 @@ public class BorderAgentInfo implements Parcelable {
     } catch (UnknownHostException e) {
     }
     port = in.readInt();
+    vendorName = in.readString();
+    modelName = in.readString();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
+    dest.writeInt(isEpskcService ? 1 : 0);
+    dest.writeString(instanceName);
     dest.writeByteArray(id);
     dest.writeString(networkName);
     dest.writeByteArray(extendedPanId);
     dest.writeByteArray(host.getAddress());
     dest.writeInt(port);
+    dest.writeString(vendorName);
+    dest.writeString(modelName);
   }
 
   @Override
