@@ -26,7 +26,7 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
 import android.content.Context;
 import android.os.Handler;
@@ -36,7 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
-import io.openthread.commissioner.service.BorderAgentDiscoverer.BorderAgentListener;
+import io.openthread.commissioner.app.BorderAgentDiscoverer.BorderAgentListener;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -66,7 +66,7 @@ public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
       networks.add(new ThreadNetworkInfoHolder(borderAgent));
     }
 
-    new Handler(Looper.getMainLooper()).post(() -> notifyDataSetChanged());
+    notifyDataSetChanged();
   }
 
   public void removeBorderAgent(byte[] lostBorderAgentId) {
@@ -78,7 +78,7 @@ public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
             networks.remove(networkInfoHolder);
           }
 
-          new Handler(Looper.getMainLooper()).post(() -> notifyDataSetChanged());
+          notifyDataSetChanged();
           return;
         }
       }
@@ -116,11 +116,11 @@ public class NetworkAdapter extends BaseAdapter implements BorderAgentListener {
 
   @Override
   public void onBorderAgentFound(BorderAgentInfo borderAgentInfo) {
-    addBorderAgent(borderAgentInfo);
+    new Handler(Looper.getMainLooper()).post(() -> addBorderAgent(borderAgentInfo));
   }
 
   @Override
   public void onBorderAgentLost(byte[] borderAgentId) {
-    removeBorderAgent(borderAgentId);
+    new Handler(Looper.getMainLooper()).post(() -> removeBorderAgent(borderAgentId));
   }
 }

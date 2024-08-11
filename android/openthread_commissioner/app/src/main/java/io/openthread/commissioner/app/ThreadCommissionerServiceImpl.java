@@ -26,8 +26,9 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
+import android.content.Context;
 import android.os.ConditionVariable;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -48,6 +49,7 @@ import io.openthread.commissioner.CommissionerHandler;
 import io.openthread.commissioner.Config;
 import io.openthread.commissioner.Error;
 import io.openthread.commissioner.ErrorCode;
+import io.openthread.commissioner.Logger;
 import java.math.BigInteger;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -69,6 +71,9 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
 
   private static final int SECONDS_WAIT_FOR_JOINER = 60;
 
+  // Use a static reference to the logger to workaround the Java & C++ reference dependency issue
+  private static Logger commissionerLogger = new NativeCommissionerLogger();
+
   private final ThreadNetworkClient threadNetworkClient;
   private final Executor executor;
   @Nullable private IntermediateStateCallback intermediateStateCallback;
@@ -77,9 +82,9 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
   private ConditionVariable curJoinerCommissioned = new ConditionVariable();
 
   public static ThreadCommissionerServiceImpl newInstance(
-      @Nullable IntermediateStateCallback intermediateStateCallback) {
+      Context context, @Nullable IntermediateStateCallback intermediateStateCallback) {
     return new ThreadCommissionerServiceImpl(
-        ThreadNetwork.getClient(CommissionerServiceApp.getContext()),
+        ThreadNetwork.getClient(context),
         Executors.newSingleThreadExecutor(),
         intermediateStateCallback);
   }
@@ -143,9 +148,9 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
     config.setId("TestComm");
     config.setDomainName("TestDomain");
     config.setEnableCcm(false);
-    config.setEnableDtlsDebugLogging(false);
+    config.setEnableDtlsDebugLogging(true);
     config.setPSKc(new ByteArray(pskc));
-    config.setLogger(new NativeCommissionerLogger());
+    config.setLogger(commissionerLogger);
 
     try {
       // Initialize the native commissioner.
@@ -206,7 +211,7 @@ public class ThreadCommissionerServiceImpl extends CommissionerHandler
     config.setEnableCcm(false);
     config.setEnableDtlsDebugLogging(true);
     config.setPSKc(new ByteArray(pskc));
-    config.setLogger(new NativeCommissionerLogger());
+    config.setLogger(commissionerLogger);
 
     try {
       // Initialize the native commissioner

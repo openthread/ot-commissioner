@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2024, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -26,15 +26,34 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-import androidx.annotation.Nullable;
+import android.app.Activity;
+import android.content.Context;
+import androidx.fragment.app.Fragment;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-public interface FragmentCallback {
-  void onJoinerInfoReceived(@Nullable JoinerDeviceInfo joinerDeviceInfo);
+public final class FragmentUtils {
+  private FragmentUtils() {}
 
-  void onNetworkSelected(
-      @Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc);
+  /** Shows an alert dialog to the user and exits the commissioning flow when the user consents. */
+  public static void showAlertAndExit(
+      Context context, FragmentCallback fragmentCallback, String title, String message) {
+    new MaterialAlertDialogBuilder(context, R.style.ThreadNetworkAlertTheme)
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton(
+            "OK", (dialog, which) -> fragmentCallback.onAddDeviceResult(Activity.RESULT_CANCELED))
+        .show();
+  }
 
-  void onMeshcopResult(int result);
+  /** Shows the next fragment and adds the current fragment to the back stack. */
+  public static void moveToNextFragment(Fragment currentFragment, Fragment nextFragment) {
+    currentFragment
+        .getParentFragmentManager()
+        .beginTransaction()
+        .replace(R.id.fragment_container, nextFragment, nextFragment.getClass().getSimpleName())
+        .addToBackStack(/* name= */ null)
+        .commit();
+  }
 }

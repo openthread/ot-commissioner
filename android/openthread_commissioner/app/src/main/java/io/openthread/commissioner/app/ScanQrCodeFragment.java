@@ -26,9 +26,10 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -42,6 +43,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
@@ -59,12 +61,16 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
   // permission request codes need to be < 256
   private static final int RC_HANDLE_CAMERA_PERM = 2;
 
+  private final FragmentCallback fragmentCallback;
+  private final ThreadNetworkInfoHolder selectedNetwork;
+  private final byte[] pskc;
   private CameraSourceView cameraSourceView;
 
-  private FragmentCallback joinerInfoCallback;
-
-  public ScanQrCodeFragment(FragmentCallback joinerInfoCallback) {
-    this.joinerInfoCallback = joinerInfoCallback;
+  public ScanQrCodeFragment(
+      FragmentCallback fragmentCallback, ThreadNetworkInfoHolder selectedNetwork, byte[] pskc) {
+    this.fragmentCallback = fragmentCallback;
+    this.selectedNetwork = selectedNetwork;
+    this.pskc = pskc.clone();
   }
 
   @Override
@@ -78,10 +84,7 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
     super.onViewCreated(view, savedInstanceState);
 
     view.findViewById(R.id.cancel_button)
-        .setOnClickListener(
-            v -> {
-              joinerInfoCallback.onJoinerInfoReceived(null);
-            });
+        .setOnClickListener(v -> fragmentCallback.onAddDeviceResult(Activity.RESULT_CANCELED));
 
     cameraSourceView = view.findViewById(R.id.camera_view);
     if (hasCameraPermission()) {
@@ -152,12 +155,13 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
             + " Result code = "
             + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
 
+    showAlertAndExit("Permission Denied", "No camera permission!");
+  }
+
+  /** Shows an alert dialog to the user and exits the commissioning flow when the user consents. */
+  private void showAlertAndExit(String title, String message) {
     DialogInterface.OnClickListener listener =
-        new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int id) {
-            joinerInfoCallback.onJoinerInfoReceived(null);
-          }
-        };
+        (dialog, id) -> fragmentCallback.onAddDeviceResult(Activity.RESULT_CANCELED);
 
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder
@@ -208,12 +212,20 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
       cameraSourceView.startCamera();
     }
 
-    joinerInfoCallback.onJoinerInfoReceived(joinerDeviceInfo);
+    getParentFragmentManager()
+        .beginTransaction()
+        .replace(
+            R.id.fragment_container,
+            new CommissioningFragment(fragmentCallback, selectedNetwork, pskc, joinerDeviceInfo),
+            CommissioningFragment.class.getSimpleName())
+        .addToBackStack(/* name= */ null)
+        .commit();
   }
 
+  @Nullable
   private JoinerDeviceInfo parseJoinerDeviceInfo(Barcode barcode) {
     if (barcode.valueFormat != Barcode.TEXT) {
-      Log.e(TAG, "broken QR code! expect QR code encode a URL string.");
+      Log.e(TAG, "broken QR code! expect QR code encode a TEXT string.");
       return null;
     }
 

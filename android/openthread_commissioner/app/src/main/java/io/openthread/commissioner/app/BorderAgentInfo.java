@@ -26,55 +26,70 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.EditText;
-import androidx.fragment.app.DialogFragment;
+import android.os.Parcel;
+import android.os.Parcelable;
+import androidx.annotation.NonNull;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-public class InputNetworkPasswordDialogFragment extends DialogFragment
-    implements DialogInterface.OnClickListener {
+public class BorderAgentInfo implements Parcelable {
 
-  private PasswordDialogListener passwordListener;
-  private EditText passwordText;
+  public byte[] id;
+  public String networkName;
+  public byte[] extendedPanId;
+  public InetAddress host;
+  public int port;
 
-  public interface PasswordDialogListener {
-    public void onPositiveClick(InputNetworkPasswordDialogFragment fragment, String password);
-
-    public void onNegativeClick(InputNetworkPasswordDialogFragment fragment);
+  public BorderAgentInfo(
+      @NonNull byte[] id,
+      @NonNull String networkName,
+      @NonNull byte[] extendedPanId,
+      @NonNull InetAddress host,
+      @NonNull int port) {
+    this.id = id == null ? null : id.clone();
+    this.networkName = networkName;
+    this.extendedPanId = extendedPanId == null ? null : extendedPanId.clone();
+    this.host = host;
+    this.port = port;
   }
 
-  public InputNetworkPasswordDialogFragment(PasswordDialogListener passwordListener) {
-    this.passwordListener = passwordListener;
-  }
-
-  @Override
-  public Dialog onCreateDialog(Bundle savedInstanceState) {
-    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    LayoutInflater inflater = requireActivity().getLayoutInflater();
-    View view = inflater.inflate(R.layout.fragment_network_password_dialog, null);
-
-    passwordText = view.findViewById(R.id.network_password);
-
-    builder.setTitle("Enter Password");
-    builder.setView(view);
-    builder.setPositiveButton(R.string.password_connect, this);
-    builder.setNegativeButton(R.string.password_cancel, this);
-
-    return builder.create();
-  }
-
-  @Override
-  public void onClick(DialogInterface dialogInterface, int which) {
-    if (which == DialogInterface.BUTTON_POSITIVE) {
-      passwordListener.onPositiveClick(this, passwordText.getText().toString());
-    } else {
-      passwordListener.onNegativeClick(this);
+  protected BorderAgentInfo(Parcel in) {
+    id = in.createByteArray();
+    networkName = in.readString();
+    extendedPanId = in.createByteArray();
+    try {
+      host = InetAddress.getByAddress(in.createByteArray());
+    } catch (UnknownHostException e) {
     }
+    port = in.readInt();
   }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeByteArray(id);
+    dest.writeString(networkName);
+    dest.writeByteArray(extendedPanId);
+    dest.writeByteArray(host.getAddress());
+    dest.writeInt(port);
+  }
+
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  public static final Creator<BorderAgentInfo> CREATOR =
+      new Creator<BorderAgentInfo>() {
+        @Override
+        public BorderAgentInfo createFromParcel(Parcel in) {
+          return new BorderAgentInfo(in);
+        }
+
+        @Override
+        public BorderAgentInfo[] newArray(int size) {
+          return new BorderAgentInfo[size];
+        }
+      };
 }

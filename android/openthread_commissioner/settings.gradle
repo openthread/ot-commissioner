@@ -1,3 +1,2 @@
-include ':service'
 include ':app'
 rootProject.name = "openthread_commissioner"

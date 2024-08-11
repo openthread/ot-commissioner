@@ -26,32 +26,58 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import androidx.annotation.NonNull;
-import io.openthread.commissioner.ErrorCode;
+import java.util.ArrayList;
 
-public class ThreadCommissionerException extends Exception {
+public class ThreadNetworkInfoHolder implements Parcelable {
+  @NonNull private final ThreadNetworkInfo networkInfo;
 
-  private final ErrorCode code;
+  @NonNull private final ArrayList<BorderAgentInfo> borderAgents;
 
-  @NonNull private final String message;
-
-  public ThreadCommissionerException(ErrorCode code, String message) {
-    this.code = code;
-    this.message = message;
+  public ThreadNetworkInfoHolder(BorderAgentInfo borderAgent) {
+    networkInfo = new ThreadNetworkInfo(borderAgent.networkName, borderAgent.extendedPanId);
+    borderAgents = new ArrayList<>();
+    borderAgents.add(borderAgent);
   }
 
-  public ErrorCode getCode() {
-    return code;
+  protected ThreadNetworkInfoHolder(Parcel in) {
+    networkInfo = in.readParcelable(ThreadNetworkInfo.class.getClassLoader());
+    borderAgents = in.createTypedArrayList(BorderAgentInfo.CREATOR);
   }
 
-  public String getMessage() {
-    return message;
+  public static final Creator<ThreadNetworkInfoHolder> CREATOR =
+      new Creator<ThreadNetworkInfoHolder>() {
+        @Override
+        public ThreadNetworkInfoHolder createFromParcel(Parcel in) {
+          return new ThreadNetworkInfoHolder(in);
+        }
+
+        @Override
+        public ThreadNetworkInfoHolder[] newArray(int size) {
+          return new ThreadNetworkInfoHolder[size];
+        }
+      };
+
+  public ThreadNetworkInfo getNetworkInfo() {
+    return networkInfo;
+  }
+
+  public ArrayList<BorderAgentInfo> getBorderAgents() {
+    return borderAgents;
   }
 
   @Override
-  public String toString() {
-    return String.format("[ %s ]: %s", code.toString(), message);
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeParcelable(networkInfo, flags);
+    dest.writeParcelableArray((BorderAgentInfo[]) borderAgents.toArray(), flags);
   }
 }

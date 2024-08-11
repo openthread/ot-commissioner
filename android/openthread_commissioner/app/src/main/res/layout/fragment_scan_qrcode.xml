@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="io.openthread.commissioner.service.CommissionerActivity">
+    tools:context=".MainActivity">
 
   <TextView
       android:id="@+id/title_text"
@@ -16,7 +16,7 @@
       app:layout_constraintLeft_toLeftOf="parent"
       app:layout_constraintTop_toTopOf="parent" />
 
-  <io.openthread.commissioner.service.CameraSourceView
+  <io.openthread.commissioner.app.CameraSourceView
       android:id="@+id/camera_view"
       android:layout_width="0dp"
       android:layout_height="0dp"
@@ -26,7 +26,7 @@
       app:layout_constraintBottom_toTopOf="@+id/scan_instruction_text"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/title_text"></io.openthread.commissioner.service.CameraSourceView>
+      app:layout_constraintTop_toBottomOf="@id/title_text"></io.openthread.commissioner.app.CameraSourceView>
   <Button
       android:id="@+id/cancel_button"
       android:layout_width="wrap_content"

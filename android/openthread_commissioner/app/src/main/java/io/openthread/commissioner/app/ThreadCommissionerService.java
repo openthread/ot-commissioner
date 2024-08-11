@@ -26,70 +26,21 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-import android.os.Parcel;
-import android.os.Parcelable;
 import androidx.annotation.NonNull;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
+import com.google.common.util.concurrent.ListenableFuture;
 
-public class BorderAgentInfo implements Parcelable {
+public interface ThreadCommissionerService {
 
-  public byte[] id;
-  public String networkName;
-  public byte[] extendedPanId;
-  public InetAddress host;
-  public int port;
+  /** Returns Credential of a given Thread Network stored in the database on the phone. */
+  ListenableFuture<ThreadNetworkCredentials> getThreadNetworkCredentials(
+      @NonNull BorderAgentInfo borderAgentInfo);
 
-  public BorderAgentInfo(
-      @NonNull byte[] id,
-      @NonNull String networkName,
-      @NonNull byte[] extendedPanId,
-      @NonNull InetAddress host,
-      @NonNull int port) {
-    this.id = id.clone();
-    this.networkName = networkName;
-    this.extendedPanId = extendedPanId.clone();
-    this.host = host;
-    this.port = port;
-  }
-
-  protected BorderAgentInfo(Parcel in) {
-    id = in.createByteArray();
-    networkName = in.readString();
-    extendedPanId = in.createByteArray();
-    try {
-      host = InetAddress.getByAddress(in.createByteArray());
-    } catch (UnknownHostException e) {
-    }
-    port = in.readInt();
-  }
-
-  @Override
-  public void writeToParcel(Parcel dest, int flags) {
-    dest.writeByteArray(id);
-    dest.writeString(networkName);
-    dest.writeByteArray(extendedPanId);
-    dest.writeByteArray(host.getAddress());
-    dest.writeInt(port);
-  }
-
-  @Override
-  public int describeContents() {
-    return 0;
-  }
-
-  public static final Creator<BorderAgentInfo> CREATOR =
-      new Creator<BorderAgentInfo>() {
-        @Override
-        public BorderAgentInfo createFromParcel(Parcel in) {
-          return new BorderAgentInfo(in);
-        }
-
-        @Override
-        public BorderAgentInfo[] newArray(int size) {
-          return new BorderAgentInfo[size];
-        }
-      };
+  /** Securely adds a new Thread joiner device into the Thread network via MeshCoP. */
+  ListenableFuture<Void> commissionJoinerDevice(
+      @NonNull BorderAgentInfo borderAgentInfo,
+      @NonNull byte[] pskc,
+      @NonNull JoinerDeviceInfo joinerDeviceInfo);
 }

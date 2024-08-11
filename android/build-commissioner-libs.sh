@@ -77,7 +77,7 @@ cd ../../../
 ## Copy shared native libraries
 cp "$BUILD_DIR"/src/java/libcommissioner-java.so "$BUILD_DIR"/libs
 
-mkdir -p openthread_commissioner/service/libs
-mkdir -p openthread_commissioner/service/src/main/jniLibs/"${ANDROID_ABI}"
-cp "$BUILD_DIR"/libs/libotcommissioner.jar openthread_commissioner/service/libs
-cp "$BUILD_DIR"/libs/*.so openthread_commissioner/service/src/main/jniLibs/"${ANDROID_ABI}"
+mkdir -p openthread_commissioner/app/libs
+mkdir -p openthread_commissioner/app/src/main/jniLibs/"${ANDROID_ABI}"
+cp "$BUILD_DIR"/libs/libotcommissioner.jar openthread_commissioner/app/libs
+cp "$BUILD_DIR"/libs/*.so openthread_commissioner/app/src/main/jniLibs/"${ANDROID_ABI}"
