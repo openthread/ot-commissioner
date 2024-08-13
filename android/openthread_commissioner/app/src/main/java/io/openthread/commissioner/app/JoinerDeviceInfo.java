@@ -26,16 +26,57 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-public class Constants {
-  public static final String KEY_DEVICE_INFO = "deviceinfo";
+import android.os.Parcel;
+import android.os.Parcelable;
+import androidx.annotation.NonNull;
 
-  public static final String KEY_NETWORK_INFO = "networkinfo";
+public class JoinerDeviceInfo implements Parcelable {
 
-  public static final String KEY_PSKC = "pskc";
+  @NonNull private byte[] eui64;
 
-  public static final String KEY_COMMISSIONING_STATUS = "commissioning_status";
+  @NonNull private String pskd;
 
-  public static final String KEY_SUCCESS = "success";
+  public JoinerDeviceInfo(@NonNull byte[] eui64, @NonNull String pskd) {
+    this.eui64 = eui64;
+    this.pskd = pskd;
+  }
+
+  public byte[] getEui64() {
+    return eui64;
+  }
+
+  public String getPskd() {
+    return pskd;
+  }
+
+  protected JoinerDeviceInfo(Parcel in) {
+    eui64 = in.createByteArray();
+    pskd = in.readString();
+  }
+
+  public static final Creator<JoinerDeviceInfo> CREATOR =
+      new Creator<JoinerDeviceInfo>() {
+        @Override
+        public JoinerDeviceInfo createFromParcel(Parcel in) {
+          return new JoinerDeviceInfo(in);
+        }
+
+        @Override
+        public JoinerDeviceInfo[] newArray(int size) {
+          return new JoinerDeviceInfo[size];
+        }
+      };
+
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel dest, int flags) {
+    dest.writeByteArray(eui64);
+    dest.writeString(pskd);
+  }
 }

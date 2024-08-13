@@ -26,17 +26,13 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-import android.util.Log;
-import io.openthread.commissioner.LogLevel;
-import io.openthread.commissioner.Logger;
-
-public class NativeCommissionerLogger extends Logger {
-  private static final String TAG = "NativeCommissioner";
-
-  @Override
-  public void log(LogLevel level, String region, String msg) {
-    Log.d(TAG, String.format("[ %s ]: %s", region, msg));
-  }
+public interface FragmentCallback {
+  /**
+   * Called when adding a new Thread device has finished either successfully or failed.
+   *
+   * @param result can be one of RESULT_* of {@link android.app.Activity}
+   */
+  void onAddDeviceResult(int result);
 }

@@ -26,7 +26,7 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -46,10 +46,10 @@ import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class MeshcopFragment extends Fragment
+public class CommissioningFragment extends Fragment
     implements ThreadCommissionerServiceImpl.IntermediateStateCallback {
 
-  private static final String TAG = MeshcopFragment.class.getSimpleName();
+  private static final String TAG = CommissioningFragment.class.getSimpleName();
 
   TextView statusText;
   ProgressBar progressBar;
@@ -58,24 +58,20 @@ public class MeshcopFragment extends Fragment
   ImageView doneImage;
   ImageView errorImage;
 
-  @NonNull private final FragmentCallback meshcopCallback;
+  private final FragmentCallback fragmentCallback;
+  private final ThreadNetworkInfoHolder networkInfoHolder;
+  private final byte[] pskc;
+  private final JoinerDeviceInfo joinerDeviceInfo;
 
-  @NonNull private final ThreadNetworkInfoHolder networkInfoHolder;
-
-  @NonNull private final byte[] pskc;
-
-  @NonNull private final JoinerDeviceInfo joinerDeviceInfo;
-
-  private final ThreadCommissionerServiceImpl commissionerService =
-      ThreadCommissionerServiceImpl.newInstance(this);
+  private ThreadCommissionerServiceImpl commissionerService;
   private ListenableFuture<Void> commissionFuture;
 
-  public MeshcopFragment(
-      @NonNull FragmentCallback meshcopCallback,
-      @NonNull ThreadNetworkInfoHolder networkInfoHolder,
-      @NonNull byte[] pskc,
-      @NonNull JoinerDeviceInfo joinerDeviceInfo) {
-    this.meshcopCallback = meshcopCallback;
+  public CommissioningFragment(
+      FragmentCallback fragmentCallback,
+      ThreadNetworkInfoHolder networkInfoHolder,
+      byte[] pskc,
+      JoinerDeviceInfo joinerDeviceInfo) {
+    this.fragmentCallback = fragmentCallback;
     this.networkInfoHolder = networkInfoHolder;
     this.pskc = pskc;
     this.joinerDeviceInfo = joinerDeviceInfo;
@@ -91,6 +87,10 @@ public class MeshcopFragment extends Fragment
   public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    if (commissionerService == null) {
+      commissionerService = ThreadCommissionerServiceImpl.newInstance(requireActivity(), this);
+    }
+
     cancelButton = view.findViewById(R.id.cancel_button);
     doneButton = view.findViewById(R.id.done_button);
     doneImage = view.findViewById(R.id.done_image);
@@ -101,13 +101,13 @@ public class MeshcopFragment extends Fragment
     view.findViewById(R.id.cancel_button)
         .setOnClickListener(
             v -> {
-              meshcopCallback.onMeshcopResult(Activity.RESULT_CANCELED);
+              fragmentCallback.onAddDeviceResult(Activity.RESULT_CANCELED);
             });
 
     view.findViewById(R.id.done_button)
         .setOnClickListener(
             v -> {
-              meshcopCallback.onMeshcopResult(Activity.RESULT_OK);
+              fragmentCallback.onAddDeviceResult(Activity.RESULT_OK);
             });
   }
 

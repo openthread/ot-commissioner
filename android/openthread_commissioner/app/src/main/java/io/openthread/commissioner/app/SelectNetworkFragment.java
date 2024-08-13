@@ -26,9 +26,8 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,29 +42,20 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
-import io.openthread.commissioner.ByteArray;
-import io.openthread.commissioner.Commissioner;
-import io.openthread.commissioner.Error;
-import io.openthread.commissioner.ErrorCode;
 
-public class SelectNetworkFragment extends Fragment
-    implements InputNetworkPasswordDialogFragment.PasswordDialogListener,
-        FetchCredentialDialogFragment.CredentialListener,
-        View.OnClickListener {
+public class SelectNetworkFragment extends Fragment {
 
   private static final String TAG = SelectNetworkFragment.class.getSimpleName();
 
-  private FragmentCallback networkInfoCallback;
+  private FragmentCallback fragmentCallback;
 
   @Nullable private JoinerDeviceInfo joinerDeviceInfo;
 
   private NetworkAdapter networksAdapter;
 
   private ThreadNetworkInfoHolder selectedNetwork;
-  private byte[] userInputPskc;
   private Button addDeviceButton;
 
   private BorderAgentDiscoverer borderAgentDiscoverer;
@@ -73,8 +63,8 @@ public class SelectNetworkFragment extends Fragment
   public SelectNetworkFragment() {}
 
   public SelectNetworkFragment(
-      @NonNull FragmentCallback networkInfoCallback, @Nullable JoinerDeviceInfo joinerDeviceInfo) {
-    this.networkInfoCallback = networkInfoCallback;
+      @NonNull FragmentCallback fragmentCallback, @Nullable JoinerDeviceInfo joinerDeviceInfo) {
+    this.fragmentCallback = fragmentCallback;
     this.joinerDeviceInfo = joinerDeviceInfo;
   }
 
@@ -119,7 +109,6 @@ public class SelectNetworkFragment extends Fragment
   @Override
   public View onCreateView(
       LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    // Inflate the layout for this fragment
     return inflater.inflate(R.layout.fragment_select_network, container, false);
   }
 
@@ -127,9 +116,9 @@ public class SelectNetworkFragment extends Fragment
   public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    // Hide the button
     addDeviceButton = view.findViewById(R.id.add_device_button);
     addDeviceButton.setVisibility(View.GONE);
+    addDeviceButton.setOnClickListener(v -> onAddDeviceButtonClicked());
 
     if (joinerDeviceInfo != null) {
       String deviceInfoString =
@@ -152,62 +141,32 @@ public class SelectNetworkFragment extends Fragment
           selectedNetwork = (ThreadNetworkInfoHolder) adapterView.getItemAtPosition(position);
           addDeviceButton.setVisibility(View.VISIBLE);
         });
-
-    view.findViewById(R.id.add_device_button).setOnClickListener(this);
   }
 
-  // Click listeners for network password dialog.
-
-  @Override
-  public void onPositiveClick(InputNetworkPasswordDialogFragment fragment, String password) {
+  private void onAddDeviceButtonClicked() {
     BorderAgentInfo selectedBorderAgent = selectedNetwork.getBorderAgents().get(0);
-    userInputPskc = computePskc(selectedNetwork.getNetworkInfo(), password);
 
-    networkInfoCallback.onNetworkSelected(selectedNetwork, userInputPskc);
-  }
-
-  @Override
-  public void onNegativeClick(InputNetworkPasswordDialogFragment fragment) {
-    networkInfoCallback.onNetworkSelected(selectedNetwork, null);
-  }
-
-  private byte[] computePskc(ThreadNetworkInfo threadNetworkInfo, String password) {
-    ByteArray extendedPanId = new ByteArray(threadNetworkInfo.getExtendedPanId());
-    ByteArray pskc = new ByteArray();
-    Error error =
-        Commissioner.generatePSKc(
-            pskc, password, threadNetworkInfo.getNetworkName(), extendedPanId);
-    if (error.getCode() != ErrorCode.kNone) {
-      Log.e(
-          TAG,
-          String.format(
-              "failed to generate PSKc: %s; network-name=%s, extended-pan-id=%s",
-              error.toString(),
-              threadNetworkInfo.getNetworkName(),
-              CommissionerUtils.getHexString(threadNetworkInfo.getExtendedPanId())));
-    } else {
-      Log.d(
-          TAG,
-          String.format(
-              "generated pskc=%s, network-name=%s, extended-pan-id=%s",
-              CommissionerUtils.getHexString(pskc),
-              threadNetworkInfo.getNetworkName(),
-              CommissionerUtils.getHexString(threadNetworkInfo.getExtendedPanId())));
+    if (selectedBorderAgent.id == null) {
+      FragmentUtils.showAlertAndExit(
+          getActivity(),
+          fragmentCallback,
+          "Invalid Border Router",
+          "No \"id\" TXT entry found in Border Router mDNS service");
+      return;
     }
 
-    return CommissionerUtils.getByteArray(pskc);
-  }
-
-  @Override
-  public void onClick(View view) {
-    BorderAgentInfo selectedBorderAgent = selectedNetwork.getBorderAgents().get(0);
-    if (selectedBorderAgent.id == null) {
-      showAlertDialog("Invalid Border Router: no \"id\" associated");
+    if (selectedBorderAgent.extendedPanId == null) {
+      FragmentUtils.showAlertAndExit(
+          getActivity(),
+          fragmentCallback,
+          "Invalid Border Router",
+          "No \"xp\" TXT entry found in Border Router mDNS service");
       return;
     }
 
     ThreadCommissionerServiceImpl commissionerService =
-        ThreadCommissionerServiceImpl.newInstance(null);
+        ThreadCommissionerServiceImpl.newInstance(
+            getActivity(), /* intermediateStateCallback= */ null);
 
     FluentFuture.from(commissionerService.getThreadNetworkCredentials(selectedBorderAgent))
         .addCallback(
@@ -215,44 +174,27 @@ public class SelectNetworkFragment extends Fragment
               @Override
               public void onSuccess(ThreadNetworkCredentials credentials) {
                 if (credentials != null) {
-                  networkInfoCallback.onNetworkSelected(selectedNetwork, credentials.getPskc());
+                  FragmentUtils.moveToNextFragment(
+                      SelectNetworkFragment.this,
+                      new ScanQrCodeFragment(
+                          fragmentCallback, selectedNetwork, credentials.getPskc()));
                 } else {
-                  // Ask the user to input Commissioner password.
-                  new InputNetworkPasswordDialogFragment(SelectNetworkFragment.this)
-                      .show(
-                          getParentFragmentManager(),
-                          InputNetworkPasswordDialogFragment.class.getSimpleName());
+                  FragmentUtils.moveToNextFragment(
+                      SelectNetworkFragment.this,
+                      new InputNetworkPasswordFragment(fragmentCallback, selectedNetwork));
                 }
               }
 
               @Override
               public void onFailure(Throwable t) {
                 Log.e(TAG, "Failed to retrieve Thread network credentials from GMS", t);
-                showAlertDialog(t.getMessage());
+                FragmentUtils.showAlertAndExit(
+                    getActivity(),
+                    fragmentCallback,
+                    "Retrieve Thread Credentials Error",
+                    "Failed to retrieve Thread network credentials from GMS: " + t.getMessage());
               }
             },
             ContextCompat.getMainExecutor(getActivity()));
-  }
-
-  private void showAlertDialog(String message) {
-    new MaterialAlertDialogBuilder(getActivity(), R.style.ThreadNetworkAlertTheme)
-        .setMessage(message)
-        .setPositiveButton(
-            "OK",
-            ((dialog, which) -> {
-              networkInfoCallback.onMeshcopResult(Activity.RESULT_CANCELED);
-            }))
-        .show();
-  }
-
-  @Override
-  public void onCancelClick(FetchCredentialDialogFragment fragment) {
-    // TODO:
-  }
-
-  @Override
-  public void onConfirmClick(
-      FetchCredentialDialogFragment fragment, ThreadNetworkCredentials credentials) {
-    // TODO:
   }
 }

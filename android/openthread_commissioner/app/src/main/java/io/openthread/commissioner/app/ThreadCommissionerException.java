@@ -26,63 +26,30 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
-import android.os.Parcel;
-import android.os.Parcelable;
 import androidx.annotation.NonNull;
+import io.openthread.commissioner.ErrorCode;
 
-public class ThreadNetworkInfo implements Parcelable {
+public class ThreadCommissionerException extends Exception {
+  private final ErrorCode code;
+  @NonNull private final String message;
 
-  @NonNull private final String networkName;
-
-  @NonNull private final byte[] extendedPanId;
-
-  public ThreadNetworkInfo(@NonNull String networkName, @NonNull byte[] extendedPanId) {
-    this.networkName = networkName;
-    this.extendedPanId = extendedPanId;
+  public ThreadCommissionerException(ErrorCode code, String message) {
+    this.code = code;
+    this.message = message;
   }
 
-  protected ThreadNetworkInfo(Parcel in) {
-    networkName = in.readString();
-    extendedPanId = in.createByteArray();
+  public ErrorCode getCode() {
+    return code;
   }
 
-  public String getNetworkName() {
-    return networkName;
-  }
-
-  public byte[] getExtendedPanId() {
-    return extendedPanId;
-  }
-
-  public static final Creator<ThreadNetworkInfo> CREATOR =
-      new Creator<ThreadNetworkInfo>() {
-        @Override
-        public ThreadNetworkInfo createFromParcel(Parcel in) {
-          return new ThreadNetworkInfo(in);
-        }
-
-        @Override
-        public ThreadNetworkInfo[] newArray(int size) {
-          return new ThreadNetworkInfo[size];
-        }
-      };
-
-  @Override
-  public int describeContents() {
-    return 0;
-  }
-
-  @Override
-  public void writeToParcel(Parcel parcel, int flags) {
-    parcel.writeString(networkName);
-    parcel.writeByteArray(extendedPanId);
+  public String getMessage() {
+    return message;
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "{name=%s, extendedPanId=%s}", networkName, CommissionerUtils.getHexString(extendedPanId));
+    return String.format("[ %s ]: %s", code.toString(), message);
   }
 }

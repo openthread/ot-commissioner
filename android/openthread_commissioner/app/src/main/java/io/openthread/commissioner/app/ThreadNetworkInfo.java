@@ -26,21 +26,63 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.openthread.commissioner.service;
+package io.openthread.commissioner.app;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import androidx.annotation.NonNull;
-import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
-import com.google.common.util.concurrent.ListenableFuture;
 
-public interface ThreadCommissionerService {
+public class ThreadNetworkInfo implements Parcelable {
 
-  /** Returns Credential of a given Thread Network stored in the database on the phone. */
-  ListenableFuture<ThreadNetworkCredentials> getThreadNetworkCredentials(
-      @NonNull BorderAgentInfo borderAgentInfo);
+  @NonNull private final String networkName;
 
-  /** Securely adds a new Thread joiner device into the Thread network via MeshCoP. */
-  ListenableFuture<Void> commissionJoinerDevice(
-      @NonNull BorderAgentInfo borderAgentInfo,
-      @NonNull byte[] pskc,
-      @NonNull JoinerDeviceInfo joinerDeviceInfo);
+  @NonNull private final byte[] extendedPanId;
+
+  public ThreadNetworkInfo(@NonNull String networkName, @NonNull byte[] extendedPanId) {
+    this.networkName = networkName;
+    this.extendedPanId = extendedPanId;
+  }
+
+  protected ThreadNetworkInfo(Parcel in) {
+    networkName = in.readString();
+    extendedPanId = in.createByteArray();
+  }
+
+  public String getNetworkName() {
+    return networkName;
+  }
+
+  public byte[] getExtendedPanId() {
+    return extendedPanId;
+  }
+
+  public static final Creator<ThreadNetworkInfo> CREATOR =
+      new Creator<ThreadNetworkInfo>() {
+        @Override
+        public ThreadNetworkInfo createFromParcel(Parcel in) {
+          return new ThreadNetworkInfo(in);
+        }
+
+        @Override
+        public ThreadNetworkInfo[] newArray(int size) {
+          return new ThreadNetworkInfo[size];
+        }
+      };
+
+  @Override
+  public int describeContents() {
+    return 0;
+  }
+
+  @Override
+  public void writeToParcel(Parcel parcel, int flags) {
+    parcel.writeString(networkName);
+    parcel.writeByteArray(extendedPanId);
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "{name=%s, extendedPanId=%s}", networkName, CommissionerUtils.getHexString(extendedPanId));
+  }
 }
