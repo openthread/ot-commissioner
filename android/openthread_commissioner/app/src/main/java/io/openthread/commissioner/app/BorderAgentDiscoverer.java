@@ -30,12 +30,17 @@ package io.openthread.commissioner.app;
 
 import android.Manifest.permission;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
+import com.google.common.net.InetAddresses;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -52,13 +57,14 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
   private static final String KEY_NETWORK_NAME = "nn";
   private static final String KEY_EXTENDED_PAN_ID = "xp";
 
-  private WifiManager.MulticastLock wifiMulticastLock;
-  private NsdManager nsdManager;
-  private BorderAgentListener borderAgentListener;
+  private final WifiManager.MulticastLock wifiMulticastLock;
+  private final NsdManager nsdManager;
+  private final ConnectivityManager connManager;
+  private final BorderAgentListener borderAgentListener;
 
   private ExecutorService executor = Executors.newSingleThreadExecutor();
-  private BlockingQueue<NsdServiceInfo> unresolvedServices = new ArrayBlockingQueue<>(256);
-  private AtomicBoolean isResolvingService = new AtomicBoolean(false);
+  private final BlockingQueue<NsdServiceInfo> unresolvedServices = new ArrayBlockingQueue<>(256);
+  private final AtomicBoolean isResolvingService = new AtomicBoolean(false);
 
   private boolean isScanning = false;
 
@@ -74,7 +80,8 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
     WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     wifiMulticastLock = wifi.createMulticastLock("multicastLock");
 
-    nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
+    nsdManager = context.getSystemService(NsdManager.class);
+    connManager = context.getSystemService(ConnectivityManager.class);
 
     this.borderAgentListener = borderAgentListener;
   }
@@ -112,7 +119,7 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
           public void onServiceResolved(NsdServiceInfo serviceInfo) {
             BorderAgentInfo borderAgent = getBorderAgentInfo(serviceInfo);
             if (borderAgent != null) {
-              Log.d(TAG, "successfully resolved service: " + serviceInfo.toString());
+              Log.d(TAG, "successfully resolved service: " + serviceInfo);
               Log.d(
                   TAG,
                   "successfully resolved service: " + serviceInfo.getHost().getCanonicalHostName());
@@ -214,8 +221,40 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
         id,
         new String(attrs.get(KEY_NETWORK_NAME)),
         attrs.get(KEY_EXTENDED_PAN_ID),
-        serviceInfo.getHost(),
+        handleNsdServiceAddress(serviceInfo.getHost()),
         serviceInfo.getPort());
+  }
+
+  /**
+   * Properly handles the {@link InetAddress} within a discovered {@link NsdServiceInfo}.
+   *
+   * <p>For example, adds the scope ID to an IPv6 link-local address to make is usable.
+   */
+  private InetAddress handleNsdServiceAddress(InetAddress address) {
+    if (!(address instanceof Inet6Address)) {
+      return address;
+    }
+
+    Inet6Address address6 = (Inet6Address) address;
+
+    if (!address6.isLinkLocalAddress() || address6.getScopeId() != 0) {
+      return address6;
+    }
+
+    // Sets the scope ID for IPv6 link-local address if it's missing. This can
+    // happen before Android U.
+
+    // Assume the mDNS service is discovered on the current active default network
+    Network network = connManager.getActiveNetwork();
+    if (network == null) {
+      return address6;
+    }
+    String interfaceName = connManager.getLinkProperties(network).getInterfaceName();
+    if (interfaceName == null) {
+      return address6;
+    }
+
+    return InetAddresses.forString(address6.getHostAddress() + "%" + interfaceName);
   }
 
   @Nullable

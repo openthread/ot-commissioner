@@ -48,9 +48,9 @@ public class BorderAgentInfo implements Parcelable {
       @NonNull byte[] extendedPanId,
       @NonNull InetAddress host,
       @NonNull int port) {
-    this.id = id == null ? null : id.clone();
+    this.id = (id == null ? null : id.clone());
     this.networkName = networkName;
-    this.extendedPanId = extendedPanId == null ? null : extendedPanId.clone();
+    this.extendedPanId = (extendedPanId == null ? null : extendedPanId.clone());
     this.host = host;
     this.port = port;
   }
