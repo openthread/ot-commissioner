@@ -45,6 +45,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "common/utils.hpp"
 #include "event2/event.h"
 #include "library/cbor.hpp"

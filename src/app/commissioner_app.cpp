@@ -97,6 +97,20 @@ exit:
     return error;
 }
 
+Error CommissionerApp::Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort)
+{
+    Error error;
+
+    SuccessOrExit(error = mCommissioner->Connect(aBorderAgentAddr, aBorderAgentPort));
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        Stop();
+    }
+    return error;
+}
+
 Error CommissionerApp::Start(std::string       &aExistingCommissionerId,
                              const std::string &aBorderAgentAddr,
                              uint16_t           aBorderAgentPort)
@@ -136,6 +150,11 @@ void CommissionerApp::CancelRequests()
 bool CommissionerApp::IsActive() const
 {
     return mCommissioner->IsActive();
+}
+
+State CommissionerApp::GetState() const
+{
+    return mCommissioner->GetState();
 }
 
 bool CommissionerApp::IsCcmMode() const

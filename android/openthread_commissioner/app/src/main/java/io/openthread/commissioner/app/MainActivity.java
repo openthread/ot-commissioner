@@ -28,10 +28,8 @@
 
 package io.openthread.commissioner.app;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -40,12 +38,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import io.openthread.commissioner.service.FragmentCallback;
-import io.openthread.commissioner.service.JoinerDeviceInfo;
-import io.openthread.commissioner.service.MeshcopFragment;
-import io.openthread.commissioner.service.ScanQrCodeFragment;
-import io.openthread.commissioner.service.SelectNetworkFragment;
-import io.openthread.commissioner.service.ThreadNetworkInfoHolder;
 
 public class MainActivity extends AppCompatActivity implements FragmentCallback {
 
@@ -114,44 +106,11 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
   }
 
   private void finishCommissioning(int result) {
-    // TODO(wgtdkp): show a dialog to the user.
-    selectedNetwork = null;
-    pskc = null;
-    joinerDeviceInfo = null;
     clearFragmentsInBackStack();
   }
 
   @Override
-  public void onNetworkSelected(
-      @Nullable ThreadNetworkInfoHolder networkInfoHolder, @Nullable byte[] pskc) {
-    if (networkInfoHolder == null || pskc == null) {
-      Log.e(TAG, "failed to get selected network or PSKc!");
-      finishCommissioning(Activity.RESULT_CANCELED);
-      return;
-    }
-
-    this.selectedNetwork = networkInfoHolder;
-    this.pskc = pskc;
-    showFragment(new ScanQrCodeFragment(this), true);
-  }
-
-  @Override
-  public void onJoinerInfoReceived(@Nullable JoinerDeviceInfo joinerDeviceInfo) {
-    if (joinerDeviceInfo == null) {
-      // TODO(wgtdkp): show dialog
-      Log.e(TAG, "failed to get Joiner Device info!");
-      finishCommissioning(Activity.RESULT_CANCELED);
-      return;
-    }
-
-    if (this.joinerDeviceInfo == null) {
-      this.joinerDeviceInfo = joinerDeviceInfo;
-      showFragment(new MeshcopFragment(this, selectedNetwork, pskc, joinerDeviceInfo), true);
-    }
-  }
-
-  @Override
-  public void onMeshcopResult(int result) {
+  public void onAddDeviceResult(int result) {
     finishCommissioning(result);
   }
 }

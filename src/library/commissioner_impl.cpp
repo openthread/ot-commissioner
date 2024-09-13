@@ -260,7 +260,7 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
 {
     Error error;
 
-    auto onConnected = [this, aHandler](Error aError) {
+    auto onConnected = [&, aHandler](Error aError) {
         if (aError != ErrorCode::kNone)
         {
             aHandler(nullptr, aError);
@@ -268,6 +268,7 @@ void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAd
         else
         {
             LOG_DEBUG(LOG_REGION_MESHCOP, "DTLS connection to border agent succeed");
+            this->mState = State::kConnected;
             SendPetition(aHandler);
         }
     };
@@ -310,7 +311,13 @@ void CommissionerImpl::Resign(ErrorHandler aHandler)
 
 void CommissionerImpl::Connect(ErrorHandler aHandler, const std::string &aAddr, uint16_t aPort)
 {
-    auto onConnected = [aHandler](const DtlsSession &, Error aError) { aHandler(aError); };
+    auto onConnected = [&, aHandler](const DtlsSession &, Error aError) {
+        if (aError == ErrorCode::kNone)
+        {
+            this->mState = State::kConnected;
+        }
+        aHandler(aError);
+    };
     mBrClient.Connect(onConnected, aAddr, aPort);
 }
 
@@ -482,7 +489,8 @@ void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t
         }
     };
 
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsActiveOrConnected(),
+                 error = ERROR_INVALID_STATE("the commissioner is not active or secure session is not connected"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtActiveGet));
     if (!datasetList.empty())
     {
@@ -588,7 +596,8 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
         }
     };
 
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+    VerifyOrExit(IsActiveOrConnected(),
+                 error = ERROR_INVALID_STATE("the commissioner is not active or secure session is not connected"));
     SuccessOrExit(error = request.SetUriPath(uri::kMgmtPendingGet));
     if (!datasetList.empty())
     {
@@ -602,7 +611,7 @@ void CommissionerImpl::GetPendingDataset(Handler<PendingOperationalDataset> aHan
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+    mBrClient.SendRequest(request, onResponse);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_GET.req");
 
@@ -1304,7 +1313,8 @@ void CommissionerImpl::SendPetition(PetitionHandler aHandler)
         aHandler(existingCommissionerId.empty() ? nullptr : &existingCommissionerId, error);
     };
 
-    VerifyOrExit(mState == State::kDisabled, error = ERROR_INVALID_STATE("the commissioner is petitioning or active"));
+    VerifyOrExit(mState == State::kConnected,
+                 error = ERROR_INVALID_STATE("the commissioner is not started, petitioning, or already active"));
     SuccessOrExit(error = request.SetUriPath(uri::kPetitioning));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kCommissionerId, mConfig.mId}));
 

@@ -271,6 +271,11 @@ private:
 
     void HandleJoinerSessionTimer(Timer &aTimer);
 
+    bool IsActiveOrConnected() const
+    {
+        return (mState == State::kActive || mState == State::kConnected);
+    }
+
 private:
     State    mState;
     uint16_t mSessionId; ///< The Commissioner Session ID.

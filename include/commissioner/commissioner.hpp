@@ -55,6 +55,7 @@ namespace commissioner {
 enum class State : uint8_t
 {
     kDisabled = 0,
+    kConnected,
     kPetitioning,
     kActive,
 };

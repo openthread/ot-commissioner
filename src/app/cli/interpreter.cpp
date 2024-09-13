@@ -171,7 +171,7 @@ Interpreter::NetworkSelectionComparator::NetworkSelectionComparator(const Interp
     {
         mStartWith = nwk.mXpan;
     }
-}
+    
 
 Interpreter::NetworkSelectionComparator::~NetworkSelectionComparator()
 {
@@ -202,6 +202,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
     {"diag", &Interpreter::ProcessDiag},
+    {"state", &Interpreter::ProcessState},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -209,7 +210,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                "config set admincode <9-digits-thread-administrator-passcode>\n"
                "config get pskc\n"
                "config set pskc <pskc-hex-string>"},
-    {"start", "start <border-agent-addr> <border-agent-port>\n"
+    {"state", "state"},
+    {"start", "start <border-agent-addr> <border-agent-port> [--connect-only]\n"
               "start [ --nwk <network-alias-list | --dom <domain-alias>]"},
     {"stop", "stop\n"
              "stop [ --nwk <network-alias-list | --dom <domain-alias>]"},
@@ -299,6 +301,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
         Interpreter::StringArray{"start"},
         Interpreter::StringArray{"stop"},
         Interpreter::StringArray{"active"},
+        Interpreter::StringArray{"state"},
         Interpreter::StringArray{"sessionid"},
         Interpreter::StringArray{"bbrdataset", "get"},
         Interpreter::StringArray{"commdataset", "get"},
@@ -953,6 +956,33 @@ exit:
     return value;
 }
 
+Interpreter::Value Interpreter::ProcessState(const Expression &)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+
+    switch (commissioner->GetState())
+    {
+    case State::kDisabled:
+        value = std::string("disabled");
+        break;
+    case State::kConnected:
+        value = std::string("connected");
+        break;
+    case State::kPetitioning:
+        value = std::string("petitioning");
+        break;
+    case State::kActive:
+        value = std::string("active");
+        break;
+    }
+
+exit:
+    return value;
+}
+
 Interpreter::Value Interpreter::ProcessStart(const Expression &aExpr)
 {
     Value              value;
@@ -1018,13 +1048,27 @@ Interpreter::Value Interpreter::ProcessStartJob(CommissionerAppPtr &aCommissione
     Error       error;
     uint16_t    port;
     std::string existingCommissionerId;
+    bool        connectOnly = false;
 
     VerifyOrExit(aExpr.size() >= 3, error = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
     SuccessOrExit(error = ParseInteger(port, aExpr[2]));
-    SuccessOrExit(error = aCommissioner->Start(existingCommissionerId, aExpr[1], port));
+
+    {
+        auto it = std::find(mContext.mCommandKeys.begin(), mContext.mCommandKeys.end(), "--connect-only");
+
+        if (it != mContext.mCommandKeys.end())
+        {
+            connectOnly = true;
+            error       = aCommissioner->Connect(aExpr[1], port);
+        }
+        else
+        {
+            error = aCommissioner->Start(existingCommissionerId, aExpr[1], port);
+        }
+    }
 
 exit:
-    if (!existingCommissionerId.empty())
+    if (!connectOnly && !existingCommissionerId.empty())
     {
         error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }
