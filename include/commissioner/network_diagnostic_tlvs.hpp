@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "defines.hpp"
-#include "common/address.hpp"
 
 namespace ot {
 
@@ -111,7 +110,7 @@ using ChildTable = std::vector<ChildEntry>;
 /**
  * @brief IPv6 Address TLV
  */
-using Ipv6Address = std::vector<Address>;
+using Ipv6Address = std::vector<ByteArray>;
 
 /**
  * @brief Leader Data TLV

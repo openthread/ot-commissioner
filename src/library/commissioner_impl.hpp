@@ -228,10 +228,10 @@ private:
     // Diagnostic feature in TMF
     static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
     static Error     DecodeLeaderDataTlv(LeaderData &aLeaderDataTlv, const ByteArray &aBuf);
-    static Error     DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf);
+    static void      DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf);
     static void      DecodeModeTlv(Mode &aModeTlv, uint8_t aMode);
     static Error     DecodeChildTableTlv(ChildTable &aChildTableTlv, const ByteArray &aBuf);
-    static Error     DecodeRouteData(RouteData &aRouteData, const ByteArray &aBuf);
+    static void      DecodeRouteData(RouteData &aRouteData, const ByteArray &aBuf);
     static Error     DecodeIpv6Address(Ipv6Address &aIpv6Address, const ByteArray &aBuf);
     static ByteArray GetDiagTlvs(uint64_t aDiagTlvFlags);
 

@@ -510,7 +510,8 @@ static void to_json(Json &aJson, const Ipv6Address &aIpv6Address)
     Json ipv6AddressArray = Json::array();
     for (const auto &entry : aIpv6Address)
     {
-        ipv6AddressArray.push_back(entry.ToString());
+        Address addr;
+        ipv6AddressArray.push_back(addr.Set(entry).ToString());
     }
     aJson["List"] = ipv6AddressArray;
 }

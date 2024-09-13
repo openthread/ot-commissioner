@@ -1555,20 +1555,18 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf)
+void CommissionerImpl::DecodeRoute64Tlv(Route64 &aRoute64Tlv, const ByteArray &aBuf)
 {
-    Error  error;
     size_t offset = 0;
 
     aRoute64Tlv.mIdSequence = aBuf[offset++];
     ByteArray maskBytes     = {aBuf.begin() + offset, aBuf.begin() + offset + 8};
     offset += 8;
     aRoute64Tlv.mMask = maskBytes;
-    error             = DecodeRouteData(aRoute64Tlv.mRouteData, {aBuf.begin() + offset, aBuf.end()});
-    return error;
+    DecodeRouteData(aRoute64Tlv.mRouteData, {aBuf.begin() + offset, aBuf.end()});
 }
 
-Error CommissionerImpl::DecodeRouteData(RouteData &aRouteData, const ByteArray &aBuf)
+void CommissionerImpl::DecodeRouteData(RouteData &aRouteData, const ByteArray &aBuf)
 {
     Error     error;
     size_t    length = aBuf.size();
@@ -1584,8 +1582,6 @@ Error CommissionerImpl::DecodeRouteData(RouteData &aRouteData, const ByteArray &
         aRouteData.emplace_back(entry);
         offset++;
     }
-exit:
-    return error;
 }
 
 Error CommissionerImpl::DecodeIpv6Address(Ipv6Address &aIpv6Address, const ByteArray &aBuf)
@@ -1595,11 +1591,9 @@ Error CommissionerImpl::DecodeIpv6Address(Ipv6Address &aIpv6Address, const ByteA
     size_t offset = 0;
     while (offset < length)
     {
-        Address address;
         VerifyOrExit(offset + 16 <= length, error = ERROR_BAD_FORMAT("premature end of Ipv6 Address Entry"));
         ByteArray addressBytes = {aBuf.begin() + offset, aBuf.begin() + offset + 16};
-        error                  = address.Set(addressBytes);
-        aIpv6Address.emplace_back(address);
+        aIpv6Address.emplace_back(addressBytes);
         offset += 16;
     }
 exit:
@@ -1713,7 +1707,7 @@ Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteA
     if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
     {
         const ByteArray &value = route64->GetValue();
-        SuccessOrExit(error = DecodeRoute64Tlv(dataset.mRoute64, value));
+        DecodeRoute64Tlv(dataset.mRoute64, value);
         dataset.mPresentFlags |= NetDiagTlvs::kRoute64Bit;
     }
 
