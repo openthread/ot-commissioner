@@ -505,17 +505,6 @@ static void to_json(Json &aJson, const struct Mode &aMode)
 #undef SET
 }
 
-static void to_json(Json &aJson, const Ipv6Address &aIpv6Address)
-{
-    Json ipv6AddressArray = Json::array();
-    for (const auto &entry : aIpv6Address)
-    {
-        Address addr;
-        ipv6AddressArray.push_back(addr.Set(entry).ToString());
-    }
-    aJson["List"] = ipv6AddressArray;
-}
-
 static void to_json(Json &aJson, const ChildTable &aChildTable)
 {
     Json childrenArray = Json::array();
