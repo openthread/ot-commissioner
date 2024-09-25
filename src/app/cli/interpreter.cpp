@@ -270,8 +270,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
              "diag get leaderdata <dest mesh local address> \n"
              "diag get ipvaddr <dest mesh local address> \n"
              "diag get childtable <dest mesh local address> \n"
-             "diag get eui64 <dest mesh local address> \n"
-             "diag get rawdata <dest mesh local address>"},
+             "diag get eui64 <dest mesh local address>"},
     {"bbrdataset", "bbrdataset get trihostname\n"
                    "bbrdataset set trihostname <TRI-hostname>\n"
                    "bbrdataset get reghostname\n"
@@ -2604,23 +2603,6 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
     }
 
-    if (CaseInsensitiveEqual(aExpr[2], "rawdata"))
-    {
-        flags |= NetDiagTlvs::kExtMacAddressBit;
-        flags |= NetDiagTlvs::kMacAddressBit;
-        flags |= NetDiagTlvs::kModeBit;
-        flags |= NetDiagTlvs::kRoute64Bit;
-        flags |= NetDiagTlvs::kChildTableBit;
-        flags |= NetDiagTlvs::kLeaderDataBit;
-        flags |= NetDiagTlvs::kEui64Bit;
-        flags |= NetDiagTlvs::kIpv6AddressBit;
-
-        if (opertionType == 0)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetRawData(rawTlvs, dstAddr, flags));
-            value = utils::Hex(rawTlvs);
-        }
-    }
     if (CaseInsensitiveEqual(aExpr[2], "extmacaddr"))
     {
         flags = NetDiagTlvs::kExtMacAddressBit;

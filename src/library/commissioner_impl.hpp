@@ -200,12 +200,10 @@ public:
     void  CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
                                 const std::string   &aAddr,
                                 uint64_t             aDiagTlvFlags) override;
-    void  CommandDiagGetRawData(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
     Error CommandDiagGetRequest(NetDiagTlvs &, const std::string &, uint64_t) override
     {
         return ERROR_UNIMPLEMENTED("");
     }
-    Error CommandDiagGetRawData(ByteArray &, const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
 
 private:
     using AsyncRequest = std::function<void()>;

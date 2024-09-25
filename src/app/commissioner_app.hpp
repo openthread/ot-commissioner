@@ -232,7 +232,6 @@ public:
     // Diagnostic feature in TMF
     // Always send DIAG_GET.req.
     MOCKABLE Error CommandDiagGetRequest(NetDiagTlvs &aTlvs, const std::string &aAddr, uint64_t aDiagTlvFlags);
-    MOCKABLE Error CommandDiagGetRawData(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags);
 
     /*
      * BBR Dataset APIs

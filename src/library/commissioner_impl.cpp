@@ -666,52 +666,31 @@ void CommissionerImpl::CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
                                              const std::string   &aAddr,
                                              uint64_t             aDiagTlvFlags)
 {
-    auto rawDataHandler = [aHandler](const ByteArray *aRawData, Error aError) {
-        Error       error;
-        NetDiagTlvs dataset;
-
-        SuccessOrExit(error = aError);
-        SuccessOrExit(error = DecodeNetDiagTlvs(dataset, *aRawData));
-
-        aHandler(&dataset, error);
-    exit:
-        if (error != ErrorCode::kNone)
-        {
-            aHandler(nullptr, error);
-        }
-    };
-    CommandDiagGetRawData(rawDataHandler, aAddr, aDiagTlvFlags);
-}
-
-void CommissionerImpl::CommandDiagGetRawData(Handler<ByteArray> aHandler,
-                                             const std::string &aAddr,
-                                             uint64_t           aDiagTlvFlags)
-{
     Error         error;
     Address       dstAddr;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
-    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
-        Error error;
+
+    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error       error;
+        NetDiagTlvs netDiagTlvs;
 
         SuccessOrExit(error = aError);
         SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
-
         LOG_INFO(LOG_REGION_MESHDIAG, "Accepted DIAG_GET.req data {}", utils::Hex(aResponse->GetPayload()));
-        aHandler(&aResponse->GetPayload(), error);
 
+        SuccessOrExit(error = DecodeNetDiagTlvs(netDiagTlvs, aResponse->GetPayload()));
+        aHandler(&netDiagTlvs, error);
     exit:
         if (error != ErrorCode::kNone)
         {
             aHandler(nullptr, error);
         }
     };
-
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
     SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTlvs(aDiagTlvFlags),
                                               tlv::Scope::kNetworkDiag}));
-
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
     {

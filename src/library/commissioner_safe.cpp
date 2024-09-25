@@ -355,27 +355,6 @@ Error CommissionerSafe::CommandDiagGetRequest(NetDiagTlvs       &aDiagTlvData,
     return pro.get_future().get();
 }
 
-void CommissionerSafe::CommandDiagGetRawData(Handler<ByteArray> aHandler,
-                                             const std::string &aAddr,
-                                             uint64_t           aDiagTlvFlags)
-{
-    PushAsyncRequest([=]() { mImpl->CommandDiagGetRawData(aHandler, aAddr, aDiagTlvFlags); });
-}
-
-Error CommissionerSafe::CommandDiagGetRawData(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags)
-{
-    std::promise<Error> pro;
-    auto                wait = [&pro, &aRawTlvData](const ByteArray *rawTlvData, Error error) {
-        if (rawTlvData != nullptr)
-        {
-            aRawTlvData = *rawTlvData;
-        }
-        pro.set_value(error);
-    };
-    CommandDiagGetRawData(wait, aAddr, aDiagTlvFlags);
-    return pro.get_future().get();
-}
-
 void CommissionerSafe::SetActiveDataset(ErrorHandler aHandler, const ActiveOperationalDataset &aDataset)
 {
     PushAsyncRequest([=]() { mImpl->SetActiveDataset(aHandler, aDataset); });

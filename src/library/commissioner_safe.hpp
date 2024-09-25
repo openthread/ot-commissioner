@@ -150,8 +150,6 @@ public:
                                 const std::string   &aAddr,
                                 uint64_t             aDiagTlvFlags) override;
     Error CommandDiagGetRequest(NetDiagTlvs &aDiagTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
-    void  CommandDiagGetRawData(Handler<ByteArray> aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
-    Error CommandDiagGetRawData(ByteArray &aRawTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
 
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,
