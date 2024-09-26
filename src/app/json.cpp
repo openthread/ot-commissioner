@@ -473,7 +473,7 @@ static void to_json(Json &aJson, const RouteDataEntry &aRouteDataEntry)
 
     SET(RouterId);
     SET(OutgoingLinkQuality);
-    SET(IncommingLinkQuality);
+    SET(IncomingLinkQuality);
     SET(RouteCost);
 
 #undef SET
@@ -529,12 +529,12 @@ static void to_json(Json &aJson, const ChildEntry &aChildEntry)
 #undef SET
 }
 
-static void to_json(Json &aJson, const Ipv6Address &aIpv6Address)
+static void to_json(Json &aJson, const Ipv6AddressList &aIpv6Address)
 {
     Json ipaddrArray = Json::array();
     for (const auto &ipaddrBytes : aIpv6Address.mIpv6Addresses)
     {
-        ipaddrArray.push_back(utils::Hex(ipaddrBytes));
+        ipaddrArray.push_back(ipaddrBytes.ToString());
     }
     aJson["Ipv6 Addresses"] = ipaddrArray;
 }
@@ -569,7 +569,7 @@ std::string ModeToJson(const struct Mode &aMode)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-std::string Ipv6AddressToJson(const Ipv6Address &aIpv6Address)
+std::string Ipv6AddressToJson(const Ipv6AddressList &aIpv6Address)
 {
     Json json = aIpv6Address;
     return json.dump(JSON_INDENT_DEFAULT);

@@ -1608,7 +1608,7 @@ Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteA
     if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
     {
         const ByteArray &value = ipv6Addresses->GetValue();
-        SuccessOrExit(Ipv6Address::Decode(dataset.mIpv6Addresses, value));
+        SuccessOrExit(Ipv6AddressList::Decode(dataset.mIpv6Addresses, value));
         dataset.mPresentFlags |= NetDiagTlvs::kIpv6AddressBit;
     }
 

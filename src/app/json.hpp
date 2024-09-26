@@ -88,7 +88,7 @@ std::string LeaderDataToJson(const LeaderData &aLeaderData);
 std::string RouteDataEntryToJson(const RouteDataEntry &aRouteDataEntry);
 std::string Route64ToJson(const Route64 &aRoute64);
 std::string ModeToJson(const Mode &aMode);
-std::string Ipv6AddressToJson(const Ipv6Address &aIpv6Address);
+std::string Ipv6AddressToJson(const Ipv6AddressList &aIpv6Address);
 std::string ChildEntryToJson(const ChildEntry &aChildEntry);
 std::string ChildTableToJson(const ChildTable &aChildTable);
 

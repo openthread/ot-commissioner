@@ -34,6 +34,7 @@
 #ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
 #define OT_COMM_NETWORK_DIAG_TLVS_HPP_
 
+#include <cstddef>
 #include <cstdint>
 #include <stdbool.h>
 #include <string>
@@ -139,6 +140,16 @@ struct ChildTable
      * Returns a string representation of the ChildTable.
      */
     std::string ToString() const;
+
+    /**
+     * Returns the size of the ChildTable.
+     */
+    size_t GetSize() const;
+
+    /**
+     * Returns the ChildEntry at the given index.
+     */
+    ChildEntry GetChildEntry(size_t aIndex) const;
 };
 
 /**
@@ -146,11 +157,39 @@ struct ChildTable
  */
 struct Ipv6Address
 {
-    std::vector<ByteArray> mIpv6Addresses;
+    ByteArray mAddress;
     /**
      * Decodes Ipv6Address from a ByteArray
      */
     static Error Decode(Ipv6Address &aIpv6Address, const ByteArray &aBuf);
+
+    /**
+     * Returns a string representation of the Ipv6Address.
+     */
+    std::string ToString() const;
+};
+
+/**
+ * @brief IPv6 Address TLV
+ */
+struct Ipv6AddressList
+{
+    std::vector<Ipv6Address> mIpv6Addresses;
+
+    /**
+     * Returns the size of the Ipv6AddressList.
+     */
+    size_t GetSize() const;
+
+    /**
+     * Returns the Ipv6Address at the given index.
+     */
+    Ipv6Address GetIpv6Address(size_t aIndex) const;
+
+    /**
+     * Decodes Ipv6Address from a ByteArray
+     */
+    static Error Decode(Ipv6AddressList &aIpv6Address, const ByteArray &aBuf);
 
     /**
      * Returns a string representation of the Ipv6Address.
@@ -185,10 +224,10 @@ struct LeaderData
  */
 struct RouteDataEntry
 {
-    uint8_t mRouterId             = 0;
-    uint8_t mOutgoingLinkQuality  = 0;
-    uint8_t mIncommingLinkQuality = 0;
-    uint8_t mRouteCost            = 0;
+    uint8_t mRouterId            = 0;
+    uint8_t mOutgoingLinkQuality = 0;
+    uint8_t mIncomingLinkQuality = 0;
+    uint8_t mRouteCost           = 0;
     /**
      * Decodes RouteDataEntry from a ByteArray
      */
@@ -196,18 +235,13 @@ struct RouteDataEntry
 };
 
 /**
- * @brief Route Data in Route64 TLV
- */
-using RouteData = std::vector<RouteDataEntry>;
-
-/**
  * @brief Route64 TLV
  */
 struct Route64
 {
-    uint8_t   mIdSequence = 0;
-    ByteArray mMask;
-    RouteData mRouteData;
+    uint8_t                     mIdSequence = 0;
+    ByteArray                   mMask;
+    std::vector<RouteDataEntry> mRouteData;
     /**
      * Decodes Route64 from a ByteArray
      */
@@ -222,6 +256,80 @@ struct Route64
      * Returns a string representation of the Route64.
      */
     std::string ToString() const;
+
+    /**
+     * Returns the size of the RouteData.
+     */
+    size_t GetRouteDataSize() const;
+
+    /**
+     * Returns the RouteDataEntry at the given index.
+     */
+    RouteDataEntry GetRouteData(size_t aIndex) const;
+};
+
+struct ChildIpv6AddressList
+{
+    uint16_t        mRloc16 = 0;
+    Ipv6AddressList mIpv6AddressList;
+
+    /**
+     * Decodes ChildIpv6Address from a ByteArray
+     */
+    static Error Decode(ChildIpv6AddressList &aChildIpv6AddressList, const ByteArray &aBuf);
+
+    /**
+     * Returns a string representation of the ChildIpv6Address.
+     */
+    std::string ToString() const;
+};
+
+struct Child
+{
+    bool      mRxOnWhenIdleFlag     = false;
+    bool      mFullThreadDeviceFlag = false;
+    bool      mFullNetworkDataFlag  = false;
+    bool      mCslFlag              = false;
+    bool      mErrorRateFlag        = false;
+    uint16_t  mRloc16               = 0;
+    ByteArray mExtMacAddress;
+    uint16_t  mThreadVersion       = 0;
+    uint32_t  mTimeout             = 0;
+    uint32_t  mAge                 = 0;
+    uint32_t  mConnectionTime      = 0;
+    uint16_t  mSupervisionInterval = 0;
+    uint8_t   mLinkMargin          = 0;
+    uint8_t   mAverageRssi         = 0;
+    uint8_t   mLastRssi            = 0;
+    uint16_t  mFrameErrorRate      = 0;
+    uint16_t  mMessageErrorRate    = 0;
+    uint16_t  mQueuedMessageCount  = 0;
+    uint16_t  mCslPeriod           = 0;
+    uint32_t  mCslTimeout          = 0;
+    uint8_t   mCslChannel          = 0;
+};
+
+struct MacCounters
+{
+    uint32_t mIfInUnknownProtos  = 0;
+    uint32_t mIfInErrors         = 0;
+    uint32_t mIfOutErrors        = 0;
+    uint32_t mIfInUcastPkts      = 0;
+    uint32_t mIfInBroadcastPkts  = 0;
+    uint32_t mIfInDiscards       = 0;
+    uint32_t mIfOutUcastPkts     = 0;
+    uint32_t mIfOutBroadcastPkts = 0;
+    uint32_t mIfOutDiscards      = 0;
+
+    /**
+     * Decodes MacCounters from a ByteArray
+     */
+    static Error Decode(MacCounters &aMacCounters, const ByteArray &aBuf);
+
+    /**
+     * Returns a string representation of the MacCounters.
+     */
+    std::string ToString() const;
 };
 
 /**
@@ -233,15 +341,17 @@ struct Route64
  */
 struct NetDiagTlvs
 {
-    ByteArray   mExtMacAddress;
-    uint16_t    mMacAddress = 0;
-    Mode        mMode;
-    Route64     mRoute64;
-    LeaderData  mLeaderData;
-    Ipv6Address mIpv6Addresses;
-    ChildTable  mChildTable;
-    ByteArray   mEui64;
-    ByteArray   mTlvTypeList;
+    ByteArray            mExtMacAddress;
+    uint16_t             mMacAddress = 0;
+    Mode                 mMode;
+    Route64              mRoute64;
+    LeaderData           mLeaderData;
+    Ipv6AddressList      mIpv6Addresses;
+    ChildTable           mChildTable;
+    ByteArray            mEui64;
+    ByteArray            mTlvTypeList;
+    ChildIpv6AddressList mChildIpv6AddressList;
+    MacCounters          mMacCounters;
 
     /**
      * Indicates which fields are included in the dataset.
@@ -262,6 +372,10 @@ struct NetDiagTlvs
         (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildTable));
     static constexpr uint64_t kEui64Bit   = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagEui64));
     static constexpr uint64_t kTlvTypeBit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagTypeList));
+    static constexpr uint64_t kMacCountersBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMacCounters));
+    static constexpr uint64_t kChildIpv6AddressBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildIpv6Address));
 };
 
 } // namespace commissioner
