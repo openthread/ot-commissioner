@@ -27,14 +27,14 @@
  */
 
 #include "commissioner/network_diagnostic_tlvs.hpp"
-#include <sys/types.h>
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include "common/utils.hpp"
-#include "common/error_macros.hpp"
+#include <sys/types.h>
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
+#include "common/error_macros.hpp"
+#include "common/utils.hpp"
 
 #define ROUTER_ID_MASK_BYTES 8
 #define CHILD_TABLE_ENTRY_BYTES 4
@@ -49,8 +49,7 @@ Error LeaderData::Decode(LeaderData &aLeaderData, const ByteArray &aBuf)
     size_t length = aBuf.size();
     Error  error;
 
-    VerifyOrExit(length == 8,
-                 error = ERROR_BAD_FORMAT("incorrect size of LeaderData"));
+    VerifyOrExit(length == 8, error = ERROR_BAD_FORMAT("incorrect size of LeaderData"));
 
     aLeaderData.mPartitionId       = utils::Decode<uint32_t>(aBuf.data(), 4);
     aLeaderData.mWeighting         = aBuf[length - 4];
@@ -75,16 +74,13 @@ Error Route64::Decode(Route64 &aRoute64, const ByteArray &aBuf)
     size_t    offset = 0;
     ByteArray routerIdList;
 
-    VerifyOrExit(length >= ROUTER_ID_MASK_BYTES + 1,
-                 error = ERROR_BAD_FORMAT("incorrect size of Route64"));
+    VerifyOrExit(length >= ROUTER_ID_MASK_BYTES + 1, error = ERROR_BAD_FORMAT("incorrect size of Route64"));
     aRoute64.mIdSequence = aBuf[offset++];
-    aRoute64.mMask = {aBuf.begin() + offset,
-                      aBuf.begin() + offset + ROUTER_ID_MASK_BYTES};
+    aRoute64.mMask       = {aBuf.begin() + offset, aBuf.begin() + offset + ROUTER_ID_MASK_BYTES};
     offset += ROUTER_ID_MASK_BYTES;
 
     routerIdList = ExtractRouterIds(aRoute64.mMask);
-    VerifyOrExit((length - offset) == routerIdList.size(),
-                 error = ERROR_BAD_FORMAT("incorrect size of RouteData"));
+    VerifyOrExit((length - offset) == routerIdList.size(), error = ERROR_BAD_FORMAT("incorrect size of RouteData"));
     while (offset < length)
     {
         RouteDataEntry entry;
@@ -97,25 +93,24 @@ exit:
     return error;
 }
 
-std::string Route64::ToString() const{
-  std::string ret;
-  ret += "id_sequence: " + std::to_string(mIdSequence) + "\n";
-  ret += "mask: ";
-  for (uint8_t byte : mMask) {
-    ret += std::to_string(byte) + " ";
-  }
-  ret += "\n";
-  for (const auto &entry : mRouteData) {
-    ret += "router_id: " + std::to_string(entry.mRouterId) + "\n";
-    ret += "outgoing_link_quality: "
-            + std::to_string(entry.mOutgoingLinkQuality)
-            + "\n";
-    ret += "incomming_link_quality: "
-            + std::to_string(entry.mIncommingLinkQuality)
-            + "\n";
-    ret += "route_cost: " + std::to_string(entry.mRouteCost) + "\n";
-  }
-  return ret;
+std::string Route64::ToString() const
+{
+    std::string ret;
+    ret += "id_sequence: " + std::to_string(mIdSequence) + "\n";
+    ret += "mask: ";
+    for (uint8_t byte : mMask)
+    {
+        ret += std::to_string(byte) + " ";
+    }
+    ret += "\n";
+    for (const auto &entry : mRouteData)
+    {
+        ret += "router_id: " + std::to_string(entry.mRouterId) + "\n";
+        ret += "outgoing_link_quality: " + std::to_string(entry.mOutgoingLinkQuality) + "\n";
+        ret += "incomming_link_quality: " + std::to_string(entry.mIncommingLinkQuality) + "\n";
+        ret += "route_cost: " + std::to_string(entry.mRouteCost) + "\n";
+    }
+    return ret;
 }
 
 std::string LeaderData::ToString() const
@@ -129,33 +124,34 @@ std::string LeaderData::ToString() const
     return ret;
 }
 
-ByteArray Route64::ExtractRouterIds(const ByteArray  &aMask) {
-  ByteArray routerIdList;
+ByteArray Route64::ExtractRouterIds(const ByteArray &aMask)
+{
+    ByteArray routerIdList;
 
-  for (size_t i = 0; i < ROUTER_ID_MASK_BYTES * 8; i++) {
-    if ((aMask[i / 8] & (0x80 >> (i % 8))) != 0) {
-      routerIdList.push_back(i);
+    for (size_t i = 0; i < ROUTER_ID_MASK_BYTES * 8; i++)
+    {
+        if ((aMask[i / 8] & (0x80 >> (i % 8))) != 0)
+        {
+            routerIdList.push_back(i);
+        }
     }
-  }
 
-  return routerIdList;
+    return routerIdList;
 }
 
 void Mode::Decode(Mode &aMode, uint8_t aBuf)
 {
-    aMode.mIsRxOnWhenIdleMode = (aBuf & 0x01) != 0;
-    aMode.mIsMtd = (aBuf & 0x02) != 0;
-    aMode.mIsStableNetworkDataRequired = (aBuf & 0x04) != 0;
+    aMode.mIsRxOnWhenIdleMode          = (aBuf & 0x01) == 0;
+    aMode.mIsMtd                       = (aBuf & 0x02) == 0;
+    aMode.mIsStableNetworkDataRequired = (aBuf & 0x04) == 0;
 }
 
 std::string Mode::ToString() const
 {
     std::string ret;
-    ret += "is_rx_on_when_idle_mode: "
-            + std::to_string(mIsRxOnWhenIdleMode) + "\n";
+    ret += "is_rx_on_when_idle_mode: " + std::to_string(mIsRxOnWhenIdleMode) + "\n";
     ret += "is_mtd: " + std::to_string(mIsMtd) + "\n";
-    ret += "is_stable_network_data_required: "
-            + std::to_string(mIsStableNetworkDataRequired) + "\n";
+    ret += "is_stable_network_data_required: " + std::to_string(mIsStableNetworkDataRequired) + "\n";
     return ret;
 }
 
@@ -165,8 +161,7 @@ Error ChildEntry::Decode(ChildEntry &aChildEntry, const ByteArray &aBuf)
     size_t length = aBuf.size();
     size_t offset = 0;
 
-    VerifyOrExit(offset + 4 <= length,
-                  error = ERROR_BAD_FORMAT("premature end of Child Table"));
+    VerifyOrExit(offset + 4 <= length, error = ERROR_BAD_FORMAT("premature end of Child Table"));
     aChildEntry.mTimeout             = aBuf[offset++];
     aChildEntry.mIncomingLinkQuality = aBuf[offset++];
     aChildEntry.mChildId             = aBuf[offset++];
@@ -179,8 +174,7 @@ std::string ChildEntry::ToString() const
 {
     std::string ret;
     ret += "timeout: " + std::to_string(mTimeout) + "\n";
-    ret += "incoming_link_quality: " + std::to_string(mIncomingLinkQuality)
-            + "\n";
+    ret += "incoming_link_quality: " + std::to_string(mIncomingLinkQuality) + "\n";
     ret += "child_id: " + std::to_string(mChildId) + "\n";
     ret += "mode: " + mModeData.ToString() + "\n";
     return ret;
@@ -194,10 +188,9 @@ Error ChildTable::Decode(ChildTable &aChildTable, const ByteArray &aBuf)
     while (offset < length)
     {
         ChildEntry entry;
-        VerifyOrExit(offset + 4 <= length,
-                     error = ERROR_BAD_FORMAT("premature end of Child Table"));
-        SuccessOrExit(error = ChildEntry::Decode(entry, {aBuf.begin() + offset,
-                      aBuf.begin() + offset + CHILD_TABLE_ENTRY_BYTES}));
+        VerifyOrExit(offset + 4 <= length, error = ERROR_BAD_FORMAT("premature end of Child Table"));
+        SuccessOrExit(error = ChildEntry::Decode(
+                          entry, {aBuf.begin() + offset, aBuf.begin() + offset + CHILD_TABLE_ENTRY_BYTES}));
         aChildTable.mChildEntries.emplace_back(entry);
     }
 exit:
@@ -207,7 +200,8 @@ exit:
 std::string ChildTable::ToString() const
 {
     std::string ret;
-    for (const auto &entry : mChildEntries) {
+    for (const auto &entry : mChildEntries)
+    {
         ret += entry.ToString() + "\n";
     }
     return ret;
@@ -215,16 +209,13 @@ std::string ChildTable::ToString() const
 
 Error Ipv6Address::Decode(Ipv6Address &aIpv6Address, const ByteArray &aBuf)
 {
-    Error error;
+    Error  error;
     size_t length = aBuf.size();
     size_t offset = 0;
     while (offset < length)
     {
-        VerifyOrExit(offset + IPV6_ADDRESS_BYTES <= length,
-                     error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
-        aIpv6Address.mIpv6Addresses.emplace_back(aBuf.begin() + offset,
-                                                 aBuf.begin() + offset +
-                                                     IPV6_ADDRESS_BYTES);
+        VerifyOrExit(offset + IPV6_ADDRESS_BYTES <= length, error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
+        aIpv6Address.mIpv6Addresses.emplace_back(aBuf.begin() + offset, aBuf.begin() + offset + IPV6_ADDRESS_BYTES);
         offset += IPV6_ADDRESS_BYTES;
     }
 exit:
@@ -234,12 +225,13 @@ exit:
 std::string Ipv6Address::ToString() const
 {
     std::string ret;
-    for (const auto &address : mIpv6Addresses) {
+    for (const auto &address : mIpv6Addresses)
+    {
         ret += utils::Hex(address) + "\n";
     }
     return ret;
 }
 
-}  // namespace commissioner
+} // namespace commissioner
 
-}  // namespace ot
+} // namespace ot
