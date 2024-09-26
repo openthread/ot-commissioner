@@ -117,8 +117,6 @@
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
 #define DIAG_GET_REQ_TYPE 0
-#define DIAG_GET_QRY_TYPE 1
-#define DIAG_RST_NTF_TYPE 2
 
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
@@ -2580,11 +2578,10 @@ exit:
 Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
     Value       value;
-    uint64_t    flags        = 0;
-    uint8_t     opertionType = 0;
+    uint64_t    flags         = 0;
+    uint8_t     operationType = 0;
     std::string dstAddr;
     NetDiagTlvs tlvs;
-    ByteArray   rawTlvs;
 
     VerifyOrExit(aExpr.size() >= 3,
                  value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
@@ -2600,7 +2597,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
 
     if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
-        opertionType = DIAG_GET_REQ_TYPE;
+        operationType = DIAG_GET_REQ_TYPE;
     }
     else
     {
@@ -2610,7 +2607,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "extmacaddr"))
     {
         flags = NetDiagTlvs::kExtMacAddressBit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2620,7 +2617,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "rloc16"))
     {
         flags = NetDiagTlvs::kMacAddressBit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2630,7 +2627,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "mode"))
     {
         flags = NetDiagTlvs::kModeBit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2640,7 +2637,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "route64"))
     {
         flags = NetDiagTlvs::kRoute64Bit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2650,7 +2647,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "leaderdata"))
     {
         flags = NetDiagTlvs::kLeaderDataBit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2660,7 +2657,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "eui64"))
     {
         flags = NetDiagTlvs::kEui64Bit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2670,7 +2667,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "ipaddr"))
     {
         flags = NetDiagTlvs::kIpv6AddressBit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
@@ -2680,7 +2677,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     if (CaseInsensitiveEqual(aExpr[2], "childtable"))
     {
         flags = NetDiagTlvs::kChildTableBit;
-        if (opertionType == DIAG_GET_REQ_TYPE)
+        if (operationType == DIAG_GET_REQ_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
             tlvs.mPresentFlags = flags;
