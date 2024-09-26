@@ -43,7 +43,7 @@
 
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
-#include "commissioner/network_diagnostic_tlvs.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/commissioner_impl.hpp"

@@ -26,7 +26,7 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "commissioner/network_diagnostic_tlvs.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <string>
