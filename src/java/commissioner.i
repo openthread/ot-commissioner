@@ -40,6 +40,7 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diagnostic_tlvs.hpp>
 #include <commissioner/commissioner.hpp>
 %}
 
@@ -168,6 +169,13 @@ namespace commissioner {
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
 
+    %ignore Commissioner::CommandDiagGetRequest(Handler<NetDiagTlvs>   aHandler,
+                                                const std::string     &aAddr,
+                                                uint64_t               aDiagTlvFlags);
+    %ignore Commissioner::CommandDiagGetRequest(NetDiagTlvs           aDiagTlvData,
+                                                const std::string     &aAddr,
+                                                uint64_t               aDiagTlvFlags);
+
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
     %ignore Error::Error(Error &&aError) noexcept;
@@ -186,5 +194,6 @@ namespace commissioner {
 %include <commissioner/defines.hpp>
 %include <commissioner/error.hpp>
 %include <commissioner/network_data.hpp>
+%include <commissioner/network_diagnostic_tlvs.hpp>
 %include <commissioner/commissioner.hpp>
 %include <commissioner/commissioner.hpp>

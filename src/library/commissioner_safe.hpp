@@ -34,11 +34,16 @@
 #ifndef OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 #define OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 
+#include <cstdint>
 #include <mutex>
+#include <string>
 #include <thread>
 
 #include <commissioner/commissioner.hpp>
 
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/commissioner_impl.hpp"
@@ -140,6 +145,11 @@ public:
 
     void  CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr) override;
     Error CommandDomainReset(const std::string &aDstAddr) override;
+    // Diagnostic feature in TMF
+    void  CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                const std::string   &aAddr,
+                                uint64_t             aDiagTlvFlags) override;
+    Error CommandDiagGetRequest(NetDiagTlvs &aDiagTlvData, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
 
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,

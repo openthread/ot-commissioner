@@ -40,6 +40,7 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diagnostic_tlvs.hpp>
 
 #include "app/border_agent.hpp"
 #include "app/commissioner_app.hpp"
@@ -80,6 +81,16 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson);
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
+
+// Diagnostic feature in TMF
+std::string NetDiagTlvsToJson(const NetDiagTlvs &aNetDiagTlvs);
+std::string LeaderDataToJson(const LeaderData &aLeaderData);
+std::string RouteDataEntryToJson(const RouteDataEntry &aRouteDataEntry);
+std::string Route64ToJson(const Route64 &aRoute64);
+std::string ModeToJson(const Mode &aMode);
+std::string Ipv6AddressToJson(const Ipv6Address &aIpv6Address);
+std::string ChildEntryToJson(const ChildEntry &aChildEntry);
+std::string ChildTableToJson(const ChildTable &aChildTable);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);
