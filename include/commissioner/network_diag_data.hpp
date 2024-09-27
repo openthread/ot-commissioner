@@ -34,6 +34,7 @@
 #ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
 #define OT_COMM_NETWORK_DIAG_TLVS_HPP_
 
+#include <cstddef>
 #include <cstdint>
 #include <stdbool.h>
 #include <string>
@@ -45,43 +46,6 @@
 namespace ot {
 
 namespace commissioner {
-
-/**
- * @brief Enum representing the types of Network Diagnostic TLVs.
- */
-enum class NetworkDiagTlvType : uint8_t
-{
-    kNetworkDiagExtMacAddress           = 0,  ///< Extended MAC Address TLV
-    kNetworkDiagMacAddress              = 1,  ///< MAC Address TLV
-    kNetworkDiagMode                    = 2,  ///< Mode TLV
-    kNetworkDiagTimeout                 = 3,  ///< Timeout TLV
-    kNetworkDiagConnectivity            = 4,  ///< Connectivity TLV
-    kNetworkDiagRoute64                 = 5,  ///< Route64 TLV
-    kNetworkDiagLeaderData              = 6,  ///< Leader Data TLV
-    kNetworkDiagNetworkData             = 7,  ///< Network Data TLV
-    kNetworkDiagIpv6Address             = 8,  ///< IPv6 Address TLV
-    kNetworkDiagMacCounters             = 9,  ///< MAC Counters TLV
-    kNetworkDiagBatteryLevel            = 14, ///< Battery Level TLV
-    kNetworkDiagSupplyVoltage           = 15, ///< Supply Voltage TLV
-    kNetworkDiagChildTable              = 16, ///< Child Table TLV
-    kNetworkDiagChannelPages            = 17, ///< Channel Pages TLV
-    kNetworkDiagTypeList                = 18, ///< Type List TLV
-    kNetworkDiagMaxChildTimeout         = 19, ///< Max Child Timeout TLV
-    kNetworkDiagLDevIDSubjectPubKeyInfo = 20, ///< LDevID Subject Public Key Info TLV
-    kNetworkDiagIDevIDCert              = 21, ///< IDevID Certificate TLV
-    kNetworkDiagEui64                   = 23, ///< EUI-64 TLV
-    kNetworkDiagVersion                 = 24, ///< Version TLV
-    kNetworkDiagVendorName              = 25, ///< Vendor Name TLV
-    kNetworkDiagVendorModel             = 26, ///< Vendor Model TLV
-    kNetworkDiagVendorSWVersion         = 27, ///< Vendor Software Version TLV
-    kNetworkDiagThreadStackVersion      = 28, ///< Thread Stack Version TLV
-    kNetworkDiagChild                   = 29, ///< Child TLV
-    kNetworkDiagChildIpv6Address        = 30, ///< Child IPv6 Address TLV
-    kNetworkDiagRouterNeighbor          = 31, ///< Router Neighbor TLV
-    kNetworkDiagAnswer                  = 32, ///< Answer TLV
-    kNetworkDiagQueryID                 = 33, ///< Query ID TLV
-    kNetworkDiagMleCounters             = 34  ///< MLE Counters TLV
-};
 
 /**
  * @brief Mode TLV
@@ -139,6 +103,33 @@ struct ChildTable
      * Returns a string representation of the ChildTable.
      */
     std::string ToString() const;
+
+    /**
+     * Returns the size of the ChildTable.
+     */
+    size_t GetSize() const;
+
+    /**
+     * Returns the ChildEntry at the given index.
+     */
+    ChildEntry GetChildEntry(size_t aIndex) const;
+};
+
+/**
+ * @brief IPv6 Address TLV
+ */
+struct Ipv6Address
+{
+    ByteArray mAddress;
+    /**
+     * Decodes Ipv6Address from a ByteArray
+     */
+    static Error Decode(Ipv6Address &aIpv6Address, const ByteArray &aBuf);
+
+    /**
+     * Returns a string representation of the Ipv6Address.
+     */
+    std::string ToString() const;
 };
 
 /**
@@ -146,7 +137,18 @@ struct ChildTable
  */
 struct Ipv6AddressList
 {
-    std::vector<ByteArray> mIpv6Addresses;
+    std::vector<Ipv6Address> mIpv6Addresses;
+
+    /**
+     * Returns the size of the Ipv6AddressList.
+     */
+    size_t GetSize() const;
+
+    /**
+     * Returns the Ipv6Address at the given index.
+     */
+    Ipv6Address GetIpv6Address(size_t aIndex) const;
+
     /**
      * Decodes Ipv6Address from a ByteArray
      */
@@ -185,10 +187,10 @@ struct LeaderData
  */
 struct RouteDataEntry
 {
-    uint8_t mRouterId             = 0;
-    uint8_t mOutgoingLinkQuality  = 0;
-    uint8_t mIncommingLinkQuality = 0;
-    uint8_t mRouteCost            = 0;
+    uint8_t mRouterId            = 0;
+    uint8_t mOutgoingLinkQuality = 0;
+    uint8_t mIncomingLinkQuality = 0;
+    uint8_t mRouteCost           = 0;
     /**
      * Decodes RouteDataEntry from a ByteArray
      */
@@ -196,18 +198,13 @@ struct RouteDataEntry
 };
 
 /**
- * @brief Route Data in Route64 TLV
- */
-using RouteData = std::vector<RouteDataEntry>;
-
-/**
  * @brief Route64 TLV
  */
 struct Route64
 {
-    uint8_t   mIdSequence = 0;
-    ByteArray mMask;
-    RouteData mRouteData;
+    uint8_t                     mIdSequence = 0;
+    ByteArray                   mMask;
+    std::vector<RouteDataEntry> mRouteData;
     /**
      * Decodes Route64 from a ByteArray
      */
@@ -222,6 +219,16 @@ struct Route64
      * Returns a string representation of the Route64.
      */
     std::string ToString() const;
+
+    /**
+     * Returns the size of the RouteData.
+     */
+    size_t GetRouteDataSize() const;
+
+    /**
+     * Returns the RouteDataEntry at the given index.
+     */
+    RouteDataEntry GetRouteData(size_t aIndex) const;
 };
 
 struct ChildIpv6AddressList
@@ -314,24 +321,17 @@ struct NetDiagTlvs
      */
     uint64_t mPresentFlags;
 
-    static constexpr uint64_t kExtMacAddressBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagExtMacAddress));
-    static constexpr uint64_t kMacAddressBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMacAddress));
-    static constexpr uint64_t kModeBit    = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMode));
-    static constexpr uint64_t kRoute64Bit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagRoute64));
-    static constexpr uint64_t kLeaderDataBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagLeaderData));
-    static constexpr uint64_t kIpv6AddressBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagIpv6Address));
-    static constexpr uint64_t kChildTableBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildTable));
-    static constexpr uint64_t kEui64Bit   = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagEui64));
-    static constexpr uint64_t kTlvTypeBit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagTypeList));
-    static constexpr uint64_t kMacCountersBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMacCounters));
-    static constexpr uint64_t kChildIpv6AddressBit =
-        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildIpv6Address));
+    static constexpr uint64_t kExtMacAddressBit    = (1ull << 63);
+    static constexpr uint64_t kMacAddressBit       = (1ull << 62);
+    static constexpr uint64_t kModeBit             = (1ull << 61);
+    static constexpr uint64_t kRoute64Bit          = (1ull << 60);
+    static constexpr uint64_t kLeaderDataBit       = (1ull << 59);
+    static constexpr uint64_t kIpv6AddressBit      = (1ull << 58);
+    static constexpr uint64_t kChildTableBit       = (1ull << 57);
+    static constexpr uint64_t kEui64Bit            = (1ull << 56);
+    static constexpr uint64_t kTlvTypeBit          = (1ull << 55);
+    static constexpr uint64_t kMacCountersBit      = (1ull << 54);
+    static constexpr uint64_t kChildIpv6AddressBit = (1ull << 53);
 };
 
 } // namespace commissioner

@@ -49,7 +49,7 @@ add_library(commissioner
     mbedtls_error.hpp
     message.hpp
     network_data.cpp
-    network_diagnostic_tlvs.cpp
+    network_diag_data.cpp
     openthread/bloom_filter.cpp
     openthread/bloom_filter.hpp
     openthread/crc16.cpp
