@@ -2707,6 +2707,8 @@ exit:
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
 {
+    mJobManager->StopCommissionerPool();
+    mShouldExit = true;
     return ERROR_NONE;
 }
 
