@@ -266,7 +266,7 @@ public:
      * @param[in] aDiagAnsMsg   Parsed DiagTlvs data.
      *
      */
-    virtual void OnDiagGetAnswerMessage(NetDiagTlvs aDiagAnsMsg) { (void)aDiagAnsMsg; }
+    virtual void OnDiagGetAnswerMessage(NetDiagTlvs &aDiagAnsMsg) { (void)aDiagAnsMsg; }
 
     /**
      * This function notifies that the operational dataset has been changed.

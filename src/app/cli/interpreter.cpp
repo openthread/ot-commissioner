@@ -116,9 +116,7 @@
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
-#define DIAG_GET_REQ_TYPE 0
 #define DIAG_GET_QRY_TYPE 1
-#define DIAG_RST_NTF_TYPE 2
 
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
@@ -267,14 +265,14 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                   "opdataset set active '<active-dataset-in-json-string>'\n"
                   "opdataset get pending\n"
                   "opdataset set pending '<pending-dataset-in-json-string>'"},
-    {"diag", "diag (get|query) extmacaddr <dest mesh local address>\n"
-             "diag (get|query) rloc16 <dest mesh local address> \n"
-             "diag (get|query) mode <dest mesh local address> \n"
-             "diag (get|query) rout64 <dest mesh local address> \n"
-             "diag (get|query) leaderdata <dest mesh local address> \n"
-             "diag (get|query) ipvaddr <dest mesh local address> \n"
-             "diag (get|query) childtable <dest mesh local address> \n"
-             "diag (get|query) eui64 <dest mesh local address>"},
+    {"diag", "diag query extmacaddr <dest mesh local address>\n"
+             "diag query rloc16 <dest mesh local address> \n"
+             "diag query mode <dest mesh local address> \n"
+             "diag query rout64 <dest mesh local address> \n"
+             "diag query leaderdata <dest mesh local address> \n"
+             "diag query ipvaddr <dest mesh local address> \n"
+             "diag query childtable <dest mesh local address> \n"
+             "diag query eui64 <dest mesh local address>"},
     {"bbrdataset", "bbrdataset get trihostname\n"
                    "bbrdataset set trihostname <TRI-hostname>\n"
                    "bbrdataset get reghostname\n"
@@ -2588,7 +2586,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
 
     VerifyOrExit(aExpr.size() >= 3,
                  value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
-                                            "diag [get] [rloc16 | extmacaddr | ... ] <dest mesh local address>"));
+                                            "diag [query] [rloc16 | extmacaddr | ... ] <dest mesh local address>"));
     if (aExpr.size() > 3 && !aExpr[3].empty())
     {
         dstAddr = aExpr[3];
@@ -2598,11 +2596,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         dstAddr.clear();
     }
 
-    if (CaseInsensitiveEqual(aExpr[1], "get"))
-    {
-        operationType = DIAG_GET_REQ_TYPE;
-    }
-    else if (CaseInsensitiveEqual(aExpr[1], "query"))
+    if (CaseInsensitiveEqual(aExpr[1], "query"))
     {
         operationType = DIAG_GET_QRY_TYPE;
     }
@@ -2630,6 +2624,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             tlvs               = aCommissioner->GetNetDiagTlvs();
             tlvs.mPresentFlags = flags;
             value              = NetDiagTlvsToJson(tlvs);
@@ -2641,6 +2636,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             tlvs               = aCommissioner->GetNetDiagTlvs();
             tlvs.mPresentFlags = flags;
             value              = ModeToJson(tlvs.mMode);
@@ -2652,6 +2648,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             tlvs               = aCommissioner->GetNetDiagTlvs();
             tlvs.mPresentFlags = flags;
             value              = Route64ToJson(tlvs.mRoute64);
@@ -2663,6 +2660,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             tlvs               = aCommissioner->GetNetDiagTlvs();
             tlvs.mPresentFlags = flags;
             value              = LeaderDataToJson(tlvs.mLeaderData);
@@ -2674,6 +2672,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             tlvs               = aCommissioner->GetNetDiagTlvs();
             tlvs.mPresentFlags = flags;
             value              = NetDiagTlvsToJson(tlvs);
@@ -2686,9 +2685,8 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = Ipv6AddressToJson(tlvs.mIpv6Addresses);
+            tlvs  = aCommissioner->GetNetDiagTlvs();
+            value = Ipv6AddressToJson(tlvs.mIpv6Addresses);
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "childtable"))
@@ -2697,6 +2695,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             tlvs               = aCommissioner->GetNetDiagTlvs();
             tlvs.mPresentFlags = flags;
             value              = ChildTableToJson(tlvs.mChildTable);
@@ -2708,10 +2707,6 @@ exit:
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
 {
-    mJobManager->StopCommissionerPool();
-
-    mShouldExit = true;
-
     return ERROR_NONE;
 }
 
