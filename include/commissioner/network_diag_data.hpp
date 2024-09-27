@@ -43,11 +43,37 @@
 #include "defines.hpp"
 #include "error.hpp"
 
+#define CHILD_TABLE_ENTRY_BYTES 3
 #define IPV6_ADDRESS_BYTES 16
+#define LEADER_DATA_BYTES 8
+#define MAC_COUNTERS_BYTES 36
+#define RLOC16_BYTES 2
+#define ROUTER_ID_MASK_BYTES 8
 
 namespace ot {
 
 namespace commissioner {
+
+/**
+ * @brief Mode Data
+ */
+struct ModeData
+{
+    bool mIsRxOnWhenIdleMode          = false;
+    bool mIsMtd                       = false;
+    bool mIsStableNetworkDataRequired = false;
+};
+
+/**
+ * @brief Child Entry in Child Table
+ */
+struct ChildTableEntry
+{
+    uint32_t mTimeout             = 0;
+    uint8_t  mIncomingLinkQuality = 0;
+    uint16_t mChildId             = 0;
+    ModeData mModeData;
+};
 
 /**
  * @brief IPv6 Addresses List
@@ -55,6 +81,64 @@ namespace commissioner {
 struct Ipv6AddressList
 {
     std::vector<std::string> mIpv6Addresses;
+};
+
+/**
+ * @brief Leader Data
+ */
+struct LeaderData
+{
+    uint32_t mPartitionId       = 0;
+    uint8_t  mWeighting         = 0;
+    uint8_t  mDataVersion       = 0;
+    uint8_t  mStableDataVersion = 0;
+    uint8_t  mRouterId          = 0;
+};
+
+/**
+ * @brief Route Data Entry of RouteData in Route64
+ */
+struct RouteDataEntry
+{
+    uint8_t mRouterId            = 0;
+    uint8_t mOutgoingLinkQuality = 0;
+    uint8_t mIncomingLinkQuality = 0;
+    uint8_t mRouteCost           = 0;
+};
+
+/**
+ * @brief Route64 Data
+ */
+struct Route64
+{
+    uint8_t                     mIdSequence = 0;
+    ByteArray                   mMask;
+    std::vector<RouteDataEntry> mRouteData;
+};
+
+/**
+ * @brief Child IPv6 Address List TLV
+ */
+struct ChildIpv6AddressList
+{
+    uint16_t        mRloc16 = 0;
+    Ipv6AddressList mIpv6AddressList;
+};
+
+/**
+ * @brief MAC Counters TLV
+ */
+struct MacCounters
+{
+    uint32_t mIfInUnknownProtos  = 0;
+    uint32_t mIfInErrors         = 0;
+    uint32_t mIfOutErrors        = 0;
+    uint32_t mIfInUcastPkts      = 0;
+    uint32_t mIfInBroadcastPkts  = 0;
+    uint32_t mIfInDiscards       = 0;
+    uint32_t mIfOutUcastPkts     = 0;
+    uint32_t mIfOutBroadcastPkts = 0;
+    uint32_t mIfOutDiscards      = 0;
 };
 
 /**
@@ -66,14 +150,34 @@ struct Ipv6AddressList
  */
 struct NetDiagData
 {
-    Ipv6AddressList mIpv6AddressList;
+    ByteArray                    mExtMacAddress;
+    uint16_t                     mMacAddress = 0;
+    ModeData                     mMode;
+    Route64                      mRoute64;
+    LeaderData                   mLeaderData;
+    Ipv6AddressList              mIpv6AddressList;
+    std::vector<ChildTableEntry> mChildTable;
+    ByteArray                    mEui64;
+    ByteArray                    mTlvTypeList;
+    ChildIpv6AddressList         mChildIpv6AddressList;
+    MacCounters                  mMacCounters;
 
     /**
      * Indicates which fields are included in the dataset.
      */
     uint64_t mPresentFlags;
 
-    static constexpr uint64_t kIpv6AddressBit = (1ull << 0);
+    static constexpr uint64_t kExtMacAddressBit    = (1ull << 0);
+    static constexpr uint64_t kMacAddressBit       = (1ull << 1);
+    static constexpr uint64_t kModeBit             = (1ull << 2);
+    static constexpr uint64_t kRoute64Bit          = (1ull << 3);
+    static constexpr uint64_t kLeaderDataBit       = (1ull << 4);
+    static constexpr uint64_t kIpv6AddressBit      = (1ull << 5);
+    static constexpr uint64_t kChildTableBit       = (1ull << 6);
+    static constexpr uint64_t kEui64Bit            = (1ull << 7);
+    static constexpr uint64_t kTlvTypeBit          = (1ull << 8);
+    static constexpr uint64_t kMacCountersBit      = (1ull << 9);
+    static constexpr uint64_t kChildIpv6AddressBit = (1ull << 10);
 };
 
 } // namespace commissioner

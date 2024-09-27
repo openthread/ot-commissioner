@@ -232,6 +232,14 @@ private:
     static Error     DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload);
     static ByteArray GetDiagTypeTlvList(uint64_t aDiagTlvFlags);
     static Error     DecodeIpv6AddressList(Ipv6AddressList &aIpv6AddressList, const ByteArray &aBuf);
+    static Error     DecodeChildIpv6AddressList(ChildIpv6AddressList &aChildIpv6AddressList, const ByteArray &aBuf);
+    static Error     DecodeModeData(ModeData &aModeData, const ByteArray &aBuf);
+    static Error     DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf);
+    static Error     DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf);
+    static Error     DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf);
+    static Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
+    static void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
+    static ByteArray ExtractRouterIds(const ByteArray &aMask);
 
     void SendPetition(PetitionHandler aHandler);
 
