@@ -267,7 +267,7 @@ public:
      * @param[in] aDiagAnsMsg   Parsed DiagTlvs data.
      *
      */
-    virtual void OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg)
+    virtual void OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagData &aDiagAnsMsg)
     {
         (void)aDestAddress;
         (void)aDiagAnsMsg;

@@ -83,14 +83,8 @@ std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
 // Diagnostic feature in TMF
-std::string NetDiagTlvsToJson(const NetDiagTlvs &aNetDiagTlvs);
-std::string LeaderDataToJson(const LeaderData &aLeaderData);
-std::string RouteDataEntryToJson(const RouteDataEntry &aRouteDataEntry);
-std::string Route64ToJson(const Route64 &aRoute64);
-std::string ModeToJson(const Mode &aMode);
+std::string NetDiagTlvsToJson(const NetDiagData &aNetDiagData);
 std::string Ipv6AddressToJson(const Ipv6AddressList &aIpv6Address);
-std::string ChildEntryToJson(const ChildEntry &aChildEntry);
-std::string ChildTableToJson(const ChildTable &aChildTable);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);

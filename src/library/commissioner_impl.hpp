@@ -229,8 +229,9 @@ private:
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
 
-    static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
-    static ByteArray GetDiagTlvs(uint64_t aDiagTlvFlags);
+    static Error     DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload);
+    static ByteArray GetDiagTypeTlvList(uint64_t aDiagTlvFlags);
+    static Error     DecodeIpv6AddressList(Ipv6AddressList &aIpv6AddressList, const ByteArray &aBuf);
 
     void SendPetition(PetitionHandler aHandler);
 
@@ -300,7 +301,7 @@ private:
     coap::Resource mResourceEnergyReport;
 
     coap::Resource mResourceDiagAns;
-    NetDiagTlvs    mDiagAnsTlvs;
+    NetDiagData    mDiagAnsTlvs;
 };
 
 /*

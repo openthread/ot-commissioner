@@ -100,7 +100,7 @@ void CommissionerApp::OnDatasetChanged()
 {
 }
 
-void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg)
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagData &aDiagAnsMsg)
 {
     UNUSED(aDestAddress);
     UNUSED(aDiagAnsMsg);
