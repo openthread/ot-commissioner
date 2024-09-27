@@ -45,7 +45,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
-#include "commissioner/network_diagnostic_tlvs.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
@@ -688,17 +688,16 @@ void CommissionerImpl::CommandDiagReset(ErrorHandler aHandler, const std::string
     }
 #endif
 
+    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
     if (aAddr.empty())
     {
-        LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
         mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
-        LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
-
-        ExitNow();
     }
-    SuccessOrExit(error = dstAddr.Set(aAddr));
-    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
     LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
 
 exit:

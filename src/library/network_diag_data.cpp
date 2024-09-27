@@ -26,7 +26,7 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "commissioner/network_diagnostic_tlvs.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -64,9 +64,9 @@ exit:
 
 void RouteDataEntry::Decode(RouteDataEntry &aRouteDataEntry, uint8_t aBuf)
 {
-    aRouteDataEntry.mOutgoingLinkQuality  = (aBuf >> 6) & 0x03;
-    aRouteDataEntry.mIncommingLinkQuality = (aBuf >> 4) & 0x03;
-    aRouteDataEntry.mRouteCost            = aBuf & 0x0F;
+    aRouteDataEntry.mOutgoingLinkQuality = (aBuf >> 6) & 0x03;
+    aRouteDataEntry.mIncomingLinkQuality = (aBuf >> 4) & 0x03;
+    aRouteDataEntry.mRouteCost           = aBuf & 0x0F;
 }
 
 Error Route64::Decode(Route64 &aRoute64, const ByteArray &aBuf)
@@ -109,10 +109,20 @@ std::string Route64::ToString() const
     {
         ret += "router_id: " + std::to_string(entry.mRouterId) + "\n";
         ret += "outgoing_link_quality: " + std::to_string(entry.mOutgoingLinkQuality) + "\n";
-        ret += "incomming_link_quality: " + std::to_string(entry.mIncommingLinkQuality) + "\n";
+        ret += "incomming_link_quality: " + std::to_string(entry.mIncomingLinkQuality) + "\n";
         ret += "route_cost: " + std::to_string(entry.mRouteCost) + "\n";
     }
     return ret;
+}
+
+size_t Route64::GetRouteDataSize() const
+{
+    return mRouteData.size();
+}
+
+RouteDataEntry Route64::GetRouteData(size_t aIndex) const
+{
+    return mRouteData[aIndex];
 }
 
 std::string LeaderData::ToString() const
@@ -209,6 +219,39 @@ std::string ChildTable::ToString() const
     return ret;
 }
 
+size_t ChildTable::GetSize() const
+{
+    return mChildEntries.size();
+}
+
+ChildEntry ChildTable::GetChildEntry(size_t aIndex) const
+{
+    return mChildEntries[aIndex];
+}
+
+Error Ipv6Address::Decode(Ipv6Address &aIpv6Address, const ByteArray &aBuf)
+{
+    Error error;
+    VerifyOrExit(aBuf.size() == IPV6_ADDRESS_BYTES, error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
+    aIpv6Address.mAddress = {aBuf.begin(), aBuf.end()};
+exit:
+    return error;
+}
+
+std::string Ipv6Address::ToString() const
+{
+    std::string ret;
+    for (size_t i = 0; i < IPV6_ADDRESS_BYTES; i++)
+    {
+        if (i % 2 == 0 && i != 0 && i != IPV6_ADDRESS_BYTES - 1)
+        {
+            ret += ":";
+        }
+        ret += std::to_string(mAddress[i]);
+    }
+    return ret;
+}
+
 Error Ipv6AddressList::Decode(Ipv6AddressList &aIpv6AddressList, const ByteArray &aBuf)
 {
     Error  error;
@@ -217,7 +260,10 @@ Error Ipv6AddressList::Decode(Ipv6AddressList &aIpv6AddressList, const ByteArray
     while (offset < length)
     {
         VerifyOrExit(offset + IPV6_ADDRESS_BYTES <= length, error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
-        aIpv6AddressList.mIpv6Addresses.emplace_back(aBuf.begin() + offset, aBuf.begin() + offset + IPV6_ADDRESS_BYTES);
+        Ipv6Address ipv6Address;
+        SuccessOrExit(error = Ipv6Address::Decode(ipv6Address,
+                                                  {aBuf.begin() + offset, aBuf.begin() + offset + IPV6_ADDRESS_BYTES}));
+        aIpv6AddressList.mIpv6Addresses.emplace_back(ipv6Address);
         offset += IPV6_ADDRESS_BYTES;
     }
 exit:
@@ -229,9 +275,19 @@ std::string Ipv6AddressList::ToString() const
     std::string ret;
     for (const auto &address : mIpv6Addresses)
     {
-        ret += utils::Hex(address) + "\n";
+        ret += address.ToString() + "\n";
     }
     return ret;
+}
+
+size_t Ipv6AddressList::GetSize() const
+{
+    return mIpv6Addresses.size();
+}
+
+Ipv6Address Ipv6AddressList::GetIpv6Address(size_t aIndex) const
+{
+    return mIpv6Addresses[aIndex];
 }
 
 Error ChildIpv6AddressList::Decode(ChildIpv6AddressList &aChildIpv6AddressList, const ByteArray &aBuf)

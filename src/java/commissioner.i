@@ -189,5 +189,6 @@ namespace commissioner {
 %include <commissioner/defines.hpp>
 %include <commissioner/error.hpp>
 %include <commissioner/network_data.hpp>
+%include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
 %include <commissioner/commissioner.hpp>
