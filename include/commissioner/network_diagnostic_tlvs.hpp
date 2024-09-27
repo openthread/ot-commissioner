@@ -216,7 +216,7 @@ struct Route64
     /**
      * Extracts router IDs from a router ID mask.
      */
-    static ByteArray ExtractRouterIds(const ByteArray& aMask);
+    static ByteArray ExtractRouterIds(const ByteArray &aMask);
 
     /**
      * Returns a string representation of the Route64.
@@ -226,7 +226,7 @@ struct Route64
 
 struct ChildIpv6AddressList
 {
-    uint16_t mRloc16 = 0;
+    uint16_t        mRloc16 = 0;
     Ipv6AddressList mIpv6AddressList;
 
     /**
@@ -242,30 +242,31 @@ struct ChildIpv6AddressList
 
 struct Child
 {
-    bool       mRxOnWhenIdleFlag              = false;
-    bool       mFullThreadDeviceFlag          = false;
-    bool       mFullNetworkDataFlag           = false;
-    bool       mCslFlag                       = false;
-    bool       mErrorRateFlag                 = false;
-    uint16_t   mRloc16                        = 0;
-    ByteArray  mExtMacAddress;
-    uint16_t   mThreadVersion                 = 0;
-    uint32_t   mTimeout                       = 0;
-    uint32_t   mAge                           = 0;
-    uint32_t   mConnectionTime                = 0;
-    uint16_t   mSupervisionInterval           = 0;
-    uint8_t    mLinkMargin                    = 0;
-    uint8_t    mAverageRssi                   = 0;
-    uint8_t    mLastRssi                      = 0;
-    uint16_t   mFrameErrorRate                = 0;
-    uint16_t   mMessageErrorRate              = 0;
-    uint16_t   mQueuedMessageCount            = 0;
-    uint16_t   mCslPeriod                     = 0;
-    uint32_t   mCslTimeout                    = 0;
-    uint8_t    mCslChannel                    = 0;
+    bool      mRxOnWhenIdleFlag     = false;
+    bool      mFullThreadDeviceFlag = false;
+    bool      mFullNetworkDataFlag  = false;
+    bool      mCslFlag              = false;
+    bool      mErrorRateFlag        = false;
+    uint16_t  mRloc16               = 0;
+    ByteArray mExtMacAddress;
+    uint16_t  mThreadVersion       = 0;
+    uint32_t  mTimeout             = 0;
+    uint32_t  mAge                 = 0;
+    uint32_t  mConnectionTime      = 0;
+    uint16_t  mSupervisionInterval = 0;
+    uint8_t   mLinkMargin          = 0;
+    uint8_t   mAverageRssi         = 0;
+    uint8_t   mLastRssi            = 0;
+    uint16_t  mFrameErrorRate      = 0;
+    uint16_t  mMessageErrorRate    = 0;
+    uint16_t  mQueuedMessageCount  = 0;
+    uint16_t  mCslPeriod           = 0;
+    uint32_t  mCslTimeout          = 0;
+    uint8_t   mCslChannel          = 0;
 };
 
-struct MacCounters {
+struct MacCounters
+{
     uint32_t mIfInUnknownProtos  = 0;
     uint32_t mIfInErrors         = 0;
     uint32_t mIfOutErrors        = 0;
@@ -327,7 +328,8 @@ struct NetDiagTlvs
         (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildTable));
     static constexpr uint64_t kEui64Bit   = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagEui64));
     static constexpr uint64_t kTlvTypeBit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagTypeList));
-    static constexpr uint64_t kMacCountersBit = (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMacCounters));
+    static constexpr uint64_t kMacCountersBit =
+        (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagMacCounters));
     static constexpr uint64_t kChildIpv6AddressBit =
         (1ull << static_cast<uint8_t>(NetworkDiagTlvType::kNetworkDiagChildIpv6Address));
 };
