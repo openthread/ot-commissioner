@@ -1401,12 +1401,16 @@ Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aD
 
 void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg)
 {
-    mNetDiagTlvs = aDiagAnsMsg;
+    Address addr;
+
+    SuccessOrDie(addr.Set(aDestAddress));
+
+    mDiagAnsDataMap[addr] = aDiagAnsMsg;
 }
 
-NetDiagTlvs CommissionerApp::GetNetDiagTlvs() const
+DiagAnsDataMap CommissionerApp::GetNetDiagTlvs() const
 {
-    return mNetDiagTlvs;
+    return mDiagAnsDataMap;
 }
 
 } // namespace commissioner

@@ -64,6 +64,8 @@ struct EnergyReport
 };
 using EnergyReportMap = std::map<Address, EnergyReport>;
 
+using DiagAnsDataMap = std::map<Address, NetDiagTlvs>;
+
 /**
  * @brief Enumeration of Joiner Type for steering.
  *
@@ -280,7 +282,7 @@ public:
     MOCKABLE const EnergyReportMap &GetAllEnergyReports() const;
 
     const std::string &GetDomainName() const;
-    NetDiagTlvs        GetNetDiagTlvs() const;
+    DiagAnsDataMap     GetNetDiagTlvs() const;
 
 protected:
     CommissionerApp() = default;
@@ -331,7 +333,7 @@ private:
     PendingOperationalDataset       mPendingDataset;
     CommissionerDataset             mCommDataset;
     BbrDataset                      mBbrDataset;
-    NetDiagTlvs                     mNetDiagTlvs;
+    DiagAnsDataMap                  mDiagAnsDataMap;
 };
 
 Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);

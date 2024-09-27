@@ -269,6 +269,7 @@ public:
      */
     virtual void OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg)
     {
+        (void)aDestAddress;
         (void)aDiagAnsMsg;
     }
 

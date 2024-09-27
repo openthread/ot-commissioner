@@ -2612,9 +2612,13 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = NetDiagTlvsToJson(tlvs);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() + "\nContent: " + NetDiagTlvsToJson(it->second);
+            }
         }
     }
 
@@ -2625,9 +2629,13 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = NetDiagTlvsToJson(tlvs);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() + "\nContent: " + NetDiagTlvsToJson(it->second);
+            }
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "mode"))
@@ -2637,9 +2645,13 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = ModeToJson(tlvs.mMode);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() + "\nContent: " + ModeToJson(it->second.mMode);
+            }
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "route64"))
@@ -2649,9 +2661,13 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = Route64ToJson(tlvs.mRoute64);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() + "\nContent: " + Route64ToJson(it->second.mRoute64);
+            }
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "leaderdata"))
@@ -2661,9 +2677,14 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = LeaderDataToJson(tlvs.mLeaderData);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() +
+                        "\nContent: " + LeaderDataToJson(it->second.mLeaderData);
+            }
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "eui64"))
@@ -2673,9 +2694,13 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = NetDiagTlvsToJson(tlvs);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() + "\nContent: " + NetDiagTlvsToJson(it->second);
+            }
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "ipaddr"))
@@ -2685,8 +2710,14 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs  = aCommissioner->GetNetDiagTlvs();
-            value = Ipv6AddressToJson(tlvs.mIpv6Addresses);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() +
+                        "\nContent: " + Ipv6AddressToJson(it->second.mIpv6Addresses);
+            }
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "childtable"))
@@ -2696,9 +2727,14 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            tlvs               = aCommissioner->GetNetDiagTlvs();
-            tlvs.mPresentFlags = flags;
-            value              = ChildTableToJson(tlvs.mChildTable);
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (std::map<Address, NetDiagTlvs>::iterator it = diagAnsDataMaps.begin(); it != diagAnsDataMaps.end();
+                 ++it)
+            {
+                value = "Peer Address: " + (it->first).ToString() +
+                        "\nContent: " + ChildTableToJson(it->second.mChildTable);
+            }
         }
     }
 exit:
