@@ -656,11 +656,12 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
     if (aAddr.empty())
     {
         mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
-        LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
-        ExitNow();
     }
-    SuccessOrExit(error = dstAddr.Set(aAddr));
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
     LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
 
 exit:
@@ -681,7 +682,7 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
     SuccessOrExit(error = DecodeNetDiagTlvs(mDiagAnsTlvs, aRequest.GetPayload()));
     LOG_INFO(LOG_REGION_MESHDIAG, "accepted DIAG_GET.ans data {}", utils::Hex(aRequest.GetPayload()));
 
-    mCommissionerHandler.OnDiagGetAnswerMessage(mDiagAnsTlvs);
+    mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
 
 exit:
     if (error != ErrorCode::kNone)

@@ -263,10 +263,14 @@ public:
     /**
      * This function notifies the receiving the queried Diagnostic TLVs by DIAG_GET.ans command.
      *
+     * @param[in] aDestAddress  The destination address of the DIAG_GET.ans command.
      * @param[in] aDiagAnsMsg   Parsed DiagTlvs data.
      *
      */
-    virtual void OnDiagGetAnswerMessage(NetDiagTlvs &aDiagAnsMsg) { (void)aDiagAnsMsg; }
+    virtual void OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg)
+    {
+        (void)aDiagAnsMsg;
+    }
 
     /**
      * This function notifies that the operational dataset has been changed.

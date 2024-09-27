@@ -127,7 +127,7 @@ public:
 
     MOCKABLE void OnDatasetChanged() override;
 
-    MOCKABLE void OnDiagGetAnswerMessage(NetDiagTlvs &aDiagAnsMsg) override;
+    MOCKABLE void OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg) override;
 
     MOCKABLE Error Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
 

@@ -473,7 +473,7 @@ static void to_json(Json &aJson, const RouteDataEntry &aRouteDataEntry)
 
     SET(RouterId);
     SET(OutgoingLinkQuality);
-    SET(IncommingLinkQuality);
+    SET(IncomingLinkQuality);
     SET(RouteCost);
 
 #undef SET
@@ -534,7 +534,7 @@ static void to_json(Json &aJson, const Ipv6AddressList &aIpv6Address)
     Json ipaddrArray = Json::array();
     for (const auto &ipaddrBytes : aIpv6Address.mIpv6Addresses)
     {
-        ipaddrArray.push_back(utils::Hex(ipaddrBytes));
+        ipaddrArray.push_back(ipaddrBytes.ToString());
     }
     aJson["Ipv6 Addresses"] = ipaddrArray;
 }

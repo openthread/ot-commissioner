@@ -34,6 +34,7 @@
 #ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
 #define OT_COMM_NETWORK_DIAG_TLVS_HPP_
 
+#include <cstddef>
 #include <cstdint>
 #include <stdbool.h>
 #include <string>
@@ -139,6 +140,33 @@ struct ChildTable
      * Returns a string representation of the ChildTable.
      */
     std::string ToString() const;
+
+    /**
+     * Returns the size of the ChildTable.
+     */
+    size_t GetSize() const;
+
+    /**
+     * Returns the ChildEntry at the given index.
+     */
+    ChildEntry GetChildEntry(size_t aIndex) const;
+};
+
+/**
+ * @brief IPv6 Address TLV
+ */
+struct Ipv6Address
+{
+    ByteArray mAddress;
+    /**
+     * Decodes Ipv6Address from a ByteArray
+     */
+    static Error Decode(Ipv6Address &aIpv6Address, const ByteArray &aBuf);
+
+    /**
+     * Returns a string representation of the Ipv6Address.
+     */
+    std::string ToString() const;
 };
 
 /**
@@ -146,7 +174,18 @@ struct ChildTable
  */
 struct Ipv6AddressList
 {
-    std::vector<ByteArray> mIpv6Addresses;
+    std::vector<Ipv6Address> mIpv6Addresses;
+
+    /**
+     * Returns the size of the Ipv6AddressList.
+     */
+    size_t GetSize() const;
+
+    /**
+     * Returns the Ipv6Address at the given index.
+     */
+    Ipv6Address GetIpv6Address(size_t aIndex) const;
+
     /**
      * Decodes Ipv6Address from a ByteArray
      */
@@ -185,10 +224,10 @@ struct LeaderData
  */
 struct RouteDataEntry
 {
-    uint8_t mRouterId             = 0;
-    uint8_t mOutgoingLinkQuality  = 0;
-    uint8_t mIncommingLinkQuality = 0;
-    uint8_t mRouteCost            = 0;
+    uint8_t mRouterId            = 0;
+    uint8_t mOutgoingLinkQuality = 0;
+    uint8_t mIncomingLinkQuality = 0;
+    uint8_t mRouteCost           = 0;
     /**
      * Decodes RouteDataEntry from a ByteArray
      */
@@ -196,18 +235,13 @@ struct RouteDataEntry
 };
 
 /**
- * @brief Route Data in Route64 TLV
- */
-using RouteData = std::vector<RouteDataEntry>;
-
-/**
  * @brief Route64 TLV
  */
 struct Route64
 {
-    uint8_t   mIdSequence = 0;
-    ByteArray mMask;
-    RouteData mRouteData;
+    uint8_t                     mIdSequence = 0;
+    ByteArray                   mMask;
+    std::vector<RouteDataEntry> mRouteData;
     /**
      * Decodes Route64 from a ByteArray
      */
@@ -222,6 +256,16 @@ struct Route64
      * Returns a string representation of the Route64.
      */
     std::string ToString() const;
+
+    /**
+     * Returns the size of the RouteData.
+     */
+    size_t GetRouteDataSize() const;
+
+    /**
+     * Returns the RouteDataEntry at the given index.
+     */
+    RouteDataEntry GetRouteData(size_t aIndex) const;
 };
 
 struct ChildIpv6AddressList
