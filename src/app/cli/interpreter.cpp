@@ -2597,7 +2597,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
     }
 
-    if (CaseInsensitiveEqual(aExpr[2], "macaccounters"))
+    if (CaseInsensitiveEqual(aExpr[2], "maccounters"))
     {
         flags = NetDiagTlvs::kMacCountersBit;
         if (operationType == DIAG_RST_NTF_TYPE)

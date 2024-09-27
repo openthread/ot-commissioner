@@ -688,15 +688,18 @@ void CommissionerImpl::CommandDiagReset(ErrorHandler aHandler, const std::string
     }
 #endif
 
-    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
     if (aAddr.empty())
     {
+        LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
         mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+        LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
+
         ExitNow();
     }
     SuccessOrExit(error = dstAddr.Set(aAddr));
+    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
     mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
-    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
+    LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
 
 exit:
     if (error != ErrorCode::kNone)
