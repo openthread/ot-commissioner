@@ -1408,7 +1408,7 @@ void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aDestAddress, co
     mDiagAnsDataMap[addr] = aDiagAnsMsg;
 }
 
-DiagAnsDataMap CommissionerApp::GetNetDiagTlvs() const
+const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
 {
     return mDiagAnsDataMap;
 }

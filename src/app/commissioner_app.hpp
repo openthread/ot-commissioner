@@ -281,8 +281,8 @@ public:
     MOCKABLE const EnergyReport    *GetEnergyReport(const Address &aDstAddr) const;
     MOCKABLE const EnergyReportMap &GetAllEnergyReports() const;
 
-    const std::string &GetDomainName() const;
-    DiagAnsDataMap     GetNetDiagTlvs() const;
+    const std::string    &GetDomainName() const;
+    const DiagAnsDataMap &GetNetDiagTlvs() const;
 
 protected:
     CommissionerApp() = default;
