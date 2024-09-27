@@ -50,6 +50,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "common/address.hpp"
 
 namespace ot {
@@ -125,6 +126,8 @@ public:
                                  const ByteArray   &aEnergyList) override;
 
     MOCKABLE void OnDatasetChanged() override;
+
+    MOCKABLE void OnDiagGetAnswerMessage(NetDiagTlvs aDiagAnsMsg) override;
 
     MOCKABLE Error Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
 
@@ -229,6 +232,9 @@ public:
     // Always send MGMT_PENDING_SET.req.
     MOCKABLE Error SetPendingDataset(const PendingOperationalDataset &aDataset);
 
+    // Network Diagnostic
+    MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags);
+
     /*
      * BBR Dataset APIs
      */
@@ -274,6 +280,7 @@ public:
     MOCKABLE const EnergyReportMap &GetAllEnergyReports() const;
 
     const std::string &GetDomainName() const;
+    NetDiagTlvs        GetNetDiagTlvs() const;
 
 protected:
     CommissionerApp() = default;
@@ -324,6 +331,7 @@ private:
     PendingOperationalDataset       mPendingDataset;
     CommissionerDataset             mCommDataset;
     BbrDataset                      mBbrDataset;
+    NetDiagTlvs                     mNetDiagTlvs;
 };
 
 Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);

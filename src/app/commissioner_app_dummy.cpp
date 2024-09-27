@@ -99,6 +99,8 @@ void CommissionerApp::OnDatasetChanged()
 {
 }
 
+void CommissionerApp::OnDiagAnswerMessage(NetDiagTlvs aDiagAnsMsg){UNSUED(aDiagAnsMsg)}
+
 Error CommissionerApp::Start(std::string       &aExistingCommissionerId,
                              const std::string &aBorderAgentAddr,
                              uint16_t           aBorderAgentPort)

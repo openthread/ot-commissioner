@@ -417,6 +417,176 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 #undef SET
 }
 
+// Diagnostic feature in TMF
+static void to_json(Json &aJson, const NetDiagTlvs &aNetDiagTlvs)
+{
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kExtMacAddressBit)
+    {
+        aJson["ExtMacAddress"] = utils::Hex(aNetDiagTlvs.mExtMacAddress);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kMacAddressBit)
+    {
+        aJson["Rloc16"] = utils::Hex(aNetDiagTlvs.mMacAddress);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kModeBit)
+    {
+        aJson["Mode"] = ModeToJson(aNetDiagTlvs.mMode);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kRoute64Bit)
+    {
+        aJson["Route64"] = Route64ToJson(aNetDiagTlvs.mRoute64);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kLeaderDataBit)
+    {
+        aJson["LeaderData"] = LeaderDataToJson(aNetDiagTlvs.mLeaderData);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kEui64Bit)
+    {
+        aJson["Eui64"] = utils::Hex(aNetDiagTlvs.mEui64);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kIpv6AddressBit)
+    {
+        aJson["Ipv6Addresses"] = Ipv6AddressToJson(aNetDiagTlvs.mIpv6Addresses);
+    }
+    if (aNetDiagTlvs.mPresentFlags & NetDiagTlvs::kChildTableBit)
+    {
+        aJson["ChildTable"] = ChildTableToJson(aNetDiagTlvs.mChildTable);
+    }
+}
+
+static void to_json(Json &aJson, const LeaderData &aLeaderData)
+{
+#define SET(name) aJson[#name] = aLeaderData.m##name;
+
+    SET(PartitionId);
+    SET(Weighting);
+    SET(DataVersion);
+    SET(StableDataVersion);
+    SET(RouterId);
+
+#undef SET
+}
+
+static void to_json(Json &aJson, const RouteDataEntry &aRouteDataEntry)
+{
+#define SET(name) aJson[#name] = aRouteDataEntry.m##name;
+
+    SET(RouterId);
+    SET(OutgoingLinkQuality);
+    SET(IncommingLinkQuality);
+    SET(RouteCost);
+
+#undef SET
+}
+
+static void to_json(Json &aJson, const Route64 &aRoute64)
+{
+#define SET(name) aJson[#name] = aRoute64.m##name;
+
+    SET(IdSequence);
+    SET(Mask);
+
+    Json routeDataArray = Json::array();
+    for (const auto &entry : aRoute64.mRouteData)
+    {
+        routeDataArray.push_back(RouteDataEntryToJson(entry));
+    }
+    aJson["RouteData"] = routeDataArray;
+#undef SET
+}
+
+static void to_json(Json &aJson, const struct Mode &aMode)
+{
+#define SET(name) aJson[#name] = aMode.m##name;
+
+    SET(IsRxOnWhenIdleMode);
+    SET(IsMtd);
+    SET(IsStableNetworkDataRequired);
+
+#undef SET
+}
+
+static void to_json(Json &aJson, const ChildTable &aChildTable)
+{
+    Json childrenArray = Json::array();
+    for (const auto &entry : aChildTable.mChildEntries)
+    {
+        childrenArray.push_back(ChildEntryToJson(entry));
+    }
+    aJson["ChildTable"] = childrenArray;
+}
+
+static void to_json(Json &aJson, const ChildEntry &aChildEntry)
+{
+#define SET(name) aJson[#name] = aChildEntry.m##name;
+
+    SET(Timeout);
+    SET(IncomingLinkQuality);
+    SET(ChildId);
+
+    aJson["Mode"] = ModeToJson(aChildEntry.mModeData);
+
+#undef SET
+}
+
+static void to_json(Json &aJson, const Ipv6AddressList &aIpv6Address)
+{
+    Json ipaddrArray = Json::array();
+    for (const auto &ipaddrBytes : aIpv6Address.mIpv6Addresses)
+    {
+        ipaddrArray.push_back(utils::Hex(ipaddrBytes));
+    }
+    aJson["Ipv6 Addresses"] = ipaddrArray;
+}
+
+std::string NetDiagTlvsToJson(const NetDiagTlvs &aNetDiagTlvs)
+{
+    Json json = aNetDiagTlvs;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string LeaderDataToJson(const LeaderData &aLeaderData)
+{
+    Json json = aLeaderData;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string RouteDataEntryToJson(const RouteDataEntry &aRouteDataEntry)
+{
+    Json json = aRouteDataEntry;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string Route64ToJson(const Route64 &aRoute64)
+{
+    Json json = aRoute64;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string ModeToJson(const struct Mode &aMode)
+{
+    Json json = aMode;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string Ipv6AddressToJson(const Ipv6AddressList &aIpv6Address)
+{
+    Json json = aIpv6Address;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string ChildEntryToJson(const ChildEntry &aChildEntry)
+{
+    Json json = aChildEntry;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string ChildTableToJson(const ChildTable &aChildTable)
+{
+    Json json = aChildTable;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
 static void to_json(Json &aJson, const ActiveOperationalDataset &aDataset)
 {
 #define SET_IF_PRESENT(name)                                             \

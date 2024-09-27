@@ -40,6 +40,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
 #include "event2/event.h"
@@ -192,6 +193,9 @@ public:
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
+    void  CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGetQuery(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
@@ -225,6 +229,9 @@ private:
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
 
+    static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
+    static ByteArray GetDiagTlvs(uint64_t aDiagTlvFlags);
+
     void SendPetition(PetitionHandler aHandler);
 
     // Set @p aKeepAlive to false to resign the commissioner role.
@@ -250,6 +257,8 @@ private:
     void HandleRlyRx(const coap::Request &aRlyRx);
 
     void HandleJoinerSessionTimer(Timer &aTimer);
+
+    void HandleDiagGetAnswer(const coap::Request &aRequest);
 
     bool IsActiveOrConnected() const
     {
@@ -289,6 +298,9 @@ private:
     coap::Resource mResourceDatasetChanged;
     coap::Resource mResourcePanIdConflict;
     coap::Resource mResourceEnergyReport;
+
+    coap::Resource mResourceDiagAns;
+    NetDiagTlvs    mDiagAnsTlvs;
 };
 
 /*
