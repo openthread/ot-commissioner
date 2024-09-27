@@ -100,6 +100,12 @@ void CommissionerApp::OnDatasetChanged()
 {
 }
 
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagTlvs &aDiagAnsMsg)
+{
+    UNUSED(aDestAddress);
+    UNUSED(aDiagAnsMsg);
+}
+
 Error CommissionerApp::Start(std::string       &aExistingCommissionerId,
                              const std::string &aBorderAgentAddr,
                              uint16_t           aBorderAgentPort)
