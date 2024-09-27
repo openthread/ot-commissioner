@@ -46,6 +46,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
@@ -327,6 +328,19 @@ Error CommissionerSafe::GetRawActiveDataset(ByteArray &aRawDataset, uint16_t aDa
     };
 
     GetRawActiveDataset(wait, aDatasetFlags);
+    return pro.get_future().get();
+}
+
+void CommissionerSafe::CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    PushAsyncRequest([=]() { mImpl->CommandDiagReset(aHandler, aAddr, aDiagTlvFlags); });
+}
+
+Error CommissionerSafe::CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro](Error error) { pro.set_value(error); };
+    CommandDiagReset(wait, aAddr, aDiagTlvFlags);
     return pro.get_future().get();
 }
 

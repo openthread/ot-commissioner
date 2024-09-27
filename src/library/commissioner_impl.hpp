@@ -40,6 +40,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diagnostic_tlvs.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
 #include "event2/event.h"
@@ -144,6 +145,9 @@ public:
         return ERROR_UNIMPLEMENTED("");
     }
 
+    void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagReset(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+
     void  AnnounceBegin(ErrorHandler       aHandler,
                         uint32_t           aChannelMask,
                         uint8_t            aCount,
@@ -214,6 +218,9 @@ private:
     static Error EncodeActiveOperationalDataset(coap::Request &aRequest, const ActiveOperationalDataset &aDataset);
     static Error EncodePendingOperationalDataset(coap::Request &aRequest, const PendingOperationalDataset &aDataset);
     static Error EncodeChannelMask(ByteArray &aBuf, const ChannelMask &aChannelMask);
+
+    static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
+    static ByteArray GetDiagTlvs(uint64_t aDiagTlvFlags);
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     static Error     DecodeBbrDataset(BbrDataset &aDataset, const coap::Response &aResponse);
