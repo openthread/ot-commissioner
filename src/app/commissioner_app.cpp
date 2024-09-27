@@ -1399,11 +1399,11 @@ Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aD
     return error;
 }
 
-void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aDestAddress, const NetDiagData &aDiagAnsMsg)
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
 {
     Address addr;
 
-    SuccessOrDie(addr.Set(aDestAddress));
+    SuccessOrDie(addr.Set(aPeerAddr));
 
     mDiagAnsDataMap[addr] = aDiagAnsMsg;
 }
