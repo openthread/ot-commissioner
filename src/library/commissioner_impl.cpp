@@ -1910,45 +1910,9 @@ ByteArray CommissionerImpl::GetDiagTlvs(uint64_t aDiagTlvFlags)
 {
     ByteArray tlvTypes;
 
-    if (aDiagTlvFlags & NetDiagTlvs::kExtMacAddressBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kMacAddressBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kModeBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kRoute64Bit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kLeaderDataBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kIpv6AddressBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
-    }
     if (aDiagTlvFlags & NetDiagTlvs::kMacCountersBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacCounters);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kChildTableBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kEui64Bit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
-    }
-    if (aDiagTlvFlags & NetDiagTlvs::kChildIpv6AddressBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
     }
 
     return tlvTypes;
@@ -1963,76 +1927,11 @@ Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteA
     dataset.mPresentFlags = 0;
     SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
 
-    if (auto extMacAddress = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
-    {
-        const ByteArray &value = extMacAddress->GetValue();
-        dataset.mExtMacAddress = value;
-        dataset.mPresentFlags |= NetDiagTlvs::kExtMacAddressBit;
-    }
-
-    if (auto macAddress = tlvSet[tlv::Type::kNetworkDiagMacAddress])
-    {
-        uint16_t value;
-        value               = utils::Decode<uint16_t>(macAddress->GetValue());
-        dataset.mMacAddress = value;
-        dataset.mPresentFlags |= NetDiagTlvs::kMacAddressBit;
-    }
-
-    if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
-    {
-        uint8_t value;
-        value = utils::Decode<uint8_t>(mode->GetValue());
-        Mode::Decode(dataset.mMode, value);
-        dataset.mPresentFlags |= NetDiagTlvs::kModeBit;
-    }
-
-    if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
-    {
-        const ByteArray &value = route64->GetValue();
-        SuccessOrExit(error = Route64::Decode(dataset.mRoute64, value));
-        dataset.mPresentFlags |= NetDiagTlvs::kRoute64Bit;
-    }
-
-    if (auto leaderData = tlvSet[tlv::Type::kNetworkDiagLeaderData])
-    {
-        const ByteArray &value = leaderData->GetValue();
-        SuccessOrExit(error = LeaderData::Decode(dataset.mLeaderData, value));
-        dataset.mPresentFlags |= NetDiagTlvs::kLeaderDataBit;
-    }
-
-    if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
-    {
-        const ByteArray &value = ipv6Addresses->GetValue();
-        SuccessOrExit(Ipv6AddressList::Decode(dataset.mIpv6Addresses, value));
-        dataset.mPresentFlags |= NetDiagTlvs::kIpv6AddressBit;
-    }
-
     if (auto macCounters = tlvSet[tlv::Type::kNetworkDiagMacCounters])
     {
         const ByteArray &value = macCounters->GetValue();
         SuccessOrExit(error = MacCounters::Decode(dataset.mMacCounters, value));
         dataset.mPresentFlags |= NetDiagTlvs::kMacCountersBit;
-    }
-
-    if (auto childTable = tlvSet[tlv::Type::kNetworkDiagChildTable])
-    {
-        const ByteArray &value = childTable->GetValue();
-        SuccessOrExit(error = ChildTable::Decode(dataset.mChildTable, value));
-        dataset.mPresentFlags |= NetDiagTlvs::kChildTableBit;
-    }
-
-    if (auto eui64 = tlvSet[tlv::Type::kNetworkDiagEui64])
-    {
-        const ByteArray &value = eui64->GetValue();
-        dataset.mEui64         = value;
-        dataset.mPresentFlags |= NetDiagTlvs::kEui64Bit;
-    }
-
-    if (auto childIpv6Address = tlvSet[tlv::Type::kNetworkDiagChildIpv6Address])
-    {
-        const ByteArray &value = childIpv6Address->GetValue();
-        SuccessOrExit(error = ChildIpv6AddressList::Decode(dataset.mChildIpv6AddressList, value));
-        dataset.mPresentFlags |= NetDiagTlvs::kChildIpv6AddressBit;
     }
 
     aNetDiagTlvs = dataset;
