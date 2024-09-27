@@ -50,7 +50,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
-#include "commissioner/network_diagnostic_tlvs.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 
 namespace ot {
