@@ -656,6 +656,7 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
     if (aAddr.empty())
     {
         mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+        LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
         ExitNow();
     }
     SuccessOrExit(error = dstAddr.Set(aAddr));
@@ -673,6 +674,7 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
 {
     Error       error;
     std::string peerAddr = aRequest.GetEndpoint()->GetPeerAddr().ToString();
+
     LOG_INFO(LOG_REGION_MESHDIAG, "received DIAG_GET.ans from {}", peerAddr);
     mProxyClient.SendEmptyChanged(aRequest);
 
