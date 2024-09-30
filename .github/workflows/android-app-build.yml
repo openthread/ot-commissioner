@@ -50,7 +50,7 @@ jobs:
       - name: Build
         run: |
           cd android
-          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "24.*") ./build-commissioner-libs.sh
+          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "26.*") ./build-commissioner-libs.sh
           cd openthread_commissioner
           ./gradlew build
       - name: Tests
