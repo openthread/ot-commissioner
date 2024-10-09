@@ -146,6 +146,9 @@ public:
                          const std::string &aDstNetworkName) override;
     Error CommandMigrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork) override;
 
+    void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+
     void  RegisterMulticastListener(Handler<uint8_t>                aHandler,
                                     const std::vector<std::string> &aMulticastAddrList,
                                     uint32_t                        aTimeout) override;

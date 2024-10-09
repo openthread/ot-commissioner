@@ -50,6 +50,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 
 namespace ot {
@@ -228,6 +229,9 @@ public:
 
     // Always send MGMT_PENDING_SET.req.
     MOCKABLE Error SetPendingDataset(const PendingOperationalDataset &aDataset);
+
+    // Network Diagnostic
+    MOCKABLE Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags);
 
     /*
      * BBR Dataset APIs

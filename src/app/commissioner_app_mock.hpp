@@ -137,6 +137,7 @@ public:
     MOCK_METHOD(Error, EnergyScan, (uint32_t, uint8_t, uint16_t, uint16_t, const std::string &));
     MOCK_METHOD(const EnergyReport *, GetEnergyReport, (const Address &), (const));
     MOCK_METHOD(const EnergyReportMap &, GetAllEnergyReports, (), (const));
+    MOCK_METHOD(Error, CommandDiagReset, (const std::string &, uint64_t));
 };
 
 class CommissionerAppStaticExpecter

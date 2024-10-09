@@ -167,6 +167,9 @@ namespace commissioner {
                                                     const std::vector<std::string> &aMulticastAddrList,
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
+    %ignore Commissioner::CommandDiagReset(ErrorHandler         aHandler,
+                                           const std::string   &aAddr,
+                                           uint64_t             aDiagTlvFlags);
 
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
@@ -186,5 +189,6 @@ namespace commissioner {
 %include <commissioner/defines.hpp>
 %include <commissioner/error.hpp>
 %include <commissioner/network_data.hpp>
+%include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
 %include <commissioner/commissioner.hpp>
