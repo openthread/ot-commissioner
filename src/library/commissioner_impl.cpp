@@ -45,6 +45,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
@@ -652,6 +653,52 @@ void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOpe
     mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_PENDING_SET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
+void CommissionerImpl::CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    Error         error;
+    Address       dstAddr;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+    exit:
+        aHandler(error);
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagRst));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTlvs(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
+    if (aAddr.empty())
+    {
+        mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+    }
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
+    LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
 
 exit:
     if (error != ErrorCode::kNone)
@@ -1856,6 +1903,40 @@ Error CommissionerImpl::DecodeCommissionerDataset(CommissionerDataset &aDataset,
     }
 
     aDataset = dataset;
+
+exit:
+    return error;
+}
+
+ByteArray CommissionerImpl::GetDiagTlvs(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    if (aDiagTlvFlags & NetDiagTlvs::kMacCountersBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacCounters);
+    }
+
+    return tlvTypes;
+}
+
+Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload)
+{
+    Error       error;
+    tlv::TlvSet tlvSet;
+    NetDiagTlvs dataset;
+    // Clear all data fields
+    dataset.mPresentFlags = 0;
+    SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
+
+    if (auto macCounters = tlvSet[tlv::Type::kNetworkDiagMacCounters])
+    {
+        const ByteArray &value = macCounters->GetValue();
+        SuccessOrExit(error = MacCounters::Decode(dataset.mMacCounters, value));
+        dataset.mPresentFlags |= NetDiagTlvs::kMacCountersBit;
+    }
+
+    aNetDiagTlvs = dataset;
 
 exit:
     return error;

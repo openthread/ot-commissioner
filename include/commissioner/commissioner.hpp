@@ -1147,6 +1147,36 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Asynchronously reset dedicated diagnostic TLVs from a Thread device.
+     *
+     * This method sends a DIAG_RST.ntf message to the specified Thread device,
+     * resetting the diagnostic TLVs (MacCounters & MleCounters) indicated by `aDiagTlvFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     *
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
+     * @param[in]      aAddr           Mesh local address of the target Thread device.
+     * @param[in]      aDiagTlvFlags   Diagnostic TLVs flags indicate which TLVs are wanted.
+     *
+     */
+    virtual void CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
+
+    /**
+     * @brief Synchronously reset dedicated diagnostic TLVs from a Thread device.
+     *
+     * This method sends a DIAG_RST.nrf message to the specified Thread device,
+     * resetting the diagnostic TLVs (MacCounters & MleCounters) indicated by `aDiagTlvFlags`.
+     * The method blocks until a response is received, an error occurs.
+     *
+     * @param[in]  aAddr            Mesh local address of the target Thread device.
+     * @param[in]  aDiagTlvFlags    Diagnostic TLVs flags indicate which TLVs are wanted.
+     *
+     * @return Error::kNone, succeed; Otherwise, failed.
+     *
+     */
+    virtual Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
 };
 
 } // namespace commissioner

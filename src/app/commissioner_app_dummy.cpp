@@ -518,6 +518,13 @@ const EnergyReportMap &CommissionerApp::GetAllEnergyReports() const
     return sEnergyReportMap;
 }
 
+Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    UNUSED(aAddr);
+    UNUSED(aDiagTlvFlags);
+    return Error{};
+}
+
 } // namespace commissioner
 
 } // namespace ot

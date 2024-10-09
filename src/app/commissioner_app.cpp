@@ -1389,6 +1389,15 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
     return nullptr;
 }
 
+// Network Diagnostic
+Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    Error error;
+
+    error = mCommissioner->CommandDiagReset(aAddr, aDiagTlvFlags);
+    return error;
+}
+
 } // namespace commissioner
 
 } // namespace ot
