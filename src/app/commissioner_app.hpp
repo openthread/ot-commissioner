@@ -229,6 +229,10 @@ public:
     // Always send MGMT_PENDING_SET.req.
     MOCKABLE Error SetPendingDataset(const PendingOperationalDataset &aDataset);
 
+    // Diagnostic feature in TMF
+    // Always send DIAG_GET.req.
+    MOCKABLE Error CommandDiagGetRequest(NetDiagTlvs &aTlvs, const std::string &aAddr, uint64_t aDiagTlvFlags);
+
     /*
      * BBR Dataset APIs
      */
