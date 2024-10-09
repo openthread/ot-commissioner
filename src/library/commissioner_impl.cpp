@@ -32,6 +32,7 @@
  */
 
 #include "library/commissioner_impl.hpp"
+#include <sys/types.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -45,6 +46,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
@@ -657,6 +659,61 @@ exit:
     if (error != ErrorCode::kNone)
     {
         aHandler(error);
+    }
+}
+
+void CommissionerImpl::CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                             const std::string   &aAddr,
+                                             uint64_t             aDiagTlvFlags)
+{
+    Error         error;
+    Address       dstAddr;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+
+    auto onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error       error;
+        NetDiagTlvs netDiagTlvs;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+        LOG_INFO(LOG_REGION_MESHDIAG, "Accepted DIAG_GET.req data {}", utils::Hex(aResponse->GetPayload()));
+
+        SuccessOrExit(error = DecodeNetDiagTlvs(netDiagTlvs, aResponse->GetPayload()));
+        aHandler(&netDiagTlvs, error);
+    exit:
+        if (error != ErrorCode::kNone)
+        {
+            aHandler(nullptr, error);
+        }
+    };
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGet));
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetDiagTlvs(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sending DIAG_GET.req command to {}", aAddr);
+    if (aAddr.empty())
+    {
+        mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+    }
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.req");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(nullptr, error);
     }
 }
 
@@ -1459,6 +1516,120 @@ ByteArray CommissionerImpl::GetPendingOperationalDatasetTlvs(uint16_t aDatasetFl
     }
 
     return tlvTypes;
+}
+
+ByteArray CommissionerImpl::GetDiagTlvs(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    if (aDiagTlvFlags & NetDiagTlvs::kExtMacAddressBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kMacAddressBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kModeBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kRoute64Bit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kLeaderDataBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kIpv6AddressBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kChildTableBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
+    }
+    if (aDiagTlvFlags & NetDiagTlvs::kEui64Bit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
+    }
+
+    return tlvTypes;
+}
+
+Error CommissionerImpl::DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload)
+{
+    Error       error;
+    tlv::TlvSet tlvSet;
+    NetDiagTlvs dataset;
+    // Clear all data fields
+    dataset.mPresentFlags = 0;
+    SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
+
+    if (auto extMacAddress = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
+    {
+        const ByteArray &value = extMacAddress->GetValue();
+        dataset.mExtMacAddress = value;
+        dataset.mPresentFlags |= NetDiagTlvs::kExtMacAddressBit;
+    }
+
+    if (auto macAddress = tlvSet[tlv::Type::kNetworkDiagMacAddress])
+    {
+        uint16_t value;
+        value               = utils::Decode<uint16_t>(macAddress->GetValue());
+        dataset.mMacAddress = value;
+        dataset.mPresentFlags |= NetDiagTlvs::kMacAddressBit;
+    }
+
+    if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
+    {
+        uint8_t value;
+        value = utils::Decode<uint8_t>(mode->GetValue());
+        Mode::Decode(dataset.mMode, value);
+        dataset.mPresentFlags |= NetDiagTlvs::kModeBit;
+    }
+
+    if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
+    {
+        const ByteArray &value = route64->GetValue();
+        SuccessOrExit(error = Route64::Decode(dataset.mRoute64, value));
+        dataset.mPresentFlags |= NetDiagTlvs::kRoute64Bit;
+    }
+
+    if (auto leaderData = tlvSet[tlv::Type::kNetworkDiagLeaderData])
+    {
+        const ByteArray &value = leaderData->GetValue();
+        SuccessOrExit(error = LeaderData::Decode(dataset.mLeaderData, value));
+        LOG_DEBUG(LOG_REGION_MESHDIAG, "received partition ID {}", std::to_string(dataset.mLeaderData.mPartitionId));
+        dataset.mPresentFlags |= NetDiagTlvs::kLeaderDataBit;
+    }
+
+    if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
+    {
+        const ByteArray &value = ipv6Addresses->GetValue();
+        SuccessOrExit(Ipv6AddressList::Decode(dataset.mIpv6Addresses, value));
+        dataset.mPresentFlags |= NetDiagTlvs::kIpv6AddressBit;
+    }
+
+    if (auto childTable = tlvSet[tlv::Type::kNetworkDiagChildTable])
+    {
+        const ByteArray &value = childTable->GetValue();
+        SuccessOrExit(error = ChildTable::Decode(dataset.mChildTable, value));
+        dataset.mPresentFlags |= NetDiagTlvs::kChildTableBit;
+    }
+
+    if (auto eui64 = tlvSet[tlv::Type::kNetworkDiagEui64])
+    {
+        const ByteArray &value = eui64->GetValue();
+        dataset.mEui64         = value;
+        dataset.mPresentFlags |= NetDiagTlvs::kEui64Bit;
+    }
+
+    aNetDiagTlvs = dataset;
+
+exit:
+    return error;
 }
 
 Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset &aDataset, const ByteArray &aPayload)

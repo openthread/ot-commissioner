@@ -32,6 +32,7 @@
  */
 
 #include "library/commissioner_safe.hpp"
+#include <sys/types.h>
 
 #include <cstdint>
 #include <future>
@@ -46,6 +47,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
@@ -327,6 +329,29 @@ Error CommissionerSafe::GetRawActiveDataset(ByteArray &aRawDataset, uint16_t aDa
     };
 
     GetRawActiveDataset(wait, aDatasetFlags);
+    return pro.get_future().get();
+}
+
+void CommissionerSafe::CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                             const std::string   &aAddr,
+                                             uint64_t             aDiagTlvFlags)
+{
+    PushAsyncRequest([=]() { mImpl->CommandDiagGetRequest(aHandler, aAddr, aDiagTlvFlags); });
+}
+
+Error CommissionerSafe::CommandDiagGetRequest(NetDiagTlvs       &aDiagTlvData,
+                                              const std::string &aAddr,
+                                              uint64_t           aDiagTlvFlags)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro, &aDiagTlvData](const NetDiagTlvs *diagTlvData, Error error) {
+        if (diagTlvData != nullptr)
+        {
+            aDiagTlvData = *diagTlvData;
+        }
+        pro.set_value(error);
+    };
+    CommandDiagGetRequest(wait, aAddr, aDiagTlvFlags);
     return pro.get_future().get();
 }
 

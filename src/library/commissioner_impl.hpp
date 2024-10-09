@@ -40,6 +40,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
 #include "event2/event.h"
@@ -195,6 +196,14 @@ public:
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
+    // Diagnostic feature in TMF
+    void  CommandDiagGetRequest(Handler<NetDiagTlvs> aHandler,
+                                const std::string   &aAddr,
+                                uint64_t             aDiagTlvFlags) override;
+    Error CommandDiagGetRequest(NetDiagTlvs &, const std::string &, uint64_t) override
+    {
+        return ERROR_UNIMPLEMENTED("");
+    }
 
 private:
     using AsyncRequest = std::function<void()>;
@@ -214,6 +223,9 @@ private:
     static Error EncodeActiveOperationalDataset(coap::Request &aRequest, const ActiveOperationalDataset &aDataset);
     static Error EncodePendingOperationalDataset(coap::Request &aRequest, const PendingOperationalDataset &aDataset);
     static Error EncodeChannelMask(ByteArray &aBuf, const ChannelMask &aChannelMask);
+    // Diagnostic feature in TMF
+    static Error     DecodeNetDiagTlvs(NetDiagTlvs &aNetDiagTlvs, const ByteArray &aPayload);
+    static ByteArray GetDiagTlvs(uint64_t aDiagTlvFlags);
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     static Error     DecodeBbrDataset(BbrDataset &aDataset, const coap::Response &aResponse);

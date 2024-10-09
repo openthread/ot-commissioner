@@ -116,6 +116,8 @@
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
+#define DIAG_GET_REQ_TYPE 0
+
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
 namespace ot {
@@ -200,7 +202,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
-    {"state", &Interpreter::ProcessState},
+    {"state", &Interpreter::ProcessState},         {"diag", &Interpreter::ProcessDiag},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -263,6 +265,14 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                   "opdataset set active '<active-dataset-in-json-string>'\n"
                   "opdataset get pending\n"
                   "opdataset set pending '<pending-dataset-in-json-string>'"},
+    {"diag", "diag get extmacaddr <dest mesh local address>\n"
+             "diag get rloc16 <dest mesh local address> \n"
+             "diag get mode <dest mesh local address> \n"
+             "diag get rout64 <dest mesh local address> \n"
+             "diag get leaderdata <dest mesh local address> \n"
+             "diag get ipvaddr <dest mesh local address> \n"
+             "diag get childtable <dest mesh local address> \n"
+             "diag get eui64 <dest mesh local address>"},
     {"bbrdataset", "bbrdataset get trihostname\n"
                    "bbrdataset set trihostname <TRI-hostname>\n"
                    "bbrdataset get reghostname\n"
@@ -2549,6 +2559,131 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
         value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]);
     }
 
+exit:
+    return value;
+}
+
+// Diagnostic feature in TMF
+Interpreter::Value Interpreter::ProcessDiag(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessDiagJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
+    Value       value;
+    uint64_t    flags         = 0;
+    uint8_t     operationType = 0;
+    std::string dstAddr;
+    NetDiagTlvs tlvs;
+
+    VerifyOrExit(aExpr.size() >= 3,
+                 value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
+                                            "diag [get] [rloc16 | extmacaddr | ... ] <dest mesh local address>"));
+    if (aExpr.size() > 3 && !aExpr[3].empty())
+    {
+        dstAddr = aExpr[3];
+    }
+    else
+    {
+        dstAddr.clear();
+    }
+
+    if (CaseInsensitiveEqual(aExpr[1], "get"))
+    {
+        operationType = DIAG_GET_REQ_TYPE;
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
+    }
+
+    if (CaseInsensitiveEqual(aExpr[2], "extmacaddr"))
+    {
+        flags = NetDiagTlvs::kExtMacAddressBit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = NetDiagTlvsToJson(tlvs);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "rloc16"))
+    {
+        flags = NetDiagTlvs::kMacAddressBit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = NetDiagTlvsToJson(tlvs);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "mode"))
+    {
+        flags = NetDiagTlvs::kModeBit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = ModeToJson(tlvs.mMode);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "route64"))
+    {
+        flags = NetDiagTlvs::kRoute64Bit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = Route64ToJson(tlvs.mRoute64);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "leaderdata"))
+    {
+        flags = NetDiagTlvs::kLeaderDataBit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = LeaderDataToJson(tlvs.mLeaderData);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "eui64"))
+    {
+        flags = NetDiagTlvs::kEui64Bit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = NetDiagTlvsToJson(tlvs);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "ipaddr"))
+    {
+        flags = NetDiagTlvs::kIpv6AddressBit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = Ipv6AddressToJson(tlvs.mIpv6Addresses);
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "childtable"))
+    {
+        flags = NetDiagTlvs::kChildTableBit;
+        if (operationType == DIAG_GET_REQ_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetRequest(tlvs, dstAddr, flags));
+            tlvs.mPresentFlags = flags;
+            value              = ChildTableToJson(tlvs.mChildTable);
+        }
+    }
 exit:
     return value;
 }
