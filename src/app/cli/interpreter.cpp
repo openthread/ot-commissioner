@@ -116,6 +116,8 @@
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
+#define DIAG_GET_QRY_TYPE 1
+
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
 namespace ot {
@@ -200,7 +202,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
-    {"state", &Interpreter::ProcessState},
+    {"state", &Interpreter::ProcessState},         {"diag", &Interpreter::ProcessDiag},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -263,6 +265,14 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                   "opdataset set active '<active-dataset-in-json-string>'\n"
                   "opdataset get pending\n"
                   "opdataset set pending '<pending-dataset-in-json-string>'"},
+    {"diag", "diag query extmacaddr <dest mesh local address>\n"
+             "diag query rloc16 <dest mesh local address> \n"
+             "diag query mode <dest mesh local address> \n"
+             "diag query rout64 <dest mesh local address> \n"
+             "diag query leaderdata <dest mesh local address> \n"
+             "diag query ipvaddr <dest mesh local address> \n"
+             "diag query childtable <dest mesh local address> \n"
+             "diag query eui64 <dest mesh local address>"},
     {"bbrdataset", "bbrdataset get trihostname\n"
                    "bbrdataset set trihostname <TRI-hostname>\n"
                    "bbrdataset get reghostname\n"
@@ -2553,12 +2563,185 @@ exit:
     return value;
 }
 
+// Diagnostic feature in TMF
+Interpreter::Value Interpreter::ProcessDiag(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessDiagJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
+    Value       value;
+    uint64_t    flags         = 0;
+    uint8_t     operationType = 0;
+    std::string dstAddr;
+    NetDiagTlvs tlvs;
+    ByteArray   rawTlvs;
+
+    VerifyOrExit(aExpr.size() >= 3,
+                 value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
+                                            "diag [query] [rloc16 | extmacaddr | ... ] <dest mesh local address>"));
+    if (aExpr.size() > 3 && !aExpr[3].empty())
+    {
+        dstAddr = aExpr[3];
+    }
+    else
+    {
+        dstAddr.clear();
+    }
+
+    if (CaseInsensitiveEqual(aExpr[1], "query"))
+    {
+        operationType = DIAG_GET_QRY_TYPE;
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
+    }
+
+    if (CaseInsensitiveEqual(aExpr[2], "extmacaddr"))
+    {
+        flags = NetDiagTlvs::kExtMacAddressBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagTlvsToJson(diagAnsDataMap.second);
+            }
+        }
+    }
+
+    if (CaseInsensitiveEqual(aExpr[2], "rloc16"))
+    {
+        flags = NetDiagTlvs::kMacAddressBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagTlvsToJson(diagAnsDataMap.second);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "mode"))
+    {
+        flags = NetDiagTlvs::kModeBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + ModeToJson(diagAnsDataMap.second.mMode);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "route64"))
+    {
+        flags = NetDiagTlvs::kRoute64Bit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + Route64ToJson(diagAnsDataMap.second.mRoute64);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "leaderdata"))
+    {
+        flags = NetDiagTlvs::kLeaderDataBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + LeaderDataToJson(diagAnsDataMap.second.mLeaderData);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "eui64"))
+    {
+        flags = NetDiagTlvs::kEui64Bit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagTlvsToJson(diagAnsDataMap.second);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "ipaddr"))
+    {
+        flags = NetDiagTlvs::kIpv6AddressBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + Ipv6AddressToJson(diagAnsDataMap.second.mIpv6Addresses);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "childtable"))
+    {
+        flags = NetDiagTlvs::kChildTableBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            tlvs.mPresentFlags             = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + ChildTableToJson(diagAnsDataMap.second.mChildTable);
+            }
+        }
+    }
+exit:
+    return value;
+}
+
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
 {
     mJobManager->StopCommissionerPool();
-
     mShouldExit = true;
-
     return ERROR_NONE;
 }
 
