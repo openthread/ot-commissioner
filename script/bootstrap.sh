@@ -130,6 +130,9 @@ elif [ "$(uname)" = "Darwin" ]; then
         brew unlink cmake
         brew install cmake --HEAD
     }
+
+    ## Install coreutils for realpath
+    brew install coreutils
 else
     echo "platform $(uname) is not fully supported"
     exit 1
