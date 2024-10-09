@@ -43,6 +43,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "gmock/gmock-function-mocker.h"
 
@@ -137,6 +138,7 @@ public:
     MOCK_METHOD(Error, EnergyScan, (uint32_t, uint8_t, uint16_t, uint16_t, const std::string &));
     MOCK_METHOD(const EnergyReport *, GetEnergyReport, (const Address &), (const));
     MOCK_METHOD(const EnergyReportMap &, GetAllEnergyReports, (), (const));
+    MOCK_METHOD(Error, CommandDiagGetRequest(NetDiagTlvs &, const std::string &, uint64_t));
 };
 
 class CommissionerAppStaticExpecter
