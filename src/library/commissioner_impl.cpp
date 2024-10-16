@@ -73,6 +73,13 @@ static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 static constexpr uint32_t kMinKeepAliveInterval = 30;
 static constexpr uint32_t kMaxKeepAliveInterval = 45;
 
+static constexpr uint8_t kChildTableEntryBytes = 3;
+static constexpr uint8_t kIpv6AddressBytes     = 16;
+static constexpr uint8_t kLeaderDataBytes      = 8;
+static constexpr uint8_t kMacCountersBytes     = 36;
+static constexpr uint8_t kRloc16Bytes          = 2;
+static constexpr uint8_t kRouterIdMaskBytes    = 8;
+
 Error Commissioner::GeneratePSKc(ByteArray         &aPSKc,
                                  const std::string &aPassphrase,
                                  const std::string &aNetworkName,
@@ -1955,7 +1962,7 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
     return tlvTypes;
 }
 
-ByteArray CommissionerImpl::GetDiagTypeTlvList(uint64_t aDiagTlvFlags)
+ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
 {
     ByteArray tlvTypes;
 
@@ -1963,38 +1970,47 @@ ByteArray CommissionerImpl::GetDiagTypeTlvList(uint64_t aDiagTlvFlags)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
     }
+
     if (aDiagTlvFlags & NetDiagData::kMacAddressBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
     }
+
     if (aDiagTlvFlags & NetDiagData::kModeBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
     }
+
     if (aDiagTlvFlags & NetDiagData::kRoute64Bit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
     }
+
     if (aDiagTlvFlags & NetDiagData::kLeaderDataBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
     }
+
     if (aDiagTlvFlags & NetDiagData::kIpv6AddressBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
     }
+
     if (aDiagTlvFlags & NetDiagData::kMacCountersBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacCounters);
     }
+
     if (aDiagTlvFlags & NetDiagData::kChildTableBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
     }
+
     if (aDiagTlvFlags & NetDiagData::kEui64Bit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
     }
+
     if (aDiagTlvFlags & NetDiagData::kChildIpv6AddressBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
@@ -2007,82 +2023,82 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
 {
     Error       error;
     tlv::TlvSet tlvSet;
-    NetDiagData dataset;
+    NetDiagData diagData;
     // Clear all data fields
-    dataset.mPresentFlags = 0;
+    diagData.mPresentFlags = 0;
     SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
 
     if (auto extMacAddress = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
     {
-        const ByteArray &value = extMacAddress->GetValue();
-        dataset.mExtMacAddress = value;
-        dataset.mPresentFlags |= NetDiagData::kExtMacAddressBit;
+        const ByteArray &value  = extMacAddress->GetValue();
+        diagData.mExtMacAddress = value;
+        diagData.mPresentFlags |= NetDiagData::kExtMacAddressBit;
     }
 
     if (auto macAddress = tlvSet[tlv::Type::kNetworkDiagMacAddress])
     {
         uint16_t value;
-        value               = utils::Decode<uint16_t>(macAddress->GetValue());
-        dataset.mMacAddress = value;
-        dataset.mPresentFlags |= NetDiagData::kMacAddressBit;
+        value                = utils::Decode<uint16_t>(macAddress->GetValue());
+        diagData.mMacAddress = value;
+        diagData.mPresentFlags |= NetDiagData::kMacAddressBit;
     }
 
     if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
     {
-        SuccessOrExit(error = DecodeModeData(dataset.mMode, mode->GetValue()));
-        dataset.mPresentFlags |= NetDiagData::kModeBit;
+        SuccessOrExit(error = DecodeModeData(diagData.mMode, mode->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kModeBit;
     }
 
     if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
     {
         const ByteArray &value = route64->GetValue();
-        SuccessOrExit(error = DecodeRoute64(dataset.mRoute64, value));
-        dataset.mPresentFlags |= NetDiagData::kRoute64Bit;
+        SuccessOrExit(error = DecodeRoute64(diagData.mRoute64, value));
+        diagData.mPresentFlags |= NetDiagData::kRoute64Bit;
     }
 
     if (auto leaderData = tlvSet[tlv::Type::kNetworkDiagLeaderData])
     {
         const ByteArray &value = leaderData->GetValue();
-        SuccessOrExit(error = DecodeLeaderData(dataset.mLeaderData, value));
-        dataset.mPresentFlags |= NetDiagData::kLeaderDataBit;
+        SuccessOrExit(error = DecodeLeaderData(diagData.mLeaderData, value));
+        diagData.mPresentFlags |= NetDiagData::kLeaderDataBit;
     }
 
     if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
     {
         const ByteArray &value = ipv6Addresses->GetValue();
-        SuccessOrExit(error = DecodeIpv6AddressList(dataset.mAddrs, value));
-        dataset.mPresentFlags |= NetDiagData::kIpv6AddressBit;
+        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddrs, value));
+        diagData.mPresentFlags |= NetDiagData::kIpv6AddressBit;
     }
 
     if (auto macCounters = tlvSet[tlv::Type::kNetworkDiagMacCounters])
     {
         const ByteArray &value = macCounters->GetValue();
-        SuccessOrExit(error = DecodeMacCounters(dataset.mMacCounters, value));
-        dataset.mPresentFlags |= NetDiagData::kMacCountersBit;
+        SuccessOrExit(error = DecodeMacCounters(diagData.mMacCounters, value));
+        diagData.mPresentFlags |= NetDiagData::kMacCountersBit;
     }
 
     if (auto childTable = tlvSet[tlv::Type::kNetworkDiagChildTable])
     {
         const ByteArray &value = childTable->GetValue();
-        SuccessOrExit(error = DecodeChildTable(dataset.mChildTable, value));
-        dataset.mPresentFlags |= NetDiagData::kChildTableBit;
+        SuccessOrExit(error = DecodeChildTable(diagData.mChildTable, value));
+        diagData.mPresentFlags |= NetDiagData::kChildTableBit;
     }
 
     if (auto eui64 = tlvSet[tlv::Type::kNetworkDiagEui64])
     {
         const ByteArray &value = eui64->GetValue();
-        dataset.mEui64         = value;
-        dataset.mPresentFlags |= NetDiagData::kEui64Bit;
+        diagData.mEui64        = value;
+        diagData.mPresentFlags |= NetDiagData::kEui64Bit;
     }
 
     if (auto childIpv6Address = tlvSet[tlv::Type::kNetworkDiagChildIpv6Address])
     {
         const ByteArray &value = childIpv6Address->GetValue();
-        SuccessOrExit(error = DecodeChildIpv6AddressList(dataset.mChildIpv6AddrsInfoList, value));
-        dataset.mPresentFlags |= NetDiagData::kChildIpv6AddressBit;
+        SuccessOrExit(error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, value));
+        diagData.mPresentFlags |= NetDiagData::kChildIpv6AddressBit;
     }
 
-    aNetDiagData = dataset;
+    aNetDiagData = diagData;
 
 exit:
     return error;
@@ -2113,7 +2129,7 @@ Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressI
     size_t               length = aBuf.size();
     ChildIpv6AddressInfo childIpv6AddrsInfo;
 
-    VerifyOrExit((length - kRloc16Bytes) % kIpv6AddressBytes == 0,
+    VerifyOrExit((length % kIpv6AddressBytes) == kRloc16Bytes,
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
     childIpv6AddrsInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
 
@@ -2127,7 +2143,7 @@ Error CommissionerImpl::DecodeModeData(ModeData &aModeData, const ByteArray &aBu
 {
     Error  error;
     size_t length = aBuf.size();
-    VerifyOrExit(length == 1, error = ERROR_BAD_FORMAT("incorrect size of ModeData"));
+    VerifyOrExit(length == 1, error = ERROR_BAD_FORMAT("invalid Mode value length {}, expect 1", length));
     aModeData.mIsRxOnWhenIdleMode          = (aBuf[0] & 0x01) != 0;
     aModeData.mIsMtd                       = (aBuf[0] & 0x02) != 0;
     aModeData.mIsStableNetworkDataRequired = (aBuf[0] & 0x04) != 0;
@@ -2135,6 +2151,23 @@ exit:
     return error;
 }
 
+/**
+ * Decode Child Table TLV
+ *
+ * @param aChildTable The Child Table to be decoded, which is a vector of ChildTableEntry.
+ *                    The ChildTableEntry is a struct of timeout, incoming link quality, child id,
+ *                    and mode data which is composed of 3 bytes
+ *                    Timeout is 2^(Timeout-4) seconds.
+ *                    ILQ is a value between 0 and 3.
+ *                    Child ID is a 9-bit value.
+ * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+ * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * |       Timeout     |  ILQ  ｜           Child ID                |            Mode              |
+ * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * @param aBuf The buffer to be decoded
+ * @return Error code
+ */
 Error CommissionerImpl::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf)
 {
     Error  error;

@@ -47,13 +47,6 @@ namespace ot {
 
 namespace commissioner {
 
-static constexpr uint8_t kChildTableEntryBytes = 3;
-static constexpr uint8_t kIpv6AddressBytes     = 16;
-static constexpr uint8_t kLeaderDataBytes      = 8;
-static constexpr uint8_t kMacCountersBytes     = 36;
-static constexpr uint8_t kRloc16Bytes          = 2;
-static constexpr uint8_t kRouterIdMaskBytes    = 8;
-
 /**
  * @brief Mode Data
  */
@@ -142,22 +135,21 @@ struct MacCounters
  */
 struct NetDiagData
 {
+    ModeData                          mMode;
+    ByteArray                         mEui64;
     ByteArray                         mExtMacAddress;
     uint16_t                          mMacAddress = 0;
-    ModeData                          mMode;
     Route64                           mRoute64;
     LeaderData                        mLeaderData;
+    MacCounters                       mMacCounters;
     std::vector<std::string>          mAddrs;
     std::vector<ChildTableEntry>      mChildTable;
-    ByteArray                         mEui64;
-    ByteArray                         mTlvTypeList;
     std::vector<ChildIpv6AddressInfo> mChildIpv6AddrsInfoList;
-    MacCounters                       mMacCounters;
 
     /**
-     * Indicates which fields are included in the dataset.
+     * Indicates which fields are included in the object.
      */
-    uint64_t mPresentFlags;
+    uint64_t mPresentFlags = 0;
 
     static constexpr uint64_t kExtMacAddressBit    = (1ull << 0);
     static constexpr uint64_t kMacAddressBit       = (1ull << 1);
@@ -167,13 +159,12 @@ struct NetDiagData
     static constexpr uint64_t kIpv6AddressBit      = (1ull << 5);
     static constexpr uint64_t kChildTableBit       = (1ull << 6);
     static constexpr uint64_t kEui64Bit            = (1ull << 7);
-    static constexpr uint64_t kTlvTypeBit          = (1ull << 8);
-    static constexpr uint64_t kMacCountersBit      = (1ull << 9);
-    static constexpr uint64_t kChildIpv6AddressBit = (1ull << 10);
+    static constexpr uint64_t kMacCountersBit      = (1ull << 8);
+    static constexpr uint64_t kChildIpv6AddressBit = (1ull << 9);
 };
 
 } // namespace commissioner
 
 } // namespace ot
 
-#endif // OT_COMM_NETWORK_DIAG_TLVS_HPP_
+#endif // OT_COMM_NETWORK_DIAG_DATA_HPP_
