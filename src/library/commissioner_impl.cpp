@@ -2145,7 +2145,7 @@ Error CommissionerImpl::DecodeChildTable(std::vector<ChildTableEntry> &aChildTab
                      error = ERROR_BAD_FORMAT("premature end of Child Table"));
         entry.mTimeout             = 1 << (((aBuf[offset] & 0xF8) >> 3) - 4);
         entry.mIncomingLinkQuality = (aBuf[offset] & 0x06) >> 1;
-        entry.mChildId             = ((aBuf[offset] & 0x01) << 9) | aBuf[1];
+        entry.mChildId             = ((aBuf[offset] & 0x01) << 9) | aBuf[offset + 1];
         SuccessOrExit(error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3}));
         aChildTable.emplace_back(entry);
         offset += CHILD_TABLE_ENTRY_BYTES;
