@@ -34,6 +34,7 @@ add_library(commissioner
     coap_secure.hpp
     commissioner_impl.cpp
     commissioner_impl.hpp
+    commissioner_impl_internal.hpp
     commissioner_safe.cpp
     commissioner_safe.hpp
     cose.cpp
@@ -148,6 +149,7 @@ if (OT_COMM_TEST)
         coap.hpp
         coap_test.cpp
         commissioner_impl.hpp
+        commissioner_impl_internal.hpp
         commissioner_impl_test.cpp
         commissioner_safe.hpp
         commissioner_safe_test.cpp

@@ -274,7 +274,7 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagChild:
             return length >= 43;
         case Type::kNetworkDiagChildIpv6Address:
-            return (length % 16 == 0) && (length / 16 >= 1);
+            return (length % 16 == 2) && (length / 16 >= 1);
         case Type::kNetworkDiagRouterNeighbor:
             return length >= 24;
         case Type::kNetworkDiagAnswer:

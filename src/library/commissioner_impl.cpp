@@ -52,6 +52,7 @@
 #include "common/utils.hpp"
 #include "event2/event.h"
 #include "library/coap.hpp"
+#include "library/commissioner_impl_internal.hpp"
 #include "library/dtls.hpp"
 #include "library/joiner_session.hpp"
 #include "library/openthread/bloom_filter.hpp"
@@ -72,13 +73,6 @@ static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 
 static constexpr uint32_t kMinKeepAliveInterval = 30;
 static constexpr uint32_t kMaxKeepAliveInterval = 45;
-
-static constexpr uint8_t kChildTableEntryBytes = 3;
-static constexpr uint8_t kIpv6AddressBytes     = 16;
-static constexpr uint8_t kLeaderDataBytes      = 8;
-static constexpr uint8_t kMacCountersBytes     = 36;
-static constexpr uint8_t kRloc16Bytes          = 2;
-static constexpr uint8_t kRouterIdMaskBytes    = 8;
 
 Error Commissioner::GeneratePSKc(ByteArray         &aPSKc,
                                  const std::string &aPassphrase,
@@ -2019,7 +2013,7 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
     return tlvTypes;
 }
 
-Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload)
+Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload)
 {
     Error        error;
     tlv::TlvSet  tlvSet;
@@ -2045,7 +2039,7 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
 
     if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
     {
-        SuccessOrExit(error = DecodeModeData(diagData.mMode, mode->GetValue()));
+        SuccessOrExit(error = internal::DecodeModeData(diagData.mMode, mode->GetValue()));
         diagData.mPresentFlags |= NetDiagData::kModeBit;
     }
 
@@ -2109,7 +2103,7 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf)
+Error internal::DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf)
 {
     Error  error;
     size_t length = aBuf.size();
@@ -2128,8 +2122,8 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChildIpv6AddressInfoList,
-                                                   const ByteArray                &aBuf)
+Error internal::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChildIpv6AddressInfoList,
+                                           const ByteArray                &aBuf)
 {
     Error             error;
     size_t            length = aBuf.size();
@@ -2137,7 +2131,8 @@ Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo
 
     VerifyOrExit((length % kIpv6AddressBytes) == kRloc16Bytes,
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
-    childIpv6AddrsInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
+    childIpv6AddrsInfo.mRloc16  = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
+    childIpv6AddrsInfo.mChildId = childIpv6AddrsInfo.mRloc16 & 0x1FF;
 
     SuccessOrExit(error =
                       DecodeIpv6AddressList(childIpv6AddrsInfo.mAddresses, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
@@ -2147,13 +2142,13 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeModeData(ModeData &aModeData, const ByteArray &aBuf)
+Error internal::DecodeModeData(ModeData &aModeData, const ByteArray &aBuf)
 {
     Error  error;
     size_t length = aBuf.size();
     VerifyOrExit(length == 1, error = ERROR_BAD_FORMAT("invalid Mode value length {}, expect 1", length));
     aModeData.mIsRxOnWhenIdleMode          = (aBuf[0] & 0x01) != 0;
-    aModeData.mIsMtd                       = (aBuf[0] & 0x02) != 0;
+    aModeData.mIsMtd                       = (aBuf[0] & 0x02) == 0;
     aModeData.mIsStableNetworkDataRequired = (aBuf[0] & 0x04) != 0;
 
 exit:
@@ -2177,7 +2172,7 @@ exit:
  * @param aBuf The buffer to be decoded
  * @return Error code
  */
-Error CommissionerImpl::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf)
+Error internal::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf)
 {
     Error  error;
     size_t length = aBuf.size();
@@ -2200,7 +2195,7 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf)
+Error internal::DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf)
 {
     Error  error;
     size_t length = aBuf.size();
@@ -2215,7 +2210,7 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf)
+Error internal::DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf)
 {
     Error     error;
     size_t    length = aBuf.size();
@@ -2242,14 +2237,14 @@ exit:
     return error;
 }
 
-void CommissionerImpl::DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf)
+void internal::DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf)
 {
     aRouteDataEntry.mOutgoingLinkQuality = (aBuf >> 6) & 0x03;
     aRouteDataEntry.mIncomingLinkQuality = (aBuf >> 4) & 0x03;
     aRouteDataEntry.mRouteCost           = aBuf & 0x0F;
 }
 
-ByteArray CommissionerImpl::ExtractRouterIds(const ByteArray &aMask)
+ByteArray internal::ExtractRouterIds(const ByteArray &aMask)
 {
     ByteArray routerIdList;
 
@@ -2264,7 +2259,7 @@ ByteArray CommissionerImpl::ExtractRouterIds(const ByteArray &aMask)
     return routerIdList;
 }
 
-Error CommissionerImpl::DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf)
+Error internal::DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf)
 {
     Error  error;
     size_t length = aBuf.size();
