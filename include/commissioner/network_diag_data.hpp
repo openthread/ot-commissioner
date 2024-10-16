@@ -43,16 +43,16 @@
 #include "defines.hpp"
 #include "error.hpp"
 
-#define CHILD_TABLE_ENTRY_BYTES 3
-#define IPV6_ADDRESS_BYTES 16
-#define LEADER_DATA_BYTES 8
-#define MAC_COUNTERS_BYTES 36
-#define RLOC16_BYTES 2
-#define ROUTER_ID_MASK_BYTES 8
-
 namespace ot {
 
 namespace commissioner {
+
+static constexpr uint8_t kChildTableEntryBytes = 3;
+static constexpr uint8_t kIpv6AddressBytes     = 16;
+static constexpr uint8_t kLeaderDataBytes      = 8;
+static constexpr uint8_t kMacCountersBytes     = 36;
+static constexpr uint8_t kRloc16Bytes          = 2;
+static constexpr uint8_t kRouterIdMaskBytes    = 8;
 
 /**
  * @brief Mode Data
@@ -117,12 +117,12 @@ struct Route64
 };
 
 /**
- * @brief Child IPv6 Address List
+ * @brief Child IPv6 Address Info
  */
-struct ChildIpv6AddressList
+struct ChildIpv6AddressInfo
 {
-    uint16_t        mRloc16 = 0;
-    Ipv6AddressList mIpv6AddressList;
+    uint16_t                 mRloc16 = 0;
+    std::vector<std::string> mAddrs;
 };
 
 /**
@@ -150,17 +150,17 @@ struct MacCounters
  */
 struct NetDiagData
 {
-    ByteArray                    mExtMacAddress;
-    uint16_t                     mMacAddress = 0;
-    ModeData                     mMode;
-    Route64                      mRoute64;
-    LeaderData                   mLeaderData;
-    Ipv6AddressList              mIpv6AddressList;
-    std::vector<ChildTableEntry> mChildTable;
-    ByteArray                    mEui64;
-    ByteArray                    mTlvTypeList;
-    ChildIpv6AddressList         mChildIpv6AddressList;
-    MacCounters                  mMacCounters;
+    ByteArray                         mExtMacAddress;
+    uint16_t                          mMacAddress = 0;
+    ModeData                          mMode;
+    Route64                           mRoute64;
+    LeaderData                        mLeaderData;
+    std::vector<std::string>          mAddrs;
+    std::vector<ChildTableEntry>      mChildTable;
+    ByteArray                         mEui64;
+    ByteArray                         mTlvTypeList;
+    std::vector<ChildIpv6AddressInfo> mChildIpv6AddrsInfoList;
+    MacCounters                       mMacCounters;
 
     /**
      * Indicates which fields are included in the dataset.
