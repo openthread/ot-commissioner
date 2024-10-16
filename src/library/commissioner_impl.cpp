@@ -2106,18 +2106,18 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList, const ByteArray &aBuf)
+Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList,
+                                                   const ByteArray                   &aBuf)
 {
-    Error  error;
-    size_t length = aBuf.size();
+    Error                error;
+    size_t               length = aBuf.size();
     ChildIpv6AddressInfo childIpv6AddrsInfo;
 
     VerifyOrExit((length - kRloc16Bytes) % kIpv6AddressBytes == 0,
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
     childIpv6AddrsInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
-    
-    SuccessOrExit(error = DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs,
-                                                {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
+
+    SuccessOrExit(error = DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
     aChildIpv6AddressInfoList.emplace_back(childIpv6AddrsInfo);
 exit:
     return error;

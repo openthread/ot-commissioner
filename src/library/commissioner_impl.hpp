@@ -229,7 +229,8 @@ private:
     static Error     DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload);
     static ByteArray GetDiagTypeTlvList(uint64_t aDiagTlvFlags);
     static Error     DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf);
-    static Error     DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList, const ByteArray &aBuf);
+    static Error     DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList,
+                                                const ByteArray                   &aBuf);
     static Error     DecodeModeData(ModeData &aModeData, const ByteArray &aBuf);
     static Error     DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf);
     static Error     DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf);

@@ -76,14 +76,6 @@ struct ChildTableEntry
 };
 
 /**
- * @brief IPv6 Addresses List
- */
-struct Ipv6AddressList
-{
-    std::vector<std::string> mIpv6Addresses;
-};
-
-/**
  * @brief Leader Data
  */
 struct LeaderData
