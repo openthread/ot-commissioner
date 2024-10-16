@@ -104,7 +104,7 @@ struct Route64
 /**
  * @brief Child IPv6 Address Info
  */
-struct ChildIpv6AddressInfo
+struct ChildIpv6AddrInfo
 {
     uint16_t                 mRloc16 = 0;
     std::vector<std::string> mAddresses;
@@ -135,32 +135,32 @@ struct MacCounters
  */
 struct NetDiagData
 {
-    ModeData                          mMode;
-    ByteArray                         mEui64;
-    ByteArray                         mExtMacAddress;
-    uint16_t                          mMacAddress = 0;
-    Route64                           mRoute64;
-    LeaderData                        mLeaderData;
-    MacCounters                       mMacCounters;
-    std::vector<std::string>          mAddresses;
-    std::vector<ChildTableEntry>      mChildTable;
-    std::vector<ChildIpv6AddressInfo> mChildIpv6AddrsInfoList;
+    ModeData                       mMode;
+    ByteArray                      mEui64;
+    ByteArray                      mExtMacAddr;
+    uint16_t                       mMacAddr = 0;
+    Route64                        mRoute64;
+    LeaderData                     mLeaderData;
+    MacCounters                    mMacCounters;
+    std::vector<std::string>       mAddrs;
+    std::vector<ChildTableEntry>   mChildTable;
+    std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
 
     /**
      * Indicates which fields are included in the object.
      */
     uint64_t mPresentFlags = 0;
 
-    static constexpr uint64_t kExtMacAddressBit    = (1ull << 0);
-    static constexpr uint64_t kMacAddressBit       = (1ull << 1);
-    static constexpr uint64_t kModeBit             = (1ull << 2);
-    static constexpr uint64_t kRoute64Bit          = (1ull << 3);
-    static constexpr uint64_t kLeaderDataBit       = (1ull << 4);
-    static constexpr uint64_t kIpv6AddressBit      = (1ull << 5);
-    static constexpr uint64_t kChildTableBit       = (1ull << 6);
-    static constexpr uint64_t kEui64Bit            = (1ull << 7);
-    static constexpr uint64_t kMacCountersBit      = (1ull << 8);
-    static constexpr uint64_t kChildIpv6AddressBit = (1ull << 9);
+    static constexpr uint64_t kExtMacAddrBit             = (1ull << 0);
+    static constexpr uint64_t kMacAddrBit                = (1ull << 1);
+    static constexpr uint64_t kModeBit                   = (1ull << 2);
+    static constexpr uint64_t kRoute64Bit                = (1ull << 3);
+    static constexpr uint64_t kLeaderDataBit             = (1ull << 4);
+    static constexpr uint64_t kAddrsBit                  = (1ull << 5);
+    static constexpr uint64_t kChildTableBit             = (1ull << 6);
+    static constexpr uint64_t kEui64Bit                  = (1ull << 7);
+    static constexpr uint64_t kMacCountersBit            = (1ull << 8);
+    static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
 };
 
 } // namespace commissioner

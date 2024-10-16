@@ -1966,12 +1966,12 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
 {
     ByteArray tlvTypes;
 
-    if (aDiagTlvFlags & NetDiagData::kExtMacAddressBit)
+    if (aDiagTlvFlags & NetDiagData::kExtMacAddrBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kMacAddressBit)
+    if (aDiagTlvFlags & NetDiagData::kMacAddrBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
     }
@@ -1991,7 +1991,7 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kIpv6AddressBit)
+    if (aDiagTlvFlags & NetDiagData::kAddrsBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
     }
@@ -2011,7 +2011,7 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kChildIpv6AddressBit)
+    if (aDiagTlvFlags & NetDiagData::kChildIpv6AddrsInfoListBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
     }
@@ -2028,19 +2028,19 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
 
     SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
 
-    if (auto extMacAddress = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
+    if (auto extMacAddr = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
     {
-        const ByteArray &value  = extMacAddress->GetValue();
-        diagData.mExtMacAddress = value;
-        diagData.mPresentFlags |= NetDiagData::kExtMacAddressBit;
+        const ByteArray &value = extMacAddr->GetValue();
+        diagData.mExtMacAddr   = value;
+        diagData.mPresentFlags |= NetDiagData::kExtMacAddrBit;
     }
 
-    if (auto macAddress = tlvSet[tlv::Type::kNetworkDiagMacAddress])
+    if (auto macAddr = tlvSet[tlv::Type::kNetworkDiagMacAddress])
     {
         uint16_t value;
-        value                = utils::Decode<uint16_t>(macAddress->GetValue());
-        diagData.mMacAddress = value;
-        diagData.mPresentFlags |= NetDiagData::kMacAddressBit;
+        value             = utils::Decode<uint16_t>(macAddr->GetValue());
+        diagData.mMacAddr = value;
+        diagData.mPresentFlags |= NetDiagData::kMacAddrBit;
     }
 
     if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
@@ -2063,11 +2063,11 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
         diagData.mPresentFlags |= NetDiagData::kLeaderDataBit;
     }
 
-    if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
+    if (auto ipv6Addrs = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
     {
-        const ByteArray &value = ipv6Addresses->GetValue();
-        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddresses, value));
-        diagData.mPresentFlags |= NetDiagData::kIpv6AddressBit;
+        const ByteArray &value = ipv6Addrs->GetValue();
+        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddrs, value));
+        diagData.mPresentFlags |= NetDiagData::kAddrsBit;
     }
 
     if (auto macCounters = tlvSet[tlv::Type::kNetworkDiagMacCounters])
@@ -2100,7 +2100,7 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
         {
             SuccessOrExit(error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, tlv.GetValue()));
         }
-        diagData.mPresentFlags |= NetDiagData::kChildIpv6AddressBit;
+        diagData.mPresentFlags |= NetDiagData::kChildIpv6AddrsInfoListBit;
     }
 
     aNetDiagData = diagData;
@@ -2128,12 +2128,12 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList,
-                                                   const ByteArray                   &aBuf)
+Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChildIpv6AddressInfoList,
+                                                   const ByteArray                &aBuf)
 {
-    Error                error;
-    size_t               length = aBuf.size();
-    ChildIpv6AddressInfo childIpv6AddrsInfo;
+    Error             error;
+    size_t            length = aBuf.size();
+    ChildIpv6AddrInfo childIpv6AddrsInfo;
 
     VerifyOrExit((length % kIpv6AddressBytes) == kRloc16Bytes,
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
