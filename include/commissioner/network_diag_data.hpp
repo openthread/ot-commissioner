@@ -31,8 +31,8 @@
  *   This file defines the types of Thread Network Diagnostic TLVs used for network diagnostics.
  */
 
-#ifndef OT_COMM_NETWORK_DIAG_TLVS_HPP_
-#define OT_COMM_NETWORK_DIAG_TLVS_HPP_
+#ifndef OT_COMM_NETWORK_DIAG_DATA_HPP_
+#define OT_COMM_NETWORK_DIAG_DATA_HPP_
 
 #include <cstddef>
 #include <cstdint>
