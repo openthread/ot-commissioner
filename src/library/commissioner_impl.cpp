@@ -2066,7 +2066,7 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
     if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
     {
         const ByteArray &value = ipv6Addresses->GetValue();
-        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddrs, value));
+        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddresses, value));
         diagData.mPresentFlags |= NetDiagData::kIpv6AddressBit;
     }
 
@@ -2139,7 +2139,8 @@ Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressI
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
     childIpv6AddrsInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
 
-    SuccessOrExit(error = DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
+    SuccessOrExit(error =
+                      DecodeIpv6AddressList(childIpv6AddrsInfo.mAddresses, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
     aChildIpv6AddressInfoList.emplace_back(childIpv6AddrsInfo);
 
 exit:

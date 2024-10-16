@@ -107,7 +107,7 @@ struct Route64
 struct ChildIpv6AddressInfo
 {
     uint16_t                 mRloc16 = 0;
-    std::vector<std::string> mAddrs;
+    std::vector<std::string> mAddresses;
 };
 
 /**
@@ -142,7 +142,7 @@ struct NetDiagData
     Route64                           mRoute64;
     LeaderData                        mLeaderData;
     MacCounters                       mMacCounters;
-    std::vector<std::string>          mAddrs;
+    std::vector<std::string>          mAddresses;
     std::vector<ChildTableEntry>      mChildTable;
     std::vector<ChildIpv6AddressInfo> mChildIpv6AddrsInfoList;
 
