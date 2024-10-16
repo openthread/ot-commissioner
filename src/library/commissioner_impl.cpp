@@ -2021,11 +2021,11 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
 
 Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload)
 {
-    Error       error;
-    tlv::TlvSet tlvSet;
-    NetDiagData diagData;
-    // Clear all data fields
-    diagData.mPresentFlags = 0;
+    Error        error;
+    tlv::TlvSet  tlvSet;
+    tlv::TlvList tlvList;
+    NetDiagData  diagData;
+
     SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
 
     if (auto extMacAddress = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
@@ -2091,10 +2091,15 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
         diagData.mPresentFlags |= NetDiagData::kEui64Bit;
     }
 
-    if (auto childIpv6Address = tlvSet[tlv::Type::kNetworkDiagChildIpv6Address])
+    SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChildIpv6Address,
+                                                tlv::Scope::kNetworkDiag));
+
+    if (tlvList.size() > 0)
     {
-        const ByteArray &value = childIpv6Address->GetValue();
-        SuccessOrExit(error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, value));
+        for (const auto &tlv : tlvList)
+        {
+            SuccessOrExit(error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, tlv.GetValue()));
+        }
         diagData.mPresentFlags |= NetDiagData::kChildIpv6AddressBit;
     }
 
@@ -2118,6 +2123,7 @@ Error CommissionerImpl::DecodeIpv6AddressList(std::vector<std::string> &aAddrs, 
         aAddrs.emplace_back(addr.ToString());
         offset += kIpv6AddressBytes;
     }
+
 exit:
     return error;
 }
@@ -2135,6 +2141,7 @@ Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressI
 
     SuccessOrExit(error = DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
     aChildIpv6AddressInfoList.emplace_back(childIpv6AddrsInfo);
+
 exit:
     return error;
 }
@@ -2147,6 +2154,7 @@ Error CommissionerImpl::DecodeModeData(ModeData &aModeData, const ByteArray &aBu
     aModeData.mIsRxOnWhenIdleMode          = (aBuf[0] & 0x01) != 0;
     aModeData.mIsMtd                       = (aBuf[0] & 0x02) != 0;
     aModeData.mIsStableNetworkDataRequired = (aBuf[0] & 0x04) != 0;
+
 exit:
     return error;
 }
@@ -2186,6 +2194,7 @@ Error CommissionerImpl::DecodeChildTable(std::vector<ChildTableEntry> &aChildTab
         aChildTable.emplace_back(entry);
         offset += kChildTableEntryBytes;
     }
+
 exit:
     return error;
 }
@@ -2200,6 +2209,7 @@ Error CommissionerImpl::DecodeLeaderData(LeaderData &aLeaderData, const ByteArra
     aLeaderData.mDataVersion       = aBuf[5];
     aLeaderData.mStableDataVersion = aBuf[6];
     aLeaderData.mRouterId          = aBuf[7];
+
 exit:
     return error;
 }
@@ -2226,6 +2236,7 @@ Error CommissionerImpl::DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf)
         aRoute64.mRouteData.emplace_back(entry);
         offset++;
     }
+
 exit:
     return error;
 }
@@ -2266,6 +2277,7 @@ Error CommissionerImpl::DecodeMacCounters(MacCounters &aMacCounters, const ByteA
     aMacCounters.mIfOutUcastPkts     = utils::Decode<uint32_t>(aBuf.data() + 24, 4);
     aMacCounters.mIfOutBroadcastPkts = utils::Decode<uint32_t>(aBuf.data() + 28, 4);
     aMacCounters.mIfOutDiscards      = utils::Decode<uint32_t>(aBuf.data() + 32, 4);
+
 exit:
     return error;
 }

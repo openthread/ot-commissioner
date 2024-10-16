@@ -503,6 +503,35 @@ exit:
     return ret;
 }
 
+Error GetTlvListByType(TlvList &aTlvList, const ByteArray &aBuf, tlv::Type aTlvType, Scope aScope)
+{
+    Error  error;
+    size_t offset = 0;
+
+    aTlvList.clear();
+
+    while (offset < aBuf.size())
+    {
+        auto tlvPtr = tlv::Tlv::Deserialize(error, offset, aBuf, aScope);
+        SuccessOrExit(error);
+        VerifyOrDie(tlvPtr != nullptr);
+
+        if (tlvPtr->IsValid() && tlvPtr->GetType() == aTlvType)
+        {
+            aTlvList.push_back(*tlvPtr);
+        }
+        else
+        {
+            // Drop invalid TLVs
+            LOG_WARN(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
+                     utils::to_underlying(tlvPtr->GetType()), utils::Hex(tlvPtr->GetValue()));
+        }
+    }
+
+exit:
+    return error;
+}
+
 bool IsDatasetParameter(bool aIsActiveDataset, tlv::Type aTlvType)
 {
     static const std::set<tlv::Type> kActiveSet = {tlv::Type::kActiveTimestamp,
