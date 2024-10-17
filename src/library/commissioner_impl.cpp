@@ -2135,7 +2135,7 @@ Error internal::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChil
     childIpv6AddrsInfo.mChildId = childIpv6AddrsInfo.mRloc16 & 0x1FF;
 
     SuccessOrExit(error =
-                      DecodeIpv6AddressList(childIpv6AddrsInfo.mAddresses, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
+                      DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
     aChildIpv6AddressInfoList.emplace_back(childIpv6AddrsInfo);
 
 exit:

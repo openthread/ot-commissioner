@@ -108,7 +108,7 @@ struct ChildIpv6AddrInfo
 {
     uint16_t                 mRloc16  = 0;
     uint16_t                 mChildId = 0;
-    std::vector<std::string> mAddresses;
+    std::vector<std::string> mAddrs;
 };
 
 /**

@@ -180,7 +180,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList.size(), 2);
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mRloc16, 28696);
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mChildId, 24);
-    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddresses[0], "fdc3:1ff4:5fef:f4e7:5257:420f:1cbd:46f5");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[0], "fdc3:1ff4:5fef:f4e7:5257:420f:1cbd:46f5");
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mChildId, 2);
 }
 
