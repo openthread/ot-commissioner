@@ -153,7 +153,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     std::string tlvsHexString =
         "00086ac6c2de12b212df0102c80002010f0512e7000400204300300af1f1f1f1f101f1f1f10608360bb9f7415c30210840fd9238a3395d"
         "0001f9043dfeb7b3edf3fd7d604fb88a0000000000fffe00c800fd7d604fb88a0000fe3e5a4c31acb559fe8000000000000068c6c2de12"
-        "b212df1009601804601d046019041e227018fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e227002fd"
+        "b212df1009601804601d046019041e22c818fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e22c802fd"
         "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0";
 
     error = utils::Hex(buf, tlvsHexString);
@@ -178,10 +178,14 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mChildTable[0].mChildId, 24);
     EXPECT_EQ(diagData.mLeaderData.mRouterId, 33);
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList.size(), 2);
-    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mRloc16, 28696);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mRloc16, 51224);
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mChildId, 24);
-    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[0], "fdc3:1ff4:5fef:f4e7:5257:420f:1cbd:46f5");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mAddrs[0], "fdc3:1ff4:5fef:f4e7:e580:431c:60be:cfab");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mAddrs[1], "fd11:22::8df8:46f3:ab0c:555");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mRloc16, 51202);
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mChildId, 2);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[0], "fdc3:1ff4:5fef:f4e7:5257:420f:1cbd:46f5");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[1], "fd11:22::34e5:d9e2:8d19:52c0");
 }
 
 } // namespace commissioner
