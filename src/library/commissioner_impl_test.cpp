@@ -164,7 +164,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
 
     ByteArray extMacAddrBytes;
     uint16_t  macAddr = 0xc800;
-    utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
+    error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
 
     EXPECT_EQ(error, ErrorCode::kNone);
     EXPECT_EQ(diagData.mPresentFlags, 639);
