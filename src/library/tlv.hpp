@@ -218,8 +218,7 @@ private:
 Error  GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope = Scope::kMeshCoP);
 TlvPtr GetTlv(tlv::Type aTlvType, const ByteArray &aBuf, Scope aScope = Scope::kMeshCoP);
 Error  GetTlvListByType(TlvList &aTlvList, const ByteArray &aBuf, tlv::Type aTlvType, Scope aScope = Scope::kMeshCoP);
-
-bool IsDatasetParameter(bool aIsActiveDataset, tlv::Type aTlvType);
+bool   IsDatasetParameter(bool aIsActiveDataset, tlv::Type aTlvType);
 
 } // namespace tlv
 
