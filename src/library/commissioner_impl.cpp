@@ -52,6 +52,7 @@
 #include "common/utils.hpp"
 #include "event2/event.h"
 #include "library/coap.hpp"
+#include "library/commissioner_impl_internal.hpp"
 #include "library/dtls.hpp"
 #include "library/joiner_session.hpp"
 #include "library/openthread/bloom_filter.hpp"
@@ -1953,6 +1954,327 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
         tlvTypes.emplace_back(utils::to_underlying(tlv::Type::kNmkpUdpPort));
     }
     return tlvTypes;
+}
+
+ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
+{
+    ByteArray tlvTypes;
+
+    if (aDiagTlvFlags & NetDiagData::kExtMacAddrBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kMacAddrBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kModeBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kRoute64Bit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kLeaderDataBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kAddrsBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kMacCountersBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacCounters);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kChildTableBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kEui64Bit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
+    }
+
+    if (aDiagTlvFlags & NetDiagData::kChildIpv6AddrsInfoListBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
+    }
+
+    return tlvTypes;
+}
+
+Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload)
+{
+    Error        error;
+    tlv::TlvSet  tlvSet;
+    tlv::TlvList tlvList;
+    NetDiagData  diagData;
+
+    SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aPayload, tlv::Scope::kNetworkDiag));
+
+    if (auto extMacAddr = tlvSet[tlv::Type::kNetworkDiagExtMacAddress])
+    {
+        const ByteArray &value = extMacAddr->GetValue();
+        diagData.mExtMacAddr   = value;
+        diagData.mPresentFlags |= NetDiagData::kExtMacAddrBit;
+    }
+
+    if (auto macAddr = tlvSet[tlv::Type::kNetworkDiagMacAddress])
+    {
+        uint16_t value;
+        value             = utils::Decode<uint16_t>(macAddr->GetValue());
+        diagData.mMacAddr = value;
+        diagData.mPresentFlags |= NetDiagData::kMacAddrBit;
+    }
+
+    if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
+    {
+        SuccessOrExit(error = internal::DecodeModeData(diagData.mMode, mode->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kModeBit;
+    }
+
+    if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
+    {
+        const ByteArray &value = route64->GetValue();
+        SuccessOrExit(error = DecodeRoute64(diagData.mRoute64, value));
+        diagData.mPresentFlags |= NetDiagData::kRoute64Bit;
+    }
+
+    if (auto leaderData = tlvSet[tlv::Type::kNetworkDiagLeaderData])
+    {
+        const ByteArray &value = leaderData->GetValue();
+        SuccessOrExit(error = DecodeLeaderData(diagData.mLeaderData, value));
+        diagData.mPresentFlags |= NetDiagData::kLeaderDataBit;
+    }
+
+    if (auto ipv6Addrs = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
+    {
+        const ByteArray &value = ipv6Addrs->GetValue();
+        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddrs, value));
+        diagData.mPresentFlags |= NetDiagData::kAddrsBit;
+    }
+
+    if (auto macCounters = tlvSet[tlv::Type::kNetworkDiagMacCounters])
+    {
+        const ByteArray &value = macCounters->GetValue();
+        SuccessOrExit(error = DecodeMacCounters(diagData.mMacCounters, value));
+        diagData.mPresentFlags |= NetDiagData::kMacCountersBit;
+    }
+
+    if (auto childTable = tlvSet[tlv::Type::kNetworkDiagChildTable])
+    {
+        const ByteArray &value = childTable->GetValue();
+        SuccessOrExit(error = DecodeChildTable(diagData.mChildTable, value));
+        diagData.mPresentFlags |= NetDiagData::kChildTableBit;
+    }
+
+    if (auto eui64 = tlvSet[tlv::Type::kNetworkDiagEui64])
+    {
+        const ByteArray &value = eui64->GetValue();
+        diagData.mEui64        = value;
+        diagData.mPresentFlags |= NetDiagData::kEui64Bit;
+    }
+
+    SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChildIpv6Address,
+                                                tlv::Scope::kNetworkDiag));
+
+    if (tlvList.size() > 0)
+    {
+        for (const auto &tlv : tlvList)
+        {
+            SuccessOrExit(error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, tlv.GetValue()));
+        }
+        diagData.mPresentFlags |= NetDiagData::kChildIpv6AddrsInfoListBit;
+    }
+
+    aNetDiagData = diagData;
+
+exit:
+    return error;
+}
+
+Error internal::DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    size_t offset = 0;
+    while (offset < length)
+    {
+        VerifyOrExit(offset + kIpv6AddressBytes <= length, error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
+        Address          addr;
+        const ByteArray &value = {aBuf.data() + offset, aBuf.data() + offset + kIpv6AddressBytes};
+        SuccessOrExit(error = addr.Set(value));
+        aAddrs.emplace_back(addr.ToString());
+        offset += kIpv6AddressBytes;
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChildIpv6AddressInfoList,
+                                           const ByteArray                &aBuf)
+{
+    Error             error;
+    size_t            length = aBuf.size();
+    ChildIpv6AddrInfo childIpv6AddrsInfo;
+
+    VerifyOrExit((length % kIpv6AddressBytes) == kRloc16Bytes,
+                 error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
+    childIpv6AddrsInfo.mRloc16  = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
+    childIpv6AddrsInfo.mChildId = childIpv6AddrsInfo.mRloc16 & 0x1FF;
+
+    SuccessOrExit(error = DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
+    aChildIpv6AddressInfoList.emplace_back(childIpv6AddrsInfo);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeModeData(ModeData &aModeData, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    VerifyOrExit(length == 1, error = ERROR_BAD_FORMAT("invalid Mode value length {}, expect 1", length));
+    aModeData.mIsRxOnWhenIdleMode          = (aBuf[0] & 0x01) != 0;
+    aModeData.mIsMtd                       = (aBuf[0] & 0x02) == 0;
+    aModeData.mIsStableNetworkDataRequired = (aBuf[0] & 0x04) != 0;
+
+exit:
+    return error;
+}
+
+/**
+ * Decode Child Table TLV
+ *
+ * @param aChildTable The Child Table to be decoded, which is a vector of ChildTableEntry.
+ *                    The ChildTableEntry is a struct of timeout, incoming link quality, child id,
+ *                    and mode data which is composed of 3 bytes
+ *                    Timeout is 2^(Timeout-4) seconds.
+ *                    ILQ is a value between 0 and 3.
+ *                    Child ID is a 9-bit value.
+ * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+ * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * |       Timeout     |  ILQ  ｜           Child ID                |            Mode              |
+ * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * @param aBuf The buffer to be decoded
+ * @return Error code
+ */
+Error internal::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    size_t offset = 0;
+
+    while (offset < length)
+    {
+        ChildTableEntry entry;
+        VerifyOrExit(offset + kChildTableEntryBytes <= length,
+                     error = ERROR_BAD_FORMAT("premature end of Child Table"));
+        entry.mTimeout             = 1 << (((aBuf[offset] & 0xF8) >> 3) - 4);
+        entry.mIncomingLinkQuality = (aBuf[offset] & 0x06) >> 1;
+        entry.mChildId             = ((aBuf[offset] & 0x01) << 9) | aBuf[offset + 1];
+        SuccessOrExit(error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3}));
+        aChildTable.emplace_back(entry);
+        offset += kChildTableEntryBytes;
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    VerifyOrExit(length == kLeaderDataBytes, error = ERROR_BAD_FORMAT("incorrect size of LeaderData"));
+    aLeaderData.mPartitionId       = utils::Decode<uint32_t>(aBuf.data(), 4);
+    aLeaderData.mWeighting         = aBuf[4];
+    aLeaderData.mDataVersion       = aBuf[5];
+    aLeaderData.mStableDataVersion = aBuf[6];
+    aLeaderData.mRouterId          = aBuf[7];
+
+exit:
+    return error;
+}
+
+Error internal::DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf)
+{
+    Error     error;
+    size_t    length = aBuf.size();
+    size_t    offset = 0;
+    ByteArray routerIdList;
+
+    VerifyOrExit(length >= kRouterIdMaskBytes + 1, error = ERROR_BAD_FORMAT("incorrect size of Route64"));
+    aRoute64.mIdSequence = aBuf[offset++];
+    aRoute64.mMask       = {aBuf.begin() + offset, aBuf.begin() + offset + kRouterIdMaskBytes};
+    offset += kRouterIdMaskBytes;
+
+    routerIdList = ExtractRouterIds(aRoute64.mMask);
+    VerifyOrExit((length - offset) == routerIdList.size(), error = ERROR_BAD_FORMAT("incorrect size of RouteData"));
+    while (offset < length)
+    {
+        RouteDataEntry entry;
+        entry.mRouterId = routerIdList[offset - kRouterIdMaskBytes - 1];
+        DecodeRouteDataEntry(entry, aBuf[offset]);
+        aRoute64.mRouteData.emplace_back(entry);
+        offset++;
+    }
+
+exit:
+    return error;
+}
+
+void internal::DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf)
+{
+    aRouteDataEntry.mOutgoingLinkQuality = (aBuf >> 6) & 0x03;
+    aRouteDataEntry.mIncomingLinkQuality = (aBuf >> 4) & 0x03;
+    aRouteDataEntry.mRouteCost           = aBuf & 0x0F;
+}
+
+ByteArray internal::ExtractRouterIds(const ByteArray &aMask)
+{
+    ByteArray routerIdList;
+
+    for (size_t i = 0; i < kRouterIdMaskBytes * 8; i++)
+    {
+        if ((aMask[i / 8] & (0x80 >> (i % 8))) != 0)
+        {
+            routerIdList.push_back(i);
+        }
+    }
+
+    return routerIdList;
+}
+
+Error internal::DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+    VerifyOrExit(length == kMacCountersBytes, error = ERROR_BAD_FORMAT("incorrect size of MacCounters"));
+    aMacCounters.mIfInUnknownProtos  = utils::Decode<uint32_t>(aBuf.data(), 4);
+    aMacCounters.mIfInErrors         = utils::Decode<uint32_t>(aBuf.data() + 4, 4);
+    aMacCounters.mIfOutErrors        = utils::Decode<uint32_t>(aBuf.data() + 8, 4);
+    aMacCounters.mIfInUcastPkts      = utils::Decode<uint32_t>(aBuf.data() + 12, 4);
+    aMacCounters.mIfInBroadcastPkts  = utils::Decode<uint32_t>(aBuf.data() + 16, 4);
+    aMacCounters.mIfInDiscards       = utils::Decode<uint32_t>(aBuf.data() + 20, 4);
+    aMacCounters.mIfOutUcastPkts     = utils::Decode<uint32_t>(aBuf.data() + 24, 4);
+    aMacCounters.mIfOutBroadcastPkts = utils::Decode<uint32_t>(aBuf.data() + 28, 4);
+    aMacCounters.mIfOutDiscards      = utils::Decode<uint32_t>(aBuf.data() + 32, 4);
+
+exit:
+    return error;
 }
 
 void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string &aDstAddr, const std::string &aUriPath)

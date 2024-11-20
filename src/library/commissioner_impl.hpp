@@ -40,6 +40,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
 #include "event2/event.h"
@@ -224,6 +225,8 @@ private:
     static Error     DecodeCommissionerDataset(CommissionerDataset &aDataset, const coap::Response &aResponse);
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
+
+    static ByteArray GetNetDiagTlvTypes(uint64_t aDiagTlvFlags);
 
     void SendPetition(PetitionHandler aHandler);
 

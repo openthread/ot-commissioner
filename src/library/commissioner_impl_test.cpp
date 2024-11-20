@@ -35,9 +35,11 @@
  */
 
 #include "library/commissioner_impl.hpp"
+#include "library/commissioner_impl_internal.hpp"
 
 #include <gtest/gtest.h>
 
+#include "commissioner/defines.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
@@ -141,6 +143,49 @@ TEST(CommissionerImpl, NotImplementedApis)
     EXPECT_EQ(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684), ErrorCode::kUnimplemented);
 
     event_base_free(eventBase);
+}
+
+TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
+{
+    ByteArray   buf;
+    NetDiagData diagData;
+    Error       error;
+    std::string tlvsHexString =
+        "00086ac6c2de12b212df0102c80002010f0512e7000400204300300af1f1f1f1f101f1f1f10608360bb9f7415c30210840fd9238a3395d"
+        "0001f9043dfeb7b3edf3fd7d604fb88a0000000000fffe00c800fd7d604fb88a0000fe3e5a4c31acb559fe8000000000000068c6c2de12"
+        "b212df1009601804601d046019041e22c818fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e22c802fd"
+        "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0";
+
+    error = utils::Hex(buf, tlvsHexString);
+    EXPECT_EQ(error, ErrorCode::kNone);
+
+    error = ot::commissioner::internal::DecodeNetDiagData(diagData, buf);
+    EXPECT_EQ(error, ErrorCode::kNone);
+
+    ByteArray extMacAddrBytes;
+    uint16_t  macAddr = 0xc800;
+    error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
+
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(diagData.mPresentFlags, 639);
+    EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
+    EXPECT_EQ(diagData.mMacAddr, macAddr);
+    EXPECT_EQ(diagData.mMode.mIsMtd, false);
+    EXPECT_EQ(diagData.mRoute64.mRouteData.size(), 9);
+    EXPECT_EQ(diagData.mAddrs.size(), 4);
+    EXPECT_EQ(diagData.mAddrs[0], "fd92:38a3:395d:1:f904:3dfe:b7b3:edf3");
+    EXPECT_EQ(diagData.mChildTable.size(), 3);
+    EXPECT_EQ(diagData.mChildTable[0].mChildId, 24);
+    EXPECT_EQ(diagData.mLeaderData.mRouterId, 33);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList.size(), 2);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mRloc16, 51224);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mChildId, 24);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mAddrs[0], "fdc3:1ff4:5fef:f4e7:e580:431c:60be:cfab");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[0].mAddrs[1], "fd11:22::8df8:46f3:ab0c:555");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mRloc16, 51202);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mChildId, 2);
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[0], "fdc3:1ff4:5fef:f4e7:5257:420f:1cbd:46f5");
+    EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[1], "fd11:22::34e5:d9e2:8d19:52c0");
 }
 
 } // namespace commissioner

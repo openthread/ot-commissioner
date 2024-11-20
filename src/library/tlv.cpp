@@ -274,7 +274,7 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagChild:
             return length >= 43;
         case Type::kNetworkDiagChildIpv6Address:
-            return (length % 16 == 0) && (length / 16 >= 1);
+            return (length % 16 == 2) && (length / 16 >= 1);
         case Type::kNetworkDiagRouterNeighbor:
             return length >= 24;
         case Type::kNetworkDiagAnswer:
@@ -501,6 +501,35 @@ TlvPtr GetTlv(tlv::Type aTlvType, const ByteArray &aBuf, Scope aScope)
 
 exit:
     return ret;
+}
+
+Error GetTlvListByType(TlvList &aTlvList, const ByteArray &aBuf, tlv::Type aTlvType, Scope aScope)
+{
+    Error  error;
+    size_t offset = 0;
+
+    aTlvList.clear();
+
+    while (offset < aBuf.size())
+    {
+        auto tlvPtr = tlv::Tlv::Deserialize(error, offset, aBuf, aScope);
+        SuccessOrExit(error);
+        VerifyOrDie(tlvPtr != nullptr);
+
+        if (tlvPtr->IsValid() && tlvPtr->GetType() == aTlvType)
+        {
+            aTlvList.push_back(*tlvPtr);
+        }
+        else
+        {
+            // Drop invalid TLVs
+            LOG_WARN(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
+                     utils::to_underlying(tlvPtr->GetType()), utils::Hex(tlvPtr->GetValue()));
+        }
+    }
+
+exit:
+    return error;
 }
 
 bool IsDatasetParameter(bool aIsActiveDataset, tlv::Type aTlvType)
