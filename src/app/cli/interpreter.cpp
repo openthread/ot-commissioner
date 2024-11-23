@@ -2608,7 +2608,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
             for (auto &diagAnsDataMap : diagAnsDataMaps)
             {
                 value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + Ipv6AddressToJson(diagAnsDataMap.second.mIpv6AddressList);
+                        "\nContent: " + Ipv6AddressToJson(diagAnsDataMap.second.mAddrs);
             }
         }
     }

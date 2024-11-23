@@ -1862,7 +1862,7 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
     if (auto ipv6Addresses = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
     {
         const ByteArray &value = ipv6Addresses->GetValue();
-        SuccessOrExit(error = DecodeIpv6AddressList(dataset.mIpv6AddressList, value));
+        SuccessOrExit(error = DecodeIpv6AddressList(dataset.mAddrs, value));
         dataset.mPresentFlags |= NetDiagData::kIpv6AddressBit;
     }
 
@@ -1890,7 +1890,7 @@ Error CommissionerImpl::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteA
     if (auto childIpv6Address = tlvSet[tlv::Type::kNetworkDiagChildIpv6Address])
     {
         const ByteArray &value = childIpv6Address->GetValue();
-        SuccessOrExit(error = DecodeChildIpv6AddressList(dataset.mChildIpv6AddressList, value));
+        SuccessOrExit(error = DecodeChildIpv6AddressList(dataset.mChildIpv6AddrsInfoList, value));
         dataset.mPresentFlags |= NetDiagData::kChildIpv6AddressBit;
     }
 
@@ -1900,34 +1900,37 @@ exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeIpv6AddressList(Ipv6AddressList &aIpv6AddressList, const ByteArray &aBuf)
+Error CommissionerImpl::DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf)
 {
     Error  error;
     size_t length = aBuf.size();
     size_t offset = 0;
     while (offset < length)
     {
-        VerifyOrExit(offset + IPV6_ADDRESS_BYTES <= length, error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
+        VerifyOrExit(offset + kIpv6AddressBytes <= length, error = ERROR_BAD_FORMAT("premature end of IPv6 Address"));
         Address          addr;
-        const ByteArray &value = {aBuf.data() + offset, aBuf.data() + offset + IPV6_ADDRESS_BYTES};
+        const ByteArray &value = {aBuf.data() + offset, aBuf.data() + offset + kIpv6AddressBytes};
         SuccessOrExit(error = addr.Set(value));
-        aIpv6AddressList.mIpv6Addresses.emplace_back(addr.ToString());
-        offset += IPV6_ADDRESS_BYTES;
+        aAddrs.emplace_back(addr.ToString());
+        offset += kIpv6AddressBytes;
     }
 exit:
     return error;
 }
 
-Error CommissionerImpl::DecodeChildIpv6AddressList(ChildIpv6AddressList &aChildIpv6AddressList, const ByteArray &aBuf)
+Error CommissionerImpl::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList,
+                                                   const ByteArray                   &aBuf)
 {
-    Error  error;
-    size_t length = aBuf.size();
-    VerifyOrExit((length - RLOC16_BYTES) % IPV6_ADDRESS_BYTES == 0,
+    Error                error;
+    size_t               length = aBuf.size();
+    ChildIpv6AddressInfo childIpv6AddrsInfo;
+
+    VerifyOrExit((length - kRloc16Bytes) % kIpv6AddressBytes == 0,
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
-    aChildIpv6AddressList.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), RLOC16_BYTES);
-    ;
-    SuccessOrExit(error = DecodeIpv6AddressList(aChildIpv6AddressList.mIpv6AddressList,
-                                                {aBuf.begin() + RLOC16_BYTES, aBuf.end()}));
+    childIpv6AddrsInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
+
+    SuccessOrExit(error = DecodeIpv6AddressList(childIpv6AddrsInfo.mAddrs, {aBuf.begin() + kRloc16Bytes, aBuf.end()}));
+    aChildIpv6AddressInfoList.emplace_back(childIpv6AddrsInfo);
 exit:
     return error;
 }
@@ -1953,14 +1956,14 @@ Error CommissionerImpl::DecodeChildTable(std::vector<ChildTableEntry> &aChildTab
     while (offset < length)
     {
         ChildTableEntry entry;
-        VerifyOrExit(offset + CHILD_TABLE_ENTRY_BYTES <= length,
+        VerifyOrExit(offset + kChildTableEntryBytes <= length,
                      error = ERROR_BAD_FORMAT("premature end of Child Table"));
         entry.mTimeout             = 1 << (((aBuf[offset] & 0xF8) >> 3) - 4);
         entry.mIncomingLinkQuality = (aBuf[offset] & 0x06) >> 1;
-        entry.mChildId             = ((aBuf[offset] & 0x01) << 9) | aBuf[1];
+        entry.mChildId             = ((aBuf[offset] & 0x01) << 9) | aBuf[offset + 1];
         SuccessOrExit(error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3}));
         aChildTable.emplace_back(entry);
-        offset += CHILD_TABLE_ENTRY_BYTES;
+        offset += kChildTableEntryBytes;
     }
 exit:
     return error;
@@ -1970,7 +1973,7 @@ Error CommissionerImpl::DecodeLeaderData(LeaderData &aLeaderData, const ByteArra
 {
     Error  error;
     size_t length = aBuf.size();
-    VerifyOrExit(length == LEADER_DATA_BYTES, error = ERROR_BAD_FORMAT("incorrect size of LeaderData"));
+    VerifyOrExit(length == kLeaderDataBytes, error = ERROR_BAD_FORMAT("incorrect size of LeaderData"));
     aLeaderData.mPartitionId       = utils::Decode<uint32_t>(aBuf.data(), 4);
     aLeaderData.mWeighting         = aBuf[4];
     aLeaderData.mDataVersion       = aBuf[5];
@@ -1987,17 +1990,17 @@ Error CommissionerImpl::DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf)
     size_t    offset = 0;
     ByteArray routerIdList;
 
-    VerifyOrExit(length >= ROUTER_ID_MASK_BYTES + 1, error = ERROR_BAD_FORMAT("incorrect size of Route64"));
+    VerifyOrExit(length >= kRouterIdMaskBytes + 1, error = ERROR_BAD_FORMAT("incorrect size of Route64"));
     aRoute64.mIdSequence = aBuf[offset++];
-    aRoute64.mMask       = {aBuf.begin() + offset, aBuf.begin() + offset + ROUTER_ID_MASK_BYTES};
-    offset += ROUTER_ID_MASK_BYTES;
+    aRoute64.mMask       = {aBuf.begin() + offset, aBuf.begin() + offset + kRouterIdMaskBytes};
+    offset += kRouterIdMaskBytes;
 
     routerIdList = ExtractRouterIds(aRoute64.mMask);
     VerifyOrExit((length - offset) == routerIdList.size(), error = ERROR_BAD_FORMAT("incorrect size of RouteData"));
     while (offset < length)
     {
         RouteDataEntry entry;
-        entry.mRouterId = routerIdList[offset - ROUTER_ID_MASK_BYTES - 1];
+        entry.mRouterId = routerIdList[offset - kRouterIdMaskBytes - 1];
         DecodeRouteDataEntry(entry, aBuf[offset]);
         aRoute64.mRouteData.emplace_back(entry);
         offset++;
@@ -2017,7 +2020,7 @@ ByteArray CommissionerImpl::ExtractRouterIds(const ByteArray &aMask)
 {
     ByteArray routerIdList;
 
-    for (size_t i = 0; i < ROUTER_ID_MASK_BYTES * 8; i++)
+    for (size_t i = 0; i < kRouterIdMaskBytes * 8; i++)
     {
         if ((aMask[i / 8] & (0x80 >> (i % 8))) != 0)
         {
@@ -2032,7 +2035,7 @@ Error CommissionerImpl::DecodeMacCounters(MacCounters &aMacCounters, const ByteA
 {
     Error  error;
     size_t length = aBuf.size();
-    VerifyOrExit(length == MAC_COUNTERS_BYTES, error = ERROR_BAD_FORMAT("incorrect size of MacCounters"));
+    VerifyOrExit(length == kMacCountersBytes, error = ERROR_BAD_FORMAT("incorrect size of MacCounters"));
     aMacCounters.mIfInUnknownProtos  = utils::Decode<uint32_t>(aBuf.data(), 4);
     aMacCounters.mIfInErrors         = utils::Decode<uint32_t>(aBuf.data() + 4, 4);
     aMacCounters.mIfOutErrors        = utils::Decode<uint32_t>(aBuf.data() + 8, 4);

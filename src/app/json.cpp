@@ -420,18 +420,39 @@ static void from_json(const Json &aJson, SecurityPolicy &aSecurityPolicy)
 // Diagnostic feature in TMF
 static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
-    if (aNetDiagData.mPresentFlags & NetDiagData::kIpv6AddressBit)
-    {
-        aJson["Ipv6Addresses"] = Ipv6AddressToJson(aNetDiagData.mIpv6AddressList);
-    }
+//    if (aNetDiagData.mPresentFlags & NetDiagData::kIpv6AddressBit)
+//    {
+//        aJson["Ipv6Addresses"] = Ipv6AddressToJson(aNetDiagData.mAddrs);
+//    }
+#define SET_IF_PRESENT(name)                                        \
+    if (aNetDiagData.mPresentFlags & NetDiagData::k##name##Bit) \
+    {                                                               \
+        aJson[#name] = aNetDiagData.m##name;                            \
+    };
+
+    SET_IF_PRESENT(ExtMacAddress);
+    SET_IF_PRESENT(MacAddress);
+#undef SET_IF_PRESENT
+
+
 }
 
-static void to_json(Json &aJson, const Ipv6AddressList &aIpv6Address)
+static void to_json(Json &aJson, const std::vector<std::string> &aIpv6Address)
 {
     Json ipaddrArray = Json::array();
-    for (const auto &ipaddr : aIpv6Address.mIpv6Addresses)
+    for (const auto &ipaddr : aIpv6Address)
     {
         ipaddrArray.push_back(ipaddr);
+    }
+    aJson["Ipv6 Addresses"] = ipaddrArray;
+}
+
+static void to_json(Json &aJson, const std::vector<ChildIpv6AddressInfo> &aChildIpv6AddrsInfoList)
+{
+    Json childAddrsArray = Json::array();
+    for (const auto &childIpv6AddrsInfo : aChildIpv6AddrsInfoList)
+    {
+        childAddrsArray.push_back();
     }
     aJson["Ipv6 Addresses"] = ipaddrArray;
 }
@@ -442,9 +463,15 @@ std::string NetDiagTlvsToJson(const NetDiagData &aNetDiagData)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-std::string Ipv6AddressToJson(const Ipv6AddressList &aIpv6Address)
+std::string Ipv6AddressToJson(const std::vector<std::string> &aIpv6Address)
 {
     Json json = aIpv6Address;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string ChildIpv6AddrsInfoListToJson(const std::vector<ChildIpv6AddressInfo> &aChildIpv6AddrsInfoList)
+{
+    Json json = aChildIpv6AddrsInfoList;
     return json.dump(JSON_INDENT_DEFAULT);
 }
 

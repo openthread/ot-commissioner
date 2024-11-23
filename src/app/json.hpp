@@ -84,7 +84,8 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
 // Diagnostic feature in TMF
 std::string NetDiagTlvsToJson(const NetDiagData &aNetDiagData);
-std::string Ipv6AddressToJson(const Ipv6AddressList &aIpv6Address);
+std::string Ipv6AddressToJson(const std::vector<std::string> &aIpv6Address);
+std::string ChildIpv6AddrsInfoListToJson(const std::vector<ChildIpv6AddressInfo> &aIpv6Address);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);
