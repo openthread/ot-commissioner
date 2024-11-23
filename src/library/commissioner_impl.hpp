@@ -229,18 +229,7 @@ private:
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
 
-    static Error     DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload);
-    static ByteArray GetDiagTypeTlvList(uint64_t aDiagTlvFlags);
-    static Error     DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf);
-    static Error     DecodeChildIpv6AddressList(std::vector<ChildIpv6AddressInfo> &aChildIpv6AddressInfoList,
-                                                const ByteArray                   &aBuf);
-    static Error     DecodeModeData(ModeData &aModeData, const ByteArray &aBuf);
-    static Error     DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf);
-    static Error     DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf);
-    static Error     DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf);
-    static Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
-    static void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
-    static ByteArray ExtractRouterIds(const ByteArray &aMask);
+    static ByteArray GetNetDiagTlvTypes(uint64_t aDiagTlvFlags);
 
     void SendPetition(PetitionHandler aHandler);
 
