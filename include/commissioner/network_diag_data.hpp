@@ -108,10 +108,16 @@ struct ChildIpv6AddrInfo
 {
     uint16_t                 mRloc16  = 0;
     uint16_t                 mChildId = 0;
+    std::vector<std::string> mAddrs;
+};
+
+/**
+ * @brief MAC Counters
  */
 struct MacCounters
 {
     uint32_t mIfInUnknownProtos  = 0;
+    uint32_t mIfInErrors         = 0;
     uint32_t mIfOutErrors        = 0;
     uint32_t mIfInUcastPkts      = 0;
     uint32_t mIfInBroadcastPkts  = 0;
