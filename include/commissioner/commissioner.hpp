@@ -1167,11 +1167,13 @@ public:
      *
      * This method sends a DIAG_GET.qry message to the specified Thread device,
      * requesting the set of diagnostic data indicated by `aDiagDataFlags`.
-     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     * The ACK, or any errors encountered, will be delivered to the provided `aHandler`,
+     * and the diag data will be obtained by the callback of OnDiagGetAnswerMessage.
      *
      * @param[in, out] aHandler        A handler to process the response or any errors.
      *                                 This handler is guaranteed to be called.
-     * @param[in]      aAddr           Unicast mesh local address of the target Thread device.
+     * @param[in]      aAddr           Unicast mesh local address of the target Thread device,
+     *                                 the leader ALOC will be set by default if it is empty.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
      *
      */
@@ -1182,9 +1184,11 @@ public:
      *
      * This method sends a DIAG_GET.qry message to the specified Thread device,
      * requesting the set of diagnostic data indicated by `aDiagDataFlags`.
-     * The method blocks until a response is received, an error occurs.
+     * The method blocks until a ack is received, an error occurs, and the diag data
+     * will be obtained by the callback OnDiagGetAnswerMessage of CommissionerHandler.
      *
-     * @param[in]  aAddr            Unicast mesh local address of the target Thread device.
+     * @param[in]  aAddr            Unicast mesh local address of the target Thread device,
+     *                              the leader ALOC will be set by default if it is empty.
      * @param[in]  aDiagDataFlags   Diagnostic data flags indicate which TLVs are wanted.
      *
      * @return Error::kNone, succeed; Otherwise, failed.

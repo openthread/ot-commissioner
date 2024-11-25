@@ -202,7 +202,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
-    {"state", &Interpreter::ProcessState},         {"diag", &Interpreter::ProcessDiag},
+    {"state", &Interpreter::ProcessState},         {"netdiag", &Interpreter::ProcessDiag},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -281,7 +281,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "panid conflict <panid>"},
     {"energy", "energy scan <channel-mask> <count> <period> <scan-duration> <dst-addr>\n"
                "energy report [<dst-addr>]"},
-    {"diag", "diag query [extaddr | rloc16] <dest mesh local address>"},
+    {"netdiag", "netdiag query [extaddr | rloc16] <dest mesh local address>"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -2577,7 +2577,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
 
     VerifyOrExit(aExpr.size() >= 3,
                  value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
-                                            "diag [query] [extaddr | rloc16 ] <dest mesh local address>"));
+                                            "netdiag [query] [extaddr | rloc16 ] <dest mesh local address>"));
     if (aExpr.size() > 3 && !aExpr[3].empty())
     {
         dstAddr = aExpr[3];
