@@ -43,6 +43,7 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diag_data.hpp>
 
 namespace ot {
 
@@ -257,6 +258,19 @@ public:
         (void)aPeerAddr;
         (void)aChannelMask;
         (void)aEnergyList;
+    }
+
+    /**
+     * This function notifies the receiving the queried Diagnostic TLVs by DIAG_GET.ans command.
+     *
+     * @param[in] aPeerAddr     The destination address of the DIAG_GET.ans command.
+     * @param[in] aDiagAnsMsg   Parsed network diag data.
+     *
+     */
+    virtual void OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
+    {
+        (void)aPeerAddr;
+        (void)aDiagAnsMsg;
     }
 
     /**
@@ -1147,6 +1161,36 @@ public:
      *         git repository.
      */
     static std::string GetVersion(void);
+
+    /**
+     * @brief Asynchronously query diagnostic TLV decoded data from a Thread device.
+     *
+     * This method sends a DIAG_GET.qry message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     *
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
+     * @param[in]      aAddr           Mesh local address of the target Thread device.
+     * @param[in]      aDiagTlvFlags   Diagnostic TLVs flags indicate which TLVs are wanted.
+     *
+     */
+    virtual void CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
+
+    /**
+     * @brief Synchronously query diagnostic TLV decoded data from a Thread device.
+     *
+     * This method sends a DIAG_GET.qry message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagTlvFlags`.
+     * The method blocks until a response is received, an error occurs.
+     *
+     * @param[in]  aAddr            Mesh local address of the target Thread device.
+     * @param[in]  aDiagTlvFlags    Diagnostic TLVs flags indicate which TLVs are wanted.
+     *
+     * @return Error::kNone, succeed; Otherwise, failed.
+     *
+     */
+    virtual Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags) = 0;
 };
 
 } // namespace commissioner

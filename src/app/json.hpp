@@ -40,6 +40,7 @@
 #include <commissioner/commissioner.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diag_data.hpp>
 
 #include "app/border_agent.hpp"
 #include "app/commissioner_app.hpp"
@@ -80,6 +81,8 @@ Error ConfigFromJson(Config &aConfig, const std::string &aJson);
 std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
+
+std::string NetDiagDataToJson(const NetDiagData &aNetDiagData);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);

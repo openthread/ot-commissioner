@@ -200,6 +200,11 @@ private:
      */
     Error UpdateNetworkSelectionInfo(bool onStart = false);
 
+    /**
+     * Execute the diagnostic command to handle the network diag data.
+     */
+    Value executeDiagCommands(uint64_t aFlags, uint8_t aOperationType, std::string aDstAddr);
+
     Value ProcessConfig(const Expression &aExpr);
     Value ProcessStart(const Expression &aExpr);
     Value ProcessState(const Expression &aExpr);
@@ -223,6 +228,7 @@ private:
     Value ProcessAnnounce(const Expression &aExpr);
     Value ProcessPanId(const Expression &aExpr);
     Value ProcessEnergy(const Expression &aExpr);
+    Value ProcessDiag(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
@@ -233,6 +239,7 @@ private:
     Value ProcessCommDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 

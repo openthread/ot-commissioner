@@ -50,6 +50,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 
 namespace ot {
@@ -62,6 +63,8 @@ struct EnergyReport
     ByteArray   mEnergyList;
 };
 using EnergyReportMap = std::map<Address, EnergyReport>;
+
+using DiagAnsDataMap = std::map<Address, NetDiagData>;
 
 /**
  * @brief Enumeration of Joiner Type for steering.
@@ -125,6 +128,8 @@ public:
                                  const ByteArray   &aEnergyList) override;
 
     MOCKABLE void OnDatasetChanged() override;
+
+    MOCKABLE void OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg) override;
 
     MOCKABLE Error Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
 
@@ -229,6 +234,9 @@ public:
     // Always send MGMT_PENDING_SET.req.
     MOCKABLE Error SetPendingDataset(const PendingOperationalDataset &aDataset);
 
+    // Network Diagnostic
+    MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags);
+
     /*
      * BBR Dataset APIs
      */
@@ -273,7 +281,8 @@ public:
     MOCKABLE const EnergyReport    *GetEnergyReport(const Address &aDstAddr) const;
     MOCKABLE const EnergyReportMap &GetAllEnergyReports() const;
 
-    const std::string &GetDomainName() const;
+    const std::string    &GetDomainName() const;
+    const DiagAnsDataMap &GetNetDiagTlvs() const;
 
 protected:
     CommissionerApp() = default;
@@ -324,6 +333,7 @@ private:
     PendingOperationalDataset       mPendingDataset;
     CommissionerDataset             mCommDataset;
     BbrDataset                      mBbrDataset;
+    DiagAnsDataMap                  mDiagAnsDataMap;
 };
 
 Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);

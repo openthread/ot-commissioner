@@ -766,6 +766,25 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
+static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
+{
+#define SET_IF_PRESENT(name)                                    \
+    if (aNetDiagData.mPresentFlags & NetDiagData::k##name##Bit) \
+    {                                                           \
+        aJson[#name] = aNetDiagData.m##name;                    \
+    };
+
+    SET_IF_PRESENT(ExtMacAddr);
+    SET_IF_PRESENT(MacAddr);
+#undef SET_IF_PRESENT
+}
+
+std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
+{
+    Json json = aNetDiagData;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
 Error JsonFromFile(std::string &aJson, const std::string &aPath)
 {
     Error       error;

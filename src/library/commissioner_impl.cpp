@@ -33,6 +33,8 @@
 
 #include "library/commissioner_impl.hpp"
 
+#include <sys/types.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -45,6 +47,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
@@ -159,12 +162,14 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
     , mResourcePanIdConflict(uri::kMgmtPanidConflict,
                              [this](const coap::Request &aRequest) { HandlePanIdConflict(aRequest); })
     , mResourceEnergyReport(uri::kMgmtEdReport, [this](const coap::Request &aRequest) { HandleEnergyReport(aRequest); })
+    , mResourceDiagAns(uri::kDiagGetAns, [this](const coap::Request &aRequest) { HandleDiagGetAnswer(aRequest); })
 {
     SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
     SuccessOrDie(mBrClient.AddResource(mResourceRlyRx));
     SuccessOrDie(mProxyClient.AddResource(mResourceDatasetChanged));
     SuccessOrDie(mProxyClient.AddResource(mResourcePanIdConflict));
     SuccessOrDie(mProxyClient.AddResource(mResourceEnergyReport));
+    SuccessOrDie(mProxyClient.AddResource(mResourceDiagAns));
 }
 
 Error CommissionerImpl::Init(const Config &aConfig)
@@ -618,6 +623,72 @@ exit:
     if (error != ErrorCode::kNone)
     {
         aHandler(nullptr, error);
+    }
+}
+
+void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    Error         error;
+    Address       dstAddr;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+    exit:
+        aHandler(error);
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGetQuery));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetNetDiagTlvTypes(aDiagTlvFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_GET.qry");
+    if (aAddr.empty())
+    {
+        mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+    }
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
+void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
+{
+    Error       error;
+    std::string peerAddr = aRequest.GetEndpoint()->GetPeerAddr().ToString();
+
+    LOG_INFO(LOG_REGION_MESHDIAG, "received DIAG_GET.ans from {}", peerAddr);
+    mProxyClient.SendEmptyChanged(aRequest);
+
+    SuccessOrExit(error = internal::DecodeNetDiagData(mDiagAnsTlvs, aRequest.GetPayload()));
+    LOG_INFO(LOG_REGION_MESHDIAG, "accepted DIAG_GET.ans data {}", utils::Hex(aRequest.GetPayload()));
+
+    mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        LOG_ERROR(LOG_REGION_MESHDIAG, "failed to handle DIAG_GET.ans from {}", peerAddr);
     }
 }
 

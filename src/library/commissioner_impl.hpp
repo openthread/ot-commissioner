@@ -193,6 +193,9 @@ public:
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
+    void  CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags) override;
+    Error CommandDiagGetQuery(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
@@ -254,6 +257,8 @@ private:
 
     void HandleJoinerSessionTimer(Timer &aTimer);
 
+    void HandleDiagGetAnswer(const coap::Request &aRequest);
+
     bool IsActiveOrConnected() const
     {
         return (mState == State::kActive || mState == State::kConnected);
@@ -292,6 +297,9 @@ private:
     coap::Resource mResourceDatasetChanged;
     coap::Resource mResourcePanIdConflict;
     coap::Resource mResourceEnergyReport;
+
+    coap::Resource mResourceDiagAns;
+    NetDiagData    mDiagAnsTlvs;
 };
 
 /*

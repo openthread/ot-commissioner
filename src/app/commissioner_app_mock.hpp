@@ -43,6 +43,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "gmock/gmock-function-mocker.h"
 
@@ -71,6 +72,7 @@ public:
     MOCK_METHOD(void, OnPanIdConflict, (const std::string &, const ChannelMask &, uint16_t), (override));
     MOCK_METHOD(void, OnEnergyReport, (const std::string &, const ChannelMask &, const ByteArray &), (override));
     MOCK_METHOD(void, OnDatasetChanged, (), (override));
+    MOCK_METHOD(void, OnDiagGetAnswerMessage, (const std::string &, const NetDiagData &), (override));
 
     MOCK_METHOD(Error, Connect, (const std::string &, uint16_t));
     MOCK_METHOD(Error, Start, (std::string &, const std::string &, uint16_t));
@@ -137,6 +139,8 @@ public:
     MOCK_METHOD(Error, EnergyScan, (uint32_t, uint8_t, uint16_t, uint16_t, const std::string &));
     MOCK_METHOD(const EnergyReport *, GetEnergyReport, (const Address &), (const));
     MOCK_METHOD(const EnergyReportMap &, GetAllEnergyReports, (), (const));
+    MOCK_METHOD(const DiagAnsDataMap &, GetNetDiagTlvs, (), (const));
+    MOCK_METHOD(Error, CommandDiagGetQuery, (const std::string &, uint64_t));
 };
 
 class CommissionerAppStaticExpecter
