@@ -2575,8 +2575,9 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     std::string dstAddr;
     NetDiagData diagData;
 
-    VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
-                                                               "diag [query] [extaddr | rloc16 ] <dest mesh local address>"));
+    VerifyOrExit(aExpr.size() >= 3,
+                 value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
+                                            "diag [query] [extaddr | rloc16 ] <dest mesh local address>"));
     if (aExpr.size() > 3 && !aExpr[3].empty())
     {
         dstAddr = aExpr[3];

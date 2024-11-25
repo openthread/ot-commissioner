@@ -62,7 +62,7 @@ test_execute_diag_command()
 
     start_commissioner "${NON_CCM_CONFIG}"
     petition_commissioner
-    send_command_to_commissioner "diag query extmac"
+    send_command_to_commissioner "diag query extaddr"
     stop_commissioner
 
     stop_daemon
