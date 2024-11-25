@@ -202,7 +202,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
-    {"state", &Interpreter::ProcessState},         {"netdiag", &Interpreter::ProcessDiag},
+    {"state", &Interpreter::ProcessState},         {"netdiag", &Interpreter::ProcessNetworkDiag},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -2556,18 +2556,18 @@ exit:
     return value;
 }
 
-Interpreter::Value Interpreter::ProcessDiag(const Expression &aExpr)
+Interpreter::Value Interpreter::ProcessNetworkDiag(const Expression &aExpr)
 {
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
 
     SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
-    value = ProcessDiagJob(commissioner, aExpr);
+    value = ProcessNetworkDiagJob(commissioner, aExpr);
 exit:
     return value;
 }
 
-Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
     Value       value;
     uint64_t    flags         = 0;
