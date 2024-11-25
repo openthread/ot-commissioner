@@ -281,7 +281,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "panid conflict <panid>"},
     {"energy", "energy scan <channel-mask> <count> <period> <scan-duration> <dst-addr>\n"
                "energy report [<dst-addr>]"},
-    {"diag", "diag query [extmac | rloc16] <dest mesh local address>"},
+    {"diag", "diag query [extaddr | rloc16] <dest mesh local address>"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -2576,7 +2576,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
     NetDiagData diagData;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
-                                                               "diag [query] [ipaddr] <dest mesh local address>"));
+                                                               "diag [query] [extaddr | rloc16 ] <dest mesh local address>"));
     if (aExpr.size() > 3 && !aExpr[3].empty())
     {
         dstAddr = aExpr[3];
@@ -2595,7 +2595,7 @@ Interpreter::Value Interpreter::ProcessDiagJob(CommissionerAppPtr &aCommissioner
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
     }
 
-    if (CaseInsensitiveEqual(aExpr[2], "extmac"))
+    if (CaseInsensitiveEqual(aExpr[2], "extaddr"))
     {
         flags = NetDiagData::kExtMacAddrBit;
         if (operationType == DIAG_GET_QRY_TYPE)

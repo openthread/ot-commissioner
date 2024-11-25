@@ -1171,7 +1171,7 @@ public:
      *
      * @param[in, out] aHandler        A handler to process the response or any errors.
      *                                 This handler is guaranteed to be called.
-     * @param[in]      aAddr           Mesh local address of the target Thread device.
+     * @param[in]      aAddr           Unicast mesh local address of the target Thread device.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
      *
      */
@@ -1184,7 +1184,7 @@ public:
      * requesting the set of diagnostic data indicated by `aDiagDataFlags`.
      * The method blocks until a response is received, an error occurs.
      *
-     * @param[in]  aAddr            Mesh local address of the target Thread device.
+     * @param[in]  aAddr            Unicast mesh local address of the target Thread device.
      * @param[in]  aDiagDataFlags   Diagnostic data flags indicate which TLVs are wanted.
      *
      * @return Error::kNone, succeed; Otherwise, failed.
