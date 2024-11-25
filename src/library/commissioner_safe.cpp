@@ -549,16 +549,16 @@ Error CommissionerSafe::SetToken(const ByteArray &aSignedToken)
     return pro.get_future().get();
 }
 
-void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags)
 {
-    PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aAddr, aDiagTlvFlags); });
+    PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aAddr, aDiagDataFlags); });
 }
 
-Error CommissionerSafe::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags)
+Error CommissionerSafe::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags)
 {
     std::promise<Error> pro;
     auto                wait = [&pro](Error error) { pro.set_value(error); };
-    CommandDiagGetQuery(wait, aAddr, aDiagTlvFlags);
+    CommandDiagGetQuery(wait, aAddr, aDiagDataFlags);
     return pro.get_future().get();
 }
 

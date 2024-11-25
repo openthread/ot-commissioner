@@ -201,7 +201,7 @@ private:
     Error UpdateNetworkSelectionInfo(bool onStart = false);
 
     /**
-     * Execute the diagnostic command to handle the network diag data.
+     * Execute the diagnostic command (query) to handle the network diag data.
      */
     Value executeDiagCommands(uint64_t aFlags, uint8_t aOperationType, std::string aDstAddr);
 

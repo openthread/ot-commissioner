@@ -626,7 +626,7 @@ exit:
     }
 }
 
-void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagTlvFlags)
+void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags)
 {
     Error         error;
     Address       dstAddr;
@@ -643,7 +643,7 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
 
     VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
     SuccessOrExit(error = request.SetUriPath(uri::kDiagGetQuery));
-    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetNetDiagTlvTypes(aDiagTlvFlags),
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetNetDiagTlvTypes(aDiagDataFlags),
                                               tlv::Scope::kNetworkDiag}));
 
 #if OT_COMM_CONFIG_CCM_ENABLE
@@ -2027,56 +2027,56 @@ ByteArray CommissionerImpl::GetCommissionerDatasetTlvs(uint16_t aDatasetFlags)
     return tlvTypes;
 }
 
-ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagTlvFlags)
+ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
 {
     ByteArray tlvTypes;
 
-    if (aDiagTlvFlags & NetDiagData::kExtMacAddrBit)
+    if (aDiagDataFlags & NetDiagData::kExtMacAddrBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagExtMacAddress);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kMacAddrBit)
+    if (aDiagDataFlags & NetDiagData::kMacAddrBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacAddress);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kModeBit)
+    if (aDiagDataFlags & NetDiagData::kModeBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMode);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kRoute64Bit)
+    if (aDiagDataFlags & NetDiagData::kRoute64Bit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRoute64);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kLeaderDataBit)
+    if (aDiagDataFlags & NetDiagData::kLeaderDataBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagLeaderData);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kAddrsBit)
+    if (aDiagDataFlags & NetDiagData::kAddrsBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagIpv6Address);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kMacCountersBit)
+    if (aDiagDataFlags & NetDiagData::kMacCountersBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMacCounters);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kChildTableBit)
+    if (aDiagDataFlags & NetDiagData::kChildTableBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildTable);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kEui64Bit)
+    if (aDiagDataFlags & NetDiagData::kEui64Bit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagEui64);
     }
 
-    if (aDiagTlvFlags & NetDiagData::kChildIpv6AddrsInfoListBit)
+    if (aDiagDataFlags & NetDiagData::kChildIpv6AddrsInfoListBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
     }

@@ -1391,11 +1391,11 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
 }
 
 // Network Diagnostic
-Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags)
+Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags)
 {
     Error error;
 
-    error = mCommissioner->CommandDiagGetQuery(aAddr, aDiagTlvFlags);
+    error = mCommissioner->CommandDiagGetQuery(aAddr, aDiagDataFlags);
     return error;
 }
 

@@ -235,7 +235,7 @@ public:
     MOCKABLE Error SetPendingDataset(const PendingOperationalDataset &aDataset);
 
     // Network Diagnostic
-    MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags);
+    MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags);
 
     /*
      * BBR Dataset APIs
