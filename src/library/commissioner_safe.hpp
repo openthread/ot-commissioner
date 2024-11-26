@@ -141,6 +141,9 @@ public:
     void  CommandDomainReset(ErrorHandler aHandler, const std::string &aDstAddr) override;
     Error CommandDomainReset(const std::string &aDstAddr) override;
 
+    void  CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
+    Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags) override;
+
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,
                          const std::string &aDstNetworkName) override;

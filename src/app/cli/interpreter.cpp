@@ -116,6 +116,8 @@
 #define WARN_NETWORK_SELECTION_DROPPED "Network selection was dropped by the command"
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
+#define DIAG_GET_QRY_TYPE 1
+
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
 namespace ot {
@@ -200,7 +202,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
-    {"state", &Interpreter::ProcessState},
+    {"state", &Interpreter::ProcessState},         {"netdiag", &Interpreter::ProcessNetworkDiag},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -279,6 +281,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "panid conflict <panid>"},
     {"energy", "energy scan <channel-mask> <count> <period> <scan-duration> <dst-addr>\n"
                "energy report [<dst-addr>]"},
+    {"netdiag", "netdiag query [extaddr | rloc16] <dest mesh local address>"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -2547,6 +2550,83 @@ Interpreter::Value Interpreter::ProcessEnergy(const Expression &aExpr)
     else
     {
         value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]);
+    }
+
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessNetworkDiag(const Expression &aExpr)
+{
+    Value              value;
+    CommissionerAppPtr commissioner = nullptr;
+
+    SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
+    value = ProcessNetworkDiagJob(commissioner, aExpr);
+exit:
+    return value;
+}
+
+Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
+    Value       value;
+    uint64_t    flags         = 0;
+    uint8_t     operationType = 0;
+    std::string dstAddr;
+    NetDiagData diagData;
+
+    VerifyOrExit(aExpr.size() >= 3,
+                 value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
+                                            "netdiag [query] [extaddr | rloc16 ] <dest mesh local address>"));
+    if (aExpr.size() > 3 && !aExpr[3].empty())
+    {
+        dstAddr = aExpr[3];
+    }
+    else
+    {
+        dstAddr.clear();
+    }
+
+    if (CaseInsensitiveEqual(aExpr[1], "query"))
+    {
+        operationType = DIAG_GET_QRY_TYPE;
+    }
+    else
+    {
+        ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
+    }
+
+    if (CaseInsensitiveEqual(aExpr[2], "extaddr"))
+    {
+        flags = NetDiagData::kExtMacAddrBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            diagData.mPresentFlags         = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "rloc16"))
+    {
+        flags = NetDiagData::kMacAddrBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            diagData.mPresentFlags         = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
+            }
+        }
     }
 
 exit:

@@ -34,6 +34,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 
 #define UNUSED(A) (void)A
@@ -97,6 +98,12 @@ void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
 
 void CommissionerApp::OnDatasetChanged()
 {
+}
+
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
+{
+    UNUSED(aPeerAddr);
+    UNUSED(aDiagAnsMsg);
 }
 
 Error CommissionerApp::Start(std::string       &aExistingCommissionerId,
@@ -516,6 +523,19 @@ const EnergyReportMap &CommissionerApp::GetAllEnergyReports() const
 {
     static EnergyReportMap sEnergyReportMap{};
     return sEnergyReportMap;
+}
+
+const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
+{
+    static DiagAnsDataMap sDiagAnsDataMap{};
+    return sDiagAnsDataMap;
+}
+
+Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    UNUSED(aAddr);
+    UNUSED(aDiagTlvFlags);
+    return Error{};
 }
 
 } // namespace commissioner

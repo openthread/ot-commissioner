@@ -54,3 +54,16 @@ test_get_commissioner_dataset()
 
     stop_daemon
 }
+
+test_execute_diag_command()
+{
+    start_daemon
+    form_network "${PSKC}"
+
+    start_commissioner "${NON_CCM_CONFIG}"
+    petition_commissioner
+    send_command_to_commissioner "netdiag query extaddr"
+    stop_commissioner
+
+    stop_daemon
+}

@@ -46,6 +46,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
@@ -1387,6 +1388,29 @@ const JoinerInfo *CommissionerApp::GetJoinerInfo(JoinerType aType, const ByteArr
         return &joinerInfo->second;
     }
     return nullptr;
+}
+
+// Network Diagnostic
+Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags)
+{
+    Error error;
+
+    error = mCommissioner->CommandDiagGetQuery(aAddr, aDiagDataFlags);
+    return error;
+}
+
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
+{
+    Address addr;
+
+    SuccessOrDie(addr.Set(aPeerAddr));
+
+    mDiagAnsDataMap[addr] = aDiagAnsMsg;
+}
+
+const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
+{
+    return mDiagAnsDataMap;
 }
 
 } // namespace commissioner

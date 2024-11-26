@@ -193,6 +193,9 @@ public:
     void  RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort) override;
     Error RequestToken(ByteArray &, const std::string &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
 
+    void  CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
+    Error CommandDiagGetQuery(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
@@ -226,7 +229,7 @@ private:
     static Error     EncodeCommissionerDataset(coap::Request &aRequest, const CommissionerDataset &aDataset);
     static ByteArray GetCommissionerDatasetTlvs(uint16_t aDatasetFlags);
 
-    static ByteArray GetNetDiagTlvTypes(uint64_t aDiagTlvFlags);
+    static ByteArray GetNetDiagTlvTypes(uint64_t aDiagDataFlags);
 
     void SendPetition(PetitionHandler aHandler);
 
@@ -253,6 +256,8 @@ private:
     void HandleRlyRx(const coap::Request &aRlyRx);
 
     void HandleJoinerSessionTimer(Timer &aTimer);
+
+    void HandleDiagGetAnswer(const coap::Request &aRequest);
 
     bool IsActiveOrConnected() const
     {
@@ -292,6 +297,9 @@ private:
     coap::Resource mResourceDatasetChanged;
     coap::Resource mResourcePanIdConflict;
     coap::Resource mResourceEnergyReport;
+
+    coap::Resource mResourceDiagAns;
+    NetDiagData    mDiagAnsTlvs;
 };
 
 /*
