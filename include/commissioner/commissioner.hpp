@@ -1206,7 +1206,7 @@ public:
      * @param[in, out] aHandler        A handler to process the response or any errors.
      *                                 This handler is guaranteed to be called.
      * @param[in]      aAddr           Unicast mesh local address of the target Thread device,
-     *                                 the leader ALOC will be set by default if it is empty.
+     *                                 the leader ALOC will be used if it is empty.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
      *
      */
