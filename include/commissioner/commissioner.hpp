@@ -1200,7 +1200,7 @@ public:
      * @brief Asynchronously reset dedicated diagnostic TLV(s) from a Thread device.
      *
      * This method sends a DIAG_RST.ntf message to the specified Thread device,
-     * resetting the diagnostic TLVs such as MacCounters  indicated by `aDiagDataFlags`.
+     * resetting the diagnostic TLVs such as MacCounters indicated by `aDiagDataFlags`.
      * The response, or any errors encountered, will be delivered to the provided `aHandler`.
      *
      * @param[in, out] aHandler        A handler to process the response or any errors.
