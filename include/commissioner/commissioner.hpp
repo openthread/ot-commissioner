@@ -1213,7 +1213,7 @@ public:
     virtual void CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
 
     /**
-     * @brief Synchronously reset dedicated diagnostic TLVs from a Thread device.
+     * @brief Synchronously reset dedicated diagnostic TLVs on a Thread device.
      *
      * This method sends a DIAG_RST.ntf message to the specified Thread device,
      * resetting the diagnostic TLVs such as MacCounters  indicated by `aDiagDataFlags`.
