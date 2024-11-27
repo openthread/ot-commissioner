@@ -1216,7 +1216,7 @@ public:
      * @brief Synchronously reset dedicated diagnostic TLVs on a Thread device.
      *
      * This method sends a DIAG_RST.ntf message to the specified Thread device,
-     * resetting the diagnostic TLVs such as MacCounters  indicated by `aDiagDataFlags`.
+     * resetting the diagnostic TLVs such as MacCounters indicated by `aDiagDataFlags`.
      * The method blocks until a response is received, an error occurs.
      *
      * @param[in]      aAddr          Unicast mesh local address of the target Thread device,
