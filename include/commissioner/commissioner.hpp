@@ -1217,7 +1217,7 @@ public:
      *
      * This method sends a DIAG_RST.ntf message to the specified Thread device,
      * resetting the diagnostic TLVs such as MacCounters indicated by `aDiagDataFlags`.
-     * The method blocks until a response is received, an error occurs.
+     * The method blocks until a response is received or an error occurs.
      *
      * @param[in]      aAddr          Unicast mesh local address of the target Thread device,
      *                                the leader ALOC will be used if it is empty.
