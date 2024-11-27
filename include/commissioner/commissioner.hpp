@@ -1197,7 +1197,7 @@ public:
     virtual Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
 
     /**
-     * @brief Asynchronously reset dedicated diagnostic TLV(s) from a Thread device.
+     * @brief Asynchronously reset dedicated diagnostic TLV(s) on a Thread device.
      *
      * This method sends a DIAG_RST.ntf message to the specified Thread device,
      * resetting the diagnostic TLVs such as MacCounters indicated by `aDiagDataFlags`.
