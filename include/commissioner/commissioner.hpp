@@ -1220,7 +1220,7 @@ public:
      * The method blocks until a response is received, an error occurs.
      *
      * @param[in]      aAddr          Unicast mesh local address of the target Thread device,
-     *                                the leader ALOC will be set by default if it is empty.
+     *                                the leader ALOC will be used if it is empty.
      * @param[in]  aDiagDataFlags     Diagnostic data flags indicate which TLVs are wanted.
      *
      * @return Error::kNone, succeed; Otherwise, failed.
