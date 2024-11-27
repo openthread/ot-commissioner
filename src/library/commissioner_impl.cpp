@@ -692,6 +692,52 @@ exit:
     }
 }
 
+void CommissionerImpl::CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags)
+{
+    Error         error;
+    Address       dstAddr;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+    exit:
+        aHandler(error);
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagRst));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetNetDiagTlvTypes(aDiagDataFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    LOG_INFO(LOG_REGION_MESHDIAG, "sending DIAG_RST.ntf");
+    if (aAddr.empty())
+    {
+        mProxyClient.SendRequest(request, onResponse, kLeaderAloc16, kDefaultMmPort);
+    }
+    else
+    {
+        SuccessOrExit(error = dstAddr.Set(aAddr));
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
+    LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
 void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset)
 {
     Error         error;

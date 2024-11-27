@@ -1195,6 +1195,38 @@ public:
      *
      */
     virtual Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
+
+    /**
+     * @brief Asynchronously reset dedicated diagnostic TLV(s) from a Thread device.
+     *
+     * This method sends a DIAG_RST.ntf message to the specified Thread device,
+     * resetting the diagnostic TLVs such as MacCounters  indicated by `aDiagDataFlags`.
+     * The response, or any errors encountered, will be delivered to the provided `aHandler`.
+     *
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
+     * @param[in]      aAddr           Unicast mesh local address of the target Thread device,
+     *                                 the leader ALOC will be set by default if it is empty.
+     * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
+     *
+     */
+    virtual void CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
+
+    /**
+     * @brief Synchronously reset dedicated diagnostic TLVs from a Thread device.
+     *
+     * This method sends a DIAG_RST.ntf message to the specified Thread device,
+     * resetting the diagnostic TLVs such as MacCounters  indicated by `aDiagDataFlags`.
+     * The method blocks until a response is received, an error occurs.
+     *
+     * @param[in]      aAddr          Unicast mesh local address of the target Thread device,
+     *                                the leader ALOC will be set by default if it is empty.
+     * @param[in]  aDiagDataFlags     Diagnostic data flags indicate which TLVs are wanted.
+     *
+     * @return Error::kNone, succeed; Otherwise, failed.
+     *
+     */
+    virtual Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
 };
 
 } // namespace commissioner

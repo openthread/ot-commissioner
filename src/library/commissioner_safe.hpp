@@ -143,6 +143,8 @@ public:
 
     void  CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags) override;
+    void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
+    Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags) override;
 
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,
