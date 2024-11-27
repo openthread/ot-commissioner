@@ -1413,6 +1413,14 @@ const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
     return mDiagAnsDataMap;
 }
 
+Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags)
+{
+    Error error;
+
+    error = mCommissioner->CommandDiagReset(aAddr, aDiagDataFlags);
+    return error;
+}
+
 } // namespace commissioner
 
 } // namespace ot

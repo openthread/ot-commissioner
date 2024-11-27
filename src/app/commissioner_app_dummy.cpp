@@ -538,6 +538,13 @@ Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aD
     return Error{};
 }
 
+Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagTlvFlags)
+{
+    UNUSED(aAddr);
+    UNUSED(aDiagTlvFlags);
+    return Error{};
+}
+
 } // namespace commissioner
 
 } // namespace ot

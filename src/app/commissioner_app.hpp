@@ -236,6 +236,7 @@ public:
 
     // Network Diagnostic
     MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags);
+    MOCKABLE Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags);
 
     /*
      * BBR Dataset APIs

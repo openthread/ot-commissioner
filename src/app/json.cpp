@@ -777,11 +777,36 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(ExtMacAddr);
     SET_IF_PRESENT(MacAddr);
 #undef SET_IF_PRESENT
+    if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
+    {
+        aJson["MacCounters"] = MacCountersToJson(aNetDiagData.mMacCounters);
+    }
 }
 
 std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
 {
     Json json = aNetDiagData;
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+static void to_json(Json &aJson, const MacCounters &aMacCounters)
+{
+#define SET(name) aJson[#name] = aMacCounters.m##name;
+    SET(IfInUnknownProtos);
+    SET(IfInErrors);
+    SET(IfOutErrors);
+    SET(IfInUcastPkts);
+    SET(IfInBroadcastPkts);
+    SET(IfInDiscards);
+    SET(IfOutUcastPkts);
+    SET(IfOutBroadcastPkts);
+    SET(IfOutDiscards);
+#undef SET
+}
+
+std::string MacCountersToJson(const MacCounters &aMacCounters)
+{
+    Json json = aMacCounters;
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
