@@ -30,6 +30,20 @@ package io.openthread.commissioner.app;
 
 public interface FragmentCallback {
   /**
+   * Called when the Operational Dataset is retrieved successfully ir failed.
+   *
+   * @param result can be one of RESULT_* of {@link android.app.Activity}
+   */
+  void onRetrieveDatasetResult(int result);
+
+  /**
+   * Called when the Operational Dataset is set successfully ir failed.
+   *
+   * @param result can be one of RESULT_* of {@link android.app.Activity}
+   */
+  void onSetDatasetResult(int result);
+
+  /**
    * Called when adding a new Thread device has finished either successfully or failed.
    *
    * @param result can be one of RESULT_* of {@link android.app.Activity}

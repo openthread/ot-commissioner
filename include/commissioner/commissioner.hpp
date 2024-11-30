@@ -758,6 +758,19 @@ public:
     virtual Error SetPendingDataset(const PendingOperationalDataset &aPendingDataset) = 0;
 
     /**
+     * @brief Synchronously set the Pending Operational Dataset.
+     *
+     * This method set Pending Operational Dataset of the Thread network
+     * by sending MGMT_PENDING_SET.req message.
+     * It will not return until errors happened, timeouted or succeed.
+     *
+     * @param[in] aDataset  A Pending Operational Dataset to be set.
+     *
+     * @return Error::kNone, succeed; otherwise, failed;
+     */
+    virtual Error SetRawPendingDataset(const ByteArray &aPendingDataset) = 0;
+
+    /**
      * @brief Asynchronously, securely set the Pending Operational Dataset.
      *
      * This method set Pending Operational Dataset which is to be securely disseminated
