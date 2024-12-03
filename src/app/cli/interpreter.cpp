@@ -117,6 +117,7 @@
 #define WARN_NETWORK_SELECTION_CHANGED "Network selection was changed by the command"
 
 #define DIAG_GET_QRY_TYPE 1
+#define DIAG_RST_NTF_TYPE 2
 
 #define COLOR_ALIAS_FAILED Console::Color::kYellow
 
@@ -281,7 +282,8 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
               "panid conflict <panid>"},
     {"energy", "energy scan <channel-mask> <count> <period> <scan-duration> <dst-addr>\n"
                "energy report [<dst-addr>]"},
-    {"netdiag", "netdiag query [extaddr | rloc16] <dest mesh local address>"},
+    {"netdiag", "netdiag query [extaddr | rloc16] <dest mesh local address>\n"
+                "netdiag reset maccounters <dest mesh local address>"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -2591,6 +2593,10 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
     {
         operationType = DIAG_GET_QRY_TYPE;
     }
+    else if (CaseInsensitiveEqual(aExpr[1], "reset"))
+    {
+        operationType = DIAG_RST_NTF_TYPE;
+    }
     else
     {
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
@@ -2616,6 +2622,26 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
     {
         flags = NetDiagData::kMacAddrBit;
         if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            diagData.mPresentFlags         = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "maccounters"))
+    {
+        flags = NetDiagData::kMacCountersBit;
+        if (operationType == DIAG_RST_NTF_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagReset(dstAddr, flags));
+        }
+        else if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));

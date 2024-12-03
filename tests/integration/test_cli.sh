@@ -67,3 +67,16 @@ test_execute_diag_command()
 
     stop_daemon
 }
+
+test_execute_diag_command()
+{
+    start_daemon
+    form_network "${PSKC}"
+
+    start_commissioner "${NON_CCM_CONFIG}"
+    petition_commissioner
+    send_command_to_commissioner "netdiag reset maccounters"
+    stop_commissioner
+
+    stop_daemon
+}

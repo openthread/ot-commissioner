@@ -63,6 +63,7 @@ struct NetworkData
 
 Error       NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson);
 std::string NetworkDataToJson(const NetworkData &aNetworkData);
+std::string MacCountersToJson(const MacCounters &aMacCounters);
 
 Error       CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::string &aJson);
 std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset);
