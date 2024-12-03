@@ -100,6 +100,9 @@
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
 %template(StringVector) std::vector<std::string>;
+%template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::ChildIpv6AddrInfo>;
+%template(ChildTableEntryVector) std::vector<ot::commissioner::ChildTableEntry>;
+%template(RouteDataEntryVector) std::vector<ot::commissioner::RouteDataEntry>;
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
