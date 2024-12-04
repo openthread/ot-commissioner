@@ -117,11 +117,7 @@ elif [ "$(uname)" = "Darwin" ]; then
     brew install readline
     brew install cmake
     brew install ninja
-<<<<<<< HEAD
-    brew install swig@4
-=======
     brew install swig
->>>>>>> 170baf0 (execute the realpath command based on OS environment)
     brew install lcov
 
     brew install llvm@14 && \
