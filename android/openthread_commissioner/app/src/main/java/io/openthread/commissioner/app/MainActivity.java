@@ -33,7 +33,6 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -42,12 +41,6 @@ import androidx.fragment.app.FragmentTransaction;
 public class MainActivity extends AppCompatActivity implements FragmentCallback {
 
   private static final String TAG = MainActivity.class.getSimpleName();
-
-  @Nullable private ThreadNetworkInfoHolder selectedNetwork;
-
-  @Nullable private byte[] pskc;
-
-  @Nullable private JoinerDeviceInfo joinerDeviceInfo;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
     gitHash.setText(BuildConfig.GIT_HASH);
 
     if (savedInstanceState == null) {
-      showFragment(new SelectNetworkFragment(this, null), false);
+      showFragment(new SelectBorderRouterFragment(this), false);
     }
   }
 
@@ -113,4 +106,41 @@ public class MainActivity extends AppCompatActivity implements FragmentCallback 
   public void onAddDeviceResult(int result) {
     finishCommissioning(result);
   }
+
+  @Override
+  public void onSetDatasetResult(int result) {
+    finishCommissioning(result);
+  }
+
+  @Override
+  public void onRetrieveDatasetResult(int result) {
+    finishCommissioning(result);
+  }
+
+  /*
+  public void onGetAdminPasscodeStarted(BorderAgentInfo borderAgentInfo, int adminPasscodeFlow) {
+    showFragment(
+        new GetAdminPasscodeFragment(this, borderAgentInfo, adminPasscodeFlow),
+         true);
+  }
+
+  public void onAdminPasscodeReceived(
+      BorderAgentInfo borderAgentInfo, int adminPasscodeFlow, String passcode, int epskcPort) {
+    if (adminPasscodeFlow == GetAdminPasscodeFragment.FLOW_RETRIEVE_DATASET) {
+      showFragment(
+          new RetrieveDatasetFragment(this, borderAgentInfo, passcode, epskcPort),
+           true);
+    } else if (adminPasscodeFlow == GetAdminPasscodeFragment.FLOW_SET_DATASET) {
+      showFragment(
+          new SetDatasetFragment(this, borderAgentInfo, passcode, epskcPort),
+           true);
+    } else {
+      throw new AssertionError("Unknown Admin Passcode flow: " + adminPasscodeFlow);
+    }
+  }
+
+  public void onCredentialsRetrieved() {
+    clearFragmentsInBackStack();
+  }
+  */
 }
