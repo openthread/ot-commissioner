@@ -33,6 +33,7 @@ if [ "$(uname)" = "Linux" ]; then
 elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
     readonly CUR_DIR="$(dirname "$(realpath "$0")")"
+fi
 
 set -e
 
