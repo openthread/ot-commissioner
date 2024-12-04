@@ -113,12 +113,12 @@ elif [ "$(uname)" = "Darwin" ]; then
 
     ## Install packages
     brew update
-    brew install coreutils \
-                 readline \
-                 cmake \
-                 ninja \
-                 swig@4 \
-                 lcov && true
+    brew install coreutils
+    brew install readline
+    brew install cmake
+    brew install ninja
+    brew install swig@4
+    brew install lcov
 
     brew install llvm@14 && \
     sudo ln -s "$(brew --prefix llvm@14)/bin/clang-format" /usr/local/bin/clang-format-14 && \
