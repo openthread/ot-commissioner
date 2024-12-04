@@ -27,7 +27,12 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-readonly CUR_DIR="$(dirname "$(realpath "$0")")"
+if [ "$(uname)" = "Linux" ]; then
+    echo "OS is Linux"
+    readonly CUR_DIR="$(dirname "$(realpath -s "$0")")"
+elif [ "$(uname)" = "Darwin" ]; then
+    echo "OS is Darwin"
+    readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 
 set -e
 

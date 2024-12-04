@@ -106,6 +106,8 @@ if [ "$(uname)" = "Linux" ]; then
         exit 1
     }
 
+    readonly CUR_DIR="$(dirname "$(realpath -s "$0")")"
+
 elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
 
@@ -133,12 +135,12 @@ elif [ "$(uname)" = "Darwin" ]; then
 
     ## Install coreutils for realpath
     brew install coreutils
+
+    readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 else
     echo "platform $(uname) is not fully supported"
     exit 1
 fi
-
-readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 
 cd "${CUR_DIR}/.."
 if [ "${WITH_CCM}" = "1" ]; then
