@@ -37,7 +37,7 @@ jobs:
       matrix:
         android-api: [26, 34]
         android-abi: [x86_64]
-        os: [macos-12, ubuntu-22.04]
+        os: [macos-13, ubuntu-22.04]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v4
