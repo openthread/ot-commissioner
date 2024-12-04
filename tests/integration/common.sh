@@ -29,7 +29,7 @@
 
 ## This file defines constants and common functions for test cases.
 
-readonly CUR_DIR=$(dirname "$(realpath $0)")
+readonly CUR_DIR=$(dirname "$(realpath -s $0)")
 readonly TEST_ROOT_DIR=${CUR_DIR}
 
 readonly RUNTIME_DIR=/tmp/test-ot-commissioner
