@@ -136,6 +136,8 @@ elif [ "$(uname)" = "Darwin" ]; then
     ## Install coreutils for realpath
     brew install coreutils
 
+    brew install ninja
+
     readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 else
     echo "platform $(uname) is not fully supported"
