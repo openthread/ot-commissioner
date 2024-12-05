@@ -35,8 +35,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        android-api: [26, 34]
-        android-abi: [arm64-v8a]
+        android-api: [28, 34]
+        android-abi: [x86_64]
         os: [macos-14, ubuntu-22.04]
     steps:
       - uses: actions/checkout@v3
@@ -50,7 +50,7 @@ jobs:
       - name: Build
         run: |
           cd android
-          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "26.*") ./build-commissioner-libs.sh
+          ANDROID_ABI=${{ matrix.android-abi }} ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "33.*") ./build-commissioner-libs.sh
           cd openthread_commissioner
           ./gradlew build
       - name: Tests
