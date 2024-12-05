@@ -89,6 +89,7 @@ if [ "$(uname)" = "Linux" ]; then
                          cmake \
                          ninja-build \
                          swig \
+                         android-sdk \
                          lcov \
                          jsonlint
 
@@ -115,6 +116,7 @@ elif [ "$(uname)" = "Darwin" ]; then
                  cmake \
                  ninja \
                  swig  \
+                 android-sdk \
                  lcov && true
 
     brew install llvm@14 && \
