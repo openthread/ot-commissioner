@@ -105,7 +105,6 @@ if [ "$(uname)" = "Linux" ]; then
         echo "Did you forget to add '/usr/bin' to beginning of your PATH?"
         exit 1
     }
-
 elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
 
@@ -115,7 +114,7 @@ elif [ "$(uname)" = "Darwin" ]; then
                  readline \
                  cmake \
                  ninja \
-                 swig@4 \
+                 swig  \
                  lcov && true
 
     brew install llvm@14 && \
@@ -130,15 +129,12 @@ elif [ "$(uname)" = "Darwin" ]; then
         brew unlink cmake
         brew install cmake --HEAD
     }
-
-    ## Install coreutils for realpath
-    brew install coreutils
 else
     echo "platform $(uname) is not fully supported"
     exit 1
 fi
 
-readonly CUR_DIR="$(dirname "$(realpath -s "$0")")"
+readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 
 cd "${CUR_DIR}/.."
 if [ "${WITH_CCM}" = "1" ]; then
