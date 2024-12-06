@@ -27,7 +27,7 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-readonly CUR_DIR="$(dirname "$(realpath -s "$0")")"
+readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 
 set -e
 
