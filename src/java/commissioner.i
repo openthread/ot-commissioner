@@ -40,6 +40,7 @@
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 #include <commissioner/network_data.hpp>
+#include <commissioner/network_diag_data.hpp>
 #include <commissioner/commissioner.hpp>
 %}
 
@@ -99,6 +100,9 @@
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
 %template(StringVector) std::vector<std::string>;
+%template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::ChildIpv6AddrInfo>;
+%template(ChildTableEntryVector) std::vector<ot::commissioner::ChildTableEntry>;
+%template(RouteDataEntryVector) std::vector<ot::commissioner::RouteDataEntry>;
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
@@ -167,6 +171,12 @@ namespace commissioner {
                                                     const std::vector<std::string> &aMulticastAddrList,
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
+    %ignore Commissioner::CommandDiagGetQuery(ErrorHandler       aHandler,
+                                              const std::string &aAddr,
+                                              uint64_t           aDiagDataFlags);
+    %ignore Commissioner::CommandDiagReset(ErrorHandler          aHandler,
+                                           const std::string    &aAddr,
+                                           uint64_t              aDiagDataFlags);
 
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
@@ -186,5 +196,6 @@ namespace commissioner {
 %include <commissioner/defines.hpp>
 %include <commissioner/error.hpp>
 %include <commissioner/network_data.hpp>
+%include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
 %include <commissioner/commissioner.hpp>
