@@ -62,21 +62,21 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
   private static final int RC_HANDLE_CAMERA_PERM = 2;
 
   private final FragmentCallback fragmentCallback;
-  private final ThreadNetworkInfoHolder selectedNetwork;
+  private final BorderAgentInfo selectedBorderAgent;
   private final byte[] pskc;
+
   private CameraSourceView cameraSourceView;
 
   public ScanQrCodeFragment(
-      FragmentCallback fragmentCallback, ThreadNetworkInfoHolder selectedNetwork, byte[] pskc) {
+      FragmentCallback fragmentCallback, BorderAgentInfo selectedBorderAgent, byte[] pskc) {
     this.fragmentCallback = fragmentCallback;
-    this.selectedNetwork = selectedNetwork;
+    this.selectedBorderAgent = selectedBorderAgent;
     this.pskc = pskc.clone();
   }
 
   @Override
   public View onCreateView(
       LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    // Inflate the layout for this fragment
     return inflater.inflate(R.layout.fragment_scan_qrcode, container, false);
   }
 
@@ -212,14 +212,9 @@ public class ScanQrCodeFragment extends Fragment implements Detector.Processor<B
       cameraSourceView.startCamera();
     }
 
-    getParentFragmentManager()
-        .beginTransaction()
-        .replace(
-            R.id.fragment_container,
-            new CommissioningFragment(fragmentCallback, selectedNetwork, pskc, joinerDeviceInfo),
-            CommissioningFragment.class.getSimpleName())
-        .addToBackStack(/* name= */ null)
-        .commit();
+    FragmentUtils.moveToNextFragment(
+        this,
+        new CommissioningFragment(fragmentCallback, selectedBorderAgent, pskc, joinerDeviceInfo));
   }
 
   @Nullable

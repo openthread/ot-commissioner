@@ -30,21 +30,18 @@ package io.openthread.commissioner.app;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import androidx.annotation.NonNull;
 
 public class JoinerDeviceInfo implements Parcelable {
+  private final byte[] eui64;
+  private final String pskd;
 
-  @NonNull private byte[] eui64;
-
-  @NonNull private String pskd;
-
-  public JoinerDeviceInfo(@NonNull byte[] eui64, @NonNull String pskd) {
-    this.eui64 = eui64;
+  public JoinerDeviceInfo(byte[] eui64, String pskd) {
+    this.eui64 = eui64.clone();
     this.pskd = pskd;
   }
 
   public byte[] getEui64() {
-    return eui64;
+    return eui64.clone();
   }
 
   public String getPskd() {

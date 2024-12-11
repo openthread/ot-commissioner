@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+  <TextView
+      android:id="@+id/select_border_router"
+      style="@style/title_text"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="80dp"
+      android:text="@string/select_border_router"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent" />
+
+  <ProgressBar
+      android:id="@+id/border_agent_scan_bar"
+      style="?android:attr/progressBarStyleHorizontal"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:indeterminate="true"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@+id/select_border_router" />
+
+  <ListView
+      android:id="@+id/networks"
+      style="@style/Widget.AppCompat.Light.ListView.DropDown"
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:orientation="vertical"
+      android:choiceMode="singleChoice"
+      android:listSelector="#bbbbbb"
+      android:divider="@android:color/transparent"
+      android:dividerHeight="10.0sp"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintBottom_toTopOf="@id/border_agents_bottom_separator"
+      app:layout_constraintTop_toBottomOf="@id/border_agent_scan_bar" />
+
+  <View
+      android:id="@+id/border_agents_bottom_separator"
+      android:layout_width="0dp"
+      android:layout_height="1dp"
+      android:layout_marginTop="2dp"
+      android:layout_marginBottom="12dp"
+      android:background="@android:color/darker_gray"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintBottom_toTopOf="@id/retrieve_dataset_button" />
+
+  <Button
+      android:id="@+id/retrieve_dataset_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="12dp"
+      android:text="@string/retrieve_dataset"
+      app:layout_constraintBottom_toTopOf="@id/set_dataset_button"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+
+  <Button
+      android:id="@+id/set_dataset_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="12dp"
+      android:text="@string/set_dataset"
+      app:layout_constraintBottom_toTopOf="@id/add_device_button"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+
+  <Button
+      android:id="@+id/add_device_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="32dp"
+      android:text="@string/add_device"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
