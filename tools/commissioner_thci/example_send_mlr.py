@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #   Copyright (c) 2019, The OpenThread Commissioner Authors.
@@ -71,8 +71,8 @@ def test_mlr():
         comm.start(BORDER_AGENT_ADDR, BORDER_AGENT_PORT)
         assert comm.isActive()
 
-        print("commissioner connected, session ID = {}".format(
-            comm.getSessionId()))
+        print(("commissioner connected, session ID = {}".format(
+            comm.getSessionId())))
 
         ## Send MLR.req
         comm.MLR([MA1, MA2], 60)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #   Copyright (c) 2019, The OpenThread Commissioner Authors.
@@ -194,7 +194,7 @@ class OTCommissioner(ICommissioner):
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_COMMISSIONER_GET(self, tlvTypes):
-        types = ' '.join(map(lambda x: TLV_TYPE_TO_STRING[x], tlvTypes))
+        types = ' '.join([TLV_TYPE_TO_STRING[x] for x in tlvTypes])
         command = 'commdataset get ' + types
         response = self._execute_and_check(command)
 
@@ -252,7 +252,7 @@ class OTCommissioner(ICommissioner):
         self._execute_and_check(' '.join(command))
 
     def MGMT_ACTIVE_GET(self, tlvTypes):
-        types = ' '.join(map(lambda x: TLV_TYPE_TO_STRING[x], tlvTypes))
+        types = ' '.join([TLV_TYPE_TO_STRING[x] for x in tlvTypes])
         result = self._execute_and_check(
             'opdataset get active {}'.format(types))
 
@@ -267,7 +267,7 @@ class OTCommissioner(ICommissioner):
             OTCommissioner._active_op_dataset_to_json(activeOpDataset)))
 
     def MGMT_PENDING_GET(self, tlvTypes):
-        types = ' '.join(map(lambda x: TLV_TYPE_TO_STRING[x], tlvTypes))
+        types = ' '.join([TLV_TYPE_TO_STRING[x] for x in tlvTypes])
         result = self._execute_and_check(
             'opdataset get pending {}'.format(types))
 
@@ -282,7 +282,7 @@ class OTCommissioner(ICommissioner):
             OTCommissioner._pending_op_dataset_to_json(pendingOpDataset)))
 
     def MGMT_BBR_GET(self, tlvTypes):
-        types = ' '.join(map(lambda x: TLV_TYPE_TO_STRING[x], tlvTypes))
+        types = ' '.join([TLV_TYPE_TO_STRING[x] for x in tlvTypes])
         result = self._execute_and_check('bbrdataset get {}'.format(types))
 
         try:
