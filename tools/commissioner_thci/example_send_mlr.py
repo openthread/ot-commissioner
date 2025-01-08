@@ -71,8 +71,7 @@ def test_mlr():
         comm.start(BORDER_AGENT_ADDR, BORDER_AGENT_PORT)
         assert comm.isActive()
 
-        print(("commissioner connected, session ID = {}".format(
-            comm.getSessionId())))
+        print(f"commissioner connected, session ID = {comm.getSessionId()}")
 
         ## Send MLR.req
         comm.MLR([MA1, MA2], 60)

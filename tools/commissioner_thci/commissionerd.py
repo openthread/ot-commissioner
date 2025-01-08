@@ -167,7 +167,7 @@ class Application(object):
         if not self._process:
             raise self._AppException('CLI not started yet')
 
-        print('Executing: "{}"'.format(command))
+        print(f'Executing: "{command}"')
         self._process.sendline(command)
         if wait_for_result:
             try:
@@ -178,8 +178,7 @@ class Application(object):
                 self._process.kill(sig=signal.SIGINT)
                 try:
                     self._process.expect(r'> $', timeout=1)
-                    return 'Timed out executing "{}"\n{}'.format(
-                        command, self._process.before.decode())
+                    return f'Timed out executing "{command}"\n{self._process.before.decode()}'
                 except pexpect.exceptions.TIMEOUT as e:
                     raise self._AppException(e)
 
@@ -201,8 +200,7 @@ class Application(object):
     def _discard_process_with_error(self):
         message = self._process.before.decode()
         self._reset_states()
-        raise self._AppException(
-            'CLI process exited with error:\n{}'.format(message))
+        raise self._AppException(f'CLI process exited with error:\n{message}')
 
     def _reset_states(self):
         self._process = None
