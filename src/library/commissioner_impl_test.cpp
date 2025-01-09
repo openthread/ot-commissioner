@@ -154,7 +154,9 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "00086ac6c2de12b212df0102c80002010f0512e7000400204300300af1f1f1f1f101f1f1f10608360bb9f7415c30210840fd9238a3395d"
         "0001f9043dfeb7b3edf3fd7d604fb88a0000000000fffe00c800fd7d604fb88a0000fe3e5a4c31acb559fe8000000000000068c6c2de12"
         "b212df1009601804601d046019041e22c818fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e22c802fd"
-        "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0";
+        "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0077d030e0007fc0109e400108400109c000003140040fd27"
+        "fd30e5ce0001070212400504e400f1000b0e8001010d09e4000a000500000e100b0881025cf40d029c0003130060fd6b51760904ffff00"
+        "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc080100";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -167,7 +169,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 639);
+    EXPECT_EQ(diagData.mPresentFlags, 1663);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mMode.mIsMtd, false);
@@ -186,6 +188,34 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mChildId, 2);
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[0], "fdc3:1ff4:5fef:f4e7:5257:420f:1cbd:46f5");
     EXPECT_EQ(diagData.mChildIpv6AddrsInfoList[1].mAddrs[1], "fd11:22::34e5:d9e2:8d19:52c0");
+    // Parsing prefix TLV in Network Data
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList.size(), 3);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mDomainId, 0);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mPrefixLength, 1);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes.size(), 3);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[0].mRloc16, 58368);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[0].mRouterPreference, 0);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[0].mIsNat64, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[1].mRloc16, 33792);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[1].mRouterPreference, 0);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[1].mIsNat64, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[2].mRloc16, 39936);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[2].mRouterPreference, 0);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRoutes[2].mIsNat64, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters.size(), 1);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mRloc16, 58368);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mPrefixPreference, 3);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsPreferred, true);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsSlaac, true);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsDhcp, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsConfigure, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsDefaultRoute, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsOnMesh, true);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsNdDns, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mBorderRouters[0].mIsDp, false);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mSixLowPanContext.mIsCompress, true);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mSixLowPanContext.mContextId, 2);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mSixLowPanContext.mContextLength, 64);
 }
 
 } // namespace commissioner

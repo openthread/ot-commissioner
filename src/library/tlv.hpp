@@ -64,6 +64,7 @@ enum class Scope : uint8_t
     kThread,
     kMeshLink,
     kNetworkDiag,
+    kNetworkData,
 };
 
 enum class Type : uint8_t
@@ -172,6 +173,12 @@ enum class Type : uint8_t
     kNetworkDiagAnswer                  = 32,
     kNetworkDiagQueryID                 = 33,
     kNetworkDiagMleCounters             = 34,
+
+    // Network Data TLVs
+    kNetworkDataHasRoute       = 0,
+    kNetworkDataPrefix         = 1,
+    kNetworkDataBorderRouter   = 2,
+    kNetworkData6LowPanContext = 3,
 };
 
 using TlvPtr      = std::shared_ptr<Tlv>;
