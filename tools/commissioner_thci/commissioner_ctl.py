@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #   Copyright (c) 2019, The OpenThread Commissioner Authors.
@@ -29,8 +29,6 @@
 """
 Commissioner daemon controller
 """
-
-from __future__ import print_function
 
 import os
 import argparse
