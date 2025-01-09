@@ -36,11 +36,6 @@
 
 %module(directors="1") commissionerModule
 
-// Tells SWIG to use const T& paramters for setters of struct member fields.
-// This allows generated java code to accept immutable objects for setters.
-// See https://www.swig.org/Doc4.0/SWIGDocumentation.html#SWIGPlus_member_data
-%naturalvar;
-
 %{
 #include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
@@ -50,9 +45,9 @@
 %}
 
 %include <std_shared_ptr.i>
-%include "base/swig/google.swig"
-%include "base/swig/java/vector.swig"
-
+%include <std_string.i>
+%include <std_vector.i>
+%include <stl.i>
 %include <typemaps.i>
 
 // This is intentional.
@@ -68,7 +63,7 @@
 // `signed char` for `uint8_t` in only context of `std::vector<uint8_t>`.
 %apply signed char { uint8_t };
 %apply const signed char & { const uint8_t & };
-VECTOR(uint8_t)
+%template(ByteArray) std::vector<uint8_t>;
 
 // Override the typemap of `uint8_t`.
 %apply unsigned char { uint8_t };
@@ -103,15 +98,11 @@ VECTOR(uint8_t)
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
 
-VECTOR(ot::commissioner::ChannelMaskEntry)
-VECTOR(std::string)
-VECTOR(ot::commissioner::ChildIpv6AddrInfo)
-VECTOR(ot::commissioner::ChildTableEntry)
-VECTOR(ot::commissioner::RouteDataEntry)
-VECTOR(ot::commissioner::HasRouteEntry)
-VECTOR(ot::commissioner::BorderRouterEntry)
-VECTOR(ot::commissioner::SixLowPanContext)
-VECTOR(ot::commissioner::PrefixEntry)
+%template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
+%template(StringVector) std::vector<std::string>;
+%template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::ChildIpv6AddrInfo>;
+%template(ChildTableEntryVector) std::vector<ot::commissioner::ChildTableEntry>;
+%template(RouteDataEntryVector) std::vector<ot::commissioner::RouteDataEntry>;
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
@@ -202,9 +193,9 @@ namespace commissioner {
 }
 }
 
-%include "third_party/ot_commissioner/include/commissioner/defines.hpp"
-%include "third_party/ot_commissioner/include/commissioner/error.hpp"
-%include "third_party/ot_commissioner/include/commissioner/network_data.hpp"
-%include "third_party/ot_commissioner/include/commissioner/network_diag_data.hpp"
-%include "third_party/ot_commissioner/include/commissioner/commissioner.hpp"
-%include "third_party/ot_commissioner/include/commissioner/commissioner.hpp"
+%include <commissioner/defines.hpp>
+%include <commissioner/error.hpp>
+%include <commissioner/network_data.hpp>
+%include <commissioner/network_diag_data.hpp>
+%include <commissioner/commissioner.hpp>
+%include <commissioner/commissioner.hpp>
