@@ -2225,19 +2225,18 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         SuccessOrExit(error = DecodeNetworkData(diagData.mNetworkData, value));
         diagData.mPresentFlags |= NetDiagData::kNetworkDataBit;
     }
-
     aNetDiagData = diagData;
 
 exit:
     return error;
 }
 
-Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf)
+Error internal::DecodeNetworkData(NetworkDataTlv &aNetworkData, const ByteArray &aBuf)
 {
-    Error        error;
-    tlv::TlvSet  tlvSet;
-    tlv::TlvList tlvList;
-    NetworkData  networkData;
+    Error          error;
+    tlv::TlvSet    tlvSet;
+    tlv::TlvList   tlvList;
+    NetworkDataTlv networkData;
 
     SuccessOrExit(error =
                       tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData));
@@ -2255,11 +2254,11 @@ exit:
     return error;
 }
 
-Error internal::DecodePrefixList(std::vector<Prefix> &aPrefixList, const ByteArray &aBuf)
+Error internal::DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const ByteArray &aBuf)
 {
     Error        error;
     size_t       length = aBuf.size();
-    Prefix       prefix;
+    PrefixEntry  prefix;
     uint8_t      offset = 0;
     ByteArray    subTlv;
     tlv::TlvList tlvList;
@@ -2290,7 +2289,7 @@ Error internal::DecodePrefixList(std::vector<Prefix> &aPrefixList, const ByteArr
         if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
         {
             const ByteArray &value = hasRoute->GetValue();
-            SuccessOrExit(error = DecodeHasRoute(prefix.mHasRoutes, value));
+            SuccessOrExit(error = DecodeHasRoute(prefix.mHasRouteList, value));
         }
 
         // Get the BorderRouter
@@ -2298,7 +2297,7 @@ Error internal::DecodePrefixList(std::vector<Prefix> &aPrefixList, const ByteArr
         if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
         {
             const ByteArray &value = borderRouter->GetValue();
-            SuccessOrExit(error = DecodeBorderRouter(prefix.mBorderRouters, value));
+            SuccessOrExit(error = DecodeBorderRouter(prefix.mBorderRouterList, value));
         }
 
         // Add the prefix to the list
@@ -2307,13 +2306,13 @@ Error internal::DecodePrefixList(std::vector<Prefix> &aPrefixList, const ByteArr
 exit:
     return error;
 }
-Error internal::DecodeHasRoute(std::vector<HasRoute> &aHasRoutes, const ByteArray &aBuf)
+Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf)
 {
-    Error        error;
-    size_t       length = aBuf.size();
-    HasRoute     hasRoute;
-    uint8_t      offset = 0;
-    tlv::TlvList tlvList;
+    Error         error;
+    size_t        length = aBuf.size();
+    HasRouteEntry hasRoute;
+    uint8_t       offset = 0;
+    tlv::TlvList  tlvList;
 
     VerifyOrExit((length % kHasRouteBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of HasRoute"));
     while (offset < length)
@@ -2323,19 +2322,19 @@ Error internal::DecodeHasRoute(std::vector<HasRoute> &aHasRoutes, const ByteArra
         hasRoute.mIsNat64          = (aBuf[offset] >> 5) & 0x01;
         hasRoute.mRouterPreference = (aBuf[offset] >> 6) & 0x03;
         offset += 1;
-        aHasRoutes.emplace_back(hasRoute);
+        aHasRouteList.emplace_back(hasRoute);
     }
 exit:
     return error;
 }
 
-Error internal::DecodeBorderRouter(std::vector<BorderRouter> &aBorderRouters, const ByteArray &aBuf)
+Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf)
 {
-    Error        error;
-    size_t       length = aBuf.size();
-    BorderRouter borderRouter;
-    uint8_t      offset = 0;
-    tlv::TlvList tlvList;
+    Error             error;
+    size_t            length = aBuf.size();
+    BorderRouterEntry borderRouter;
+    uint8_t           offset = 0;
+    tlv::TlvList      tlvList;
     VerifyOrExit((length % kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));
     while (offset < length)
     {
@@ -2352,7 +2351,7 @@ Error internal::DecodeBorderRouter(std::vector<BorderRouter> &aBorderRouters, co
         borderRouter.mIsNdDns = (aBuf[offset] >> 7) & 0x01;
         borderRouter.mIsDp    = (aBuf[offset] >> 6) & 0x01;
         offset += 1;
-        aBorderRouters.emplace_back(borderRouter);
+        aBorderRouterList.emplace_back(borderRouter);
     }
 
 exit:

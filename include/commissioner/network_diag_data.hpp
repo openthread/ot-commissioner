@@ -128,9 +128,9 @@ struct MacCounters
 };
 
 /**
- * @brief Has Route
+ * @brief Has Route Entry
  */
-struct HasRoute
+struct HasRouteEntry
 {
     uint16_t mRloc16           = 0;
     uint8_t  mRouterPreference = 0;
@@ -138,9 +138,9 @@ struct HasRoute
 };
 
 /**
- * @brief Border Router
+ * @brief Border Router Entry
  */
-struct BorderRouter
+struct BorderRouterEntry
 {
     uint16_t mRloc16           = 0;
     uint8_t  mPrefixPreference = 0;
@@ -167,22 +167,22 @@ struct SixLowPanContext
 /**
  * @brief Prefix
  */
-struct Prefix
+struct PrefixEntry
 {
-    uint8_t                   mDomainId     = 0;
-    uint8_t                   mPrefixLength = 0;
-    ByteArray                 mPrefix;
-    std::vector<HasRoute>     mHasRoutes;
-    std::vector<BorderRouter> mBorderRouters;
-    SixLowPanContext          mSixLowPanContext;
+    uint8_t                        mDomainId     = 0;
+    uint8_t                        mPrefixLength = 0;
+    ByteArray                      mPrefix;
+    std::vector<HasRouteEntry>     mHasRouteList;
+    std::vector<BorderRouterEntry> mBorderRouterList;
+    SixLowPanContext               mSixLowPanContext;
 };
 
 /**
- * @brief Network Data
+ * @brief Network Data TLV
  */
-struct NetworkData
+struct NetworkDataTlv
 {
-    std::vector<Prefix> mPrefixList;
+    std::vector<PrefixEntry> mPrefixList;
 };
 
 /**
@@ -204,7 +204,7 @@ struct NetDiagData
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
-    NetworkData                    mNetworkData;
+    NetworkDataTlv                 mNetworkData;
 
     /**
      * Indicates which fields are included in the object.
