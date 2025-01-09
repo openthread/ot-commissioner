@@ -63,11 +63,11 @@ Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
 void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
 ByteArray ExtractRouterIds(const ByteArray &aMask);
 
-Error DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf);
-Error DecodePrefixList(std::vector<Prefix> &aPrefixList, const ByteArray &aBuf);
-Error DecodePrefix(Prefix &aPrefix, const ByteArray &aBuf);
-Error DecodeHasRoute(std::vector<HasRoute> &aHasRoutes, const ByteArray &aBuf);
-Error DecodeBorderRouter(std::vector<BorderRouter> &aBorderRouters, const ByteArray &aBuf);
+Error DecodeNetworkData(NetworkDataTlv &aNetworkData, const ByteArray &aBuf);
+Error DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const ByteArray &aBuf);
+Error DecodePrefix(PrefixEntry &aPrefix, const ByteArray &aBuf);
+Error DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf);
+Error DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf);
 Error DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArray &aBuf);
 
 } // namespace internal
