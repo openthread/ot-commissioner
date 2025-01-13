@@ -39,12 +39,16 @@ namespace ot {
 
 namespace commissioner {
 
-static constexpr uint8_t kChildTableEntryBytes = 3;
-static constexpr uint8_t kIpv6AddressBytes     = 16;
-static constexpr uint8_t kLeaderDataBytes      = 8;
-static constexpr uint8_t kMacCountersBytes     = 36;
-static constexpr uint8_t kRloc16Bytes          = 2;
-static constexpr uint8_t kRouterIdMaskBytes    = 8;
+static constexpr uint8_t kChildTableEntryBytes  = 3;
+static constexpr uint8_t kIpv6AddressBytes      = 16;
+static constexpr uint8_t kLeaderDataBytes       = 8;
+static constexpr uint8_t kMacCountersBytes      = 36;
+static constexpr uint8_t kRloc16Bytes           = 2;
+static constexpr uint8_t kRouterIdMaskBytes     = 8;
+static constexpr uint8_t kPrefixBytes           = 2;
+static constexpr uint8_t kHasRouteBytes         = 3;
+static constexpr uint8_t kBorderRouterBytes     = 4;
+static constexpr uint8_t kSixLowPanContextBytes = 2;
 
 namespace internal {
 
@@ -58,6 +62,13 @@ Error     DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf);
 Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
 void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
 ByteArray ExtractRouterIds(const ByteArray &aMask);
+
+Error DecodeNetworkData(NetworkDataTlv &aNetworkData, const ByteArray &aBuf);
+Error DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const ByteArray &aBuf);
+Error DecodePrefix(PrefixEntry &aPrefix, const ByteArray &aBuf);
+Error DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf);
+Error DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf);
+Error DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArray &aBuf);
 
 } // namespace internal
 
