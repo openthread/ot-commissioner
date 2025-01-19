@@ -52,14 +52,18 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
 
   private static final String TAG = BorderAgentDiscoverer.class.getSimpleName();
 
-  private static final String SERVICE_TYPE = "_meshcop._udp";
+  public static final String MESHCOP_SERVICE_TYPE = "_meshcop._udp";
+  public static final String MESHCOP_E_SERVICE_TYPE = "_meshcop-e._udp";
   private static final String KEY_ID = "id";
   private static final String KEY_NETWORK_NAME = "nn";
   private static final String KEY_EXTENDED_PAN_ID = "xp";
+  private static final String KEY_VENDOR_NAME = "vn";
+  private static final String KEY_MODEL_NAME = "mn";
 
   private final WifiManager.MulticastLock wifiMulticastLock;
   private final NsdManager nsdManager;
   private final ConnectivityManager connManager;
+  private final String serviceType;
   private final BorderAgentListener borderAgentListener;
 
   private ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -72,17 +76,19 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
 
     void onBorderAgentFound(BorderAgentInfo borderAgentInfo);
 
-    void onBorderAgentLost(byte[] id);
+    default void onBorderAgentLost(boolean isEpskcService, String instanceName) {}
   }
 
   @RequiresPermission(permission.INTERNET)
-  public BorderAgentDiscoverer(Context context, BorderAgentListener borderAgentListener) {
+  public BorderAgentDiscoverer(
+      Context context, String serviceType, BorderAgentListener borderAgentListener) {
     WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     wifiMulticastLock = wifi.createMulticastLock("multicastLock");
 
     nsdManager = context.getSystemService(NsdManager.class);
     connManager = context.getSystemService(ConnectivityManager.class);
 
+    this.serviceType = serviceType;
     this.borderAgentListener = borderAgentListener;
   }
 
@@ -98,8 +104,8 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
     wifiMulticastLock.acquire();
 
     startResolver();
-    nsdManager.discoverServices(
-        BorderAgentDiscoverer.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this);
+
+    nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, this);
   }
 
   private void startResolver() {
@@ -174,7 +180,7 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
 
   @Override
   public void onDiscoveryStarted(String serviceType) {
-    Log.d(TAG, "start discovering Border Agent");
+    Log.d(TAG, "start discovering Border Agent: " + serviceType);
   }
 
   @Override
@@ -191,11 +197,9 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
 
   @Override
   public void onServiceLost(NsdServiceInfo nsdServiceInfo) {
-    byte[] id = getBorderAgentId(nsdServiceInfo);
-    if (id != null) {
-      Log.d(TAG, "a Border Agent service is gone: " + nsdServiceInfo.getServiceName());
-      borderAgentListener.onBorderAgentLost(id);
-    }
+    Log.d(TAG, "a Border Agent service is gone: " + nsdServiceInfo.getServiceName());
+    borderAgentListener.onBorderAgentLost(
+        serviceType.equals(MESHCOP_E_SERVICE_TYPE), nsdServiceInfo.getServiceName());
   }
 
   @Override
@@ -211,18 +215,16 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
   @Nullable
   private BorderAgentInfo getBorderAgentInfo(NsdServiceInfo serviceInfo) {
     Map<String, byte[]> attrs = serviceInfo.getAttributes();
-    byte[] id = getBorderAgentId(serviceInfo);
-
-    if (!attrs.containsKey(KEY_NETWORK_NAME) || !attrs.containsKey(KEY_EXTENDED_PAN_ID)) {
-      return null;
-    }
-
     return new BorderAgentInfo(
-        id,
-        new String(attrs.get(KEY_NETWORK_NAME)),
-        attrs.get(KEY_EXTENDED_PAN_ID),
+        serviceType.equals(MESHCOP_E_SERVICE_TYPE),
+        serviceInfo.getServiceName(),
         handleNsdServiceAddress(serviceInfo.getHost()),
-        serviceInfo.getPort());
+        serviceInfo.getPort(),
+        attrs.get(KEY_ID),
+        getStringAttribute(attrs, KEY_NETWORK_NAME),
+        attrs.get(KEY_EXTENDED_PAN_ID),
+        getStringAttribute(attrs, KEY_VENDOR_NAME),
+        getStringAttribute(attrs, KEY_MODEL_NAME));
   }
 
   /**
@@ -258,11 +260,11 @@ public class BorderAgentDiscoverer implements NsdManager.DiscoveryListener {
   }
 
   @Nullable
-  private byte[] getBorderAgentId(NsdServiceInfo serviceInfo) {
-    Map<String, byte[]> attrs = serviceInfo.getAttributes();
-    if (attrs.containsKey(KEY_ID)) {
-      return attrs.get(KEY_ID).clone();
+  private static String getStringAttribute(Map<String, byte[]> attributes, String key) {
+    byte[] value = attributes.get(key);
+    if (value == null) {
+      return null;
     }
-    return null;
+    return new String(value);
   }
 }

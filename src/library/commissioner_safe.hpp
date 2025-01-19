@@ -129,6 +129,7 @@ public:
 
     void  SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aDataset) override;
     Error SetPendingDataset(const PendingOperationalDataset &aDataset) override;
+    Error SetRawPendingDataset(const ByteArray &aPendingDataset) override;
 
     void  SetSecurePendingDataset(ErrorHandler                     aHandler,
                                   uint32_t                         aMaxRetrievalTimer,
