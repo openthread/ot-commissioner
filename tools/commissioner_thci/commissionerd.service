@@ -3,7 +3,7 @@ Description=OT-commissioner daemon.
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python2 -u /usr/bin/commissionerd.py -c /usr/bin/commissioner-cli
+ExecStart=/usr/bin/python -u /usr/bin/commissionerd.py -c /usr/bin/commissioner-cli
 
 [Install]
 WantedBy=multi-user.target
