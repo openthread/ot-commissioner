@@ -1,6 +1,6 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -18,11 +18,16 @@
 
     <style name="ThreadNetworkDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog.Centered">
         <item name="materialAlertDialogTitleTextStyle">@style/ThreadNetworkDialogTitleStyle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/ThreadNetworkDialogBodyStyle</item>
     </style>
 
     <style name="ThreadNetworkDialogTitleStyle" parent="@style/MaterialAlertDialog.MaterialComponents.Title.Text">
         <item name="android:textAppearance">?attr/textAppearanceSubtitle1</item>
         <item name="android:maxLines">3</item>
         <item name="android:singleLine">false</item>
+    </style>
+
+    <style name="ThreadNetworkDialogBodyStyle" parent="@style/MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textIsSelectable">true</item>
     </style>
 </resources>
