@@ -134,12 +134,13 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -G"Unix Makefiles"                \
-                -DCMAKE_CXX_STANDARD=11           \
-                -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
-                -DCMAKE_BUILD_TYPE=Release        \
-                -DCMAKE_INSTALL_PREFIX=/usr/local \
-                -DOT_COMM_WARNING_AS_ERROR=ON     \
+          cmake -G"Unix Makefiles"                 \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                -DCMAKE_CXX_STANDARD=11            \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON   \
+                -DCMAKE_BUILD_TYPE=Release         \
+                -DCMAKE_INSTALL_PREFIX=/usr/local  \
+                -DOT_COMM_WARNING_AS_ERROR=ON      \
                 ..
           make -j2
           sudo make install
@@ -172,13 +173,14 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -GNinja                          \
-                -DBUILD_SHARED_LIBS=ON           \
-                -DCMAKE_CXX_STANDARD=11          \
-                -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-                -DCMAKE_BUILD_TYPE=Release       \
-                -DOT_COMM_JAVA_BINDING=ON        \
-                -DOT_COMM_WARNING_AS_ERROR=ON    \
+          cmake -GNinja                            \
+                -DBUILD_SHARED_LIBS=ON             \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                -DCMAKE_CXX_STANDARD=11            \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON   \
+                -DCMAKE_BUILD_TYPE=Release         \
+                -DOT_COMM_JAVA_BINDING=ON          \
+                -DOT_COMM_WARNING_AS_ERROR=ON      \
                 ..
           ninja
 
