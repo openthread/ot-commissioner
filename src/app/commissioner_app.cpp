@@ -1399,7 +1399,7 @@ Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aD
     return error;
 }
 
-void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const diag::NetDiagData &aDiagAnsMsg)
 {
     Address addr;
 

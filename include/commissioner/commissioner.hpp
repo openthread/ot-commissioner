@@ -267,7 +267,8 @@ public:
      * @param[in] aDiagAnsMsg   Parsed network diag data.
      *
      */
-    virtual void OnDiagGetAnswerMessage(const std::string &aPeerAddr, const ot::commissioner::NetDiagData &aDiagAnsMsg)
+    virtual void OnDiagGetAnswerMessage(const std::string                         &aPeerAddr,
+                                        const ot::commissioner::diag::NetDiagData &aDiagAnsMsg)
     {
         (void)aPeerAddr;
         (void)aDiagAnsMsg;

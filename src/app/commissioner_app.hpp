@@ -64,7 +64,7 @@ struct EnergyReport
 };
 using EnergyReportMap = std::map<Address, EnergyReport>;
 
-using DiagAnsDataMap = std::map<Address, NetDiagData>;
+using DiagAnsDataMap = std::map<Address, diag::NetDiagData>;
 
 /**
  * @brief Enumeration of Joiner Type for steering.
@@ -129,7 +129,7 @@ public:
 
     MOCKABLE void OnDatasetChanged() override;
 
-    MOCKABLE void OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg) override;
+    MOCKABLE void OnDiagGetAnswerMessage(const std::string &aPeerAddr, const diag::NetDiagData &aDiagAnsMsg) override;
 
     MOCKABLE Error Connect(const std::string &aBorderAgentAddr, uint16_t aBorderAgentPort);
 

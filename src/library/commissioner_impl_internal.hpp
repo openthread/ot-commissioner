@@ -53,22 +53,23 @@ static constexpr uint8_t kSixLowPanContextBytes = 2;
 namespace internal {
 
 Error     DecodeIpv6AddressList(std::vector<std::string> &aAddrs, const ByteArray &aBuf);
-Error     DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChildIpv6AddressInfoList, const ByteArray &aBuf);
-Error     DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aPayload);
-Error     DecodeModeData(ModeData &aModeData, const ByteArray &aBuf);
-Error     DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const ByteArray &aBuf);
-Error     DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf);
-Error     DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf);
-Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
-void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
+Error     DecodeChildIpv6AddressList(std::vector<diag::ChildIpv6AddrInfo> &aChildIpv6AddressInfoList,
+                                     const ByteArray                      &aBuf);
+Error     DecodeNetDiagData(diag::NetDiagData &aNetDiagData, const ByteArray &aPayload);
+Error     DecodeModeData(diag::ModeData &aModeData, const ByteArray &aBuf);
+Error     DecodeChildTable(std::vector<diag::ChildTableEntry> &aChildTable, const ByteArray &aBuf);
+Error     DecodeLeaderData(diag::LeaderData &aLeaderData, const ByteArray &aBuf);
+Error     DecodeMacCounters(diag::MacCounters &aMacCounters, const ByteArray &aBuf);
+Error     DecodeRoute64(diag::Route64 &aRoute64, const ByteArray &aBuf);
+void      DecodeRouteDataEntry(diag::RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
 ByteArray ExtractRouterIds(const ByteArray &aMask);
 
-Error DecodeNetworkData(NetworkDataTlv &aNetworkData, const ByteArray &aBuf);
-Error DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const ByteArray &aBuf);
-Error DecodePrefix(PrefixEntry &aPrefix, const ByteArray &aBuf);
-Error DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf);
-Error DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf);
-Error DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArray &aBuf);
+Error DecodeNetworkData(diag::NetworkData &aNetworkData, const ByteArray &aBuf);
+Error DecodePrefixList(std::vector<diag::PrefixEntry> &aPrefixList, const ByteArray &aBuf);
+Error DecodePrefix(diag::PrefixEntry &aPrefix, const ByteArray &aBuf);
+Error DecodeHasRoute(std::vector<diag::HasRouteEntry> &aHasRouteList, const ByteArray &aBuf);
+Error DecodeBorderRouter(std::vector<diag::BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf);
+Error DecodeContext(diag::SixLowPanContext &aSixLowPanContext, const ByteArray &aBuf);
 
 } // namespace internal
 

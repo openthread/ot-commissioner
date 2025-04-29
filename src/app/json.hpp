@@ -63,7 +63,7 @@ struct NetworkData
 
 Error       NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson);
 std::string NetworkDataToJson(const NetworkData &aNetworkData);
-std::string MacCountersToJson(const MacCounters &aMacCounters);
+std::string MacCountersToJson(const diag::MacCounters &aMacCounters);
 
 Error       CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::string &aJson);
 std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset);
@@ -83,7 +83,8 @@ std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
-std::string NetDiagDataToJson(const NetDiagData &aNetDiagData);
+std::string NetDiagDataToJson(const diag::NetDiagData &aNetDiagData);
+std::string MacCountersToJson(const diag::MacCounters &aMacCounters);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);

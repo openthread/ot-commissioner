@@ -2571,11 +2571,11 @@ exit:
 
 Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
-    Value       value;
-    uint64_t    flags         = 0;
-    uint8_t     operationType = 0;
-    std::string dstAddr;
-    NetDiagData diagData;
+    Value             value;
+    uint64_t          flags         = 0;
+    uint8_t           operationType = 0;
+    std::string       dstAddr;
+    diag::NetDiagData diagData;
 
     VerifyOrExit(aExpr.size() >= 3,
                  value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
@@ -2604,7 +2604,7 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
 
     if (CaseInsensitiveEqual(aExpr[2], "extaddr"))
     {
-        flags = NetDiagData::kExtMacAddrBit;
+        flags = diag::NetDiagData::kExtMacAddrBit;
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
@@ -2620,7 +2620,7 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
     }
     if (CaseInsensitiveEqual(aExpr[2], "rloc16"))
     {
-        flags = NetDiagData::kMacAddrBit;
+        flags = diag::NetDiagData::kMacAddrBit;
         if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
@@ -2636,7 +2636,7 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
     }
     if (CaseInsensitiveEqual(aExpr[2], "maccounters"))
     {
-        flags = NetDiagData::kMacCountersBit;
+        flags = diag::NetDiagData::kMacCountersBit;
         if (operationType == DIAG_RST_NTF_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagReset(dstAddr, flags));

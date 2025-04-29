@@ -300,8 +300,8 @@ private:
     coap::Resource mResourcePanIdConflict;
     coap::Resource mResourceEnergyReport;
 
-    coap::Resource mResourceDiagAns;
-    NetDiagData    mDiagAnsTlvs;
+    coap::Resource    mResourceDiagAns;
+    diag::NetDiagData mDiagAnsTlvs;
 };
 
 /*

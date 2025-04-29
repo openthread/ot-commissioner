@@ -47,6 +47,8 @@ namespace ot {
 
 namespace commissioner {
 
+namespace diag {
+
 /**
  * @brief Mode Data
  */
@@ -178,9 +180,9 @@ struct PrefixEntry
 };
 
 /**
- * @brief Network Data TLV
+ * @brief Network Data
  */
-struct NetworkDataTlv
+struct NetworkData
 {
     std::vector<PrefixEntry> mPrefixList;
 };
@@ -204,7 +206,7 @@ struct NetDiagData
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
-    NetworkDataTlv                 mNetworkData;
+    NetworkData                    mNetworkData;
 
     /**
      * Indicates which fields are included in the object.
@@ -223,6 +225,8 @@ struct NetDiagData
     static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
     static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
 };
+
+} // namespace diag
 
 } // namespace commissioner
 

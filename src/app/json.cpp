@@ -766,30 +766,31 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
+static void to_json(Json &aJson, const diag::NetDiagData &aNetDiagData)
 {
-#define SET_IF_PRESENT(name)                                    \
-    if (aNetDiagData.mPresentFlags & NetDiagData::k##name##Bit) \
-    {                                                           \
-        aJson[#name] = aNetDiagData.m##name;                    \
+#define SET_IF_PRESENT(name)                                          \
+    if (aNetDiagData.mPresentFlags & diag::NetDiagData::k##name##Bit) \
+    {                                                                 \
+        aJson[#name] = aNetDiagData.m##name;                          \
     };
 
     SET_IF_PRESENT(ExtMacAddr);
     SET_IF_PRESENT(MacAddr);
 #undef SET_IF_PRESENT
-    if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
+    if (aNetDiagData.mPresentFlags & diag::NetDiagData::kMacCountersBit)
     {
         aJson["MacCounters"] = MacCountersToJson(aNetDiagData.mMacCounters);
     }
 }
 
-std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
+std::string NetDiagDataToJson(const diag::NetDiagData &aNetDiagData)
 {
-    Json json = aNetDiagData;
+    Json json;
+    to_json(json, aNetDiagData);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-static void to_json(Json &aJson, const MacCounters &aMacCounters)
+static void to_json(Json &aJson, const diag::MacCounters &aMacCounters)
 {
 #define SET(name) aJson[#name] = aMacCounters.m##name;
     SET(IfInUnknownProtos);
@@ -804,9 +805,10 @@ static void to_json(Json &aJson, const MacCounters &aMacCounters)
 #undef SET
 }
 
-std::string MacCountersToJson(const MacCounters &aMacCounters)
+std::string MacCountersToJson(const diag::MacCounters &aMacCounters)
 {
-    Json json = aMacCounters;
+    Json json;
+    to_json(json, aMacCounters);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
