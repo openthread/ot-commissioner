@@ -100,12 +100,12 @@
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
 %template(StringVector) std::vector<std::string>;
-%template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::ChildIpv6AddrInfo>;
-%template(ChildTableEntryVector) std::vector<ot::commissioner::ChildTableEntry>;
-%template(RouteDataEntryVector) std::vector<ot::commissioner::RouteDataEntry>;
-%template(HasRouteEntryVector) std::vector<ot::commissioner::HasRouteEntry>;
-%template(BorderRouterEntryVector) std::vector<ot::commissioner::BorderRouterEntry>;
-%template(PrefixEntryVector) std::vector<ot::commissioner::PrefixEntry>;
+%template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::diag::ChildIpv6AddrInfo>;
+%template(ChildTableEntryVector) std::vector<ot::commissioner::diag::ChildTableEntry>;
+%template(RouteDataEntryVector) std::vector<ot::commissioner::diag::RouteDataEntry>;
+%template(HasRouteEntryVector) std::vector<ot::commissioner::diag::HasRouteEntry>;
+%template(BorderRouterEntryVector) std::vector<ot::commissioner::diag::BorderRouterEntry>;
+%template(PrefixEntryVector) std::vector<ot::commissioner::diag::PrefixEntry>;
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
