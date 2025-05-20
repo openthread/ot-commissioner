@@ -526,7 +526,7 @@ static void from_json(const Json &aJson, PendingOperationalDataset &aDataset)
 #undef SET_IF_PRESENT
 }
 
-static void to_json(Json &aJson, const NetworkData &aNetworkData)
+static void to_json(Json &aJson, const json::NetworkData &aNetworkData)
 {
 #define SET(name) aJson[#name] = aNetworkData.m##name
 
@@ -538,7 +538,7 @@ static void to_json(Json &aJson, const NetworkData &aNetworkData)
 #undef SET
 }
 
-static void from_json(const Json &aJson, NetworkData &aNetworkData)
+static void from_json(const Json &aJson, json::NetworkData &aNetworkData)
 {
 #define SET_IF_PRESENT(name)                                                          \
     if (aJson.contains(#name))                                                        \
@@ -564,13 +564,15 @@ static void to_json(Json &aJson, const EnergyReport &aEnergyReport)
 #undef SET
 }
 
-Error NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson)
+Error NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJson)
 {
     Error error;
+    Json  json;
 
     try
     {
-        aNetworkData = Json::parse(StripComments(aJson));
+        json = Json::parse(StripComments(aJson));
+        from_json(json, aNetworkData);
     } catch (JsonException &e)
     {
         error = e.GetError();
@@ -582,9 +584,10 @@ Error NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson)
     return error;
 }
 
-std::string NetworkDataToJson(const NetworkData &aNetworkData)
+std::string NetworkDataToJson(const json::NetworkData &aNetworkData)
 {
-    Json json = aNetworkData;
+    Json json;
+    to_json(json, aNetworkData);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
@@ -766,31 +769,31 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-static void to_json(Json &aJson, const diag::NetDiagData &aNetDiagData)
+static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
-#define SET_IF_PRESENT(name)                                          \
-    if (aNetDiagData.mPresentFlags & diag::NetDiagData::k##name##Bit) \
-    {                                                                 \
-        aJson[#name] = aNetDiagData.m##name;                          \
+#define SET_IF_PRESENT(name)                                    \
+    if (aNetDiagData.mPresentFlags & NetDiagData::k##name##Bit) \
+    {                                                           \
+        aJson[#name] = aNetDiagData.m##name;                    \
     };
 
     SET_IF_PRESENT(ExtMacAddr);
     SET_IF_PRESENT(MacAddr);
 #undef SET_IF_PRESENT
-    if (aNetDiagData.mPresentFlags & diag::NetDiagData::kMacCountersBit)
+    if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
     {
         aJson["MacCounters"] = MacCountersToJson(aNetDiagData.mMacCounters);
     }
 }
 
-std::string NetDiagDataToJson(const diag::NetDiagData &aNetDiagData)
+std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
 {
     Json json;
     to_json(json, aNetDiagData);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-static void to_json(Json &aJson, const diag::MacCounters &aMacCounters)
+static void to_json(Json &aJson, const MacCounters &aMacCounters)
 {
 #define SET(name) aJson[#name] = aMacCounters.m##name;
     SET(IfInUnknownProtos);
@@ -805,7 +808,7 @@ static void to_json(Json &aJson, const diag::MacCounters &aMacCounters)
 #undef SET
 }
 
-std::string MacCountersToJson(const diag::MacCounters &aMacCounters)
+std::string MacCountersToJson(const MacCounters &aMacCounters)
 {
     Json json;
     to_json(json, aMacCounters);

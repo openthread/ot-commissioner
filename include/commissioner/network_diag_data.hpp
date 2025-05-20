@@ -42,12 +42,11 @@
 
 #include "defines.hpp"
 #include "error.hpp"
+#include "network_data.hpp"
 
 namespace ot {
 
 namespace commissioner {
-
-namespace diag {
 
 /**
  * @brief Mode Data
@@ -130,64 +129,6 @@ struct MacCounters
 };
 
 /**
- * @brief Has Route Entry
- */
-struct HasRouteEntry
-{
-    uint16_t mRloc16           = 0;
-    uint8_t  mRouterPreference = 0;
-    bool     mIsNat64          = false;
-};
-
-/**
- * @brief Border Router Entry
- */
-struct BorderRouterEntry
-{
-    uint16_t mRloc16           = 0;
-    uint8_t  mPrefixPreference = 0;
-    bool     mIsPreferred      = false;
-    bool     mIsSlaac          = false;
-    bool     mIsDhcp           = false;
-    bool     mIsConfigure      = false;
-    bool     mIsDefaultRoute   = false;
-    bool     mIsOnMesh         = false;
-    bool     mIsNdDns          = false;
-    bool     mIsDp             = false;
-};
-
-/**
- * @brief 6LoWPAN Context
- */
-struct SixLowPanContext
-{
-    uint8_t mIsCompress    = false;
-    uint8_t mContextId     = 0;
-    uint8_t mContextLength = 0;
-};
-
-/**
- * @brief Prefix
- */
-struct PrefixEntry
-{
-    uint8_t                        mDomainId     = 0;
-    uint8_t                        mPrefixLength = 0;
-    ByteArray                      mPrefix;
-    std::vector<HasRouteEntry>     mHasRouteList;
-    std::vector<BorderRouterEntry> mBorderRouterList;
-    SixLowPanContext               mSixLowPanContext;
-};
-
-/**
- * @brief Network Data
- */
-struct NetworkData
-{
-    std::vector<PrefixEntry> mPrefixList;
-};
-
-/**
  * @brief network diagnostic data in TMF
  *
  * Each data field of Diagnostic TLVs is optional. The field is
@@ -225,8 +166,6 @@ struct NetDiagData
     static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
     static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
 };
-
-} // namespace diag
 
 } // namespace commissioner
 

@@ -147,10 +147,10 @@ TEST(CommissionerImpl, NotImplementedApis)
 
 TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
 {
-    ByteArray         buf;
-    diag::NetDiagData diagData;
-    Error             error;
-    std::string       tlvsHexString =
+    ByteArray   buf;
+    NetDiagData diagData;
+    Error       error;
+    std::string tlvsHexString =
         "00086ac6c2de12b212df0102c80002010f0512e7000400204300300af1f1f1f1f101f1f1f10608360bb9f7415c30210840fd9238a3395d"
         "0001f9043dfeb7b3edf3fd7d604fb88a0000000000fffe00c800fd7d604fb88a0000fe3e5a4c31acb559fe8000000000000068c6c2de12"
         "b212df1009601804601d046019041e22c818fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e22c802fd"

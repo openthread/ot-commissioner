@@ -53,6 +53,7 @@ namespace ot {
 
 namespace commissioner {
 
+namespace json {
 struct NetworkData
 {
     ActiveOperationalDataset  mActiveDataset;
@@ -60,10 +61,11 @@ struct NetworkData
     CommissionerDataset       mCommDataset;
     BbrDataset                mBbrDataset;
 };
+} // namespace json
 
-Error       NetworkDataFromJson(NetworkData &aNetworkData, const std::string &aJson);
-std::string NetworkDataToJson(const NetworkData &aNetworkData);
-std::string MacCountersToJson(const diag::MacCounters &aMacCounters);
+Error       NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJson);
+std::string NetworkDataToJson(const json::NetworkData &aNetworkData);
+std::string MacCountersToJson(const MacCounters &aMacCounters);
 
 Error       CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::string &aJson);
 std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset);
@@ -83,8 +85,8 @@ std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
-std::string NetDiagDataToJson(const diag::NetDiagData &aNetDiagData);
-std::string MacCountersToJson(const diag::MacCounters &aMacCounters);
+std::string NetDiagDataToJson(const NetDiagData &aNetDiagData);
+std::string MacCountersToJson(const MacCounters &aMacCounters);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);

@@ -165,8 +165,8 @@ bool CommissionerApp::IsCcmMode() const
 
 Error CommissionerApp::SaveNetworkData(const std::string &aFilename)
 {
-    Error       error;
-    NetworkData networkData;
+    Error             error;
+    json::NetworkData networkData;
 
     networkData.mActiveDataset  = mActiveDataset;
     networkData.mPendingDataset = mPendingDataset;
@@ -1399,7 +1399,7 @@ Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aD
     return error;
 }
 
-void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const diag::NetDiagData &aDiagAnsMsg)
+void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
 {
     Address addr;
 
