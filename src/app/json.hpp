@@ -61,7 +61,6 @@ struct NetworkData
     CommissionerDataset       mCommDataset;
     BbrDataset                mBbrDataset;
 };
-} // namespace json
 
 Error       NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJson);
 std::string NetworkDataToJson(const json::NetworkData &aNetworkData);
@@ -98,6 +97,8 @@ void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);
  * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
  */
 Error JsonFromFile(std::string &aJson, const std::string &aPath);
+
+} // namespace json
 
 } // namespace commissioner
 

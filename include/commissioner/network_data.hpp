@@ -359,8 +359,6 @@ struct PrefixEntry
 struct NetworkData
 {
     std::vector<PrefixEntry> mPrefixList;
-
-    static constexpr uint64_t kNetworkDataBit = (1ull << 10);
 };
 
 /**

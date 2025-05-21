@@ -152,7 +152,7 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
     TlvPtr   tlv = nullptr;
 
     VerifyOrExit(offset + 2 <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of TLV"));
-    // Based on spec 5.18,Network Data TLVs use first 7-bit type and the 8th bit to indicate
+    // Based on spec 5.18, Network Data TLVs use first 7-bit type and the 8th bit to indicate
     // the data to be valid for at least MIN_STABLE_LIFETIME.
     if (aScope == Scope::kNetworkData)
     {
