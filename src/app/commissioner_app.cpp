@@ -165,14 +165,14 @@ bool CommissionerApp::IsCcmMode() const
 
 Error CommissionerApp::SaveNetworkData(const std::string &aFilename)
 {
-    Error             error;
-    json::NetworkData networkData;
+    Error           error;
+    JsonNetworkData jsonNetworkData;
 
-    networkData.mActiveDataset  = mActiveDataset;
-    networkData.mPendingDataset = mPendingDataset;
-    networkData.mCommDataset    = mCommDataset;
-    networkData.mBbrDataset     = mBbrDataset;
-    auto jsonString             = NetworkDataToJson(networkData);
+    jsonNetworkData.mActiveDataset  = mActiveDataset;
+    jsonNetworkData.mPendingDataset = mPendingDataset;
+    jsonNetworkData.mCommDataset    = mCommDataset;
+    jsonNetworkData.mBbrDataset     = mBbrDataset;
+    auto jsonString                 = NetworkDataToJson(jsonNetworkData);
 
     SuccessOrExit(error = WriteFile(jsonString, aFilename));
 

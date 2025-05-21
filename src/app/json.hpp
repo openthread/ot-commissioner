@@ -53,8 +53,7 @@ namespace ot {
 
 namespace commissioner {
 
-namespace json {
-struct NetworkData
+struct JsonNetworkData
 {
     ActiveOperationalDataset  mActiveDataset;
     PendingOperationalDataset mPendingDataset;
@@ -62,9 +61,8 @@ struct NetworkData
     BbrDataset                mBbrDataset;
 };
 
-Error       NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJson);
-std::string NetworkDataToJson(const json::NetworkData &aNetworkData);
-std::string MacCountersToJson(const MacCounters &aMacCounters);
+Error       NetworkDataFromJson(JsonNetworkData &aJsonNetworkData, const std::string &aJson);
+std::string NetworkDataToJson(const JsonNetworkData &aJsonNetworkData);
 
 Error       CommissionerDatasetFromJson(CommissionerDataset &aDataset, const std::string &aJson);
 std::string CommissionerDatasetToJson(const CommissionerDataset &aDataset);
@@ -97,8 +95,6 @@ void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);
  * If JSON syntax is not valid, ErrorCode::kBadFormat is returned.
  */
 Error JsonFromFile(std::string &aJson, const std::string &aPath);
-
-} // namespace json
 
 } // namespace commissioner
 

@@ -526,9 +526,9 @@ static void from_json(const Json &aJson, PendingOperationalDataset &aDataset)
 #undef SET_IF_PRESENT
 }
 
-static void to_json(Json &aJson, const json::NetworkData &aNetworkData)
+static void to_json(Json &aJson, const JsonNetworkData &aJsonNetworkData)
 {
-#define SET(name) aJson[#name] = aNetworkData.m##name
+#define SET(name) aJson[#name] = aJsonNetworkData.m##name
 
     SET(ActiveDataset);
     SET(PendingDataset);
@@ -538,12 +538,12 @@ static void to_json(Json &aJson, const json::NetworkData &aNetworkData)
 #undef SET
 }
 
-static void from_json(const Json &aJson, json::NetworkData &aNetworkData)
+static void from_json(const Json &aJson, JsonNetworkData &aJsonNetworkData)
 {
-#define SET_IF_PRESENT(name)                                                          \
-    if (aJson.contains(#name))                                                        \
-    {                                                                                 \
-        aNetworkData.m##name = aJson.at(#name).get<decltype(aNetworkData.m##name)>(); \
+#define SET_IF_PRESENT(name)                                                                  \
+    if (aJson.contains(#name))                                                                \
+    {                                                                                         \
+        aJsonNetworkData.m##name = aJson.at(#name).get<decltype(aJsonNetworkData.m##name)>(); \
     };
 
     SET_IF_PRESENT(ActiveDataset);
@@ -564,7 +564,7 @@ static void to_json(Json &aJson, const EnergyReport &aEnergyReport)
 #undef SET
 }
 
-Error NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJson)
+Error NetworkDataFromJson(JsonNetworkData &aJsonNetworkData, const std::string &aJson)
 {
     Error error;
     Json  json;
@@ -572,7 +572,7 @@ Error NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJ
     try
     {
         json = Json::parse(StripComments(aJson));
-        from_json(json, aNetworkData);
+        from_json(json, aJsonNetworkData);
     } catch (JsonException &e)
     {
         error = e.GetError();
@@ -584,10 +584,10 @@ Error NetworkDataFromJson(json::NetworkData &aNetworkData, const std::string &aJ
     return error;
 }
 
-std::string NetworkDataToJson(const json::NetworkData &aNetworkData)
+std::string NetworkDataToJson(const JsonNetworkData &aJsonNetworkData)
 {
     Json json;
-    to_json(json, aNetworkData);
+    to_json(json, aJsonNetworkData);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
