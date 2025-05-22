@@ -2330,7 +2330,7 @@ Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouter
     uint8_t           offset = 0;
     BorderRouterEntry borderRouterEntry;
 
-    VerifyOrExit((length - kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));
+    VerifyOrExit((length % kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));
 
     while (offset < length)
     {

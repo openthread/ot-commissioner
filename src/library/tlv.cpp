@@ -44,6 +44,7 @@
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
+#include "library/commissioner_impl_internal.hpp"
 
 namespace ot {
 
@@ -302,11 +303,11 @@ bool Tlv::IsValid() const
         {
         // Network Data TLVs
         case Type::kNetworkDataHasRoute:
-            return length >= 3;
+            return length % kHasRouteBytes == 0;
         case Type::kNetworkDataPrefix:
             return length >= 2;
         case Type::kNetworkDataBorderRouter:
-            return length >= 4;
+            return length % kBorderRouterBytes == 0;
         case Type::kNetworkData6LowPanContext:
             return length >= 2;
         default:
