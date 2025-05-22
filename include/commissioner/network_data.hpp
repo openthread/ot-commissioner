@@ -335,7 +335,7 @@ struct BorderRouterEntry
  */
 struct SixLowPanContext
 {
-    uint8_t mIsCompress    = false;
+    bool    mIsCompress    = false;
     uint8_t mContextId     = 0;
     uint8_t mContextLength = 0;
 };
