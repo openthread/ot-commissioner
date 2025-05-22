@@ -2234,9 +2234,7 @@ exit:
 Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf)
 {
     Error        error;
-    tlv::TlvSet  tlvSet;
     tlv::TlvList tlvList;
-    NetworkData  networkData;
 
     SuccessOrExit(error =
                       tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData));
@@ -2244,44 +2242,42 @@ Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aB
     {
         for (const auto &tlv : tlvList)
         {
-            SuccessOrExit(error = DecodePrefixList(networkData.mPrefixList, tlv.GetValue()));
+            PrefixEntry prefixEntry;
+            SuccessOrExit(error = DecodePrefixEntry(prefixEntry, tlv.GetValue()));
+            aNetworkData.mPrefixList.emplace_back(prefixEntry);
         }
     }
-
-    aNetworkData = networkData;
 
 exit:
     return error;
 }
 
-Error internal::DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const ByteArray &aBuf)
+Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aBuf)
 {
-    Error        error;
-    size_t       length = aBuf.size();
-    PrefixEntry  prefix;
-    uint8_t      offset = 0;
-    ByteArray    subTlv;
-    tlv::TlvList tlvList;
-    tlv::TlvSet  tlvSet;
+    Error       error;
+    size_t      length = aBuf.size();
+    uint8_t     offset = 0;
+    ByteArray   subTlv;
+    tlv::TlvSet tlvSet;
 
     VerifyOrExit(length >= kPrefixBytes, error = ERROR_BAD_FORMAT("premature end of Prefix"));
     offset += kPrefixBytes;
-    prefix.mDomainId     = aBuf[0];
-    prefix.mPrefixLength = (aBuf[1] + 7) >> 3;
-    offset += prefix.mPrefixLength;
+    aPrefixEntry.mDomainId     = aBuf[0];
+    aPrefixEntry.mPrefixLength = (aBuf[1] + 7) >> 3;
+    offset += aPrefixEntry.mPrefixLength;
     VerifyOrExit(length >= offset, error = ERROR_BAD_FORMAT("premature end of Prefix"));
-    prefix.mPrefix = {aBuf.begin() + kPrefixBytes, aBuf.begin() + kPrefixBytes + offset};
+    aPrefixEntry.mPrefix = {aBuf.begin() + kPrefixBytes, aBuf.begin() + kPrefixBytes + aPrefixEntry.mPrefixLength};
 
     if (length > offset)
     {
         subTlv = {aBuf.begin() + offset, aBuf.end()};
 
-        // Get the context
+        // Get the 6LowPan context
         SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
         if (auto context = tlvSet[tlv::Type::kNetworkData6LowPanContext])
         {
             const ByteArray &value = context->GetValue();
-            SuccessOrExit(error = DecodeContext(prefix.mSixLowPanContext, value));
+            SuccessOrExit(error = DecodeContext(aPrefixEntry.mSixLowPanContext, value));
         }
 
         // Get the HasRoute
@@ -2289,7 +2285,7 @@ Error internal::DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const By
         if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
         {
             const ByteArray &value = hasRoute->GetValue();
-            SuccessOrExit(error = DecodeHasRoute(prefix.mHasRouteList, value));
+            SuccessOrExit(error = DecodeHasRoute(aPrefixEntry.mHasRouteList, value));
         }
 
         // Get the BorderRouter
@@ -2297,33 +2293,32 @@ Error internal::DecodePrefixList(std::vector<PrefixEntry> &aPrefixList, const By
         if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
         {
             const ByteArray &value = borderRouter->GetValue();
-            SuccessOrExit(error = DecodeBorderRouter(prefix.mBorderRouterList, value));
+            SuccessOrExit(error = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, value));
         }
-
-        // Add the prefix to the list
-        aPrefixList.emplace_back(prefix);
     }
+
 exit:
     return error;
 }
+
 Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf)
 {
     Error         error;
     size_t        length = aBuf.size();
-    HasRouteEntry hasRoute;
     uint8_t       offset = 0;
-    tlv::TlvList  tlvList;
+    HasRouteEntry hasRouteEntry;
 
     VerifyOrExit((length % kHasRouteBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of HasRoute"));
     while (offset < length)
     {
-        hasRoute.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
+        hasRouteEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
         offset += kRloc16Bytes;
-        hasRoute.mIsNat64          = (aBuf[offset] >> 5) & 0x01;
-        hasRoute.mRouterPreference = (aBuf[offset] >> 6) & 0x03;
+        hasRouteEntry.mIsNat64          = (aBuf[offset] >> 5) & 0x01;
+        hasRouteEntry.mRouterPreference = (aBuf[offset] >> 6) & 0x03;
         offset += 1;
-        aHasRouteList.emplace_back(hasRoute);
+        aHasRouteList.emplace_back(hasRouteEntry);
     }
+
 exit:
     return error;
 }
@@ -2332,26 +2327,27 @@ Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouter
 {
     Error             error;
     size_t            length = aBuf.size();
-    BorderRouterEntry borderRouter;
     uint8_t           offset = 0;
-    tlv::TlvList      tlvList;
-    VerifyOrExit((length % kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));
+    BorderRouterEntry borderRouterEntry;
+
+    VerifyOrExit((length - kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));
+
     while (offset < length)
     {
-        borderRouter.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
+        borderRouterEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
         offset += kRloc16Bytes;
-        borderRouter.mPrefixPreference = (aBuf[offset] >> 6) & 0x03;
-        borderRouter.mIsPreferred      = (aBuf[offset] >> 5) & 0x01;
-        borderRouter.mIsSlaac          = (aBuf[offset] >> 4) & 0x01;
-        borderRouter.mIsDhcp           = (aBuf[offset] >> 3) & 0x01;
-        borderRouter.mIsConfigure      = (aBuf[offset] >> 2) & 0x01;
-        borderRouter.mIsDefaultRoute   = (aBuf[offset] >> 1) & 0x01;
-        borderRouter.mIsOnMesh         = (aBuf[offset] >> 0) & 0x01;
+        borderRouterEntry.mPrefixPreference = (aBuf[offset] >> 6) & 0x03;
+        borderRouterEntry.mIsPreferred      = (aBuf[offset] >> 5) & 0x01;
+        borderRouterEntry.mIsSlaac          = (aBuf[offset] >> 4) & 0x01;
+        borderRouterEntry.mIsDhcp           = (aBuf[offset] >> 3) & 0x01;
+        borderRouterEntry.mIsConfigure      = (aBuf[offset] >> 2) & 0x01;
+        borderRouterEntry.mIsDefaultRoute   = (aBuf[offset] >> 1) & 0x01;
+        borderRouterEntry.mIsOnMesh         = (aBuf[offset] >> 0) & 0x01;
         offset += 1;
-        borderRouter.mIsNdDns = (aBuf[offset] >> 7) & 0x01;
-        borderRouter.mIsDp    = (aBuf[offset] >> 6) & 0x01;
+        borderRouterEntry.mIsNdDns = (aBuf[offset] >> 7) & 0x01;
+        borderRouterEntry.mIsDp    = (aBuf[offset] >> 6) & 0x01;
         offset += 1;
-        aBorderRouterList.emplace_back(borderRouter);
+        aBorderRouterList.emplace_back(borderRouterEntry);
     }
 
 exit:
@@ -2362,10 +2358,12 @@ Error internal::DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArr
 {
     Error  error;
     size_t length = aBuf.size();
+
     VerifyOrExit(length == kSixLowPanContextBytes, error = ERROR_BAD_FORMAT("incorrect size of Context"));
     aSixLowPanContext.mIsCompress    = (aBuf[0] >> 4) & 0x01;
     aSixLowPanContext.mContextId     = aBuf[0] & 0x0F;
     aSixLowPanContext.mContextLength = aBuf[1];
+
 exit:
     return error;
 }

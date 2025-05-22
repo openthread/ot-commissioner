@@ -216,6 +216,10 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mSixLowPanContext.mIsCompress, true);
     EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mSixLowPanContext.mContextId, 2);
     EXPECT_EQ(diagData.mNetworkData.mPrefixList[1].mSixLowPanContext.mContextLength, 64);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mDomainId, 0);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mPrefixLength, 12);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mHasRouteList.size(), 1);
+    EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mHasRouteList[0].mRloc16, 39936);
 }
 
 } // namespace commissioner
