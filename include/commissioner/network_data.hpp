@@ -304,6 +304,64 @@ struct BbrDataset
 };
 
 /**
+ * @brief Has Route Entry
+ */
+struct HasRouteEntry
+{
+    uint16_t mRloc16           = 0;
+    uint8_t  mRouterPreference = 0;
+    bool     mIsNat64          = false;
+};
+
+/**
+ * @brief Border Router Entry
+ */
+struct BorderRouterEntry
+{
+    uint16_t mRloc16           = 0;
+    uint8_t  mPrefixPreference = 0;
+    bool     mIsPreferred      = false;
+    bool     mIsSlaac          = false;
+    bool     mIsDhcp           = false;
+    bool     mIsConfigure      = false;
+    bool     mIsDefaultRoute   = false;
+    bool     mIsOnMesh         = false;
+    bool     mIsNdDns          = false;
+    bool     mIsDp             = false;
+};
+
+/**
+ * @brief 6LoWPAN Context
+ */
+struct SixLowPanContext
+{
+    bool    mIsCompress    = false;
+    uint8_t mContextId     = 0;
+    uint8_t mContextLength = 0;
+};
+
+/**
+ * @brief Prefix
+ */
+struct PrefixEntry
+{
+    uint8_t                        mDomainId     = 0;
+    uint8_t                        mPrefixLength = 0;
+    ByteArray                      mPrefix;
+    std::vector<HasRouteEntry>     mHasRouteList;
+    std::vector<BorderRouterEntry> mBorderRouterList;
+    SixLowPanContext               mSixLowPanContext;
+};
+
+/**
+ * @brief Network Data
+ */
+struct NetworkData
+{
+    std::vector<PrefixEntry> mPrefixList;
+};
+
+/**
  * @brief Parsing IPv6 prefix into raw byte array.
  *
  * This function parses an IPv6 prefix string which is followed by

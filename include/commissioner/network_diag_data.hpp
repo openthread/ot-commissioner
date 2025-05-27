@@ -42,6 +42,7 @@
 
 #include "defines.hpp"
 #include "error.hpp"
+#include "network_data.hpp"
 
 namespace ot {
 
@@ -146,6 +147,7 @@ struct NetDiagData
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
+    NetworkData                    mNetworkData;
 
     /**
      * Indicates which fields are included in the object.
@@ -162,6 +164,7 @@ struct NetDiagData
     static constexpr uint64_t kEui64Bit                  = (1ull << 7);
     static constexpr uint64_t kMacCountersBit            = (1ull << 8);
     static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
+    static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
 };
 
 } // namespace commissioner

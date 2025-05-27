@@ -2127,6 +2127,11 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChildIpv6Address);
     }
 
+    if (aDiagDataFlags & NetDiagData::kNetworkDataBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagNetworkData);
+    }
+
     return tlvTypes;
 }
 
@@ -2214,7 +2219,150 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kChildIpv6AddrsInfoListBit;
     }
 
+    if (auto networkData = tlvSet[tlv::Type::kNetworkDiagNetworkData])
+    {
+        const ByteArray &value = networkData->GetValue();
+        SuccessOrExit(error = DecodeNetworkData(diagData.mNetworkData, value));
+        diagData.mPresentFlags |= NetDiagData::kNetworkDataBit;
+    }
     aNetDiagData = diagData;
+
+exit:
+    return error;
+}
+
+Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf)
+{
+    Error        error;
+    tlv::TlvList tlvList;
+
+    SuccessOrExit(error =
+                      tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData));
+    if (tlvList.size() > 0)
+    {
+        for (const auto &tlv : tlvList)
+        {
+            PrefixEntry prefixEntry;
+            SuccessOrExit(error = DecodePrefixEntry(prefixEntry, tlv.GetValue()));
+            aNetworkData.mPrefixList.emplace_back(prefixEntry);
+        }
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aBuf)
+{
+    Error       error;
+    size_t      length = aBuf.size();
+    uint8_t     offset = 0;
+    ByteArray   subTlv;
+    tlv::TlvSet tlvSet;
+
+    VerifyOrExit(length >= kPrefixBytes, error = ERROR_BAD_FORMAT("premature end of Prefix"));
+    offset += kPrefixBytes;
+    aPrefixEntry.mDomainId     = aBuf[0];
+    aPrefixEntry.mPrefixLength = (aBuf[1] + 7) >> 3;
+    offset += aPrefixEntry.mPrefixLength;
+    VerifyOrExit(length >= offset, error = ERROR_BAD_FORMAT("premature end of Prefix"));
+    aPrefixEntry.mPrefix = {aBuf.begin() + kPrefixBytes, aBuf.begin() + kPrefixBytes + aPrefixEntry.mPrefixLength};
+
+    if (length > offset)
+    {
+        subTlv = {aBuf.begin() + offset, aBuf.end()};
+
+        // Get the 6LowPan context
+        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+        if (auto context = tlvSet[tlv::Type::kNetworkData6LowPanContext])
+        {
+            const ByteArray &value = context->GetValue();
+            SuccessOrExit(error = DecodeContext(aPrefixEntry.mSixLowPanContext, value));
+        }
+
+        // Get the HasRoute
+        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+        if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
+        {
+            const ByteArray &value = hasRoute->GetValue();
+            SuccessOrExit(error = DecodeHasRoute(aPrefixEntry.mHasRouteList, value));
+        }
+
+        // Get the BorderRouter
+        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+        if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
+        {
+            const ByteArray &value = borderRouter->GetValue();
+            SuccessOrExit(error = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, value));
+        }
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf)
+{
+    Error         error;
+    size_t        length = aBuf.size();
+    uint8_t       offset = 0;
+    HasRouteEntry hasRouteEntry;
+
+    VerifyOrExit((length % kHasRouteBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of HasRoute"));
+    while (offset < length)
+    {
+        hasRouteEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
+        offset += kRloc16Bytes;
+        hasRouteEntry.mIsNat64          = (aBuf[offset] >> 5) & 0x01;
+        hasRouteEntry.mRouterPreference = (aBuf[offset] >> 6) & 0x03;
+        offset += 1;
+        aHasRouteList.emplace_back(hasRouteEntry);
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf)
+{
+    Error             error;
+    size_t            length = aBuf.size();
+    uint8_t           offset = 0;
+    BorderRouterEntry borderRouterEntry;
+
+    VerifyOrExit((length % kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));
+
+    while (offset < length)
+    {
+        borderRouterEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
+        offset += kRloc16Bytes;
+        borderRouterEntry.mPrefixPreference = (aBuf[offset] >> 6) & 0x03;
+        borderRouterEntry.mIsPreferred      = (aBuf[offset] >> 5) & 0x01;
+        borderRouterEntry.mIsSlaac          = (aBuf[offset] >> 4) & 0x01;
+        borderRouterEntry.mIsDhcp           = (aBuf[offset] >> 3) & 0x01;
+        borderRouterEntry.mIsConfigure      = (aBuf[offset] >> 2) & 0x01;
+        borderRouterEntry.mIsDefaultRoute   = (aBuf[offset] >> 1) & 0x01;
+        borderRouterEntry.mIsOnMesh         = (aBuf[offset] >> 0) & 0x01;
+        offset += 1;
+        borderRouterEntry.mIsNdDns = (aBuf[offset] >> 7) & 0x01;
+        borderRouterEntry.mIsDp    = (aBuf[offset] >> 6) & 0x01;
+        offset += 1;
+        aBorderRouterList.emplace_back(borderRouterEntry);
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+
+    VerifyOrExit(length == kSixLowPanContextBytes, error = ERROR_BAD_FORMAT("incorrect size of Context"));
+    aSixLowPanContext.mIsCompress    = (aBuf[0] >> 4) & 0x01;
+    aSixLowPanContext.mContextId     = aBuf[0] & 0x0F;
+    aSixLowPanContext.mContextLength = aBuf[1];
 
 exit:
     return error;

@@ -44,6 +44,7 @@
 #include "common/error_macros.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
+#include "library/commissioner_impl_internal.hpp"
 
 namespace ot {
 
@@ -152,7 +153,16 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
     TlvPtr   tlv = nullptr;
 
     VerifyOrExit(offset + 2 <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of TLV"));
-    type   = aBuf[offset++];
+    // Based on spec 5.18, Network Data TLVs use first 7-bit type and the 8th bit to indicate
+    // the data to be valid for at least MIN_STABLE_LIFETIME.
+    if (aScope == Scope::kNetworkData)
+    {
+        type = aBuf[offset++] >> 1;
+    }
+    else
+    {
+        type = aBuf[offset++];
+    }
     length = aBuf[offset++];
     if (length == kEscapeLength)
     {
@@ -283,6 +293,23 @@ bool Tlv::IsValid() const
             return length >= 2;
         case Type::kNetworkDiagMleCounters:
             return length >= 66;
+        default:
+            return false;
+        }
+    }
+    else if (mScope == Scope::kNetworkData)
+    {
+        switch (mType)
+        {
+        // Network Data TLVs
+        case Type::kNetworkDataHasRoute:
+            return length % kHasRouteBytes == 0;
+        case Type::kNetworkDataPrefix:
+            return length >= 2;
+        case Type::kNetworkDataBorderRouter:
+            return length % kBorderRouterBytes == 0;
+        case Type::kNetworkData6LowPanContext:
+            return length >= 2;
         default:
             return false;
         }
