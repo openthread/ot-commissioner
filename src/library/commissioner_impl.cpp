@@ -2132,6 +2132,11 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagNetworkData);
     }
 
+    if (aDiagDataFlags & NetDiagData::kTimeoutBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTimeout);
+    }
+
     return tlvTypes;
 }
 
@@ -2225,6 +2230,15 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         SuccessOrExit(error = DecodeNetworkData(diagData.mNetworkData, value));
         diagData.mPresentFlags |= NetDiagData::kNetworkDataBit;
     }
+
+    if (auto timeoutTlv = tlvSet[tlv::Type::kNetworkDiagTimeout])
+    {
+        uint32_t value;
+        value = utils::Decode<uint32_t>(timeoutTlv->GetValue());
+        diagData.mTimeout = value;
+        diagData.mPresentFlags |= NetDiagData::kTimeoutBit;
+    }
+
     aNetDiagData = diagData;
 
 exit:

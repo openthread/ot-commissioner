@@ -156,7 +156,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "b212df1009601804601d046019041e22c818fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e22c802fd"
         "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0077d030e0007fc0109e400108400109c000003140040fd27"
         "fd30e5ce0001070212400504e400f1000b0e8001010d09e4000a000500000e100b0881025cf40d029c0003130060fd6b51760904ffff00"
-        "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc080100";
+        "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc08010003040000012C";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -166,12 +166,14 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
 
     ByteArray extMacAddrBytes;
     uint16_t  macAddr = 0xc800;
+    uint32_t  expectedTimeout = 0x12C;
     error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 1663);
+    EXPECT_EQ(diagData.mPresentFlags, 3711);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
+    EXPECT_EQ(diagData.mTimeout, expectedTimeout);
     EXPECT_EQ(diagData.mMode.mIsMtd, false);
     EXPECT_EQ(diagData.mRoute64.mRouteData.size(), 9);
     EXPECT_EQ(diagData.mAddrs.size(), 4);

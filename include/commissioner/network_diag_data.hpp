@@ -141,6 +141,7 @@ struct NetDiagData
     ByteArray                      mEui64;
     ByteArray                      mExtMacAddr;
     uint16_t                       mMacAddr = 0;
+    uint32_t                       mTimeout = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
     MacCounters                    mMacCounters;
@@ -165,6 +166,7 @@ struct NetDiagData
     static constexpr uint64_t kMacCountersBit            = (1ull << 8);
     static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
     static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
+    static constexpr uint64_t kTimeoutBit                = (1ull << 11);
 };
 
 } // namespace commissioner
