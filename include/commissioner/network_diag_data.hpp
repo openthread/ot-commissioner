@@ -165,7 +165,9 @@ struct NetDiagData
     ModeData                       mMode;
     ByteArray                      mEui64;
     ByteArray                      mExtMacAddr;
+    uint8_t                        mBatteryLevel = 0;
     uint16_t                       mMacAddr = 0;
+    uint16_t                       mSupplyVoltage = 0;
     uint32_t                       mTimeout = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
@@ -194,6 +196,8 @@ struct NetDiagData
     static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
     static constexpr uint64_t kTimeoutBit                = (1ull << 11);
     static constexpr uint64_t kConnectivityBit           = (1ull << 12);
+    static constexpr uint64_t kBatteryLevelBit           = (1ull << 13);
+    static constexpr uint64_t kSupplyVoltageBit		     = (1ull << 14);
 };
 
 } // namespace commissioner

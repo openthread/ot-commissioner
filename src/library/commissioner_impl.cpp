@@ -2142,6 +2142,16 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagConnectivity);
     }
 
+    if (aDiagDataFlags & NetDiagData::kBatteryLevelBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagBatteryLevel);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kSupplyVoltageBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagSupplyVoltage);
+    }
+
     return tlvTypes;
 }
 
@@ -2236,18 +2246,34 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kNetworkDataBit;
     }
 
-    if (auto timeoutTlv = tlvSet[tlv::Type::kNetworkDiagTimeout])
+    if (auto timeout = tlvSet[tlv::Type::kNetworkDiagTimeout])
     {
         uint32_t value;
-        value = utils::Decode<uint32_t>(timeoutTlv->GetValue());
+        value = utils::Decode<uint32_t>(timeout->GetValue());
         diagData.mTimeout = value;
         diagData.mPresentFlags |= NetDiagData::kTimeoutBit;
     }
 
-    if (auto connectivityTlv = tlvSet[tlv::Type::kNetworkDiagConnectivity])
+    if (auto connectivity = tlvSet[tlv::Type::kNetworkDiagConnectivity])
     {
-        SuccessOrExit(error = DecodeConnectivity(diagData.mConnectivity, connectivityTlv->GetValue()));
+        SuccessOrExit(error = DecodeConnectivity(diagData.mConnectivity, connectivity->GetValue()));
         diagData.mPresentFlags |= NetDiagData::kConnectivityBit;
+    }
+
+    if (auto batteryLevel = tlvSet[tlv::Type::kNetworkDiagBatteryLevel])
+    {
+        uint8_t value;
+        value = utils::Decode<uint8_t>(batteryLevel->GetValue());
+        diagData.mBatteryLevel = value;
+        diagData.mPresentFlags |= NetDiagData::kBatteryLevelBit;
+    }
+
+    if (auto supplyVoltage = tlvSet[tlv::Type::kNetworkDiagSupplyVoltage])
+    {
+        uint16_t value;
+        value = utils::Decode<uint16_t>(supplyVoltage->GetValue());
+        diagData.mSupplyVoltage = value;
+        diagData.mPresentFlags |= NetDiagData::kSupplyVoltageBit;
     }
 
     aNetDiagData = diagData;
@@ -2571,10 +2597,9 @@ exit:
  * @brief Decodes a Connectivity TLV into a Connectivity struct.
  *
  * The Connectivity TLV provides information about a device's connection quality and
- * its relationship with neighboring devices. The TLV has a minimum length of 6 bytes,
+ * its relationship with neighboring devices. The TLV has a minimum length of 7 bytes,
  * with two additional optional fields.
  *
- * Byte 0 Layout (as per specification image):
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 3 | 1 |
  * |   |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |
@@ -2594,13 +2619,14 @@ exit:
 Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf)
 {
     Error          error;
+    size_t length = aBuf.size();
     const uint8_t *cur = aBuf.data();
     const uint8_t *end = cur + aBuf.size();
     uint8_t        byte0;
     int8_t         pp;
 
     // A valid Connectivity TLV must have a length of exactly 7 or 10 bytes.
-    VerifyOrExit(aBuf.size() == 7 || aBuf.size() == 10, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
+    VerifyOrExit(length == 7 || length == 10, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
 
     // Byte 0: Parent Priority and Reserved bits
     byte0 = *cur++;
@@ -2622,7 +2648,7 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     aConnectivity.mActiveRouters  = *cur++;
 
     // If the size is 10, decode the optional fields.
-    if (aBuf.size() == 10)
+    if (length == 10)
     {
         aConnectivity.mPresentFlags |= Connectivity::kRxOffChildBufferSizeBit;
         aConnectivity.mRxOffChildBufferSize = utils::Decode<uint16_t>(cur, 2);
