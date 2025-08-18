@@ -789,7 +789,7 @@ private:
 /** Makes `coap::OptionType` formattable as a string. */
 template <> struct fmt::formatter<ot::commissioner::coap::OptionType> : formatter<string_view>
 {
-    auto format(ot::commissioner::coap::OptionType optionType, format_context &ctx) -> decltype(ctx.out());
+    auto format(ot::commissioner::coap::OptionType optionType, format_context &ctx) const-> decltype(ctx.out());
 };
 
 #endif // OT_COMM_LIBRARY_COAP_HPP_
