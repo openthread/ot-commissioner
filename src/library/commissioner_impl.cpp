@@ -2276,6 +2276,20 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kSupplyVoltageBit;
     }
 
+    if (auto channelPages = tlvSet[tlv::Type::kNetworkDiagChannelPages])
+	{
+    	const ByteArray &value = channelPages->GetValue();
+    	diagData.mChannelPages = value;
+    	diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
+	}
+
+    if (auto typeList = tlvSet[tlv::Type::kNetworkDiagTypeList])
+	{
+    	const ByteArray &value = typeList->GetValue();
+    	diagData.mTypeList = value;
+    	diagData.mPresentFlags |= NetDiagData::kTypeListBit;
+	}
+
     aNetDiagData = diagData;
 
 exit:

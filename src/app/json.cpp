@@ -782,6 +782,8 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(Timeout);
     SET_IF_PRESENT(BatteryLevel);
     SET_IF_PRESENT(SupplyVoltage);
+    SET_IF_PRESENT(ChannelPages);
+    SET_IF_PRESENT(TypeList);
 #undef SET_IF_PRESENT
     if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
     {

@@ -165,6 +165,8 @@ struct NetDiagData
     ModeData                       mMode;
     ByteArray                      mEui64;
     ByteArray                      mExtMacAddr;
+    ByteArray                      mChannelPages;
+    ByteArray                      mTypeList;
     uint8_t                        mBatteryLevel = 0;
     uint16_t                       mMacAddr = 0;
     uint16_t                       mSupplyVoltage = 0;
@@ -198,6 +200,8 @@ struct NetDiagData
     static constexpr uint64_t kConnectivityBit           = (1ull << 12);
     static constexpr uint64_t kBatteryLevelBit           = (1ull << 13);
     static constexpr uint64_t kSupplyVoltageBit		     = (1ull << 14);
+    static constexpr uint64_t kChannelPagesBit		     = (1ull << 15);
+    static constexpr uint64_t kTypeListBit			     = (1ull << 16);
 };
 
 } // namespace commissioner
