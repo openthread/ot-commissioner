@@ -177,9 +177,9 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     error = utils::Hex(typeListBytes, "05060708A0");
     EXPECT_EQ(error, ErrorCode::kNone);
 
-    uint8_t   batteryLevel 	= 0x64;
-    uint16_t  supplyVoltage = 0x1388;
-    uint32_t  timeout 		= 0x12C;
+    uint8_t  batteryLevel  = 0x64;
+    uint16_t supplyVoltage = 0x1388;
+    uint32_t timeout       = 0x12C;
 
     EXPECT_EQ(error, ErrorCode::kNone);
     EXPECT_EQ(diagData.mPresentFlags, 130687);
@@ -331,7 +331,7 @@ TEST(CommissionerImplTest, DecodeConnectivityTlv)
     {
         ByteArray buf = {
             0x01, 0x05, 0x02, 0x03, 0xFA, 0x1B, 0x0C, 0x04, 0x00, 0x0F,
-        	0xEE, // Extra byte
+            0xEE, // Extra byte
         };
         Connectivity connectivity;
         Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);

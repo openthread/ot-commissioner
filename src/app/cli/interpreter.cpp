@@ -2661,7 +2661,7 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags = flags;
+            diagData.mPresentFlags         = flags;
             DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
             for (auto &diagAnsDataMap : diagAnsDataMaps)
             {
@@ -2677,7 +2677,7 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags = flags;
+            diagData.mPresentFlags         = flags;
             DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
             for (auto &diagAnsDataMap : diagAnsDataMaps)
             {

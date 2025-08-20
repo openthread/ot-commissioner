@@ -140,17 +140,16 @@ struct Connectivity
         kRxOffChildDatagramCountBit = 1 << 1,
     };
 
-    uint8_t  mPresentFlags = 0;
-    int8_t   mParentPriority = 0;
-    uint8_t  mLinkQuality1 = 0;
-    uint8_t  mLinkQuality2 = 0;
-    uint8_t  mLinkQuality3 = 0;
-    uint8_t  mLeaderCost = 0;
-    uint8_t  mIdSequence = 0;
-    uint8_t  mActiveRouters = 0;
-    uint16_t mRxOffChildBufferSize = 0;
+    uint8_t  mPresentFlags            = 0;
+    int8_t   mParentPriority          = 0;
+    uint8_t  mLinkQuality1            = 0;
+    uint8_t  mLinkQuality2            = 0;
+    uint8_t  mLinkQuality3            = 0;
+    uint8_t  mLeaderCost              = 0;
+    uint8_t  mIdSequence              = 0;
+    uint8_t  mActiveRouters           = 0;
+    uint16_t mRxOffChildBufferSize    = 0;
     uint8_t  mRxOffChildDatagramCount = 0;
-
 };
 
 /**
@@ -167,10 +166,10 @@ struct NetDiagData
     ByteArray                      mExtMacAddr;
     ByteArray                      mChannelPages;
     ByteArray                      mTypeList;
-    uint8_t                        mBatteryLevel = 0;
-    uint16_t                       mMacAddr = 0;
+    uint8_t                        mBatteryLevel  = 0;
+    uint16_t                       mMacAddr       = 0;
     uint16_t                       mSupplyVoltage = 0;
-    uint32_t                       mTimeout = 0;
+    uint32_t                       mTimeout       = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
     MacCounters                    mMacCounters;
@@ -199,9 +198,9 @@ struct NetDiagData
     static constexpr uint64_t kTimeoutBit                = (1ull << 11);
     static constexpr uint64_t kConnectivityBit           = (1ull << 12);
     static constexpr uint64_t kBatteryLevelBit           = (1ull << 13);
-    static constexpr uint64_t kSupplyVoltageBit		     = (1ull << 14);
-    static constexpr uint64_t kChannelPagesBit		     = (1ull << 15);
-    static constexpr uint64_t kTypeListBit			     = (1ull << 16);
+    static constexpr uint64_t kSupplyVoltageBit          = (1ull << 14);
+    static constexpr uint64_t kChannelPagesBit           = (1ull << 15);
+    static constexpr uint64_t kTypeListBit               = (1ull << 16);
 };
 
 } // namespace commissioner

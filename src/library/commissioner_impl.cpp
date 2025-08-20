@@ -2259,7 +2259,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto timeout = tlvSet[tlv::Type::kNetworkDiagTimeout])
     {
         uint32_t value;
-        value = utils::Decode<uint32_t>(timeout->GetValue());
+        value             = utils::Decode<uint32_t>(timeout->GetValue());
         diagData.mTimeout = value;
         diagData.mPresentFlags |= NetDiagData::kTimeoutBit;
     }
@@ -2273,7 +2273,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto batteryLevel = tlvSet[tlv::Type::kNetworkDiagBatteryLevel])
     {
         uint8_t value;
-        value = utils::Decode<uint8_t>(batteryLevel->GetValue());
+        value                  = utils::Decode<uint8_t>(batteryLevel->GetValue());
         diagData.mBatteryLevel = value;
         diagData.mPresentFlags |= NetDiagData::kBatteryLevelBit;
     }
@@ -2281,24 +2281,24 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto supplyVoltage = tlvSet[tlv::Type::kNetworkDiagSupplyVoltage])
     {
         uint16_t value;
-        value = utils::Decode<uint16_t>(supplyVoltage->GetValue());
+        value                   = utils::Decode<uint16_t>(supplyVoltage->GetValue());
         diagData.mSupplyVoltage = value;
         diagData.mPresentFlags |= NetDiagData::kSupplyVoltageBit;
     }
 
     if (auto channelPages = tlvSet[tlv::Type::kNetworkDiagChannelPages])
-	{
-    	const ByteArray &value = channelPages->GetValue();
-    	diagData.mChannelPages = value;
-    	diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
-	}
+    {
+        const ByteArray &value = channelPages->GetValue();
+        diagData.mChannelPages = value;
+        diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
+    }
 
     if (auto typeList = tlvSet[tlv::Type::kNetworkDiagTypeList])
-	{
-    	const ByteArray &value = typeList->GetValue();
-    	diagData.mTypeList = value;
-    	diagData.mPresentFlags |= NetDiagData::kTypeListBit;
-	}
+    {
+        const ByteArray &value = typeList->GetValue();
+        diagData.mTypeList     = value;
+        diagData.mPresentFlags |= NetDiagData::kTypeListBit;
+    }
 
     aNetDiagData = diagData;
 
@@ -2625,12 +2625,15 @@ exit:
  * with two additional optional fields.
  *
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 3 | 1 |
- * |   |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |
+ * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+ * 9 | 3 | 1 | |   |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |
+ * |   |   |   | 0 |   |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |   PP  |    Reserved           |       Link Quality 3          |       Link Quality 2          |         Link Quality 1        |
+ * |   PP  |    Reserved           |       Link Quality 3          |       Link Quality 2          |         Link
+ * Quality 1        |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |       Leader Cost             |       ID Sequence             |       Active Routers          |   Rx-off Child Buffer Size    |
+ * |       Leader Cost             |       ID Sequence             |       Active Routers          |   Rx-off Child
+ * Buffer Size    |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  * |   Rx-off Child Buffer Size    |   Rx-off Child Datagram Count |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -2643,9 +2646,9 @@ exit:
 Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf)
 {
     Error          error;
-    size_t length = aBuf.size();
-    const uint8_t *cur = aBuf.data();
-    const uint8_t *end = cur + aBuf.size();
+    size_t         length = aBuf.size();
+    const uint8_t *cur    = aBuf.data();
+    const uint8_t *end    = cur + aBuf.size();
     uint8_t        byte0;
     int8_t         pp;
 
