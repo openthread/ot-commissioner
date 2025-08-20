@@ -2290,6 +2290,22 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     	diagData.mPresentFlags |= NetDiagData::kTypeListBit;
 	}
 
+    if (auto maxChildTimeout = tlvSet[tlv::Type::kNetworkDiagMaxChildTimeout])
+    {
+        uint32_t value;
+        value = utils::Decode<uint32_t>(maxChildTimeout->GetValue());
+        diagData.mMaxChildTimeout = value;
+        diagData.mPresentFlags |= NetDiagData::kMaxChildTimeoutBit;
+    }
+
+    if (auto version = tlvSet[tlv::Type::kNetworkDiagVersion])
+    {
+        uint16_t value;
+        value = utils::Decode<uint16_t>(version->GetValue());
+        diagData.mVersion = value;
+        diagData.mPresentFlags |= NetDiagData::kVersionBit;
+    }
+
     aNetDiagData = diagData;
 
 exit:

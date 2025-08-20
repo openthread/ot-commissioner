@@ -170,7 +170,9 @@ struct NetDiagData
     uint8_t                        mBatteryLevel = 0;
     uint16_t                       mMacAddr = 0;
     uint16_t                       mSupplyVoltage = 0;
+    uint16_t                       mVersion = 0;
     uint32_t                       mTimeout = 0;
+    uint32_t                       mMaxChildTimeout = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
     MacCounters                    mMacCounters;
@@ -202,6 +204,8 @@ struct NetDiagData
     static constexpr uint64_t kSupplyVoltageBit		     = (1ull << 14);
     static constexpr uint64_t kChannelPagesBit		     = (1ull << 15);
     static constexpr uint64_t kTypeListBit			     = (1ull << 16);
+    static constexpr uint64_t kMaxChildTimeoutBit		 = (1ull << 17);
+    static constexpr uint64_t kVersionBit			     = (1ull << 18);
 };
 
 } // namespace commissioner

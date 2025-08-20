@@ -2750,6 +2750,38 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
             }
         }
     }
+    if (CaseInsensitiveEqual(aExpr[2], "maxchildtimeout"))
+    {
+        flags = NetDiagData::kMaxChildTimeoutBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            diagData.mPresentFlags         = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
+            }
+        }
+    }
+    if (CaseInsensitiveEqual(aExpr[2], "version"))
+    {
+        flags = NetDiagData::kVersionBit;
+        if (operationType == DIAG_GET_QRY_TYPE)
+        {
+            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            diagData.mPresentFlags         = flags;
+            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            {
+                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
+                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
+            }
+        }
+    }
 
 exit:
     return value;
