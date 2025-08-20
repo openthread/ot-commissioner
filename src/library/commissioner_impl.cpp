@@ -2152,6 +2152,16 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagSupplyVoltage);
     }
 
+    if (aDiagDataFlags & NetDiagData::kChannelPagesBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChannelPages);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kTypeListBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTypeList);
+    }
+
     return tlvTypes;
 }
 
