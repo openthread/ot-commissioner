@@ -2162,6 +2162,16 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTypeList);
     }
 
+    if (aDiagDataFlags & NetDiagData::kMaxChildTimeoutBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMaxChildTimeout);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVersionBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVersion);
+    }
+
     return tlvTypes;
 }
 
