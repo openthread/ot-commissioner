@@ -786,6 +786,8 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(TypeList);
     SET_IF_PRESENT(MaxChildTimeout);
     SET_IF_PRESENT(Version);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(VendorModel);
 #undef SET_IF_PRESENT
     if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
     {

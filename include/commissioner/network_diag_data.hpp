@@ -176,6 +176,8 @@ struct NetDiagData
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
     MacCounters                    mMacCounters;
+    std::string                    mVendorName;
+    std::string                    mVendorModel;
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
@@ -206,6 +208,8 @@ struct NetDiagData
     static constexpr uint64_t kTypeListBit			     = (1ull << 16);
     static constexpr uint64_t kMaxChildTimeoutBit		 = (1ull << 17);
     static constexpr uint64_t kVersionBit			     = (1ull << 18);
+    static constexpr uint64_t kVendorNameBit			 = (1ull << 19);
+    static constexpr uint64_t kVendorModelBit			 = (1ull << 20);
 };
 
 } // namespace commissioner

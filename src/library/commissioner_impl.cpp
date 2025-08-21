@@ -2172,6 +2172,16 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVersion);
     }
 
+    if (aDiagDataFlags & NetDiagData::kVendorNameBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorName);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVendorModelBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorModel);
+    }
+
     return tlvTypes;
 }
 
@@ -2324,6 +2334,18 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         value = utils::Decode<uint16_t>(version->GetValue());
         diagData.mVersion = value;
         diagData.mPresentFlags |= NetDiagData::kVersionBit;
+    }
+
+    if (auto vendorName = tlvSet[tlv::Type::kNetworkDiagVendorName])
+    {
+        diagData.mVendorName = vendorName->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorNameBit;
+    }
+
+    if (auto vendorModel = tlvSet[tlv::Type::kNetworkDiagVendorModel])
+    {
+        diagData.mVendorModel = vendorModel->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorModelBit;
     }
 
     aNetDiagData = diagData;
