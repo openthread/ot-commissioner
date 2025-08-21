@@ -1662,6 +1662,35 @@ exit:
     return error;
 }
 
+Error CommissionerImpl::DecodePendingOperationalDataset(PendingOperationalDataset &aDataset, const ByteArray &aTlvs)
+{
+    Error                     error;
+    tlv::TlvSet               tlvSet;
+    PendingOperationalDataset dataset;
+
+    SuccessOrExit(error = tlv::GetTlvSet(tlvSet, aTlvs));
+    SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, aTlvs));
+
+    if (auto delayTimer = tlvSet[tlv::Type::kDelayTimer])
+    {
+        dataset.mDelayTimer = utils::Decode<uint32_t>(delayTimer->GetValue());
+        dataset.mPresentFlags |= PendingOperationalDataset::kDelayTimerBit;
+    }
+
+    if (auto pendingTimestamp = tlvSet[tlv::Type::kPendingTimestamp])
+    {
+        uint64_t value;
+        value                     = utils::Decode<uint64_t>(pendingTimestamp->GetValue());
+        dataset.mPendingTimestamp = Timestamp::Decode(value);
+        dataset.mPresentFlags |= PendingOperationalDataset::kPendingTimestampBit;
+    }
+
+    aDataset = dataset;
+
+exit:
+    return error;
+}
+
 Error CommissionerImpl::DecodePendingOperationalDataset(PendingOperationalDataset &aDataset,
                                                         const coap::Response      &aResponse)
 {

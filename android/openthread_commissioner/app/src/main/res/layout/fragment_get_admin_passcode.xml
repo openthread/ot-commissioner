@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="io.openthread.commissioner.service.CommissionerActivity">
+
+    <TextView
+        android:id="@+id/put_device_admin_mode_text"
+        style="@style/title_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:text="Put the device in administration mode"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+      android:id="@+id/wait_for_device_text"
+      style="@style/info_text"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="20dp"
+      android:text="Waiting for the device..."
+      app:layout_constraintLeft_toLeftOf="parent"
+      app:layout_constraintRight_toRightOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/put_device_admin_mode_text" />
+
+    <TextView
+        android:id="@+id/input_admin_passcode_text"
+        style="@style/title_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:text="Input the Administrator Passcode"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/wait_for_device_text" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/admin_passcode_layout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toBottomOf="@id/input_admin_passcode_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/admin_passcode_edit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxEms="9"
+            android:minEms="9"
+            android:maxLength="9"
+            android:inputType="number"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:maxLines="1"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/retrieve_dataset_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:text="Retrieve Dataset"
+        app:layout_constraintTop_toBottomOf="@id/admin_passcode_layout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
