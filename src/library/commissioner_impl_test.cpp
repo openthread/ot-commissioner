@@ -158,7 +158,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "fd30e5ce0001070212400504e400f1000b0e8001010d09e4000a000500000e100b0881025cf40d029c0003130060fd6b51760904ffff00"
         "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc08010003040000012C04"
         "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A013040000025818020005190A56656E646F724E616D651A0B"
-        "56656E646F724D6F64656C";
+        "56656E646F724D6F64656C1B0D56656E646F7253574D6F64656C1C12546872656164537461636B56657273696F6E";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -185,9 +185,11 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     uint32_t  maxChildTimeout 		= 0x258;
     std::string vendorName          = "VendorName";
     std::string vendorModel         = "VendorModel";
+    std::string vendorSWVersion     = "VendorSWModel";
+    std::string threadStackVersion  = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 2096767);
+    EXPECT_EQ(diagData.mPresentFlags, 8388223);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
@@ -199,6 +201,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mTypeList, typeListBytes);
     EXPECT_EQ(diagData.mMaxChildTimeout, maxChildTimeout);
     EXPECT_EQ(diagData.mVersion, version);
+    EXPECT_EQ(diagData.mVendorSWVersion, vendorSWVersion);
+    EXPECT_EQ(diagData.mThreadStackVersion, threadStackVersion);
     EXPECT_EQ(diagData.mMode.mIsMtd, false);
     EXPECT_EQ(diagData.mRoute64.mRouteData.size(), 9);
     EXPECT_EQ(diagData.mAddrs.size(), 4);

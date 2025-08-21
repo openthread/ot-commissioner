@@ -178,6 +178,8 @@ struct NetDiagData
     MacCounters                    mMacCounters;
     std::string                    mVendorName;
     std::string                    mVendorModel;
+    std::string                    mVendorSWVersion;
+    std::string                    mThreadStackVersion;
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
@@ -210,6 +212,8 @@ struct NetDiagData
     static constexpr uint64_t kVersionBit			     = (1ull << 18);
     static constexpr uint64_t kVendorNameBit			 = (1ull << 19);
     static constexpr uint64_t kVendorModelBit			 = (1ull << 20);
+    static constexpr uint64_t kVendorSWVersionBit		 = (1ull << 21);
+    static constexpr uint64_t kThreadStackVersionBit	 = (1ull << 22);
 };
 
 } // namespace commissioner
