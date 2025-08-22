@@ -134,7 +134,7 @@ struct MacCounters
  */
 struct Connectivity
 {
-    static constexpr uint16_t kRxOffChildBufferSizeBit = 1 << 0;
+    static constexpr uint16_t kRxOffChildBufferSizeBit    = 1 << 0;
     static constexpr uint16_t kRxOffChildDatagramCountBit = 1 << 1;
 
     uint8_t  mPresentFlags            = 0;
