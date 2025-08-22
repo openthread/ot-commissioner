@@ -326,18 +326,6 @@ TEST(CommissionerImplTest, DecodeConnectivityTlv)
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
-
-    // Test Case 4: Malformed TLV (extra byte at the end).
-    {
-        ByteArray buf = {
-            0x01, 0x05, 0x02, 0x03, 0xFA, 0x1B, 0x0C, 0x04, 0x00, 0x0F,
-            0xEE, // Extra byte
-        };
-        Connectivity connectivity;
-        Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);
-
-        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
-    }
 }
 
 } // namespace commissioner

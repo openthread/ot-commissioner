@@ -2625,15 +2625,12 @@ exit:
  * with two additional optional fields.
  *
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
- * 9 | 3 | 1 | |   |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |
- * |   |   |   | 0 |   |
+ * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 3 | 1 |
+ * |   |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |   PP  |    Reserved           |       Link Quality 3          |       Link Quality 2          |         Link
- * Quality 1        |
+ * |   PP  |    Reserved           |       Link Quality 3          |       Link Quality 2          |         Link Quality 1        |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |       Leader Cost             |       ID Sequence             |       Active Routers          |   Rx-off Child
- * Buffer Size    |
+ * |       Leader Cost             |       ID Sequence             |       Active Routers          |   Rx-off Child Buffer Size    |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  * |   Rx-off Child Buffer Size    |   Rx-off Child Datagram Count |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -2652,8 +2649,8 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     uint8_t        byte0;
     int8_t         pp;
 
-    // A valid Connectivity TLV must have a length of exactly 7 or 10 bytes.
-    VerifyOrExit(length == 7 || length == 10, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
+    // A valid Connectivity TLV must have a minimum length of 7 bytes.
+    VerifyOrExit(length >= 7, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
 
     // Byte 0: Parent Priority and Reserved bits
     byte0 = *cur++;
@@ -2675,7 +2672,7 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     aConnectivity.mActiveRouters  = *cur++;
 
     // If the size is 10, decode the optional fields.
-    if (length == 10)
+    if (length >= 10)
     {
         aConnectivity.mPresentFlags |= Connectivity::kRxOffChildBufferSizeBit;
         aConnectivity.mRxOffChildBufferSize = utils::Decode<uint16_t>(cur, 2);
@@ -2686,7 +2683,10 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     }
 
     // Ensure we have consumed all bytes of the TLV.
-    VerifyOrExit(cur == end, error = {ErrorCode::kBadFormat, "malformed connectivity tlv"});
+    if (cur != end)
+    {
+        LOG_WARN(LOG_REGION_MESHDIAG, "malformed connectivity tlv, {} trailing bytes", std::distance(cur, end));
+    }
 
 exit:
     return error;

@@ -134,11 +134,8 @@ struct MacCounters
  */
 struct Connectivity
 {
-    enum PresentFlags : uint8_t
-    {
-        kRxOffChildBufferSizeBit    = 1 << 0,
-        kRxOffChildDatagramCountBit = 1 << 1,
-    };
+    static constexpr uint16_t kRxOffChildBufferSizeBit = 1 << 0;
+    static constexpr uint16_t kRxOffChildDatagramCountBit = 1 << 1;
 
     uint8_t  mPresentFlags            = 0;
     int8_t   mParentPriority          = 0;
