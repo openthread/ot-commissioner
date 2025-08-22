@@ -171,6 +171,7 @@ struct NetDiagData
     uint16_t                       mMacAddr = 0;
     uint16_t                       mSupplyVoltage = 0;
     uint16_t                       mVersion = 0;
+    uint16_t                       mQueryID = 0;
     uint32_t                       mTimeout = 0;
     uint32_t                       mMaxChildTimeout = 0;
     Route64                        mRoute64;
@@ -214,6 +215,7 @@ struct NetDiagData
     static constexpr uint64_t kVendorModelBit			 = (1ull << 20);
     static constexpr uint64_t kVendorSWVersionBit		 = (1ull << 21);
     static constexpr uint64_t kThreadStackVersionBit	 = (1ull << 22);
+    static constexpr uint64_t kQueryIDBit           	 = (1ull << 23);
 };
 
 } // namespace commissioner
