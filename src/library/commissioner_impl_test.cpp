@@ -158,7 +158,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "fd30e5ce0001070212400504e400f1000b0e8001010d09e4000a000500000e100b0881025cf40d029c0003130060fd6b51760904ffff00"
         "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc08010003040000012C04"
         "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A013040000025818020005190A56656E646F724E616D651A0B"
-        "56656E646F724D6F64656C1B0D56656E646F7253574D6F64656C1C12546872656164537461636B56657273696F6E21020005";
+        "56656E646F724D6F64656C1B0D56656E646F7253574D6F64656C1C12546872656164537461636B56657273696F6E210200051D2BA81234"
+        "01020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -190,7 +191,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     std::string threadStackVersion  = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 16776831);
+    EXPECT_EQ(diagData.mPresentFlags, 33554047);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
@@ -268,6 +269,33 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     // Verify that the presence flags for the optional fields within the Connectivity struct have been set.
     uint16_t expectedConnFlags = Connectivity::kRxOffChildBufferSizeBit | Connectivity::kRxOffChildDatagramCountBit;
     EXPECT_EQ(connectivity.mPresentFlags, expectedConnFlags);
+
+    // Child TLV data
+    EXPECT_EQ(diagData.mChildInfoList.size(), 1);
+    const auto &childInfoList = diagData.mChildInfoList[0];
+    EXPECT_EQ(childInfoList.mIsRxOnWhenIdle, true);
+    EXPECT_EQ(childInfoList.mIsDeviceTypeMtd, false);
+    EXPECT_EQ(childInfoList.mHasNetworkData, true);
+    EXPECT_EQ(childInfoList.mSupportsCsl, false);
+    EXPECT_EQ(childInfoList.mSupportsErrorRates, true);
+    EXPECT_EQ(childInfoList.mRloc16, 0x1234);
+    ByteArray childExtAddr;
+    utils::Hex(childExtAddr, "0102030405060708");
+    EXPECT_EQ(childInfoList.mExtAddress, childExtAddr);
+    EXPECT_EQ(childInfoList.mThreadVersion, 4);
+    EXPECT_EQ(childInfoList.mTimeout, 240);
+    EXPECT_EQ(childInfoList.mAge, 10);
+    EXPECT_EQ(childInfoList.mConnectionTime, 4096);
+    EXPECT_EQ(childInfoList.mSupervisionInterval, 120);
+    EXPECT_EQ(childInfoList.mLinkMargin, 26);
+    EXPECT_EQ(childInfoList.mAverageRssi, -60);
+    EXPECT_EQ(childInfoList.mLastRssi, -64);
+    EXPECT_EQ(childInfoList.mFrameErrorRate, 10);
+    EXPECT_EQ(childInfoList.mMessageErrorRate, 5);
+    EXPECT_EQ(childInfoList.mQueuedMessageCount, 3);
+    EXPECT_EQ(childInfoList.mCslPeriod, 0);
+    EXPECT_EQ(childInfoList.mCslTimeout, 0);
+    EXPECT_EQ(childInfoList.mCslChannel, 0);
 }
 
 TEST(CommissionerImplTest, DecodeConnectivityTlv)
@@ -350,6 +378,45 @@ TEST(CommissionerImplTest, DecodeConnectivityTlv)
         };
         Connectivity connectivity;
         Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeChildInfoTlv)
+{
+    // Test Case 1: Valid Child TLV (43 bytes).
+    {
+        ByteArray buf;
+        utils::Hex(buf, "A8123401020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000");
+        std::vector<ChildInfo> childInfo;
+        Error                  error = ot::commissioner::internal::DecodeChildInfoList(childInfo, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(childInfo.size(), 1);
+        const auto &child = childInfo[0];
+        EXPECT_EQ(child.mIsRxOnWhenIdle, true);
+        EXPECT_EQ(child.mHasNetworkData, true);
+        EXPECT_EQ(child.mSupportsErrorRates, true);
+        EXPECT_EQ(child.mRloc16, 0x1234);
+        EXPECT_EQ(child.mTimeout, 240);
+        EXPECT_EQ(child.mAverageRssi, -60);
+    }
+
+    // Test Case 2: Malformed TLV (too short).
+    {
+        ByteArray              buf(42, 0); // 42 bytes, should fail
+        std::vector<ChildInfo> childInfo;
+        Error                  error = ot::commissioner::internal::DecodeChildInfoList(childInfo, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Malformed TLV (too long).
+    {
+        ByteArray              buf(44, 0); // 44 bytes, should fail
+        std::vector<ChildInfo> childInfo;
+        Error                  error = ot::commissioner::internal::DecodeChildInfoList(childInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }

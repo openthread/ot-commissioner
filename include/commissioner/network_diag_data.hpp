@@ -154,6 +154,35 @@ struct Connectivity
 };
 
 /**
+ * @brief Child TLV Data
+ */
+struct ChildInfo
+{
+    bool mIsRxOnWhenIdle      = false;
+    bool mIsDeviceTypeMtd     = false;
+    bool mHasNetworkData      = false;
+    bool mSupportsCsl         = false;
+    bool mSupportsErrorRates  = false;
+
+    uint16_t  mRloc16              = 0;
+    ByteArray mExtAddress;
+    uint16_t  mThreadVersion       = 0;
+    uint32_t  mTimeout             = 0;
+    uint32_t  mAge                 = 0;
+    uint32_t  mConnectionTime      = 0;
+    uint16_t  mSupervisionInterval = 0;
+    uint8_t   mLinkMargin          = 0;
+    int8_t    mAverageRssi         = 127;
+    int8_t    mLastRssi            = 127;
+    uint16_t  mFrameErrorRate      = 0;
+    uint16_t  mMessageErrorRate    = 0;
+    uint16_t  mQueuedMessageCount  = 0;
+    uint16_t  mCslPeriod           = 0;
+    uint32_t  mCslTimeout          = 0;
+    uint8_t   mCslChannel          = 0;
+};
+
+/**
  * @brief network diagnostic data in TMF
  *
  * Each data field of Diagnostic TLVs is optional. The field is
@@ -184,6 +213,7 @@ struct NetDiagData
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
+    std::vector<ChildInfo>         mChildInfoList;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
 
@@ -216,6 +246,7 @@ struct NetDiagData
     static constexpr uint64_t kVendorSWVersionBit		 = (1ull << 21);
     static constexpr uint64_t kThreadStackVersionBit	 = (1ull << 22);
     static constexpr uint64_t kQueryIDBit           	 = (1ull << 23);
+    static constexpr uint64_t kChildInfoListBit          = (1ull << 24);
 };
 
 } // namespace commissioner

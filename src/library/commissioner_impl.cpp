@@ -2197,6 +2197,11 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagQueryID);
     }
 
+    if (aDiagDataFlags & NetDiagData::kChildInfoListBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChild);
+    }
+
     return tlvTypes;
 }
 
@@ -2381,6 +2386,18 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         value = utils::Decode<uint16_t>(queryID->GetValue());
         diagData.mQueryID = value;
         diagData.mPresentFlags |= NetDiagData::kQueryIDBit;
+    }
+
+    SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChild,
+                                            tlv::Scope::kNetworkDiag));
+
+    if (tlvList.size() > 0)
+    {
+        for (const auto &tlv : tlvList)
+        {
+            SuccessOrExit(error = DecodeChildInfoList(diagData.mChildInfoList, tlv.GetValue()));
+        }
+        diagData.mPresentFlags |= NetDiagData::kChildInfoListBit;
     }
 
     aNetDiagData = diagData;
@@ -2767,6 +2784,47 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
 
     // Ensure we have consumed all bytes of the TLV.
     VerifyOrExit(cur == end, error = {ErrorCode::kBadFormat, "malformed connectivity tlv"});
+
+exit:
+    return error;
+}
+
+Error internal::DecodeChildInfoList(std::vector<ChildInfo> &aChildInfoList, const ByteArray &aBuf)
+{
+    Error     error;
+    ChildInfo childInfo;
+    uint8_t   flags;
+
+    VerifyOrExit(aBuf.size() == kChildBytes, error = ERROR_BAD_FORMAT("Child TLV value is too short"));
+
+    // Flags (1 byte at offset 0)
+    flags = aBuf[0];
+    childInfo.mIsRxOnWhenIdle     = (flags & 0x80) != 0;
+    childInfo.mIsDeviceTypeMtd    = (flags & 0x40) != 0;
+    childInfo.mHasNetworkData     = (flags & 0x20) != 0;
+    childInfo.mSupportsCsl        = (flags & 0x10) != 0;
+    childInfo.mSupportsErrorRates = (flags & 0x08) != 0;
+
+    // Decode all other fields into childInfo
+    childInfo.mRloc16              = utils::Decode<uint16_t>(aBuf.data() + 1, 2);
+    childInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
+    childInfo.mThreadVersion       = utils::Decode<uint16_t>(aBuf.data() + 11, 2);
+    childInfo.mTimeout             = utils::Decode<uint32_t>(aBuf.data() + 13, 4);
+    childInfo.mAge                 = utils::Decode<uint32_t>(aBuf.data() + 17, 4);
+    childInfo.mConnectionTime      = utils::Decode<uint32_t>(aBuf.data() + 21, 4);
+    childInfo.mSupervisionInterval = utils::Decode<uint16_t>(aBuf.data() + 25, 2);
+    childInfo.mLinkMargin          = aBuf[27];
+    childInfo.mAverageRssi         = static_cast<int8_t>(aBuf[28]);
+    childInfo.mLastRssi            = static_cast<int8_t>(aBuf[29]);
+    childInfo.mFrameErrorRate      = utils::Decode<uint16_t>(aBuf.data() + 30, 2);
+    childInfo.mMessageErrorRate    = utils::Decode<uint16_t>(aBuf.data() + 32, 2);
+    childInfo.mQueuedMessageCount  = utils::Decode<uint16_t>(aBuf.data() + 34, 2);
+    childInfo.mCslPeriod           = utils::Decode<uint16_t>(aBuf.data() + 36, 2);
+    childInfo.mCslTimeout          = utils::Decode<uint32_t>(aBuf.data() + 38, 4);
+    childInfo.mCslChannel          = aBuf[42];
+
+    // Add the completed object to the vector
+    aChildInfoList.emplace_back(childInfo);
 
 exit:
     return error;

@@ -769,6 +769,33 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
+static void to_json(Json &aJson, const ChildInfo &aChildInfo)
+{
+#define SET(name) aJson[#name] = aChildInfo.m##name;
+    SET(IsRxOnWhenIdle);
+    SET(IsDeviceTypeMtd);
+    SET(HasNetworkData);
+    SET(SupportsCsl);
+    SET(SupportsErrorRates);
+    SET(Rloc16);
+    aJson["ExtAddress"] = utils::Hex(aChildInfo.mExtAddress);
+    SET(ThreadVersion);
+    SET(Timeout);
+    SET(Age);
+    SET(ConnectionTime);
+    SET(SupervisionInterval);
+    SET(LinkMargin);
+    SET(AverageRssi);
+    SET(LastRssi);
+    SET(FrameErrorRate);
+    SET(MessageErrorRate);
+    SET(QueuedMessageCount);
+    SET(CslPeriod);
+    SET(CslTimeout);
+    SET(CslChannel);
+#undef SET
+}
+
 static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
 #define SET_IF_PRESENT(name)                                    \
@@ -799,6 +826,16 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     if (aNetDiagData.mPresentFlags & NetDiagData::kConnectivityBit)
     {
         aJson["Connectivity"] = ConnectivityToJson(aNetDiagData.mConnectivity);
+    }
+    if (aNetDiagData.mPresentFlags & NetDiagData::kChildInfoListBit)
+    {
+        aJson["Child"] = Json::array();
+        for (const auto &child : aNetDiagData.mChildInfoList)
+        {
+            Json childJson;
+            to_json(childJson, child);
+            aJson["Child"].push_back(childJson);
+        }
     }
 }
 
@@ -858,6 +895,13 @@ std::string ConnectivityToJson(const Connectivity &aConnectivity)
 {
     Json json;
     to_json(json, aConnectivity);
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string ChildInfoToJson(const ChildInfo &aChildInfo)
+{
+    Json json;
+    to_json(json, aChildInfo);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
