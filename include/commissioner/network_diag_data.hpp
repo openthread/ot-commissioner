@@ -129,6 +129,27 @@ struct MacCounters
 };
 
 /**
+ * @brief Connectivity.
+ *
+ */
+struct Connectivity
+{
+    static constexpr uint16_t kRxOffChildBufferSizeBit    = 1 << 0;
+    static constexpr uint16_t kRxOffChildDatagramCountBit = 1 << 1;
+
+    uint8_t  mPresentFlags            = 0;
+    int8_t   mParentPriority          = 0;
+    uint8_t  mLinkQuality1            = 0;
+    uint8_t  mLinkQuality2            = 0;
+    uint8_t  mLinkQuality3            = 0;
+    uint8_t  mLeaderCost              = 0;
+    uint8_t  mIdSequence              = 0;
+    uint8_t  mActiveRouters           = 0;
+    uint16_t mRxOffChildBufferSize    = 0;
+    uint8_t  mRxOffChildDatagramCount = 0;
+};
+
+/**
  * @brief network diagnostic data in TMF
  *
  * Each data field of Diagnostic TLVs is optional. The field is
@@ -140,7 +161,12 @@ struct NetDiagData
     ModeData                       mMode;
     ByteArray                      mEui64;
     ByteArray                      mExtMacAddr;
-    uint16_t                       mMacAddr = 0;
+    ByteArray                      mChannelPages;
+    ByteArray                      mTypeList;
+    uint8_t                        mBatteryLevel  = 0;
+    uint16_t                       mMacAddr       = 0;
+    uint16_t                       mSupplyVoltage = 0;
+    uint32_t                       mTimeout       = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
     MacCounters                    mMacCounters;
@@ -148,6 +174,7 @@ struct NetDiagData
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
     NetworkData                    mNetworkData;
+    Connectivity                   mConnectivity;
 
     /**
      * Indicates which fields are included in the object.
@@ -165,6 +192,12 @@ struct NetDiagData
     static constexpr uint64_t kMacCountersBit            = (1ull << 8);
     static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
     static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
+    static constexpr uint64_t kTimeoutBit                = (1ull << 11);
+    static constexpr uint64_t kConnectivityBit           = (1ull << 12);
+    static constexpr uint64_t kBatteryLevelBit           = (1ull << 13);
+    static constexpr uint64_t kSupplyVoltageBit          = (1ull << 14);
+    static constexpr uint64_t kChannelPagesBit           = (1ull << 15);
+    static constexpr uint64_t kTypeListBit               = (1ull << 16);
 };
 
 } // namespace commissioner

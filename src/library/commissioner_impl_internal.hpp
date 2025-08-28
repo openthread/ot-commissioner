@@ -61,6 +61,7 @@ Error     DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, const Byte
 Error     DecodeLeaderData(LeaderData &aLeaderData, const ByteArray &aBuf);
 Error     DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aBuf);
 Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
+Error     DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf);
 void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
 ByteArray ExtractRouterIds(const ByteArray &aMask);
 

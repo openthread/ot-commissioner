@@ -70,6 +70,11 @@
 %apply const unsigned char & { const uint8_t & };
 %apply unsigned char & OUTPUT { uint8_t &aStatus };
 
+// Override the typemap of `int8_t`.
+%apply signed char { int8_t };
+%apply const signed char & { const int8_t & };
+%apply signed char & OUTPUT { int8_t &aStatus };
+
 %apply unsigned short { uint16_t };
 %apply const unsigned short & { const uint16_t & };
 %apply unsigned int { uint32_t };

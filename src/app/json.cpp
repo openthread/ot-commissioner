@@ -779,10 +779,19 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 
     SET_IF_PRESENT(ExtMacAddr);
     SET_IF_PRESENT(MacAddr);
+    SET_IF_PRESENT(Timeout);
+    SET_IF_PRESENT(BatteryLevel);
+    SET_IF_PRESENT(SupplyVoltage);
+    SET_IF_PRESENT(ChannelPages);
+    SET_IF_PRESENT(TypeList);
 #undef SET_IF_PRESENT
     if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
     {
         aJson["MacCounters"] = MacCountersToJson(aNetDiagData.mMacCounters);
+    }
+    if (aNetDiagData.mPresentFlags & NetDiagData::kConnectivityBit)
+    {
+        aJson["Connectivity"] = ConnectivityToJson(aNetDiagData.mConnectivity);
     }
 }
 
@@ -812,6 +821,36 @@ std::string MacCountersToJson(const MacCounters &aMacCounters)
 {
     Json json;
     to_json(json, aMacCounters);
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+static void to_json(Json &aJson, const Connectivity &aConnectivity)
+{
+#define SET(name) aJson[#name] = aConnectivity.m##name;
+    SET(ParentPriority);
+    SET(LinkQuality3);
+    SET(LinkQuality2);
+    SET(LinkQuality1);
+    SET(LeaderCost);
+    SET(IdSequence);
+    SET(ActiveRouters);
+#undef SET
+
+    if (aConnectivity.mPresentFlags & Connectivity::kRxOffChildBufferSizeBit)
+    {
+        aJson["RxOffChildBufferSize"] = aConnectivity.mRxOffChildBufferSize;
+    }
+
+    if (aConnectivity.mPresentFlags & Connectivity::kRxOffChildDatagramCountBit)
+    {
+        aJson["RxOffChildDatagramCount"] = aConnectivity.mRxOffChildDatagramCount;
+    }
+}
+
+std::string ConnectivityToJson(const Connectivity &aConnectivity)
+{
+    Json json;
+    to_json(json, aConnectivity);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 

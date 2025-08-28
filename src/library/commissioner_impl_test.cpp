@@ -156,7 +156,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "b212df1009601804601d046019041e22c818fdc31ff45feff4e7e580431c60becfabfd110022000000008df846f3ab0c05551e22c802fd"
         "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0077d030e0007fc0109e400108400109c000003140040fd27"
         "fd30e5ce0001070212400504e400f1000b0e8001010d09e4000a000500000e100b0881025cf40d029c0003130060fd6b51760904ffff00"
-        "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc080100";
+        "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc08010003040000012C04"
+        "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A0";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -168,10 +169,27 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     uint16_t  macAddr = 0xc800;
     error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
 
+    ByteArray channelPagesBytes;
+    error = utils::Hex(channelPagesBytes, "01020304");
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 1663);
+
+    ByteArray typeListBytes;
+    error = utils::Hex(typeListBytes, "05060708A0");
+    EXPECT_EQ(error, ErrorCode::kNone);
+
+    uint8_t  batteryLevel  = 0x64;
+    uint16_t supplyVoltage = 0x1388;
+    uint32_t timeout       = 0x12C;
+
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(diagData.mPresentFlags, 130687);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
+    EXPECT_EQ(diagData.mTimeout, timeout);
+    EXPECT_EQ(diagData.mBatteryLevel, batteryLevel);
+    EXPECT_EQ(diagData.mSupplyVoltage, supplyVoltage);
+    EXPECT_EQ(diagData.mChannelPages, channelPagesBytes);
+    EXPECT_EQ(diagData.mTypeList, typeListBytes);
     EXPECT_EQ(diagData.mMode.mIsMtd, false);
     EXPECT_EQ(diagData.mRoute64.mRouteData.size(), 9);
     EXPECT_EQ(diagData.mAddrs.size(), 4);
@@ -220,6 +238,94 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mPrefixLength, 12);
     EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mHasRouteList.size(), 1);
     EXPECT_EQ(diagData.mNetworkData.mPrefixList[2].mHasRouteList[0].mRloc16, 39936);
+
+    // Connectivity TLV data
+    const auto &connectivity = diagData.mConnectivity;
+    EXPECT_EQ(connectivity.mParentPriority, 1);
+    EXPECT_EQ(connectivity.mLinkQuality3, 5);
+    EXPECT_EQ(connectivity.mLinkQuality2, 0x12);
+    EXPECT_EQ(connectivity.mLinkQuality1, 0x34);
+    EXPECT_EQ(connectivity.mLeaderCost, 0x56);
+    EXPECT_EQ(connectivity.mIdSequence, 0x78);
+    EXPECT_EQ(connectivity.mActiveRouters, 0x9A);
+    EXPECT_EQ(connectivity.mRxOffChildBufferSize, 0xBCDE);
+    EXPECT_EQ(connectivity.mRxOffChildDatagramCount, 0xF0);
+    // Verify that the presence flags for the optional fields within the Connectivity struct have been set.
+    uint16_t expectedConnFlags = Connectivity::kRxOffChildBufferSizeBit | Connectivity::kRxOffChildDatagramCountBit;
+    EXPECT_EQ(connectivity.mPresentFlags, expectedConnFlags);
+}
+
+TEST(CommissionerImplTest, DecodeConnectivityTlv)
+{
+    // // Test Case 1: All fields present (10 bytes total).
+    {
+        // Byte 0: PP=1 (binary 01) -> 0x01
+        // Byte 1: LQ3=5 -> 0x05
+        // Bytes 7-8: Buffer Size = 1024 -> 0x0400
+        ByteArray buf = {
+            0x01,       // Parent Priority
+            0x05,       // Link Quality 3
+            0x02,       // Link Quality 2
+            0x03,       // Link Quality 1
+            0xFA,       // Leader Cost
+            0x1B,       // ID Sequence
+            0x0C,       // Active Routers
+            0x04, 0x00, // Rx-off Child Buffer Size
+            0x0F,       // Rx-off Child Datagram Count
+        };
+        Connectivity connectivity;
+        Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_TRUE(connectivity.mPresentFlags & Connectivity::kRxOffChildBufferSizeBit);
+        EXPECT_TRUE(connectivity.mPresentFlags & Connectivity::kRxOffChildDatagramCountBit);
+        EXPECT_EQ(connectivity.mParentPriority, 1);
+        EXPECT_EQ(connectivity.mLinkQuality3, 5);
+        EXPECT_EQ(connectivity.mLinkQuality2, 2);
+        EXPECT_EQ(connectivity.mLinkQuality1, 3);
+        EXPECT_EQ(connectivity.mLeaderCost, 250);
+        EXPECT_EQ(connectivity.mIdSequence, 0x1B);
+        EXPECT_EQ(connectivity.mActiveRouters, 12);
+        EXPECT_EQ(connectivity.mRxOffChildBufferSize, 1024);
+        EXPECT_EQ(connectivity.mRxOffChildDatagramCount, 15);
+    }
+
+    // Test Case 2: Mandatory fields only (7 bytes total).
+    {
+        // Byte 0: PP=0 (binary 00) -> 0x00
+        // Byte 1: LQ3=3 -> 0x03
+        ByteArray buf = {
+            0x00, // Parent Priority
+            0x03, // Link Quality 3
+            0xFF, // Link Quality 2
+            0xFE, // Link Quality 1
+            0xFD, // Leader Cost
+            0xFC, // ID Sequence
+            0xFB, // Active Routers
+        };
+        Connectivity connectivity;
+        Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_FALSE(connectivity.mPresentFlags & Connectivity::kRxOffChildBufferSizeBit);
+        EXPECT_FALSE(connectivity.mPresentFlags & Connectivity::kRxOffChildDatagramCountBit);
+        EXPECT_EQ(connectivity.mParentPriority, 0);
+        EXPECT_EQ(connectivity.mLinkQuality3, 3);
+        EXPECT_EQ(connectivity.mLinkQuality2, 255);
+        EXPECT_EQ(connectivity.mLinkQuality1, 254);
+        EXPECT_EQ(connectivity.mLeaderCost, 253);
+        EXPECT_EQ(connectivity.mIdSequence, 252);
+        EXPECT_EQ(connectivity.mActiveRouters, 251);
+    }
+
+    // Test Case 3: Malformed TLV (too short).
+    {
+        ByteArray    buf = {0x01, 0x02, 0x03, 0x04, 0x05}; // Only 5 bytes
+        Connectivity connectivity;
+        Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
 }
 
 } // namespace commissioner

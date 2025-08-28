@@ -2132,6 +2132,36 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagNetworkData);
     }
 
+    if (aDiagDataFlags & NetDiagData::kTimeoutBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTimeout);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kConnectivityBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagConnectivity);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kBatteryLevelBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagBatteryLevel);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kSupplyVoltageBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagSupplyVoltage);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kChannelPagesBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChannelPages);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kTypeListBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTypeList);
+    }
+
     return tlvTypes;
 }
 
@@ -2225,6 +2255,51 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         SuccessOrExit(error = DecodeNetworkData(diagData.mNetworkData, value));
         diagData.mPresentFlags |= NetDiagData::kNetworkDataBit;
     }
+
+    if (auto timeout = tlvSet[tlv::Type::kNetworkDiagTimeout])
+    {
+        uint32_t value;
+        value             = utils::Decode<uint32_t>(timeout->GetValue());
+        diagData.mTimeout = value;
+        diagData.mPresentFlags |= NetDiagData::kTimeoutBit;
+    }
+
+    if (auto connectivity = tlvSet[tlv::Type::kNetworkDiagConnectivity])
+    {
+        SuccessOrExit(error = DecodeConnectivity(diagData.mConnectivity, connectivity->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kConnectivityBit;
+    }
+
+    if (auto batteryLevel = tlvSet[tlv::Type::kNetworkDiagBatteryLevel])
+    {
+        uint8_t value;
+        value                  = utils::Decode<uint8_t>(batteryLevel->GetValue());
+        diagData.mBatteryLevel = value;
+        diagData.mPresentFlags |= NetDiagData::kBatteryLevelBit;
+    }
+
+    if (auto supplyVoltage = tlvSet[tlv::Type::kNetworkDiagSupplyVoltage])
+    {
+        uint16_t value;
+        value                   = utils::Decode<uint16_t>(supplyVoltage->GetValue());
+        diagData.mSupplyVoltage = value;
+        diagData.mPresentFlags |= NetDiagData::kSupplyVoltageBit;
+    }
+
+    if (auto channelPages = tlvSet[tlv::Type::kNetworkDiagChannelPages])
+    {
+        const ByteArray &value = channelPages->GetValue();
+        diagData.mChannelPages = value;
+        diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
+    }
+
+    if (auto typeList = tlvSet[tlv::Type::kNetworkDiagTypeList])
+    {
+        const ByteArray &value = typeList->GetValue();
+        diagData.mTypeList     = value;
+        diagData.mPresentFlags |= NetDiagData::kTypeListBit;
+    }
+
     aNetDiagData = diagData;
 
 exit:
@@ -2537,6 +2612,83 @@ Error internal::DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aB
     aMacCounters.mIfOutUcastPkts     = utils::Decode<uint32_t>(aBuf.data() + 24, 4);
     aMacCounters.mIfOutBroadcastPkts = utils::Decode<uint32_t>(aBuf.data() + 28, 4);
     aMacCounters.mIfOutDiscards      = utils::Decode<uint32_t>(aBuf.data() + 32, 4);
+
+exit:
+    return error;
+}
+
+/**
+ * @brief Decodes a Connectivity TLV into a Connectivity struct.
+ *
+ * The Connectivity TLV provides information about a device's connection quality and
+ * its relationship with neighboring devices. The TLV has a minimum length of 7 bytes,
+ * with two additional optional fields.
+ *
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |0|1|2|3|4|5|6|7|8|9|1|1|2|3|4|5|6|7|8|9|2|1|2|3|4|5|6|7|8|9|3|1|
+ * | | | | | | | | | | |0| | | | | | | | | |0| | | | | | | | | |0| |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |PP |Reserved   |Link Quality 3 |Link Quality 2 |Link Quality 1 |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |Leader Cost    |ID Sequence    |Active Routers |Rx-off Child   |
+ * |               |               |               |Buffer Size    |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |Rx-off Child   |Rx-off Child   |
+ * |Buffer Size    |Datagram Count |
+ * +---+---+---+---+---+---+---+---+
+ *
+ * @param[out] aConnectivity  A reference to the Connectivity struct to be populated.
+ * @param[in]  aBuf         The raw byte array from the TLV value field.
+ *
+ * @returns An Error object indicating the success or failure of the decoding.
+ */
+Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf)
+{
+    Error          error;
+    size_t         length = aBuf.size();
+    const uint8_t *cur    = aBuf.data();
+    const uint8_t *end    = cur + aBuf.size();
+    uint8_t        byte0;
+    int8_t         pp;
+
+    // A valid Connectivity TLV must have a minimum length of 7 bytes.
+    VerifyOrExit(length >= 7, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
+
+    // Byte 0: Parent Priority and Reserved bits
+    byte0 = *cur++;
+    pp    = byte0 & 0x03;
+    if (pp == 0b11)
+    {
+        pp = -1;
+    }
+    else if (pp == 0b10)
+    {
+        pp = -2;
+    } // Reserved value
+    aConnectivity.mParentPriority = pp;
+    aConnectivity.mLinkQuality3   = *cur++;
+    aConnectivity.mLinkQuality2   = *cur++;
+    aConnectivity.mLinkQuality1   = *cur++;
+    aConnectivity.mLeaderCost     = *cur++;
+    aConnectivity.mIdSequence     = *cur++;
+    aConnectivity.mActiveRouters  = *cur++;
+
+    // If the size is 10, decode the optional fields.
+    if (length >= 10)
+    {
+        aConnectivity.mPresentFlags |= Connectivity::kRxOffChildBufferSizeBit;
+        aConnectivity.mRxOffChildBufferSize = utils::Decode<uint16_t>(cur, 2);
+        cur += 2;
+
+        aConnectivity.mPresentFlags |= Connectivity::kRxOffChildDatagramCountBit;
+        aConnectivity.mRxOffChildDatagramCount = *cur++;
+    }
+
+    // Ensure we have consumed all bytes of the TLV.
+    if (cur != end)
+    {
+        LOG_WARN(LOG_REGION_MESHDIAG, "malformed connectivity tlv, {} trailing bytes", std::distance(cur, end));
+    }
 
 exit:
     return error;
