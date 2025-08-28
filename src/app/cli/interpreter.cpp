@@ -370,7 +370,15 @@ static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"batterylevel", {NetDiagData::kBatteryLevelBit, false}},
     {"supplyvoltage", {NetDiagData::kSupplyVoltageBit, false}},
     {"channelpages", {NetDiagData::kChannelPagesBit, false}},
-    {"typelist", {NetDiagData::kTypeListBit, false}}};
+    {"typelist", {NetDiagData::kTypeListBit, false}},
+    {"maxchildtimeout", {NetDiagData::kMaxChildTimeoutBit, false}},
+    {"version", {NetDiagData::kVersionBit, false}},
+    {"vendorname", {NetDiagData::kVendorNameBit, false}},
+    {"vendormodel", {NetDiagData::kVendorModelBit, false}},
+    {"vendorswversion", {NetDiagData::kVendorSWVersionBit, false}},
+    {"threadstackversion", {NetDiagData::kThreadStackVersionBit, false}},
+    {"queryid", {NetDiagData::kQueryIDBit, false}},
+    {"child", {NetDiagData::kChildInfoListBit, false}}};
 
 template <typename T> static std::string ToHex(T aInteger)
 {
@@ -2650,135 +2658,6 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
             value = resultStream.str();
         }
     }
-    if (CaseInsensitiveEqual(aExpr[2], "maxchildtimeout"))
-    {
-        flags = NetDiagData::kMaxChildTimeoutBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "version"))
-    {
-        flags = NetDiagData::kVersionBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "vendorname"))
-    {
-        flags = NetDiagData::kVendorNameBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "vendormodel"))
-    {
-        flags = NetDiagData::kVendorModelBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "vendorswversion"))
-    {
-        flags = NetDiagData::kVendorSWVersionBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "threadstackversion"))
-    {
-        flags = NetDiagData::kThreadStackVersionBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "queryid"))
-    {
-        flags = NetDiagData::kQueryIDBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "child"))
-    {
-        flags = NetDiagData::kChildInfoListBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-
 exit:
     return value;
 }
