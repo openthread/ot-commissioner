@@ -1296,7 +1296,7 @@ std::string Message::GetRequestUri(void) const
 } // namespace ot
 
 auto fmt::formatter<ot::commissioner::coap::OptionType>::format(ot::commissioner::coap::OptionType optionType,
-                                                                format_context &ctx) -> decltype(ctx.out())
+                                                                format_context &ctx) const -> decltype(ctx.out())
 {
     using ot::commissioner::coap::OptionType;
     string_view name;

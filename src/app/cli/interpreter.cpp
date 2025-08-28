@@ -355,6 +355,23 @@ const std::map<std::string, Interpreter::JobEvaluator> &Interpreter::mJobEvaluat
         {"bbrdataset", &Interpreter::ProcessBbrDatasetJob},
     };
 
+struct DiagTypeInfo
+{
+    uint64_t mFlag;
+    bool     mIsResettable;
+};
+
+static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
+    {"extaddr", {NetDiagData::kExtMacAddrBit, false}},
+    {"rloc16", {NetDiagData::kMacAddrBit, false}},
+    {"maccounters", {NetDiagData::kMacCountersBit, true}},
+    {"timeout", {NetDiagData::kTimeoutBit, false}},
+    {"connectivity", {NetDiagData::kConnectivityBit, false}},
+    {"batterylevel", {NetDiagData::kBatteryLevelBit, false}},
+    {"supplyvoltage", {NetDiagData::kSupplyVoltageBit, false}},
+    {"channelpages", {NetDiagData::kChannelPagesBit, false}},
+    {"typelist", {NetDiagData::kTypeListBit, false}}};
+
 template <typename T> static std::string ToHex(T aInteger)
 {
     return "0x" + utils::Hex(utils::Encode(aInteger));
@@ -2575,179 +2592,62 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
     uint64_t    flags         = 0;
     uint8_t     operationType = 0;
     std::string dstAddr;
-    NetDiagData diagData;
 
     VerifyOrExit(aExpr.size() >= 3,
                  value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
-                                            "netdiag [query] [extaddr | rloc16 ] <dest mesh local address>"));
-    if (aExpr.size() > 3 && !aExpr[3].empty())
-    {
-        dstAddr = aExpr[3];
-    }
-    else
-    {
-        dstAddr.clear();
-    }
+                                            "netdiag [query|reset] [type] <dest mesh local address>"));
 
-    if (CaseInsensitiveEqual(aExpr[1], "query"))
     {
-        operationType = DIAG_GET_QRY_TYPE;
-    }
-    else if (CaseInsensitiveEqual(aExpr[1], "reset"))
-    {
-        operationType = DIAG_RST_NTF_TYPE;
-    }
-    else
-    {
-        ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
-    }
+        if (aExpr.size() > 3 && !aExpr[3].empty())
+        {
+            dstAddr = aExpr[3];
+        }
+        else
+        {
+            dstAddr.clear();
+        }
 
-    if (CaseInsensitiveEqual(aExpr[2], "extaddr"))
-    {
-        flags = NetDiagData::kExtMacAddrBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
+        if (CaseInsensitiveEqual(aExpr[1], "query"))
         {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
+            operationType = DIAG_GET_QRY_TYPE;
         }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "rloc16"))
-    {
-        flags = NetDiagData::kMacAddrBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
+        else if (CaseInsensitiveEqual(aExpr[1], "reset"))
         {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
+            operationType = DIAG_RST_NTF_TYPE;
         }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "maccounters"))
-    {
-        flags = NetDiagData::kMacCountersBit;
+        else
+        {
+            ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
+        }
+
+        const auto it = sDiagFlagMap.find(aExpr[2]);
+        if (it == sDiagFlagMap.end())
+        {
+            ExitNow(value = ERROR_INVALID_ARGS("'{}' is not a valid netdiag type", aExpr[2]));
+        }
+
+        const DiagTypeInfo &diagInfo = it->second;
+        flags                        = diagInfo.mFlag;
+
         if (operationType == DIAG_RST_NTF_TYPE)
         {
+            VerifyOrExit(diagInfo.mIsResettable,
+                         value = ERROR_INVALID_ARGS("reset is not supported for '{}'", aExpr[2]));
             SuccessOrExit(value = aCommissioner->CommandDiagReset(dstAddr, flags));
         }
         else if (operationType == DIAG_GET_QRY_TYPE)
         {
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
+
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
+            DiagAnsDataMap    diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
+            std::stringstream resultStream;
+            for (const auto &diagAnsDataMap : diagAnsDataMaps)
             {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
+                resultStream << "Peer Address: " << diagAnsDataMap.first.ToString()
+                             << "\nContent: " << NetDiagDataToJson(diagAnsDataMap.second) << "\n\n";
             }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "timeout"))
-    {
-        flags = NetDiagData::kTimeoutBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "connectivity"))
-    {
-        flags = NetDiagData::kConnectivityBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "batterylevel"))
-    {
-        flags = NetDiagData::kBatteryLevelBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "supplyvoltage"))
-    {
-        flags = NetDiagData::kSupplyVoltageBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "channelpages"))
-    {
-        flags = NetDiagData::kChannelPagesBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
-        }
-    }
-    if (CaseInsensitiveEqual(aExpr[2], "typelist"))
-    {
-        flags = NetDiagData::kTypeListBit;
-        if (operationType == DIAG_GET_QRY_TYPE)
-        {
-            SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            diagData.mPresentFlags         = flags;
-            DiagAnsDataMap diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            for (auto &diagAnsDataMap : diagAnsDataMaps)
-            {
-                value = "Peer Address: " + (diagAnsDataMap.first).ToString() +
-                        "\nContent: " + NetDiagDataToJson(diagAnsDataMap.second);
-            }
+            value = resultStream.str();
         }
     }
     if (CaseInsensitiveEqual(aExpr[2], "maxchildtimeout"))

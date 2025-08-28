@@ -2299,7 +2299,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto timeout = tlvSet[tlv::Type::kNetworkDiagTimeout])
     {
         uint32_t value;
-        value = utils::Decode<uint32_t>(timeout->GetValue());
+        value             = utils::Decode<uint32_t>(timeout->GetValue());
         diagData.mTimeout = value;
         diagData.mPresentFlags |= NetDiagData::kTimeoutBit;
     }
@@ -2313,7 +2313,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto batteryLevel = tlvSet[tlv::Type::kNetworkDiagBatteryLevel])
     {
         uint8_t value;
-        value = utils::Decode<uint8_t>(batteryLevel->GetValue());
+        value                  = utils::Decode<uint8_t>(batteryLevel->GetValue());
         diagData.mBatteryLevel = value;
         diagData.mPresentFlags |= NetDiagData::kBatteryLevelBit;
     }
@@ -2321,24 +2321,24 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto supplyVoltage = tlvSet[tlv::Type::kNetworkDiagSupplyVoltage])
     {
         uint16_t value;
-        value = utils::Decode<uint16_t>(supplyVoltage->GetValue());
+        value                   = utils::Decode<uint16_t>(supplyVoltage->GetValue());
         diagData.mSupplyVoltage = value;
         diagData.mPresentFlags |= NetDiagData::kSupplyVoltageBit;
     }
 
     if (auto channelPages = tlvSet[tlv::Type::kNetworkDiagChannelPages])
-	{
-    	const ByteArray &value = channelPages->GetValue();
-    	diagData.mChannelPages = value;
-    	diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
-	}
+    {
+        const ByteArray &value = channelPages->GetValue();
+        diagData.mChannelPages = value;
+        diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
+    }
 
     if (auto typeList = tlvSet[tlv::Type::kNetworkDiagTypeList])
-	{
-    	const ByteArray &value = typeList->GetValue();
-    	diagData.mTypeList = value;
-    	diagData.mPresentFlags |= NetDiagData::kTypeListBit;
-	}
+    {
+        const ByteArray &value = typeList->GetValue();
+        diagData.mTypeList     = value;
+        diagData.mPresentFlags |= NetDiagData::kTypeListBit;
+    }
 
     if (auto maxChildTimeout = tlvSet[tlv::Type::kNetworkDiagMaxChildTimeout])
     {
@@ -2724,16 +2724,18 @@ exit:
  * its relationship with neighboring devices. The TLV has a minimum length of 7 bytes,
  * with two additional optional fields.
  *
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 3 | 1 |
- * |   |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |   |   |   |   |   |   |   |   | 0 |   |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |   PP  |    Reserved           |       Link Quality 3          |       Link Quality 2          |         Link Quality 1        |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |       Leader Cost             |       ID Sequence             |       Active Routers          |   Rx-off Child Buffer Size    |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |   Rx-off Child Buffer Size    |   Rx-off Child Datagram Count |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |0|1|2|3|4|5|6|7|8|9|1|1|2|3|4|5|6|7|8|9|2|1|2|3|4|5|6|7|8|9|3|1|
+ * | | | | | | | | | | |0| | | | | | | | | |0| | | | | | | | | |0| |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |PP |Reserved   |Link Quality 3 |Link Quality 2 |Link Quality 1 |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |Leader Cost    |ID Sequence    |Active Routers |Rx-off Child   |
+ * |               |               |               |Buffer Size    |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |Rx-off Child   |Rx-off Child   |
+ * |Buffer Size    |Datagram Count |
+ * +---+---+---+---+---+---+---+---+
  *
  * @param[out] aConnectivity  A reference to the Connectivity struct to be populated.
  * @param[in]  aBuf         The raw byte array from the TLV value field.
@@ -2743,14 +2745,14 @@ exit:
 Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf)
 {
     Error          error;
-    size_t length = aBuf.size();
-    const uint8_t *cur = aBuf.data();
-    const uint8_t *end = cur + aBuf.size();
+    size_t         length = aBuf.size();
+    const uint8_t *cur    = aBuf.data();
+    const uint8_t *end    = cur + aBuf.size();
     uint8_t        byte0;
     int8_t         pp;
 
-    // A valid Connectivity TLV must have a length of exactly 7 or 10 bytes.
-    VerifyOrExit(length == 7 || length == 10, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
+    // A valid Connectivity TLV must have a minimum length of 7 bytes.
+    VerifyOrExit(length >= 7, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
 
     // Byte 0: Parent Priority and Reserved bits
     byte0 = *cur++;
@@ -2772,7 +2774,7 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     aConnectivity.mActiveRouters  = *cur++;
 
     // If the size is 10, decode the optional fields.
-    if (length == 10)
+    if (length >= 10)
     {
         aConnectivity.mPresentFlags |= Connectivity::kRxOffChildBufferSizeBit;
         aConnectivity.mRxOffChildBufferSize = utils::Decode<uint16_t>(cur, 2);
@@ -2783,7 +2785,10 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     }
 
     // Ensure we have consumed all bytes of the TLV.
-    VerifyOrExit(cur == end, error = {ErrorCode::kBadFormat, "malformed connectivity tlv"});
+    if (cur != end)
+    {
+        LOG_WARN(LOG_REGION_MESHDIAG, "malformed connectivity tlv, {} trailing bytes", std::distance(cur, end));
+    }
 
 exit:
     return error;
