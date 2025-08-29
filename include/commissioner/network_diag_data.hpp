@@ -179,6 +179,25 @@ struct ChildInfo
 };
 
 /**
+ * @brief Router Neighbor TLV Data
+ *
+ */
+struct RouterNeighborInfo
+{
+    bool mSupportsErrorRates;
+
+    uint16_t mRloc16;
+    ByteArray mExtAddress;
+    uint16_t mThreadVersion;
+    uint32_t mConnectionTime;
+    uint8_t mLinkMargin;
+    int8_t mAverageRssi;
+    int8_t mLastRssi;
+    uint16_t mFrameErrorRate;
+    uint16_t mMessageErrorRate;
+};
+
+/**
  * @brief network diagnostic data in TMF
  *
  * Each data field of Diagnostic TLVs is optional. The field is
@@ -210,6 +229,7 @@ struct NetDiagData
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
     std::vector<ChildInfo>         mChildInfoList;
+    std::vector<RouterNeighborInfo> mRouterNeighborInfoList;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
 
@@ -243,6 +263,7 @@ struct NetDiagData
     static constexpr uint64_t kThreadStackVersionBit	 = (1ull << 22);
     static constexpr uint64_t kQueryIDBit           	 = (1ull << 23);
     static constexpr uint64_t kChildInfoListBit          = (1ull << 24);
+    static constexpr uint64_t kRouterNeighborInfoListBit = (1ull << 25);
 };
 
 } // namespace commissioner

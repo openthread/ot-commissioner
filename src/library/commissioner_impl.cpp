@@ -2400,6 +2400,18 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kChildInfoListBit;
     }
 
+    SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagRouterNeighbor,
+                                            tlv::Scope::kNetworkDiag));
+
+    if (tlvList.size() > 0)
+    {
+        for (const auto &tlv : tlvList)
+        {
+            SuccessOrExit(error = DecodeRouterNeighborInfoList(diagData.mRouterNeighborInfoList, tlv.GetValue()));
+        }
+        diagData.mPresentFlags |= NetDiagData::kRouterNeighborInfoListBit;
+    }
+
     aNetDiagData = diagData;
 
 exit:
@@ -2830,6 +2842,34 @@ Error internal::DecodeChildInfoList(std::vector<ChildInfo> &aChildInfoList, cons
 
     // Add the completed object to the vector
     aChildInfoList.emplace_back(childInfo);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeRouterNeighborInfoList(std::vector<RouterNeighborInfo> &aRouterNeighborInfoList, const ByteArray &aBuf)
+{
+    Error              error;
+    RouterNeighborInfo neighborInfo;
+    uint8_t            flags;
+
+    VerifyOrExit(aBuf.size() == kRouterNeighborBytes,
+                 error = ERROR_BAD_FORMAT("Router Neighbor TLV value has incorrect size"));
+
+    flags = aBuf[0];
+    neighborInfo.mSupportsErrorRates = (flags & 0x80) != 0;
+
+    neighborInfo.mRloc16           = (aBuf[1] << 8) | aBuf[2];
+    neighborInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
+    neighborInfo.mThreadVersion    = (aBuf[11] << 8) | aBuf[12];
+    neighborInfo.mConnectionTime   = (aBuf[13] << 24) | (aBuf[14] << 16) | (aBuf[15] << 8) | aBuf[16];
+    neighborInfo.mLinkMargin       = aBuf[17];
+    neighborInfo.mAverageRssi      = aBuf[18];
+    neighborInfo.mLastRssi         = aBuf[19];
+    neighborInfo.mFrameErrorRate   = (aBuf[20] << 8) | aBuf[21];
+    neighborInfo.mMessageErrorRate = (aBuf[22] << 8) | aBuf[23];
+
+    aRouterNeighborInfoList.push_back(neighborInfo);
 
 exit:
     return error;

@@ -796,6 +796,22 @@ static void to_json(Json &aJson, const ChildInfo &aChildInfo)
 #undef SET
 }
 
+static void to_json(Json &aJson, const RouterNeighborInfo &aNeighborInfo)
+{
+#define SET(name) aJson[#name] = aNeighborInfo.m##name;
+    SET(SupportsErrorRates);
+    SET(Rloc16);
+    aJson["ExtAddress"] = utils::Hex(aNeighborInfo.mExtAddress);
+    SET(ThreadVersion);
+    SET(ConnectionTime);
+    SET(LinkMargin);
+    SET(AverageRssi);
+    SET(LastRssi);
+    SET(FrameErrorRate);
+    SET(MessageErrorRate);
+#undef SET
+}
+
 static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
 #define SET_IF_PRESENT(name)                                    \
@@ -835,6 +851,16 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
             Json childJson;
             to_json(childJson, child);
             aJson["Child"].push_back(childJson);
+        }
+    }
+    if (aNetDiagData.mPresentFlags & NetDiagData::kRouterNeighborInfoListBit)
+    {
+        aJson["RouterNeighbor"] = Json::array();
+        for (const auto &neighbor : aNetDiagData.mRouterNeighborInfoList)
+        {
+            Json neighborJson;
+            to_json(neighborJson, neighbor);
+            aJson["RouterNeighbor"].push_back(neighborJson);
         }
     }
 }
@@ -902,6 +928,13 @@ std::string ChildInfoToJson(const ChildInfo &aChildInfo)
 {
     Json json;
     to_json(json, aChildInfo);
+    return json.dump(JSON_INDENT_DEFAULT);
+}
+
+std::string RouterNeighborInfoToJson(const RouterNeighborInfo &aRouterNeighborInfo)
+{
+    Json json;
+    to_json(json, aRouterNeighborInfo);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
