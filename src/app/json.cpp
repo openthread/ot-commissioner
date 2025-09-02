@@ -812,6 +812,12 @@ static void to_json(Json &aJson, const RouterNeighborInfo &aNeighborInfo)
 #undef SET
 }
 
+static void to_json(Json &aJson, const Answer &aAnswer)
+{
+    aJson["IsLast"] = aAnswer.mIsLast;
+    aJson["Index"]  = aAnswer.mIndex;
+}
+
 static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
 #define SET_IF_PRESENT(name)                                    \
@@ -862,6 +868,12 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
             to_json(neighborJson, neighbor);
             aJson["RouterNeighbor"].push_back(neighborJson);
         }
+    }
+    if (aNetDiagData.mPresentFlags & NetDiagData::kAnswerBit)
+    {
+        Json answerJson;
+        to_json(answerJson, aNetDiagData.mAnswer);
+        aJson["Answer"] = answerJson;
     }
 }
 

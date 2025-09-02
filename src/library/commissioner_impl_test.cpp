@@ -160,7 +160,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A013040000025818020005190A56656E646F724E616D651A0B"
         "56656E646F724D6F64656C1B0D56656E646F7253574D6F64656C1C12546872656164537461636B56657273696F6E210200051D2BA81234"
         "01020304050607080004000000F00000000A0000100000781AC4C0000A00050003000000000000001F1880567811223344556677880003"
-        "0000ABCD15C4C0001A000F";
+        "0000ABCD15C4C0001A000F20028005";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -192,7 +192,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     std::string threadStackVersion  = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 67108479);
+    EXPECT_EQ(diagData.mPresentFlags, 134217343);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
@@ -313,6 +313,10 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(routerNeighborInfoList.mLastRssi, -64);
     EXPECT_EQ(routerNeighborInfoList.mFrameErrorRate, 26);
     EXPECT_EQ(routerNeighborInfoList.mMessageErrorRate, 15);
+
+    // Answer TLV data
+    EXPECT_EQ(diagData.mAnswer.mIsLast, true);
+    EXPECT_EQ(diagData.mAnswer.mIndex, 5);
 }
 
 TEST(CommissionerImplTest, DecodeConnectivityTlv)
@@ -459,6 +463,60 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
         ByteArray                       buf(25, 0); // 25 bytes, should fail
         std::vector<RouterNeighborInfo> routerNeighborInfo;
         Error                           error = ot::commissioner::internal::DecodeRouterNeighborInfoList(routerNeighborInfo, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeAnswerTlv)
+{
+    // Test Case 1: Valid TLV with 'L' flag set.
+    {
+        ByteArray  buf = {0x80, 0x05}; // L=1, Index=5
+        Answer answer;
+        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(answer.mIsLast, true);
+        EXPECT_EQ(answer.mIndex, 5);
+    }
+
+    // Test Case 2: Valid TLV with 'L' flag not set.
+    {
+        ByteArray  buf = {0x00, 0x0A}; // L=0, Index=10
+        Answer answer;
+        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(answer.mIsLast, false);
+        EXPECT_EQ(answer.mIndex, 10);
+    }
+
+    // Test Case 3: Edge case with max index value.
+    {
+        ByteArray  buf = {0x7F, 0xFF}; // L=0, Index=32767
+        Answer answer;
+        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(answer.mIsLast, false);
+        EXPECT_EQ(answer.mIndex, 32767);
+    }
+
+    // Test Case 4: Malformed TLV (too short).
+    {
+        ByteArray  buf = {0x01}; // Only 1 byte
+        Answer answer;
+        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 5: Malformed TLV (too long).
+    {
+        ByteArray  buf = {0x01, 0x02, 0x03}; // 3 bytes
+        Answer answer;
+        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }

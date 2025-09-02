@@ -198,6 +198,16 @@ struct RouterNeighborInfo
 };
 
 /**
+ * @brief Answer TLV Data
+ *
+ */
+struct Answer
+{
+    bool     mIsLast;
+    uint16_t mIndex;
+};
+
+/**
  * @brief network diagnostic data in TMF
  *
  * Each data field of Diagnostic TLVs is optional. The field is
@@ -232,6 +242,7 @@ struct NetDiagData
     std::vector<RouterNeighborInfo> mRouterNeighborInfoList;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
+    Answer                         mAnswer;
 
     /**
      * Indicates which fields are included in the object.
@@ -264,6 +275,7 @@ struct NetDiagData
     static constexpr uint64_t kQueryIDBit           	 = (1ull << 23);
     static constexpr uint64_t kChildInfoListBit          = (1ull << 24);
     static constexpr uint64_t kRouterNeighborInfoListBit = (1ull << 25);
+    static constexpr uint64_t kAnswerBit                 = (1ull << 26);
 };
 
 } // namespace commissioner

@@ -2412,6 +2412,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kRouterNeighborInfoListBit;
     }
 
+    if (auto answer = tlvSet[tlv::Type::kNetworkDiagAnswer])
+    {
+        SuccessOrExit(error = internal::DecodeAnswer(diagData.mAnswer, answer->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kAnswerBit;
+    }
+
     aNetDiagData = diagData;
 
 exit:
@@ -2870,6 +2876,21 @@ Error internal::DecodeRouterNeighborInfoList(std::vector<RouterNeighborInfo> &aR
     neighborInfo.mMessageErrorRate = (aBuf[22] << 8) | aBuf[23];
 
     aRouterNeighborInfoList.push_back(neighborInfo);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeAnswer(Answer &aAnswer, const ByteArray &aBuf)
+{
+    Error error;
+    uint16_t value = 0;
+
+    VerifyOrExit(aBuf.size() == kAnswerBytes, error = ERROR_BAD_FORMAT("Answer TLV value has incorrect size"));
+
+    value = (aBuf[0] << 8) | aBuf[1];
+    aAnswer.mIsLast = (value & 0x8000) != 0;
+    aAnswer.mIndex = value & 0x7FFF;
 
 exit:
     return error;
