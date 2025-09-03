@@ -9,10 +9,12 @@
   <string name="done">Done</string>
   <string name="scan_instruction">Please scan the QR code on the device</string>
   <string name="your_device">Your Device</string>
-  <string name="select_network">Select Network</string>
+  <string name="select_border_router">Select Border Router</string>
+  <string name="get_admin_passcode">Get Administrator Passcode</string>
+  <string name="retrieve_dataset">Retrieve Dataset</string>
+  <string name="set_dataset">Set Dataset</string>
   <string name="add_device">Add Device</string>
   <string name="scan_qrcode_fragment_label">Scan QR Code</string>
-  <string name="select_network_fragment_label">Select Network</string>
   <string name="password">password</string>
   <string name="password_connect">connect</string>
   <string name="password_cancel">cancel</string>
