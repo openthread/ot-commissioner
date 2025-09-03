@@ -208,6 +208,30 @@ struct Answer
 };
 
 /**
+ * @brief MLE Counters TLV Data
+ *
+ */
+struct MleCounters
+{
+    uint16_t mRadioDisabledCounter;
+    uint16_t mDetachedRoleCounter;
+    uint16_t mChildRoleCounter;
+    uint16_t mRouterRoleCounter;
+    uint16_t mLeaderRoleCounter;
+    uint16_t mAttachAttemptsCounter;
+    uint16_t mPartitionIdChangesCounter;
+    uint16_t mBetterPartitionAttachAttemptsCounter;
+    uint16_t mNewParentCounter;
+
+    uint64_t mTotalTrackingTime;
+    uint64_t mRadioDisabledTime;
+    uint64_t mDetachedRoleTime;
+    uint64_t mChildRoleTime;
+    uint64_t mRouterRoleTime;
+    uint64_t mLeaderRoleTime;
+};
+
+/**
  * @brief network diagnostic data in TMF
  *
  * Each data field of Diagnostic TLVs is optional. The field is
@@ -243,6 +267,7 @@ struct NetDiagData
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
     Answer                         mAnswer;
+    MleCounters                    mMleCounters;
 
     /**
      * Indicates which fields are included in the object.
@@ -276,6 +301,7 @@ struct NetDiagData
     static constexpr uint64_t kChildInfoListBit          = (1ull << 24);
     static constexpr uint64_t kRouterNeighborInfoListBit = (1ull << 25);
     static constexpr uint64_t kAnswerBit                 = (1ull << 26);
+    static constexpr uint64_t kMleCountersBit            = (1ull << 27);
 };
 
 } // namespace commissioner

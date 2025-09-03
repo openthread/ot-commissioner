@@ -380,7 +380,8 @@ static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"queryid", {NetDiagData::kQueryIDBit, false}},
     {"child", {NetDiagData::kChildInfoListBit, false}},
     {"routerneighbor", {NetDiagData::kRouterNeighborInfoListBit, false}},
-    {"answer", {NetDiagData::kAnswerBit, false}}};
+    {"answer", {NetDiagData::kAnswerBit, false}},
+    {"mlecounters", {NetDiagData::kMleCountersBit, false}}};
 
 template <typename T> static std::string ToHex(T aInteger)
 {

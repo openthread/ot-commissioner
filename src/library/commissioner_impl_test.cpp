@@ -160,7 +160,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A013040000025818020005190A56656E646F724E616D651A0B"
         "56656E646F724D6F64656C1B0D56656E646F7253574D6F64656C1C12546872656164537461636B56657273696F6E210200051D2BA81234"
         "01020304050607080004000000F00000000A0000100000781AC4C0000A00050003000000000000001F1880567811223344556677880003"
-        "0000ABCD15C4C0001A000F20028005";
+        "0000ABCD15C4C0001A000F200280052242000A000B000C000D000E000F0010001100120000000000000013000000000000001400000000"
+        "00000015000000000000001600000000000000170000000000000018";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -192,7 +193,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     std::string threadStackVersion  = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 134217343);
+    EXPECT_EQ(diagData.mPresentFlags, 268435071);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
@@ -317,6 +318,24 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     // Answer TLV data
     EXPECT_EQ(diagData.mAnswer.mIsLast, true);
     EXPECT_EQ(diagData.mAnswer.mIndex, 5);
+
+    // MLE Counters TLV data
+    const auto &mleCounters = diagData.mMleCounters;
+    EXPECT_EQ(mleCounters.mRadioDisabledCounter, 10);
+    EXPECT_EQ(mleCounters.mDetachedRoleCounter, 11);
+    EXPECT_EQ(mleCounters.mChildRoleCounter, 12);
+    EXPECT_EQ(mleCounters.mRouterRoleCounter, 13);
+    EXPECT_EQ(mleCounters.mLeaderRoleCounter, 14);
+    EXPECT_EQ(mleCounters.mAttachAttemptsCounter, 15);
+    EXPECT_EQ(mleCounters.mPartitionIdChangesCounter, 16);
+    EXPECT_EQ(mleCounters.mBetterPartitionAttachAttemptsCounter, 17);
+    EXPECT_EQ(mleCounters.mNewParentCounter, 18);
+    EXPECT_EQ(mleCounters.mTotalTrackingTime, 19);
+    EXPECT_EQ(mleCounters.mRadioDisabledTime, 20);
+    EXPECT_EQ(mleCounters.mDetachedRoleTime, 21);
+    EXPECT_EQ(mleCounters.mChildRoleTime, 22);
+    EXPECT_EQ(mleCounters.mRouterRoleTime, 23);
+    EXPECT_EQ(mleCounters.mLeaderRoleTime, 24);
 }
 
 TEST(CommissionerImplTest, DecodeConnectivityTlv)
@@ -517,6 +536,41 @@ TEST(CommissionerImplTest, DecodeAnswerTlv)
         ByteArray  buf = {0x01, 0x02, 0x03}; // 3 bytes
         Answer answer;
         Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeMleCountersTlv)
+{
+    // Test Case 1: Valid MLE Counters TLV (66 bytes).
+    {
+        ByteArray   buf;
+        MleCounters counters;
+        utils::Hex(buf, "000A000B000C000D000E000F001000110012000000000000001300000000000000140000000000000015000000000000001600000000000000170000000000000018");
+        Error error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(counters.mRadioDisabledCounter, 10);
+        EXPECT_EQ(counters.mNewParentCounter, 18);
+        EXPECT_EQ(counters.mTotalTrackingTime, 19);
+        EXPECT_EQ(counters.mLeaderRoleTime, 24);
+    }
+
+    // Test Case 2: Malformed TLV (too short).
+    {
+        ByteArray   buf(65, 0); // 65 bytes, should fail
+        MleCounters counters;
+        Error       error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Malformed TLV (too long).
+    {
+        ByteArray   buf(67, 0); // 67 bytes, should fail
+        MleCounters counters;
+        Error       error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }

@@ -818,6 +818,27 @@ static void to_json(Json &aJson, const Answer &aAnswer)
     aJson["Index"]  = aAnswer.mIndex;
 }
 
+static void to_json(Json &aJson, const MleCounters &aCounters)
+{
+#define SET(name) aJson[#name] = aCounters.m##name
+    SET(RadioDisabledCounter);
+    SET(DetachedRoleCounter);
+    SET(ChildRoleCounter);
+    SET(RouterRoleCounter);
+    SET(LeaderRoleCounter);
+    SET(AttachAttemptsCounter);
+    SET(PartitionIdChangesCounter);
+    SET(BetterPartitionAttachAttemptsCounter);
+    SET(NewParentCounter);
+    SET(TotalTrackingTime);
+    SET(RadioDisabledTime);
+    SET(DetachedRoleTime);
+    SET(ChildRoleTime);
+    SET(RouterRoleTime);
+    SET(LeaderRoleTime);
+#undef SET
+}
+
 static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
 #define SET_IF_PRESENT(name)                                    \
@@ -874,6 +895,12 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
         Json answerJson;
         to_json(answerJson, aNetDiagData.mAnswer);
         aJson["Answer"] = answerJson;
+    }
+    if (aNetDiagData.mPresentFlags & NetDiagData::kMleCountersBit)
+    {
+        Json mleCountersJson;
+        to_json(mleCountersJson, aNetDiagData.mMleCounters);
+        aJson["MleCounters"] = mleCountersJson;
     }
 }
 

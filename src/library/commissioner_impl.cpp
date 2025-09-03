@@ -2418,6 +2418,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kAnswerBit;
     }
 
+    if (auto mleCounters = tlvSet[tlv::Type::kNetworkDiagMleCounters])
+    {
+        SuccessOrExit(error = internal::DecodeMleCounters(diagData.mMleCounters, mleCounters->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kMleCountersBit;
+    }
+
     aNetDiagData = diagData;
 
 exit:
@@ -2891,6 +2897,32 @@ Error internal::DecodeAnswer(Answer &aAnswer, const ByteArray &aBuf)
     value = (aBuf[0] << 8) | aBuf[1];
     aAnswer.mIsLast = (value & 0x8000) != 0;
     aAnswer.mIndex = value & 0x7FFF;
+
+exit:
+    return error;
+}
+
+Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
+{
+    Error error;
+
+    VerifyOrExit(aBuf.size() == kMleCountersBytes, error = ERROR_BAD_FORMAT("MLE Counters TLV has incorrect size"));
+
+    aCounters.mRadioDisabledCounter               = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
+    aCounters.mDetachedRoleCounter                = utils::Decode<uint16_t>(aBuf.data() + 2, 2);
+    aCounters.mChildRoleCounter                   = utils::Decode<uint16_t>(aBuf.data() + 4, 2);
+    aCounters.mRouterRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 6, 2);
+    aCounters.mLeaderRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 8, 2);
+    aCounters.mAttachAttemptsCounter              = utils::Decode<uint16_t>(aBuf.data() + 10, 2);
+    aCounters.mPartitionIdChangesCounter          = utils::Decode<uint16_t>(aBuf.data() + 12, 2);
+    aCounters.mBetterPartitionAttachAttemptsCounter = utils::Decode<uint16_t>(aBuf.data() + 14, 2);
+    aCounters.mNewParentCounter                   = utils::Decode<uint16_t>(aBuf.data() + 16, 2);
+    aCounters.mTotalTrackingTime = utils::Decode<uint64_t>(aBuf.data() + 18, 8);
+    aCounters.mRadioDisabledTime = utils::Decode<uint64_t>(aBuf.data() + 26, 8);
+    aCounters.mDetachedRoleTime  = utils::Decode<uint64_t>(aBuf.data() + 34, 8);
+    aCounters.mChildRoleTime     = utils::Decode<uint64_t>(aBuf.data() + 42, 8);
+    aCounters.mRouterRoleTime    = utils::Decode<uint64_t>(aBuf.data() + 50, 8);
+    aCounters.mLeaderRoleTime    = utils::Decode<uint64_t>(aBuf.data() + 58, 8);
 
 exit:
     return error;
