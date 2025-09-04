@@ -181,16 +181,16 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     error = utils::Hex(typeListBytes, "05060708A0");
     EXPECT_EQ(error, ErrorCode::kNone);
 
-    uint8_t   batteryLevel 			= 0x64;
-    uint16_t  supplyVoltage 		= 0x1388;
-    uint16_t  version		 		= 0x05;
-    uint16_t  queryID		 		= 0x05;
-    uint32_t  timeout 				= 0x12C;
-    uint32_t  maxChildTimeout 		= 0x258;
-    std::string vendorName          = "VendorName";
-    std::string vendorModel         = "VendorModel";
-    std::string vendorSWVersion     = "VendorSWModel";
-    std::string threadStackVersion  = "ThreadStackVersion";
+    uint8_t     batteryLevel       = 0x64;
+    uint16_t    supplyVoltage      = 0x1388;
+    uint16_t    version            = 0x05;
+    uint16_t    queryID            = 0x05;
+    uint32_t    timeout            = 0x12C;
+    uint32_t    maxChildTimeout    = 0x258;
+    std::string vendorName         = "VendorName";
+    std::string vendorModel        = "VendorModel";
+    std::string vendorSWVersion    = "VendorSWModel";
+    std::string threadStackVersion = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
     EXPECT_EQ(diagData.mPresentFlags, 268435071);
@@ -418,7 +418,7 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
         ByteArray buf;
         utils::Hex(buf, "A8123401020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000");
         std::vector<Child> childInfo;
-        Error                  error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+        Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(childInfo.size(), 1);
@@ -433,18 +433,18 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
 
     // Test Case 2: Malformed TLV (too short).
     {
-        ByteArray              buf(42, 0); // 42 bytes, should fail
+        ByteArray          buf(42, 0); // 42 bytes, should fail
         std::vector<Child> childInfo;
-        Error                  error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+        Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 
     // Test Case 3: Malformed TLV (too long).
     {
-        ByteArray              buf(44, 0); // 44 bytes, should fail
+        ByteArray          buf(44, 0); // 44 bytes, should fail
         std::vector<Child> childInfo;
-        Error                  error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+        Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
@@ -457,7 +457,7 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
         ByteArray buf;
         utils::Hex(buf, "805678112233445566778800030000ABCD15C4C0001A000F");
         std::vector<RouterNeighbor> routerNeighborInfo;
-        Error                           error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+        Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(routerNeighborInfo.size(), 1);
@@ -470,18 +470,18 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
 
     // Test Case 2: Malformed TLV (too short).
     {
-        ByteArray                       buf(23, 0); // 23 bytes, should fail
+        ByteArray                   buf(23, 0); // 23 bytes, should fail
         std::vector<RouterNeighbor> routerNeighborInfo;
-        Error                           error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+        Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 
     // Test Case 3: Malformed TLV (too long).
     {
-        ByteArray                       buf(25, 0); // 25 bytes, should fail
+        ByteArray                   buf(25, 0); // 25 bytes, should fail
         std::vector<RouterNeighbor> routerNeighborInfo;
-        Error                           error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+        Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
@@ -491,9 +491,9 @@ TEST(CommissionerImplTest, DecodeAnswerTlv)
 {
     // Test Case 1: Valid TLV with 'L' flag set.
     {
-        ByteArray  buf = {0x80, 0x05}; // L=1, Index=5
-        Answer answer;
-        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+        ByteArray buf = {0x80, 0x05}; // L=1, Index=5
+        Answer    answer;
+        Error     error = ot::commissioner::internal::DecodeAnswer(answer, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(answer.mIsLast, true);
@@ -502,9 +502,9 @@ TEST(CommissionerImplTest, DecodeAnswerTlv)
 
     // Test Case 2: Valid TLV with 'L' flag not set.
     {
-        ByteArray  buf = {0x00, 0x0A}; // L=0, Index=10
-        Answer answer;
-        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+        ByteArray buf = {0x00, 0x0A}; // L=0, Index=10
+        Answer    answer;
+        Error     error = ot::commissioner::internal::DecodeAnswer(answer, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(answer.mIsLast, false);
@@ -513,9 +513,9 @@ TEST(CommissionerImplTest, DecodeAnswerTlv)
 
     // Test Case 3: Edge case with max index value.
     {
-        ByteArray  buf = {0x7F, 0xFF}; // L=0, Index=32767
-        Answer answer;
-        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+        ByteArray buf = {0x7F, 0xFF}; // L=0, Index=32767
+        Answer    answer;
+        Error     error = ot::commissioner::internal::DecodeAnswer(answer, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(answer.mIsLast, false);
@@ -524,18 +524,18 @@ TEST(CommissionerImplTest, DecodeAnswerTlv)
 
     // Test Case 4: Malformed TLV (too short).
     {
-        ByteArray  buf = {0x01}; // Only 1 byte
-        Answer answer;
-        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+        ByteArray buf = {0x01}; // Only 1 byte
+        Answer    answer;
+        Error     error = ot::commissioner::internal::DecodeAnswer(answer, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 
     // Test Case 5: Malformed TLV (too long).
     {
-        ByteArray  buf = {0x01, 0x02, 0x03}; // 3 bytes
-        Answer answer;
-        Error      error = ot::commissioner::internal::DecodeAnswer(answer, buf);
+        ByteArray buf = {0x01, 0x02, 0x03}; // 3 bytes
+        Answer    answer;
+        Error     error = ot::commissioner::internal::DecodeAnswer(answer, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
@@ -547,7 +547,8 @@ TEST(CommissionerImplTest, DecodeMleCountersTlv)
     {
         ByteArray   buf;
         MleCounters counters;
-        utils::Hex(buf, "000A000B000C000D000E000F001000110012000000000000001300000000000000140000000000000015000000000000001600000000000000170000000000000018");
+        utils::Hex(buf, "000A000B000C000D000E000F0010001100120000000000000013000000000000001400000000000000150000000000"
+                        "00001600000000000000170000000000000018");
         Error error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);

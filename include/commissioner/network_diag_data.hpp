@@ -154,13 +154,13 @@ struct Connectivity
  */
 struct Child
 {
-    bool mIsRxOnWhenIdle      = false;
-    bool mIsDeviceTypeMtd     = false;
-    bool mHasNetworkData      = false;
-    bool mSupportsCsl         = false;
-    bool mSupportsErrorRates  = false;
+    bool mIsRxOnWhenIdle     = false;
+    bool mIsDeviceTypeMtd    = false;
+    bool mHasNetworkData     = false;
+    bool mSupportsCsl        = false;
+    bool mSupportsErrorRates = false;
 
-    uint16_t  mRloc16              = 0;
+    uint16_t  mRloc16 = 0;
     ByteArray mExtAddress;
     uint16_t  mThreadVersion       = 0;
     uint32_t  mTimeout             = 0;
@@ -186,15 +186,15 @@ struct RouterNeighbor
 {
     bool mSupportsErrorRates;
 
-    uint16_t mRloc16;
+    uint16_t  mRloc16;
     ByteArray mExtAddress;
-    uint16_t mThreadVersion;
-    uint32_t mConnectionTime;
-    uint8_t mLinkMargin;
-    int8_t mAverageRssi;
-    int8_t mLastRssi;
-    uint16_t mFrameErrorRate;
-    uint16_t mMessageErrorRate;
+    uint16_t  mThreadVersion;
+    uint32_t  mConnectionTime;
+    uint8_t   mLinkMargin;
+    int8_t    mAverageRssi;
+    int8_t    mLastRssi;
+    uint16_t  mFrameErrorRate;
+    uint16_t  mMessageErrorRate;
 };
 
 /**
@@ -245,12 +245,12 @@ struct NetDiagData
     ByteArray                      mExtMacAddr;
     ByteArray                      mChannelPages;
     ByteArray                      mTypeList;
-    uint8_t                        mBatteryLevel  = 0;
-    uint16_t                       mMacAddr       = 0;
-    uint16_t                       mSupplyVoltage = 0;
-    uint32_t                       mTimeout       = 0;
-    uint16_t                       mVersion = 0;
-    uint16_t                       mQueryID = 0;
+    uint8_t                        mBatteryLevel    = 0;
+    uint16_t                       mMacAddr         = 0;
+    uint16_t                       mSupplyVoltage   = 0;
+    uint32_t                       mTimeout         = 0;
+    uint16_t                       mVersion         = 0;
+    uint16_t                       mQueryID         = 0;
     uint32_t                       mMaxChildTimeout = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
@@ -291,13 +291,13 @@ struct NetDiagData
     static constexpr uint64_t kSupplyVoltageBit          = (1ull << 14);
     static constexpr uint64_t kChannelPagesBit           = (1ull << 15);
     static constexpr uint64_t kTypeListBit               = (1ull << 16);
-    static constexpr uint64_t kMaxChildTimeoutBit		 = (1ull << 17);
-    static constexpr uint64_t kVersionBit			     = (1ull << 18);
-    static constexpr uint64_t kVendorNameBit			 = (1ull << 19);
-    static constexpr uint64_t kVendorModelBit			 = (1ull << 20);
-    static constexpr uint64_t kVendorSWVersionBit		 = (1ull << 21);
-    static constexpr uint64_t kThreadStackVersionBit	 = (1ull << 22);
-    static constexpr uint64_t kQueryIDBit           	 = (1ull << 23);
+    static constexpr uint64_t kMaxChildTimeoutBit        = (1ull << 17);
+    static constexpr uint64_t kVersionBit                = (1ull << 18);
+    static constexpr uint64_t kVendorNameBit             = (1ull << 19);
+    static constexpr uint64_t kVendorModelBit            = (1ull << 20);
+    static constexpr uint64_t kVendorSWVersionBit        = (1ull << 21);
+    static constexpr uint64_t kThreadStackVersionBit     = (1ull << 22);
+    static constexpr uint64_t kQueryIDBit                = (1ull << 23);
     static constexpr uint64_t kChildBit                  = (1ull << 24);
     static constexpr uint64_t kRouterNeighborBit         = (1ull << 25);
     static constexpr uint64_t kAnswerBit                 = (1ull << 26);

@@ -2358,7 +2358,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto maxChildTimeout = tlvSet[tlv::Type::kNetworkDiagMaxChildTimeout])
     {
         uint32_t value;
-        value = utils::Decode<uint32_t>(maxChildTimeout->GetValue());
+        value                     = utils::Decode<uint32_t>(maxChildTimeout->GetValue());
         diagData.mMaxChildTimeout = value;
         diagData.mPresentFlags |= NetDiagData::kMaxChildTimeoutBit;
     }
@@ -2366,7 +2366,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto version = tlvSet[tlv::Type::kNetworkDiagVersion])
     {
         uint16_t value;
-        value = utils::Decode<uint16_t>(version->GetValue());
+        value             = utils::Decode<uint16_t>(version->GetValue());
         diagData.mVersion = value;
         diagData.mPresentFlags |= NetDiagData::kVersionBit;
     }
@@ -2398,13 +2398,13 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto queryID = tlvSet[tlv::Type::kNetworkDiagQueryID])
     {
         uint16_t value;
-        value = utils::Decode<uint16_t>(queryID->GetValue());
+        value             = utils::Decode<uint16_t>(queryID->GetValue());
         diagData.mQueryID = value;
         diagData.mPresentFlags |= NetDiagData::kQueryIDBit;
     }
 
-    SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChild,
-                                            tlv::Scope::kNetworkDiag));
+    SuccessOrExit(error =
+                      tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChild, tlv::Scope::kNetworkDiag));
 
     if (tlvList.size() > 0)
     {
@@ -2416,7 +2416,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     }
 
     SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagRouterNeighbor,
-                                            tlv::Scope::kNetworkDiag));
+                                                tlv::Scope::kNetworkDiag));
 
     if (tlvList.size() > 0)
     {
@@ -2835,14 +2835,14 @@ exit:
 
 Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
 {
-    Error     error;
-    Child childInfo;
-    uint8_t   flags;
+    Error   error;
+    Child   childInfo;
+    uint8_t flags;
 
     VerifyOrExit(aBuf.size() == kChildBytes, error = ERROR_BAD_FORMAT("Child TLV value is too short"));
 
     // Flags (1 byte at offset 0)
-    flags = aBuf[0];
+    flags                         = aBuf[0];
     childInfo.mIsRxOnWhenIdle     = (flags & 0x80) != 0;
     childInfo.mIsDeviceTypeMtd    = (flags & 0x40) != 0;
     childInfo.mHasNetworkData     = (flags & 0x20) != 0;
@@ -2850,7 +2850,7 @@ Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
     childInfo.mSupportsErrorRates = (flags & 0x08) != 0;
 
     // Decode all other fields into childInfo
-    childInfo.mRloc16              = utils::Decode<uint16_t>(aBuf.data() + 1, 2);
+    childInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + 1, 2);
     childInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
     childInfo.mThreadVersion       = utils::Decode<uint16_t>(aBuf.data() + 11, 2);
     childInfo.mTimeout             = utils::Decode<uint32_t>(aBuf.data() + 13, 4);
@@ -2875,17 +2875,17 @@ exit:
 
 Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbor, const ByteArray &aBuf)
 {
-    Error              error;
+    Error          error;
     RouterNeighbor neighborInfo;
-    uint8_t            flags;
+    uint8_t        flags;
 
     VerifyOrExit(aBuf.size() == kRouterNeighborBytes,
                  error = ERROR_BAD_FORMAT("Router Neighbor TLV value has incorrect size"));
 
-    flags = aBuf[0];
+    flags                            = aBuf[0];
     neighborInfo.mSupportsErrorRates = (flags & 0x80) != 0;
 
-    neighborInfo.mRloc16           = (aBuf[1] << 8) | aBuf[2];
+    neighborInfo.mRloc16 = (aBuf[1] << 8) | aBuf[2];
     neighborInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
     neighborInfo.mThreadVersion    = (aBuf[11] << 8) | aBuf[12];
     neighborInfo.mConnectionTime   = (aBuf[13] << 24) | (aBuf[14] << 16) | (aBuf[15] << 8) | aBuf[16];
@@ -2903,14 +2903,14 @@ exit:
 
 Error internal::DecodeAnswer(Answer &aAnswer, const ByteArray &aBuf)
 {
-    Error error;
+    Error    error;
     uint16_t value = 0;
 
     VerifyOrExit(aBuf.size() == kAnswerBytes, error = ERROR_BAD_FORMAT("Answer TLV value has incorrect size"));
 
-    value = (aBuf[0] << 8) | aBuf[1];
+    value           = (aBuf[0] << 8) | aBuf[1];
     aAnswer.mIsLast = (value & 0x8000) != 0;
-    aAnswer.mIndex = value & 0x7FFF;
+    aAnswer.mIndex  = value & 0x7FFF;
 
 exit:
     return error;
@@ -2922,21 +2922,21 @@ Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
 
     VerifyOrExit(aBuf.size() == kMleCountersBytes, error = ERROR_BAD_FORMAT("MLE Counters TLV has incorrect size"));
 
-    aCounters.mRadioDisabledCounter               = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
-    aCounters.mDetachedRoleCounter                = utils::Decode<uint16_t>(aBuf.data() + 2, 2);
-    aCounters.mChildRoleCounter                   = utils::Decode<uint16_t>(aBuf.data() + 4, 2);
-    aCounters.mRouterRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 6, 2);
-    aCounters.mLeaderRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 8, 2);
-    aCounters.mAttachAttemptsCounter              = utils::Decode<uint16_t>(aBuf.data() + 10, 2);
-    aCounters.mPartitionIdChangesCounter          = utils::Decode<uint16_t>(aBuf.data() + 12, 2);
+    aCounters.mRadioDisabledCounter                 = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
+    aCounters.mDetachedRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 2, 2);
+    aCounters.mChildRoleCounter                     = utils::Decode<uint16_t>(aBuf.data() + 4, 2);
+    aCounters.mRouterRoleCounter                    = utils::Decode<uint16_t>(aBuf.data() + 6, 2);
+    aCounters.mLeaderRoleCounter                    = utils::Decode<uint16_t>(aBuf.data() + 8, 2);
+    aCounters.mAttachAttemptsCounter                = utils::Decode<uint16_t>(aBuf.data() + 10, 2);
+    aCounters.mPartitionIdChangesCounter            = utils::Decode<uint16_t>(aBuf.data() + 12, 2);
     aCounters.mBetterPartitionAttachAttemptsCounter = utils::Decode<uint16_t>(aBuf.data() + 14, 2);
-    aCounters.mNewParentCounter                   = utils::Decode<uint16_t>(aBuf.data() + 16, 2);
-    aCounters.mTotalTrackingTime = utils::Decode<uint64_t>(aBuf.data() + 18, 8);
-    aCounters.mRadioDisabledTime = utils::Decode<uint64_t>(aBuf.data() + 26, 8);
-    aCounters.mDetachedRoleTime  = utils::Decode<uint64_t>(aBuf.data() + 34, 8);
-    aCounters.mChildRoleTime     = utils::Decode<uint64_t>(aBuf.data() + 42, 8);
-    aCounters.mRouterRoleTime    = utils::Decode<uint64_t>(aBuf.data() + 50, 8);
-    aCounters.mLeaderRoleTime    = utils::Decode<uint64_t>(aBuf.data() + 58, 8);
+    aCounters.mNewParentCounter                     = utils::Decode<uint16_t>(aBuf.data() + 16, 2);
+    aCounters.mTotalTrackingTime                    = utils::Decode<uint64_t>(aBuf.data() + 18, 8);
+    aCounters.mRadioDisabledTime                    = utils::Decode<uint64_t>(aBuf.data() + 26, 8);
+    aCounters.mDetachedRoleTime                     = utils::Decode<uint64_t>(aBuf.data() + 34, 8);
+    aCounters.mChildRoleTime                        = utils::Decode<uint64_t>(aBuf.data() + 42, 8);
+    aCounters.mRouterRoleTime                       = utils::Decode<uint64_t>(aBuf.data() + 50, 8);
+    aCounters.mLeaderRoleTime                       = utils::Decode<uint64_t>(aBuf.data() + 58, 8);
 
 exit:
     return error;
