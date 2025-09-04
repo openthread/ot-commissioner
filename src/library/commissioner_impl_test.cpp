@@ -172,6 +172,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     ByteArray extMacAddrBytes;
     uint16_t  macAddr = 0xc800;
     error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
+    EXPECT_EQ(error, ErrorCode::kNone);
 
     ByteArray channelPagesBytes;
     error = utils::Hex(channelPagesBytes, "01020304");
@@ -282,7 +283,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(child.mSupportsErrorRates, true);
     EXPECT_EQ(child.mRloc16, 0x1234);
     ByteArray childExtAddr;
-    utils::Hex(childExtAddr, "0102030405060708");
+    error = utils::Hex(childExtAddr, "0102030405060708");
+    EXPECT_EQ(error, ErrorCode::kNone);
     EXPECT_EQ(child.mExtAddress, childExtAddr);
     EXPECT_EQ(child.mThreadVersion, 4);
     EXPECT_EQ(child.mTimeout, 240);
@@ -305,7 +307,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(routerNeighbor.mSupportsErrorRates, true);
     EXPECT_EQ(routerNeighbor.mRloc16, 0x5678);
     ByteArray neighborExtAddr;
-    utils::Hex(neighborExtAddr, "1122334455667788");
+    error = utils::Hex(neighborExtAddr, "1122334455667788");
+    EXPECT_EQ(error, ErrorCode::kNone);
     EXPECT_EQ(routerNeighbor.mExtAddress, neighborExtAddr);
     EXPECT_EQ(routerNeighbor.mThreadVersion, 3);
     EXPECT_EQ(routerNeighbor.mConnectionTime, 43981);
@@ -416,9 +419,12 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
     // Test Case 1: Valid Child TLV (43 bytes).
     {
         ByteArray buf;
-        utils::Hex(buf, "A8123401020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000");
+        Error     error;
+        error =
+            utils::Hex(buf, "A8123401020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000");
+        EXPECT_EQ(error, ErrorCode::kNone);
         std::vector<Child> childInfo;
-        Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+        error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(childInfo.size(), 1);
@@ -455,9 +461,11 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
     // Test Case 1: Valid Router Neighbor TLV (24 bytes).
     {
         ByteArray buf;
-        utils::Hex(buf, "805678112233445566778800030000ABCD15C4C0001A000F");
+        Error     error;
+        error = utils::Hex(buf, "805678112233445566778800030000ABCD15C4C0001A000F");
+        EXPECT_EQ(error, ErrorCode::kNone);
         std::vector<RouterNeighbor> routerNeighborInfo;
-        Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+        error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(routerNeighborInfo.size(), 1);
@@ -547,9 +555,12 @@ TEST(CommissionerImplTest, DecodeMleCountersTlv)
     {
         ByteArray   buf;
         MleCounters counters;
-        utils::Hex(buf, "000A000B000C000D000E000F0010001100120000000000000013000000000000001400000000000000150000000000"
-                        "00001600000000000000170000000000000018");
-        Error error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
+        Error       error;
+        error = utils::Hex(
+            buf, "000A000B000C000D000E000F0010001100120000000000000013000000000000001400000000000000150000000000"
+                 "00001600000000000000170000000000000018");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(counters.mRadioDisabledCounter, 10);
