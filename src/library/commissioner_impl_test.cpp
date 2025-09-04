@@ -273,47 +273,47 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(connectivity.mPresentFlags, expectedConnFlags);
 
     // Child TLV data
-    EXPECT_EQ(diagData.mChildInfoList.size(), 1);
-    const auto &childInfoList = diagData.mChildInfoList[0];
-    EXPECT_EQ(childInfoList.mIsRxOnWhenIdle, true);
-    EXPECT_EQ(childInfoList.mIsDeviceTypeMtd, false);
-    EXPECT_EQ(childInfoList.mHasNetworkData, true);
-    EXPECT_EQ(childInfoList.mSupportsCsl, false);
-    EXPECT_EQ(childInfoList.mSupportsErrorRates, true);
-    EXPECT_EQ(childInfoList.mRloc16, 0x1234);
+    EXPECT_EQ(diagData.mChild.size(), 1);
+    const auto &child = diagData.mChild[0];
+    EXPECT_EQ(child.mIsRxOnWhenIdle, true);
+    EXPECT_EQ(child.mIsDeviceTypeMtd, false);
+    EXPECT_EQ(child.mHasNetworkData, true);
+    EXPECT_EQ(child.mSupportsCsl, false);
+    EXPECT_EQ(child.mSupportsErrorRates, true);
+    EXPECT_EQ(child.mRloc16, 0x1234);
     ByteArray childExtAddr;
     utils::Hex(childExtAddr, "0102030405060708");
-    EXPECT_EQ(childInfoList.mExtAddress, childExtAddr);
-    EXPECT_EQ(childInfoList.mThreadVersion, 4);
-    EXPECT_EQ(childInfoList.mTimeout, 240);
-    EXPECT_EQ(childInfoList.mAge, 10);
-    EXPECT_EQ(childInfoList.mConnectionTime, 4096);
-    EXPECT_EQ(childInfoList.mSupervisionInterval, 120);
-    EXPECT_EQ(childInfoList.mLinkMargin, 26);
-    EXPECT_EQ(childInfoList.mAverageRssi, -60);
-    EXPECT_EQ(childInfoList.mLastRssi, -64);
-    EXPECT_EQ(childInfoList.mFrameErrorRate, 10);
-    EXPECT_EQ(childInfoList.mMessageErrorRate, 5);
-    EXPECT_EQ(childInfoList.mQueuedMessageCount, 3);
-    EXPECT_EQ(childInfoList.mCslPeriod, 0);
-    EXPECT_EQ(childInfoList.mCslTimeout, 0);
-    EXPECT_EQ(childInfoList.mCslChannel, 0);
+    EXPECT_EQ(child.mExtAddress, childExtAddr);
+    EXPECT_EQ(child.mThreadVersion, 4);
+    EXPECT_EQ(child.mTimeout, 240);
+    EXPECT_EQ(child.mAge, 10);
+    EXPECT_EQ(child.mConnectionTime, 4096);
+    EXPECT_EQ(child.mSupervisionInterval, 120);
+    EXPECT_EQ(child.mLinkMargin, 26);
+    EXPECT_EQ(child.mAverageRssi, -60);
+    EXPECT_EQ(child.mLastRssi, -64);
+    EXPECT_EQ(child.mFrameErrorRate, 10);
+    EXPECT_EQ(child.mMessageErrorRate, 5);
+    EXPECT_EQ(child.mQueuedMessageCount, 3);
+    EXPECT_EQ(child.mCslPeriod, 0);
+    EXPECT_EQ(child.mCslTimeout, 0);
+    EXPECT_EQ(child.mCslChannel, 0);
 
     // Router Neighbor TLV data
-    EXPECT_EQ(diagData.mRouterNeighborInfoList.size(), 1);
-    const auto &routerNeighborInfoList = diagData.mRouterNeighborInfoList[0];
-    EXPECT_EQ(routerNeighborInfoList.mSupportsErrorRates, true);
-    EXPECT_EQ(routerNeighborInfoList.mRloc16, 0x5678);
+    EXPECT_EQ(diagData.mRouterNeighbor.size(), 1);
+    const auto &routerNeighbor = diagData.mRouterNeighbor[0];
+    EXPECT_EQ(routerNeighbor.mSupportsErrorRates, true);
+    EXPECT_EQ(routerNeighbor.mRloc16, 0x5678);
     ByteArray neighborExtAddr;
     utils::Hex(neighborExtAddr, "1122334455667788");
-    EXPECT_EQ(routerNeighborInfoList.mExtAddress, neighborExtAddr);
-    EXPECT_EQ(routerNeighborInfoList.mThreadVersion, 3);
-    EXPECT_EQ(routerNeighborInfoList.mConnectionTime, 43981);
-    EXPECT_EQ(routerNeighborInfoList.mLinkMargin, 21);
-    EXPECT_EQ(routerNeighborInfoList.mAverageRssi, -60);
-    EXPECT_EQ(routerNeighborInfoList.mLastRssi, -64);
-    EXPECT_EQ(routerNeighborInfoList.mFrameErrorRate, 26);
-    EXPECT_EQ(routerNeighborInfoList.mMessageErrorRate, 15);
+    EXPECT_EQ(routerNeighbor.mExtAddress, neighborExtAddr);
+    EXPECT_EQ(routerNeighbor.mThreadVersion, 3);
+    EXPECT_EQ(routerNeighbor.mConnectionTime, 43981);
+    EXPECT_EQ(routerNeighbor.mLinkMargin, 21);
+    EXPECT_EQ(routerNeighbor.mAverageRssi, -60);
+    EXPECT_EQ(routerNeighbor.mLastRssi, -64);
+    EXPECT_EQ(routerNeighbor.mFrameErrorRate, 26);
+    EXPECT_EQ(routerNeighbor.mMessageErrorRate, 15);
 
     // Answer TLV data
     EXPECT_EQ(diagData.mAnswer.mIsLast, true);
@@ -417,8 +417,8 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
     {
         ByteArray buf;
         utils::Hex(buf, "A8123401020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000");
-        std::vector<ChildInfo> childInfo;
-        Error                  error = ot::commissioner::internal::DecodeChildInfoList(childInfo, buf);
+        std::vector<Child> childInfo;
+        Error                  error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(childInfo.size(), 1);
@@ -434,8 +434,8 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
     // Test Case 2: Malformed TLV (too short).
     {
         ByteArray              buf(42, 0); // 42 bytes, should fail
-        std::vector<ChildInfo> childInfo;
-        Error                  error = ot::commissioner::internal::DecodeChildInfoList(childInfo, buf);
+        std::vector<Child> childInfo;
+        Error                  error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
@@ -443,8 +443,8 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
     // Test Case 3: Malformed TLV (too long).
     {
         ByteArray              buf(44, 0); // 44 bytes, should fail
-        std::vector<ChildInfo> childInfo;
-        Error                  error = ot::commissioner::internal::DecodeChildInfoList(childInfo, buf);
+        std::vector<Child> childInfo;
+        Error                  error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
@@ -456,8 +456,8 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
     {
         ByteArray buf;
         utils::Hex(buf, "805678112233445566778800030000ABCD15C4C0001A000F");
-        std::vector<RouterNeighborInfo> routerNeighborInfo;
-        Error                           error = ot::commissioner::internal::DecodeRouterNeighborInfoList(routerNeighborInfo, buf);
+        std::vector<RouterNeighbor> routerNeighborInfo;
+        Error                           error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error, ErrorCode::kNone);
         EXPECT_EQ(routerNeighborInfo.size(), 1);
@@ -471,8 +471,8 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
     // Test Case 2: Malformed TLV (too short).
     {
         ByteArray                       buf(23, 0); // 23 bytes, should fail
-        std::vector<RouterNeighborInfo> routerNeighborInfo;
-        Error                           error = ot::commissioner::internal::DecodeRouterNeighborInfoList(routerNeighborInfo, buf);
+        std::vector<RouterNeighbor> routerNeighborInfo;
+        Error                           error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
@@ -480,8 +480,8 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
     // Test Case 3: Malformed TLV (too long).
     {
         ByteArray                       buf(25, 0); // 25 bytes, should fail
-        std::vector<RouterNeighborInfo> routerNeighborInfo;
-        Error                           error = ot::commissioner::internal::DecodeRouterNeighborInfoList(routerNeighborInfo, buf);
+        std::vector<RouterNeighbor> routerNeighborInfo;
+        Error                           error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }

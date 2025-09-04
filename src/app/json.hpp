@@ -83,10 +83,6 @@ std::string EnergyReportToJson(const EnergyReport &aEnergyReport);
 std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap);
 
 std::string NetDiagDataToJson(const NetDiagData &aNetDiagData);
-std::string MacCountersToJson(const MacCounters &aMacCounters);
-std::string ConnectivityToJson(const Connectivity &aConnectivity);
-std::string ChildInfoToJson(const ChildInfo &aChildInfo);
-std::string RouterNeighborInfoToJson(const RouterNeighborInfo &aRouterNeighborInfo);
 
 void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson);
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson);

@@ -2197,9 +2197,24 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagQueryID);
     }
 
-    if (aDiagDataFlags & NetDiagData::kChildInfoListBit)
+    if (aDiagDataFlags & NetDiagData::kChildBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChild);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kRouterNeighborBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRouterNeighbor);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kAnswerBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagAnswer);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kMleCountersBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMleCounters);
     }
 
     return tlvTypes;
@@ -2395,9 +2410,9 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     {
         for (const auto &tlv : tlvList)
         {
-            SuccessOrExit(error = DecodeChildInfoList(diagData.mChildInfoList, tlv.GetValue()));
+            SuccessOrExit(error = DecodeChild(diagData.mChild, tlv.GetValue()));
         }
-        diagData.mPresentFlags |= NetDiagData::kChildInfoListBit;
+        diagData.mPresentFlags |= NetDiagData::kChildBit;
     }
 
     SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagRouterNeighbor,
@@ -2407,9 +2422,9 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     {
         for (const auto &tlv : tlvList)
         {
-            SuccessOrExit(error = DecodeRouterNeighborInfoList(diagData.mRouterNeighborInfoList, tlv.GetValue()));
+            SuccessOrExit(error = DecodeRouterNeighbor(diagData.mRouterNeighbor, tlv.GetValue()));
         }
-        diagData.mPresentFlags |= NetDiagData::kRouterNeighborInfoListBit;
+        diagData.mPresentFlags |= NetDiagData::kRouterNeighborBit;
     }
 
     if (auto answer = tlvSet[tlv::Type::kNetworkDiagAnswer])
@@ -2818,10 +2833,10 @@ exit:
     return error;
 }
 
-Error internal::DecodeChildInfoList(std::vector<ChildInfo> &aChildInfoList, const ByteArray &aBuf)
+Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
 {
     Error     error;
-    ChildInfo childInfo;
+    Child childInfo;
     uint8_t   flags;
 
     VerifyOrExit(aBuf.size() == kChildBytes, error = ERROR_BAD_FORMAT("Child TLV value is too short"));
@@ -2852,17 +2867,16 @@ Error internal::DecodeChildInfoList(std::vector<ChildInfo> &aChildInfoList, cons
     childInfo.mCslTimeout          = utils::Decode<uint32_t>(aBuf.data() + 38, 4);
     childInfo.mCslChannel          = aBuf[42];
 
-    // Add the completed object to the vector
-    aChildInfoList.emplace_back(childInfo);
+    aChild.emplace_back(childInfo);
 
 exit:
     return error;
 }
 
-Error internal::DecodeRouterNeighborInfoList(std::vector<RouterNeighborInfo> &aRouterNeighborInfoList, const ByteArray &aBuf)
+Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbor, const ByteArray &aBuf)
 {
     Error              error;
-    RouterNeighborInfo neighborInfo;
+    RouterNeighbor neighborInfo;
     uint8_t            flags;
 
     VerifyOrExit(aBuf.size() == kRouterNeighborBytes,
@@ -2881,7 +2895,7 @@ Error internal::DecodeRouterNeighborInfoList(std::vector<RouterNeighborInfo> &aR
     neighborInfo.mFrameErrorRate   = (aBuf[20] << 8) | aBuf[21];
     neighborInfo.mMessageErrorRate = (aBuf[22] << 8) | aBuf[23];
 
-    aRouterNeighborInfoList.push_back(neighborInfo);
+    aRouterNeighbor.push_back(neighborInfo);
 
 exit:
     return error;

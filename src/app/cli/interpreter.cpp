@@ -378,8 +378,8 @@ static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"vendorswversion", {NetDiagData::kVendorSWVersionBit, false}},
     {"threadstackversion", {NetDiagData::kThreadStackVersionBit, false}},
     {"queryid", {NetDiagData::kQueryIDBit, false}},
-    {"child", {NetDiagData::kChildInfoListBit, false}},
-    {"routerneighbor", {NetDiagData::kRouterNeighborInfoListBit, false}},
+    {"child", {NetDiagData::kChildBit, false}},
+    {"routerneighbor", {NetDiagData::kRouterNeighborBit, false}},
     {"answer", {NetDiagData::kAnswerBit, false}},
     {"mlecounters", {NetDiagData::kMleCountersBit, false}}};
 

@@ -769,16 +769,54 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-static void to_json(Json &aJson, const ChildInfo &aChildInfo)
+static void to_json(Json &aJson, const MacCounters &aMacCounters)
 {
-#define SET(name) aJson[#name] = aChildInfo.m##name;
+#define SET(name) aJson[#name] = aMacCounters.m##name;
+    SET(IfInUnknownProtos);
+    SET(IfInErrors);
+    SET(IfOutErrors);
+    SET(IfInUcastPkts);
+    SET(IfInBroadcastPkts);
+    SET(IfInDiscards);
+    SET(IfOutUcastPkts);
+    SET(IfOutBroadcastPkts);
+    SET(IfOutDiscards);
+#undef SET
+}
+
+static void to_json(Json &aJson, const Connectivity &aConnectivity)
+{
+#define SET(name) aJson[#name] = aConnectivity.m##name;
+    SET(ParentPriority);
+    SET(LinkQuality3);
+    SET(LinkQuality2);
+    SET(LinkQuality1);
+    SET(LeaderCost);
+    SET(IdSequence);
+    SET(ActiveRouters);
+#undef SET
+
+    if (aConnectivity.mPresentFlags & Connectivity::kRxOffChildBufferSizeBit)
+    {
+        aJson["RxOffChildBufferSize"] = aConnectivity.mRxOffChildBufferSize;
+    }
+
+    if (aConnectivity.mPresentFlags & Connectivity::kRxOffChildDatagramCountBit)
+    {
+        aJson["RxOffChildDatagramCount"] = aConnectivity.mRxOffChildDatagramCount;
+    }
+}
+
+static void to_json(Json &aJson, const Child &aChild)
+{
+#define SET(name) aJson[#name] = aChild.m##name;
     SET(IsRxOnWhenIdle);
     SET(IsDeviceTypeMtd);
     SET(HasNetworkData);
     SET(SupportsCsl);
     SET(SupportsErrorRates);
     SET(Rloc16);
-    aJson["ExtAddress"] = utils::Hex(aChildInfo.mExtAddress);
+    aJson["ExtAddress"] = utils::Hex(aChild.mExtAddress);
     SET(ThreadVersion);
     SET(Timeout);
     SET(Age);
@@ -796,12 +834,12 @@ static void to_json(Json &aJson, const ChildInfo &aChildInfo)
 #undef SET
 }
 
-static void to_json(Json &aJson, const RouterNeighborInfo &aNeighborInfo)
+static void to_json(Json &aJson, const RouterNeighbor &aRouterNeighbor)
 {
-#define SET(name) aJson[#name] = aNeighborInfo.m##name;
+#define SET(name) aJson[#name] = aRouterNeighbor.m##name;
     SET(SupportsErrorRates);
     SET(Rloc16);
-    aJson["ExtAddress"] = utils::Hex(aNeighborInfo.mExtAddress);
+    aJson["ExtAddress"] = utils::Hex(aRouterNeighbor.mExtAddress);
     SET(ThreadVersion);
     SET(ConnectionTime);
     SET(LinkMargin);
@@ -818,9 +856,9 @@ static void to_json(Json &aJson, const Answer &aAnswer)
     aJson["Index"]  = aAnswer.mIndex;
 }
 
-static void to_json(Json &aJson, const MleCounters &aCounters)
+static void to_json(Json &aJson, const MleCounters &aMleCounters)
 {
-#define SET(name) aJson[#name] = aCounters.m##name
+#define SET(name) aJson[#name] = aMleCounters.m##name
     SET(RadioDisabledCounter);
     SET(DetachedRoleCounter);
     SET(ChildRoleCounter);
@@ -861,119 +899,19 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(VendorSWVersion);
     SET_IF_PRESENT(ThreadStackVersion);
     SET_IF_PRESENT(QueryID);
+    SET_IF_PRESENT(MacCounters);
+    SET_IF_PRESENT(Connectivity);
+    SET_IF_PRESENT(Child);
+    SET_IF_PRESENT(RouterNeighbor);
+    SET_IF_PRESENT(Answer);
+    SET_IF_PRESENT(MleCounters);
 #undef SET_IF_PRESENT
-    if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
-    {
-        aJson["MacCounters"] = MacCountersToJson(aNetDiagData.mMacCounters);
-    }
-    if (aNetDiagData.mPresentFlags & NetDiagData::kConnectivityBit)
-    {
-        aJson["Connectivity"] = ConnectivityToJson(aNetDiagData.mConnectivity);
-    }
-    if (aNetDiagData.mPresentFlags & NetDiagData::kChildInfoListBit)
-    {
-        aJson["Child"] = Json::array();
-        for (const auto &child : aNetDiagData.mChildInfoList)
-        {
-            Json childJson;
-            to_json(childJson, child);
-            aJson["Child"].push_back(childJson);
-        }
-    }
-    if (aNetDiagData.mPresentFlags & NetDiagData::kRouterNeighborInfoListBit)
-    {
-        aJson["RouterNeighbor"] = Json::array();
-        for (const auto &neighbor : aNetDiagData.mRouterNeighborInfoList)
-        {
-            Json neighborJson;
-            to_json(neighborJson, neighbor);
-            aJson["RouterNeighbor"].push_back(neighborJson);
-        }
-    }
-    if (aNetDiagData.mPresentFlags & NetDiagData::kAnswerBit)
-    {
-        Json answerJson;
-        to_json(answerJson, aNetDiagData.mAnswer);
-        aJson["Answer"] = answerJson;
-    }
-    if (aNetDiagData.mPresentFlags & NetDiagData::kMleCountersBit)
-    {
-        Json mleCountersJson;
-        to_json(mleCountersJson, aNetDiagData.mMleCounters);
-        aJson["MleCounters"] = mleCountersJson;
-    }
 }
 
 std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
 {
     Json json;
     to_json(json, aNetDiagData);
-    return json.dump(JSON_INDENT_DEFAULT);
-}
-
-static void to_json(Json &aJson, const MacCounters &aMacCounters)
-{
-#define SET(name) aJson[#name] = aMacCounters.m##name;
-    SET(IfInUnknownProtos);
-    SET(IfInErrors);
-    SET(IfOutErrors);
-    SET(IfInUcastPkts);
-    SET(IfInBroadcastPkts);
-    SET(IfInDiscards);
-    SET(IfOutUcastPkts);
-    SET(IfOutBroadcastPkts);
-    SET(IfOutDiscards);
-#undef SET
-}
-
-std::string MacCountersToJson(const MacCounters &aMacCounters)
-{
-    Json json;
-    to_json(json, aMacCounters);
-    return json.dump(JSON_INDENT_DEFAULT);
-}
-
-static void to_json(Json &aJson, const Connectivity &aConnectivity)
-{
-#define SET(name) aJson[#name] = aConnectivity.m##name;
-    SET(ParentPriority);
-    SET(LinkQuality3);
-    SET(LinkQuality2);
-    SET(LinkQuality1);
-    SET(LeaderCost);
-    SET(IdSequence);
-    SET(ActiveRouters);
-#undef SET
-
-    if (aConnectivity.mPresentFlags & Connectivity::kRxOffChildBufferSizeBit)
-    {
-        aJson["RxOffChildBufferSize"] = aConnectivity.mRxOffChildBufferSize;
-    }
-
-    if (aConnectivity.mPresentFlags & Connectivity::kRxOffChildDatagramCountBit)
-    {
-        aJson["RxOffChildDatagramCount"] = aConnectivity.mRxOffChildDatagramCount;
-    }
-}
-
-std::string ConnectivityToJson(const Connectivity &aConnectivity)
-{
-    Json json;
-    to_json(json, aConnectivity);
-    return json.dump(JSON_INDENT_DEFAULT);
-}
-
-std::string ChildInfoToJson(const ChildInfo &aChildInfo)
-{
-    Json json;
-    to_json(json, aChildInfo);
-    return json.dump(JSON_INDENT_DEFAULT);
-}
-
-std::string RouterNeighborInfoToJson(const RouterNeighborInfo &aRouterNeighborInfo)
-{
-    Json json;
-    to_json(json, aRouterNeighborInfo);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 

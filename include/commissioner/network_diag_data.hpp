@@ -152,7 +152,7 @@ struct Connectivity
 /**
  * @brief Child TLV Data
  */
-struct ChildInfo
+struct Child
 {
     bool mIsRxOnWhenIdle      = false;
     bool mIsDeviceTypeMtd     = false;
@@ -182,7 +182,7 @@ struct ChildInfo
  * @brief Router Neighbor TLV Data
  *
  */
-struct RouterNeighborInfo
+struct RouterNeighbor
 {
     bool mSupportsErrorRates;
 
@@ -262,8 +262,8 @@ struct NetDiagData
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
-    std::vector<ChildInfo>         mChildInfoList;
-    std::vector<RouterNeighborInfo> mRouterNeighborInfoList;
+    std::vector<Child>             mChild;
+    std::vector<RouterNeighbor>    mRouterNeighbor;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
     Answer                         mAnswer;
@@ -298,8 +298,8 @@ struct NetDiagData
     static constexpr uint64_t kVendorSWVersionBit		 = (1ull << 21);
     static constexpr uint64_t kThreadStackVersionBit	 = (1ull << 22);
     static constexpr uint64_t kQueryIDBit           	 = (1ull << 23);
-    static constexpr uint64_t kChildInfoListBit          = (1ull << 24);
-    static constexpr uint64_t kRouterNeighborInfoListBit = (1ull << 25);
+    static constexpr uint64_t kChildBit                  = (1ull << 24);
+    static constexpr uint64_t kRouterNeighborBit         = (1ull << 25);
     static constexpr uint64_t kAnswerBit                 = (1ull << 26);
     static constexpr uint64_t kMleCountersBit            = (1ull << 27);
 };
