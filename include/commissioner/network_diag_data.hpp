@@ -184,17 +184,17 @@ struct Child
  */
 struct RouterNeighbor
 {
-    bool mSupportsErrorRates;
+    bool mSupportsErrorRates = false;
 
-    uint16_t  mRloc16;
+    uint16_t  mRloc16 = 0;
     ByteArray mExtAddress;
-    uint16_t  mThreadVersion;
-    uint32_t  mConnectionTime;
-    uint8_t   mLinkMargin;
-    int8_t    mAverageRssi;
-    int8_t    mLastRssi;
-    uint16_t  mFrameErrorRate;
-    uint16_t  mMessageErrorRate;
+    uint16_t  mThreadVersion    = 0;
+    uint32_t  mConnectionTime   = 0;
+    uint8_t   mLinkMargin       = 0;
+    int8_t    mAverageRssi      = 127;
+    int8_t    mLastRssi         = 127;
+    uint16_t  mFrameErrorRate   = 0;
+    uint16_t  mMessageErrorRate = 0;
 };
 
 /**
@@ -203,8 +203,8 @@ struct RouterNeighbor
  */
 struct Answer
 {
-    bool     mIsLast;
-    uint16_t mIndex;
+    bool     mIsLast = false;
+    uint16_t mIndex  = 0;
 };
 
 /**
@@ -213,22 +213,21 @@ struct Answer
  */
 struct MleCounters
 {
-    uint16_t mRadioDisabledCounter;
-    uint16_t mDetachedRoleCounter;
-    uint16_t mChildRoleCounter;
-    uint16_t mRouterRoleCounter;
-    uint16_t mLeaderRoleCounter;
-    uint16_t mAttachAttemptsCounter;
-    uint16_t mPartitionIdChangesCounter;
-    uint16_t mBetterPartitionAttachAttemptsCounter;
-    uint16_t mNewParentCounter;
-
-    uint64_t mTotalTrackingTime;
-    uint64_t mRadioDisabledTime;
-    uint64_t mDetachedRoleTime;
-    uint64_t mChildRoleTime;
-    uint64_t mRouterRoleTime;
-    uint64_t mLeaderRoleTime;
+    uint16_t mRadioDisabledCounter                 = 0;
+    uint16_t mDetachedRoleCounter                  = 0;
+    uint16_t mChildRoleCounter                     = 0;
+    uint16_t mRouterRoleCounter                    = 0;
+    uint16_t mLeaderRoleCounter                    = 0;
+    uint16_t mAttachAttemptsCounter                = 0;
+    uint16_t mPartitionIdChangesCounter            = 0;
+    uint16_t mBetterPartitionAttachAttemptsCounter = 0;
+    uint16_t mNewParentCounter                     = 0;
+    uint64_t mTotalTrackingTime                    = 0;
+    uint64_t mRadioDisabledTime                    = 0;
+    uint64_t mDetachedRoleTime                     = 0;
+    uint64_t mChildRoleTime                        = 0;
+    uint64_t mRouterRoleTime                       = 0;
+    uint64_t mLeaderRoleTime                       = 0;
 };
 
 /**

@@ -2885,15 +2885,15 @@ Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbo
     flags                            = aBuf[0];
     neighborInfo.mSupportsErrorRates = (flags & 0x80) != 0;
 
-    neighborInfo.mRloc16 = (aBuf[1] << 8) | aBuf[2];
+    neighborInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + 1, 2);
     neighborInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
-    neighborInfo.mThreadVersion    = (aBuf[11] << 8) | aBuf[12];
-    neighborInfo.mConnectionTime   = (aBuf[13] << 24) | (aBuf[14] << 16) | (aBuf[15] << 8) | aBuf[16];
+    neighborInfo.mThreadVersion    = utils::Decode<uint16_t>(aBuf.data() + 11, 2);
+    neighborInfo.mConnectionTime   = utils::Decode<uint32_t>(aBuf.data() + 13, 4);
     neighborInfo.mLinkMargin       = aBuf[17];
-    neighborInfo.mAverageRssi      = aBuf[18];
-    neighborInfo.mLastRssi         = aBuf[19];
-    neighborInfo.mFrameErrorRate   = (aBuf[20] << 8) | aBuf[21];
-    neighborInfo.mMessageErrorRate = (aBuf[22] << 8) | aBuf[23];
+    neighborInfo.mAverageRssi      = static_cast<int8_t>(aBuf[18]);
+    neighborInfo.mLastRssi         = static_cast<int8_t>(aBuf[19]);
+    neighborInfo.mFrameErrorRate   = utils::Decode<uint16_t>(aBuf.data() + 20, 2);
+    neighborInfo.mMessageErrorRate = utils::Decode<uint16_t>(aBuf.data() + 22, 2);
 
     aRouterNeighbor.push_back(neighborInfo);
 
@@ -2908,7 +2908,7 @@ Error internal::DecodeAnswer(Answer &aAnswer, const ByteArray &aBuf)
 
     VerifyOrExit(aBuf.size() == kAnswerBytes, error = {ErrorCode::kBadFormat, "invalid answer tlv length"});
 
-    value           = (aBuf[0] << 8) | aBuf[1];
+    value           = utils::Decode<uint16_t>(aBuf.data(), 2);
     aAnswer.mIsLast = (value & 0x8000) != 0;
     aAnswer.mIndex  = value & 0x7FFF;
 
