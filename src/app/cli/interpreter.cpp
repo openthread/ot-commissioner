@@ -377,10 +377,8 @@ static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"vendormodel", {NetDiagData::kVendorModelBit, false}},
     {"vendorswversion", {NetDiagData::kVendorSWVersionBit, false}},
     {"threadstackversion", {NetDiagData::kThreadStackVersionBit, false}},
-    {"queryid", {NetDiagData::kQueryIDBit, false}},
     {"child", {NetDiagData::kChildBit, false}},
     {"routerneighbor", {NetDiagData::kRouterNeighborBit, false}},
-    {"answer", {NetDiagData::kAnswerBit, false}},
     {"mlecounters", {NetDiagData::kMleCountersBit, false}}};
 
 template <typename T> static std::string ToHex(T aInteger)

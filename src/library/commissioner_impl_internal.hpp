@@ -52,7 +52,6 @@ static constexpr uint8_t kBorderRouterBytes     = 4;
 static constexpr uint8_t kSixLowPanContextBytes = 2;
 static constexpr uint8_t kChildBytes            = 43;
 static constexpr uint8_t kRouterNeighborBytes   = 24;
-static constexpr uint8_t kAnswerBytes           = 2;
 static constexpr uint8_t kMleCountersBytes      = 66;
 
 namespace internal {
@@ -68,7 +67,6 @@ Error     DecodeRoute64(Route64 &aRoute64, const ByteArray &aBuf);
 Error     DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf);
 Error     DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf);
 Error     DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbor, const ByteArray &aBuf);
-Error     DecodeAnswer(Answer &aAnswer, const ByteArray &aBuf);
 Error     DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf);
 void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
 ByteArray ExtractRouterIds(const ByteArray &aMask);

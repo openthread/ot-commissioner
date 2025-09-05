@@ -850,12 +850,6 @@ static void to_json(Json &aJson, const RouterNeighbor &aRouterNeighbor)
 #undef SET
 }
 
-static void to_json(Json &aJson, const Answer &aAnswer)
-{
-    aJson["IsLast"] = aAnswer.mIsLast;
-    aJson["Index"]  = aAnswer.mIndex;
-}
-
 static void to_json(Json &aJson, const MleCounters &aMleCounters)
 {
 #define SET(name) aJson[#name] = aMleCounters.m##name
@@ -898,12 +892,10 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(VendorModel);
     SET_IF_PRESENT(VendorSWVersion);
     SET_IF_PRESENT(ThreadStackVersion);
-    SET_IF_PRESENT(QueryID);
     SET_IF_PRESENT(MacCounters);
     SET_IF_PRESENT(Connectivity);
     SET_IF_PRESENT(Child);
     SET_IF_PRESENT(RouterNeighbor);
-    SET_IF_PRESENT(Answer);
     SET_IF_PRESENT(MleCounters);
 #undef SET_IF_PRESENT
 }

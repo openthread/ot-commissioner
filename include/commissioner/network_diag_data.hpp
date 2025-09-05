@@ -198,16 +198,6 @@ struct RouterNeighbor
 };
 
 /**
- * @brief Answer TLV Data
- *
- */
-struct Answer
-{
-    bool     mIsLast = false;
-    uint16_t mIndex  = 0;
-};
-
-/**
  * @brief MLE Counters TLV Data
  *
  */
@@ -249,7 +239,6 @@ struct NetDiagData
     uint16_t                       mSupplyVoltage   = 0;
     uint32_t                       mTimeout         = 0;
     uint16_t                       mVersion         = 0;
-    uint16_t                       mQueryID         = 0;
     uint32_t                       mMaxChildTimeout = 0;
     Route64                        mRoute64;
     LeaderData                     mLeaderData;
@@ -265,7 +254,6 @@ struct NetDiagData
     std::vector<RouterNeighbor>    mRouterNeighbor;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
-    Answer                         mAnswer;
     MleCounters                    mMleCounters;
 
     /**
@@ -296,11 +284,9 @@ struct NetDiagData
     static constexpr uint64_t kVendorModelBit            = (1ull << 20);
     static constexpr uint64_t kVendorSWVersionBit        = (1ull << 21);
     static constexpr uint64_t kThreadStackVersionBit     = (1ull << 22);
-    static constexpr uint64_t kQueryIDBit                = (1ull << 23);
-    static constexpr uint64_t kChildBit                  = (1ull << 24);
-    static constexpr uint64_t kRouterNeighborBit         = (1ull << 25);
-    static constexpr uint64_t kAnswerBit                 = (1ull << 26);
-    static constexpr uint64_t kMleCountersBit            = (1ull << 27);
+    static constexpr uint64_t kChildBit                  = (1ull << 23);
+    static constexpr uint64_t kRouterNeighborBit         = (1ull << 24);
+    static constexpr uint64_t kMleCountersBit            = (1ull << 25);
 };
 
 } // namespace commissioner

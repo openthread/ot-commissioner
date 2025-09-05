@@ -2192,11 +2192,6 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagThreadStackVersion);
     }
 
-    if (aDiagDataFlags & NetDiagData::kQueryIDBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagQueryID);
-    }
-
     if (aDiagDataFlags & NetDiagData::kChildBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChild);
@@ -2205,11 +2200,6 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
     if (aDiagDataFlags & NetDiagData::kRouterNeighborBit)
     {
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRouterNeighbor);
-    }
-
-    if (aDiagDataFlags & NetDiagData::kAnswerBit)
-    {
-        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagAnswer);
     }
 
     if (aDiagDataFlags & NetDiagData::kMleCountersBit)
@@ -2395,14 +2385,6 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kThreadStackVersionBit;
     }
 
-    if (auto queryID = tlvSet[tlv::Type::kNetworkDiagQueryID])
-    {
-        uint16_t value;
-        value             = utils::Decode<uint16_t>(queryID->GetValue());
-        diagData.mQueryID = value;
-        diagData.mPresentFlags |= NetDiagData::kQueryIDBit;
-    }
-
     SuccessOrExit(error =
                       tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChild, tlv::Scope::kNetworkDiag));
 
@@ -2425,12 +2407,6 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
             SuccessOrExit(error = DecodeRouterNeighbor(diagData.mRouterNeighbor, tlv.GetValue()));
         }
         diagData.mPresentFlags |= NetDiagData::kRouterNeighborBit;
-    }
-
-    if (auto answer = tlvSet[tlv::Type::kNetworkDiagAnswer])
-    {
-        SuccessOrExit(error = internal::DecodeAnswer(diagData.mAnswer, answer->GetValue()));
-        diagData.mPresentFlags |= NetDiagData::kAnswerBit;
     }
 
     if (auto mleCounters = tlvSet[tlv::Type::kNetworkDiagMleCounters])
@@ -2896,21 +2872,6 @@ Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbo
     neighborInfo.mMessageErrorRate = utils::Decode<uint16_t>(aBuf.data() + 22, 2);
 
     aRouterNeighbor.push_back(neighborInfo);
-
-exit:
-    return error;
-}
-
-Error internal::DecodeAnswer(Answer &aAnswer, const ByteArray &aBuf)
-{
-    Error    error;
-    uint16_t value = 0;
-
-    VerifyOrExit(aBuf.size() == kAnswerBytes, error = {ErrorCode::kBadFormat, "invalid answer tlv length"});
-
-    value           = utils::Decode<uint16_t>(aBuf.data(), 2);
-    aAnswer.mIsLast = (value & 0x8000) != 0;
-    aAnswer.mIndex  = value & 0x7FFF;
 
 exit:
     return error;
