@@ -308,8 +308,6 @@ void CommissionerImpl::Resign(ErrorHandler aHandler)
         mKeepAliveTimer.Stop();
     }
 
-    Disconnect();
-
     aHandler(ERROR_NONE);
 }
 
@@ -1384,20 +1382,27 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
     auto          state = (aKeepAlive ? tlv::kStateAccept : tlv::kStateReject);
 
-    auto onResponse = [this](const coap::Response *aResponse, Error aError) {
+    auto onResponse = [this, aKeepAlive](const coap::Response *aResponse, Error aError) {
         Error error = HandleStateResponse(aResponse, aError);
 
-        if (error == ErrorCode::kNone)
+        if (aKeepAlive)
         {
-            mKeepAliveTimer.Start(GetKeepAliveInterval());
-            LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
-        }
-        else
-        {
-            mState = State::kDisabled;
-            Resign([](Error) {});
+            if (error == ErrorCode::kNone)
+            {
+                mKeepAliveTimer.Start(GetKeepAliveInterval());
+                LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
+            }
+            else
+            {
+                mState = State::kDisabled;
+                Resign([](Error) {});
 
-            LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
+                LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
+            }
+        } else {
+            mState = State::kDisabled;
+            Disconnect();
+            LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
         }
 
         mCommissionerHandler.OnKeepAliveResponse(error);
@@ -1417,7 +1422,10 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     }
 #endif
 
-    mKeepAliveTimer.Start(GetKeepAliveInterval());
+    if (aKeepAlive)
+    {
+        mKeepAliveTimer.Start(GetKeepAliveInterval());
+    }
 
     mBrClient.SendRequest(request, onResponse);
 
