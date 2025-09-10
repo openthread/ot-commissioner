@@ -1385,7 +1385,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     auto onResponse = [this, aKeepAlive](const coap::Response *aResponse, Error aError) {
         const Error error = HandleStateResponse(aResponse, aError);
 
-        // Handle non-keep-alive case early
+        // Handle keep-alive reject case early
         if (!aKeepAlive)
         {
             Disconnect();
