@@ -1399,7 +1399,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
                     {
                         LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", error.ToString());
                     }
-		    Disconnect();
+                    Disconnect();
                 });
                 LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
             }

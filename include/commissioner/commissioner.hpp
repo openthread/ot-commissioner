@@ -513,7 +513,8 @@ public:
      *
      * This method leaves a Thread network by sending a keep-alive message with the state TLV set
      * to `Reject`. Eventually, the connection will be closed.
-     *
+     * 
+     * @return Error::kNone, succeed; otherwise, failed;
      */
     virtual Error Resign() = 0;
 
