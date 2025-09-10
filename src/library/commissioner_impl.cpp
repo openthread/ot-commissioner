@@ -308,8 +308,6 @@ void CommissionerImpl::Resign(ErrorHandler aHandler)
         mKeepAliveTimer.Stop();
     }
 
-    Disconnect();
-
     aHandler(ERROR_NONE);
 }
 
@@ -1384,23 +1382,40 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
     auto          state = (aKeepAlive ? tlv::kStateAccept : tlv::kStateReject);
 
-    auto onResponse = [this](const coap::Response *aResponse, Error aError) {
-        Error error = HandleStateResponse(aResponse, aError);
+    auto onResponse = [this, aKeepAlive](const coap::Response *aResponse, Error aError) {
+        const Error error = HandleStateResponse(aResponse, aError);
+        
+        // Handle non-keep-alive case early
+        if (!aKeepAlive)
+        {
+            Disconnect();
+            LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
+            mCommissionerHandler.OnKeepAliveResponse(error);
+            return;
+        }
 
+        // Handle keep-alive success case
         if (error == ErrorCode::kNone)
         {
             mKeepAliveTimer.Start(GetKeepAliveInterval());
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
-        }
-        else
-        {
-            mState = State::kDisabled;
-            Resign([](Error) {});
-
-            LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
+            mCommissionerHandler.OnKeepAliveResponse(error);
+            return;
         }
 
-        mCommissionerHandler.OnKeepAliveResponse(error);
+        // Handle keep-alive failure case
+        LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
+        
+        auto resignHandler = [this, error](Error resignError) {
+            if (resignError != ErrorCode::kNone)
+            {
+                LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", resignError.ToString());
+            }
+            Disconnect();
+            mCommissionerHandler.OnKeepAliveResponse(error);
+        };
+        
+        Resign(resignHandler);
     };
 
     VerifyOrExit(IsActive(),
@@ -1416,8 +1431,6 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         SuccessOrExit(error = SignRequest(request, tlv::Scope::kMeshCoP, /* aAppendToken */ false));
     }
 #endif
-
-    mKeepAliveTimer.Start(GetKeepAliveInterval());
 
     mBrClient.SendRequest(request, onResponse);
 
