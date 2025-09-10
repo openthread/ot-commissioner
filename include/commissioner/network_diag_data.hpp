@@ -247,6 +247,7 @@ struct NetDiagData
     std::string                    mVendorModel;
     std::string                    mVendorSWVersion;
     std::string                    mThreadStackVersion;
+    std::string                    mVendorAppURL;
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
@@ -255,38 +256,41 @@ struct NetDiagData
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
     MleCounters                    mMleCounters;
+    ChannelMask                    mNonPreferredChannelsMask;
 
     /**
      * Indicates which fields are included in the object.
      */
     uint64_t mPresentFlags = 0;
 
-    static constexpr uint64_t kExtMacAddrBit             = (1ull << 0);
-    static constexpr uint64_t kMacAddrBit                = (1ull << 1);
-    static constexpr uint64_t kModeBit                   = (1ull << 2);
-    static constexpr uint64_t kRoute64Bit                = (1ull << 3);
-    static constexpr uint64_t kLeaderDataBit             = (1ull << 4);
-    static constexpr uint64_t kAddrsBit                  = (1ull << 5);
-    static constexpr uint64_t kChildTableBit             = (1ull << 6);
-    static constexpr uint64_t kEui64Bit                  = (1ull << 7);
-    static constexpr uint64_t kMacCountersBit            = (1ull << 8);
-    static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
-    static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
-    static constexpr uint64_t kTimeoutBit                = (1ull << 11);
-    static constexpr uint64_t kConnectivityBit           = (1ull << 12);
-    static constexpr uint64_t kBatteryLevelBit           = (1ull << 13);
-    static constexpr uint64_t kSupplyVoltageBit          = (1ull << 14);
-    static constexpr uint64_t kChannelPagesBit           = (1ull << 15);
-    static constexpr uint64_t kTypeListBit               = (1ull << 16);
-    static constexpr uint64_t kMaxChildTimeoutBit        = (1ull << 17);
-    static constexpr uint64_t kVersionBit                = (1ull << 18);
-    static constexpr uint64_t kVendorNameBit             = (1ull << 19);
-    static constexpr uint64_t kVendorModelBit            = (1ull << 20);
-    static constexpr uint64_t kVendorSWVersionBit        = (1ull << 21);
-    static constexpr uint64_t kThreadStackVersionBit     = (1ull << 22);
-    static constexpr uint64_t kChildBit                  = (1ull << 23);
-    static constexpr uint64_t kRouterNeighborBit         = (1ull << 24);
-    static constexpr uint64_t kMleCountersBit            = (1ull << 25);
+    static constexpr uint64_t kExtMacAddrBit               = (1ull << 0);
+    static constexpr uint64_t kMacAddrBit                  = (1ull << 1);
+    static constexpr uint64_t kModeBit                     = (1ull << 2);
+    static constexpr uint64_t kRoute64Bit                  = (1ull << 3);
+    static constexpr uint64_t kLeaderDataBit               = (1ull << 4);
+    static constexpr uint64_t kAddrsBit                    = (1ull << 5);
+    static constexpr uint64_t kChildTableBit               = (1ull << 6);
+    static constexpr uint64_t kEui64Bit                    = (1ull << 7);
+    static constexpr uint64_t kMacCountersBit              = (1ull << 8);
+    static constexpr uint64_t kChildIpv6AddrsInfoListBit   = (1ull << 9);
+    static constexpr uint64_t kNetworkDataBit              = (1ull << 10);
+    static constexpr uint64_t kTimeoutBit                  = (1ull << 11);
+    static constexpr uint64_t kConnectivityBit             = (1ull << 12);
+    static constexpr uint64_t kBatteryLevelBit             = (1ull << 13);
+    static constexpr uint64_t kSupplyVoltageBit            = (1ull << 14);
+    static constexpr uint64_t kChannelPagesBit             = (1ull << 15);
+    static constexpr uint64_t kTypeListBit                 = (1ull << 16);
+    static constexpr uint64_t kMaxChildTimeoutBit          = (1ull << 17);
+    static constexpr uint64_t kVersionBit                  = (1ull << 18);
+    static constexpr uint64_t kVendorNameBit               = (1ull << 19);
+    static constexpr uint64_t kVendorModelBit              = (1ull << 20);
+    static constexpr uint64_t kVendorSWVersionBit          = (1ull << 21);
+    static constexpr uint64_t kThreadStackVersionBit       = (1ull << 22);
+    static constexpr uint64_t kChildBit                    = (1ull << 23);
+    static constexpr uint64_t kRouterNeighborBit           = (1ull << 24);
+    static constexpr uint64_t kMleCountersBit              = (1ull << 25);
+    static constexpr uint64_t kVendorAppURLBit             = (1ull << 26);
+    static constexpr uint64_t kNonPreferredChannelsMaskBit = (1ull << 27);
 };
 
 } // namespace commissioner

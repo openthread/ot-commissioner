@@ -2207,6 +2207,16 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMleCounters);
     }
 
+    if (aDiagDataFlags & NetDiagData::kVendorAppURLBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorAppURL);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kNonPreferredChannelsMaskBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagNonPreferredChannelsMask);
+    }
+
     return tlvTypes;
 }
 
@@ -2413,6 +2423,19 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     {
         SuccessOrExit(error = internal::DecodeMleCounters(diagData.mMleCounters, mleCounters->GetValue()));
         diagData.mPresentFlags |= NetDiagData::kMleCountersBit;
+    }
+
+    if (auto vendorAppURL = tlvSet[tlv::Type::kNetworkDiagVendorAppURL])
+    {
+        diagData.mVendorAppURL = vendorAppURL->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorAppURLBit;
+    }
+
+    if (auto channelsMask = tlvSet[tlv::Type::kNetworkDiagNonPreferredChannelsMask])
+    {
+        SuccessOrExit(error = internal::DecodeNonPreferredChannelsMask(diagData.mNonPreferredChannelsMask,
+                                                                       channelsMask->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kNonPreferredChannelsMaskBit;
     }
 
     aNetDiagData = diagData;
@@ -2898,6 +2921,37 @@ Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
     aCounters.mChildRoleTime                        = utils::Decode<uint64_t>(aBuf.data() + 42, 8);
     aCounters.mRouterRoleTime                       = utils::Decode<uint64_t>(aBuf.data() + 50, 8);
     aCounters.mLeaderRoleTime                       = utils::Decode<uint64_t>(aBuf.data() + 58, 8);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeNonPreferredChannelsMask(ChannelMask &aChannelMask, const ByteArray &aBuf)
+{
+    Error       error;
+    ChannelMask channelMask;
+    size_t      offset = 0;
+    size_t      length = aBuf.size();
+
+    while (offset < length)
+    {
+        ChannelMaskEntry entry;
+        uint8_t          entryLength;
+        VerifyOrExit(offset + 2 <= length, error = ERROR_BAD_FORMAT("premature end of Channel Mask Entry"));
+
+        entry.mPage = aBuf[offset++];
+        entryLength = aBuf[offset++];
+
+        VerifyOrExit(offset + entryLength <= length, error = ERROR_BAD_FORMAT("premature end of Channel Mask Entry"));
+        entry.mMasks = {aBuf.begin() + offset, aBuf.begin() + offset + entryLength};
+        channelMask.emplace_back(entry);
+
+        offset += entryLength;
+    }
+
+    ASSERT(offset == length);
+
+    aChannelMask = channelMask;
 
 exit:
     return error;

@@ -68,6 +68,7 @@ Error     DecodeConnectivity(Connectivity &aConnectivity, const ByteArray &aBuf)
 Error     DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf);
 Error     DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbor, const ByteArray &aBuf);
 Error     DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf);
+Error     DecodeNonPreferredChannelsMask(ChannelMask &aChannelMask, const ByteArray &aBuf);
 void      DecodeRouteDataEntry(RouteDataEntry &aRouteDataEntry, uint8_t aBuf);
 ByteArray ExtractRouterIds(const ByteArray &aMask);
 

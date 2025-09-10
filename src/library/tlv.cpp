@@ -295,6 +295,10 @@ bool Tlv::IsValid() const
             return length >= 66;
         case Type::kNetworkDiagThreadStackVersion:
             return length >= 2;
+        case Type::kNetworkDiagVendorAppURL:
+            return true;
+        case Type::kNetworkDiagNonPreferredChannelsMask:
+            return true;
         default:
             return false;
         }

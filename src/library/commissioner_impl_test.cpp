@@ -161,7 +161,8 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "56656E646F724D6F64656C1B0D56656E646F7253574D6F64656C1C12546872656164537461636B56657273696F6E1D2BA8123401020304"
         "050607080004000000F00000000A0000100000781AC4C0000A00050003000000000000001F18805678112233445566778800030000ABCD"
         "15C4C0001A000F2242000A000B000C000D000E000F00100011001200000000000000130000000000000014000000000000001500000000"
-        "0000001600000000000000170000000000000018";
+        "0000001600000000000000170000000000000018231768747470733a2f2f6578616d706c652e636f6d2f617070240A0004000780000102"
+        "0001";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -207,6 +208,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(diagData.mVersion, version);
     EXPECT_EQ(diagData.mVendorSWVersion, vendorSWVersion);
     EXPECT_EQ(diagData.mThreadStackVersion, threadStackVersion);
+    EXPECT_EQ(diagData.mVendorAppURL, "https://example.com/app");
     EXPECT_EQ(diagData.mMode.mIsMtd, false);
     EXPECT_EQ(diagData.mRoute64.mRouteData.size(), 9);
     EXPECT_EQ(diagData.mAddrs.size(), 4);
@@ -333,6 +335,22 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     EXPECT_EQ(mleCounters.mChildRoleTime, 22);
     EXPECT_EQ(mleCounters.mRouterRoleTime, 23);
     EXPECT_EQ(mleCounters.mLeaderRoleTime, 24);
+
+    // Non-Preferred Channels Mask TLV
+    const auto &nonPreferredMask = diagData.mNonPreferredChannelsMask;
+    EXPECT_EQ(nonPreferredMask.size(), 2);
+
+    EXPECT_EQ(nonPreferredMask[0].mPage, 0);
+    ByteArray expectedMask1;
+    error = utils::Hex(expectedMask1, "00078000");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(nonPreferredMask[0].mMasks, expectedMask1);
+
+    EXPECT_EQ(nonPreferredMask[1].mPage, 1);
+    ByteArray expectedMask2;
+    error = utils::Hex(expectedMask2, "0001");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(nonPreferredMask[1].mMasks, expectedMask2);
 }
 
 TEST(CommissionerImplTest, DecodeConnectivityTlv)
@@ -524,6 +542,66 @@ TEST(CommissionerImplTest, DecodeMleCountersTlv)
         MleCounters counters;
         Error       error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
 
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeNonPreferredChannelsMaskTlv)
+{
+    // Test Case 1: Valid mask with multiple entries.
+    {
+        ByteArray   buf;
+        ChannelMask channelMask;
+        Error       error;
+
+        // Page 0, Length 4, Mask 0x00078000 (channels 11-15)
+        // Page 1, Length 2, Mask 0x0001 (channel 32)
+        error = utils::Hex(buf, "00040007800001020001");
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        EXPECT_EQ(channelMask.size(), 2);
+
+        EXPECT_EQ(channelMask[0].mPage, 0);
+        ByteArray expectedMask1;
+        error = utils::Hex(expectedMask1, "00078000");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(channelMask[0].mMasks, expectedMask1);
+
+        EXPECT_EQ(channelMask[1].mPage, 1);
+        ByteArray expectedMask2;
+        error = utils::Hex(expectedMask2, "0001");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(channelMask[1].mMasks, expectedMask2);
+    }
+
+    // Test Case 2: Malformed TLV (premature end of mask data).
+    {
+        ByteArray   buf;
+        ChannelMask channelMask;
+        Error       error;
+
+        // Page 0, Length 4, but only 3 bytes of mask data provided
+        error = utils::Hex(buf, "0004000780");
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Malformed TLV (trailing bytes).
+    {
+        ByteArray   buf;
+        ChannelMask channelMask;
+        Error       error;
+
+        // Valid entry followed by an extra byte
+        error = utils::Hex(buf, "000400078000FF");
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 }

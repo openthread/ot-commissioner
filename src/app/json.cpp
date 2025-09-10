@@ -897,6 +897,8 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(Child);
     SET_IF_PRESENT(RouterNeighbor);
     SET_IF_PRESENT(MleCounters);
+    SET_IF_PRESENT(VendorAppURL);
+    SET_IF_PRESENT(NonPreferredChannelsMask);
 #undef SET_IF_PRESENT
 }
 
