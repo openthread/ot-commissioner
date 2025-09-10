@@ -1406,13 +1406,14 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         // Handle keep-alive failure case
         LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
         
-        auto resignHandler = [this, error](Error resignError) {
+        // Capture error by value since Resign is asynchronous and error needs to outlive this scope
+        auto resignHandler = [this, originalError = error](Error resignError) {
             if (resignError != ErrorCode::kNone)
             {
                 LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", resignError.ToString());
             }
             Disconnect();
-            mCommissionerHandler.OnKeepAliveResponse(error);
+            mCommissionerHandler.OnKeepAliveResponse(originalError);
         };
         
         Resign(resignHandler);
