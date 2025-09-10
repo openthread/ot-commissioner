@@ -1396,12 +1396,12 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
             {
                 mState = State::kDisabled;
                 Resign([](Error) {});
-
+                Disconnect();
                 LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
             }
         }
-       	else
-	{
+        else
+        {
             mState = State::kDisabled;
             Disconnect();
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
@@ -1423,11 +1423,6 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         SuccessOrExit(error = SignRequest(request, tlv::Scope::kMeshCoP, /* aAppendToken */ false));
     }
 #endif
-
-    if (aKeepAlive)
-    {
-        mKeepAliveTimer.Start(GetKeepAliveInterval());
-    }
 
     mBrClient.SendRequest(request, onResponse);
 
