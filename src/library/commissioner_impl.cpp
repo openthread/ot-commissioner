@@ -1399,7 +1399,9 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 
                 LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
             }
-        } else {
+        }
+       	else
+	{
             mState = State::kDisabled;
             Disconnect();
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
