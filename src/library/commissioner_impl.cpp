@@ -1394,15 +1394,18 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
             }
             else
             {
-                mState = State::kDisabled;
-                Resign([](Error) {});
+                Resign([](Error error) {
+                    if (error != ErrorCode::kNone)
+                    {
+                        LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", error.ToString());
+                    }
+                });
                 Disconnect();
                 LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
             }
         }
         else
         {
-            mState = State::kDisabled;
             Disconnect();
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
         }
