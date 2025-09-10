@@ -1424,7 +1424,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     }
 #endif
 
-    mBrClient.SendRequest(request, onResponse);
+    SuccessOrExit(error = mBrClient.SendRequest(request, onResponse));
 
     LOG_DEBUG(LOG_REGION_MESHCOP, "sent keep alive message: keepAlive={}", aKeepAlive);
 
