@@ -110,6 +110,7 @@ elif [ "$(uname)" = "Darwin" ]; then
 
     ## Install packages
     brew update
+    brew uninstall cmake || true
     brew install coreutils \
                  readline \
                  cmake \
