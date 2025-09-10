@@ -511,7 +511,7 @@ public:
     /**
      * @brief Synchronously resign from the commissioner role.
      *
-     * This method leave a Thread network by sending a keep-alive message with the state TLV set
+     * This method leaves a Thread network by sending a keep-alive message with the state TLV set
      * to `Reject`. Eventually, the connection will be closed.
      *
      */
