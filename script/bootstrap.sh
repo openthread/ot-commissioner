@@ -110,12 +110,23 @@ elif [ "$(uname)" = "Darwin" ]; then
 
     ## Install packages
     brew update
-    brew install coreutils \
-                 readline \
-                 cmake \
-                 ninja \
-                 swig  \
-                 lcov && true
+    
+    # Handle CMake installation conflict
+    if brew list cmake >/dev/null 2>&1; then
+        echo "CMake is already installed, skipping CMake installation"
+        brew install coreutils \
+                     readline \
+                     ninja \
+                     swig  \
+                     lcov && true
+    else
+        brew install coreutils \
+                     readline \
+                     cmake \
+                     ninja \
+                     swig  \
+                     lcov && true
+    fi
 
     brew install llvm@14 && \
     sudo ln -s "$(brew --prefix llvm@14)/bin/clang-format" /usr/local/bin/clang-format-14 && \
@@ -124,11 +135,23 @@ elif [ "$(uname)" = "Darwin" ]; then
     sudo ln -s "$(brew --prefix llvm@14)/bin/run-clang-tidy" /usr/local/bin/run-clang-tidy-14 || \
     echo 'WARNING: could not install clang-format-14, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
 
-    ## Install latest cmake
-    match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
-        brew unlink cmake
+    ## Install latest cmake if needed
+    if command -v cmake >/dev/null 2>&1; then
+        current_cmake_version="$(cmake --version | grep -E -o '[0-9].*')"
+        if match_version "$current_cmake_version" "${MIN_CMAKE_VERSION}"; then
+            echo "CMake $current_cmake_version meets minimum requirement ${MIN_CMAKE_VERSION}"
+        else
+            echo "CMake version $current_cmake_version is less than required ${MIN_CMAKE_VERSION}"
+            if brew list cmake >/dev/null 2>&1; then
+                brew unlink cmake
+                brew install cmake --HEAD
+            else
+                brew install cmake --HEAD
+            fi
+        fi
+    else
         brew install cmake --HEAD
-    }
+    fi
 else
     echo "platform $(uname) is not fully supported"
     exit 1
