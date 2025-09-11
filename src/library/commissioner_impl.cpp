@@ -1385,39 +1385,38 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     auto onResponse = [this, aKeepAlive](const coap::Response *aResponse, Error aError) {
         const Error error = HandleStateResponse(aResponse, aError);
 
-        // Handle keep-alive reject case early
         if (!aKeepAlive)
         {
+            // Handle keep-alive reject case
             Disconnect();
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
             mCommissionerHandler.OnKeepAliveResponse(error);
-            return;
         }
-
-        // Handle keep-alive success case
-        if (error == ErrorCode::kNone)
+        else if (error == ErrorCode::kNone)
         {
+            // Handle keep-alive success case
             mKeepAliveTimer.Start(GetKeepAliveInterval());
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
             mCommissionerHandler.OnKeepAliveResponse(error);
-            return;
         }
+        else
+        {
+            // Handle keep-alive failure case
+            LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
 
-        // Handle keep-alive failure case
-        LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
+            // Store error in a local variable to ensure proper lifetime for async callback
+            const Error originalError = error;
+            auto        resignHandler = [this, originalError](Error resignError) {
+                if (resignError != ErrorCode::kNone)
+                {
+                    LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", resignError.ToString());
+                }
+                Disconnect();
+                mCommissionerHandler.OnKeepAliveResponse(originalError);
+            };
 
-        // Store error in a local variable to ensure proper lifetime for async callback
-        const Error originalError = error;
-        auto        resignHandler = [this, originalError](Error resignError) {
-            if (resignError != ErrorCode::kNone)
-            {
-                LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", resignError.ToString());
-            }
-            Disconnect();
-            mCommissionerHandler.OnKeepAliveResponse(originalError);
-        };
-
-        Resign(resignHandler);
+            Resign(resignHandler);
+        }
     };
 
     VerifyOrExit(IsActive(),
