@@ -1394,14 +1394,12 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive) void Commissioner
         }
         else if (error == ErrorCode::kNone)
         {
-            // Handle keep-alive success case
             mKeepAliveTimer.Start(GetKeepAliveInterval());
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
             mCommissionerHandler.OnKeepAliveResponse(error);
         }
         else
         {
-            // Handle keep-alive failure case
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
 
             auto resignHandler = [this, error](Error resignError) {
