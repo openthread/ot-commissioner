@@ -1376,7 +1376,8 @@ exit:
     }
 }
 
-void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
+void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive) void CommissionerImpl::SendKeepAlive(Timer &,
+                                                                                                    bool aKeepAlive)
 {
     Error         error;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
@@ -1387,10 +1388,9 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 
         if (!aKeepAlive)
         {
-            // Handle keep-alive reject case
-            Disconnect();
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
             mCommissionerHandler.OnKeepAliveResponse(error);
+            Disconnect();
         }
         else if (error == ErrorCode::kNone)
         {
@@ -1404,15 +1404,13 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
             // Handle keep-alive failure case
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
 
-            // Store error in a local variable to ensure proper lifetime for async callback
-            const Error originalError = error;
-            auto        resignHandler = [this, originalError](Error resignError) {
-                if (resignError != ErrorCode::kNone)
+            auto resignHandler = [this, error](Error resignError) {
+                if (error != ErrorCode::kNone)
                 {
                     LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", resignError.ToString());
                 }
+                mCommissionerHandler.OnKeepAliveResponse(error);
                 Disconnect();
-                mCommissionerHandler.OnKeepAliveResponse(originalError);
             };
 
             Resign(resignHandler);
