@@ -1376,8 +1376,7 @@ exit:
     }
 }
 
-void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive) void CommissionerImpl::SendKeepAlive(Timer &,
-                                                                                                    bool aKeepAlive)
+void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 {
     Error         error;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
