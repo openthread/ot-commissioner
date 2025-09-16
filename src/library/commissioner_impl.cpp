@@ -1384,27 +1384,26 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 
     auto onResponse = [this, aKeepAlive](const coap::Response *aResponse, Error aError) {
         Error error            = HandleStateResponse(aResponse, aError);
-        bool  shouldDisconnect = false;
+        bool  shouldDisconnect = true;
 
-        if (!aKeepAlive)
+        if (aKeepAlive && error == ErrorCode::kNone)
+        {
+            mKeepAliveTimer.Start(GetKeepAliveInterval());
+            LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
+            shouldDisconnect = false;
+        }
+        else if (!aKeepAlive)
         {
             if (aError == ErrorCode::kNone && error.GetCode() == ErrorCode::kRejected)
             {
                 error = ERROR_NONE;
             }
             LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, disconnecting commissioner");
-            shouldDisconnect = true;
-        }
-        else if (error == ErrorCode::kNone)
-        {
-            mKeepAliveTimer.Start(GetKeepAliveInterval());
-            LOG_INFO(LOG_REGION_MESHCOP, "keep alive message accepted, keep-alive timer restarted");
         }
         else
         {
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
             mKeepAliveTimer.Stop();
-            shouldDisconnect = true;
         }
 
         mCommissionerHandler.OnKeepAliveResponse(error);
