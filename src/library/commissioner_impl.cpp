@@ -1401,7 +1401,8 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         {
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
             mCommissionerHandler.OnKeepAliveResponse(error);
-            Resign([](Error) {});
+            mKeepAliveTimer.Stop();
+            Disconnect();
         }
     };
 
