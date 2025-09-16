@@ -1400,17 +1400,8 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
         else
         {
             LOG_WARN(LOG_REGION_MESHCOP, "keep alive message rejected: {}", error.ToString());
-
-            auto resignHandler = [this, error](Error resignError) {
-                if (error != ErrorCode::kNone)
-                {
-                    LOG_WARN(LOG_REGION_MESHCOP, "failed to resign commissioner: {}", resignError.ToString());
-                }
-                mCommissionerHandler.OnKeepAliveResponse(error);
-                Disconnect();
-            };
-
-            Resign(resignHandler);
+            mCommissionerHandler.OnKeepAliveResponse(error);
+            Resign([](Error) {});
         }
     };
 
