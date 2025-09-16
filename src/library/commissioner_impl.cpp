@@ -1383,7 +1383,7 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
     auto          state = (aKeepAlive ? tlv::kStateAccept : tlv::kStateReject);
 
     auto onResponse = [this, aKeepAlive](const coap::Response *aResponse, Error aError) {
-        Error error            = HandleStateResponse(aResponse, aError, aKeepAlive);
+        Error error            = HandleStateResponse(aResponse, aError);
         bool  shouldDisconnect = false;
 
         if (!aKeepAlive)
