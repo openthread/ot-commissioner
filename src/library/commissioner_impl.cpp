@@ -1388,7 +1388,11 @@ void CommissionerImpl::SendKeepAlive(Timer &, bool aKeepAlive)
 
         if (!aKeepAlive)
         {
-            LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, commissioner disconnected");
+            if (aError == ErrorCode::kNone && error.GetCode() == ErrorCode::kRejected)
+            {
+                error = ErrorCode::kNone;
+            }
+            LOG_INFO(LOG_REGION_MESHCOP, "keep alive reject message sent, disconnecting commissioner");
             shouldDisconnect = true;
         }
         else if (error == ErrorCode::kNone)
