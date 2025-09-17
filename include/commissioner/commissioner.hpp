@@ -511,12 +511,8 @@ public:
     /**
      * @brief Synchronously resign from the commissioner role.
      *
-     * This method petitions to a Thread network with specified border agent address and port.
-     * If succeed, a keep-alive message will be periodically sent to keep itself active.
-     * It will not return until errors happened, timeouted or succeed.
-     *
-     * @param aAddr  A border agent address.
-     * @param aPort  A border agent port.
+     * This method leaves a Thread network by sending a keep-alive message with the state TLV set
+     * to `Reject`. Eventually, the connection will be closed.
      *
      * @return Error::kNone, succeed; otherwise, failed;
      */
