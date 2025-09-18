@@ -168,8 +168,8 @@ void ProxyClient::HandleUdpRx(const coap::Request &aUdpRx)
     // get the dest port from the UDP_Rx message
     destPort = utils::Decode<uint16_t>(&udpEncap->GetValue()[2], sizeof(uint16_t));
     VerifyOrExit(destPort == kDefaultMmPort,
-                 ERROR_UNIMPLEMENTED("dropping UDP_RX.ntf message to port {}: only port {} is supported", destPort,
-                                     kDefaultMmPort));
+                 error =
+                     ("dropping UDP_RX.ntf message to port {}: only port {} is supported", destPort, kDefaultMmPort));
 
     mEndpoint.SetPeerAddr(peerAddr);
     mEndpoint.SetPeerPort(peerPort);
