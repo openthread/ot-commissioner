@@ -30,49 +30,65 @@ package io.openthread.commissioner.app;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.common.net.InetAddresses;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 public class BorderAgentInfo implements Parcelable {
-
-  public byte[] id;
-  public String networkName;
-  public byte[] extendedPanId;
-  public InetAddress host;
-  public int port;
+  public final boolean isEpskcService;
+  public final String instanceName;
+  public final InetAddress host;
+  public final int port;
+  @Nullable public final byte[] id;
+  @Nullable public final String networkName;
+  @Nullable public final byte[] extendedPanId;
+  @Nullable public final String vendorName;
+  @Nullable public final String modelName;
 
   public BorderAgentInfo(
-      @NonNull byte[] id,
-      @NonNull String networkName,
-      @NonNull byte[] extendedPanId,
-      @NonNull InetAddress host,
-      @NonNull int port) {
-    this.id = (id == null ? null : id.clone());
-    this.networkName = networkName;
-    this.extendedPanId = (extendedPanId == null ? null : extendedPanId.clone());
+      boolean isEpskcService,
+      String instanceName,
+      InetAddress host,
+      int port,
+      @Nullable byte[] id,
+      @Nullable String networkName,
+      @Nullable byte[] extendedPanId,
+      @Nullable String vendorName,
+      @Nullable String modelName) {
+    this.isEpskcService = isEpskcService;
+    this.instanceName = instanceName;
     this.host = host;
     this.port = port;
+    this.id = id == null ? null : id.clone();
+    this.networkName = networkName;
+    this.extendedPanId = extendedPanId == null ? null : extendedPanId.clone();
+    this.vendorName = vendorName;
+    this.modelName = modelName;
   }
 
   protected BorderAgentInfo(Parcel in) {
+    isEpskcService = in.readInt() != 0;
+    instanceName = in.readString();
+    host = InetAddresses.forString(in.readString());
+    port = in.readInt();
     id = in.createByteArray();
     networkName = in.readString();
     extendedPanId = in.createByteArray();
-    try {
-      host = InetAddress.getByAddress(in.createByteArray());
-    } catch (UnknownHostException e) {
-    }
-    port = in.readInt();
+    vendorName = in.readString();
+    modelName = in.readString();
   }
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
+    dest.writeInt(isEpskcService ? 1 : 0);
+    dest.writeString(instanceName);
+    dest.writeString(host.getHostAddress());
+    dest.writeInt(port);
     dest.writeByteArray(id);
     dest.writeString(networkName);
     dest.writeByteArray(extendedPanId);
-    dest.writeByteArray(host.getAddress());
-    dest.writeInt(port);
+    dest.writeString(vendorName);
+    dest.writeString(modelName);
   }
 
   @Override

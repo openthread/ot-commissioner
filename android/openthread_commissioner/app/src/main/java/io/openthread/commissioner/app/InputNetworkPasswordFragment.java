@@ -44,17 +44,16 @@ import io.openthread.commissioner.Error;
 import io.openthread.commissioner.ErrorCode;
 
 public class InputNetworkPasswordFragment extends Fragment {
-
   private static final String TAG = InputNetworkPasswordFragment.class.getSimpleName();
 
   private final FragmentCallback fragmentCallback;
-  private final ThreadNetworkInfoHolder selectedNetwork;
+  private final BorderAgentInfo selectedBorderAgent;
   private EditText passwordText;
 
   public InputNetworkPasswordFragment(
-      FragmentCallback fragmentCallback, ThreadNetworkInfoHolder selectedNetwork) {
+      FragmentCallback fragmentCallback, BorderAgentInfo selectedBorderAgent) {
     this.fragmentCallback = fragmentCallback;
-    this.selectedNetwork = selectedNetwork;
+    this.selectedBorderAgent = selectedBorderAgent;
   }
 
   @Override
@@ -85,7 +84,11 @@ public class InputNetworkPasswordFragment extends Fragment {
   }
 
   private void onPasswordInputted() {
-    byte[] pskc = computePskc(selectedNetwork.getNetworkInfo(), passwordText.getText().toString());
+    byte[] pskc =
+        computePskc(
+            selectedBorderAgent.networkName,
+            selectedBorderAgent.extendedPanId,
+            passwordText.getText().toString());
 
     if (pskc == null) {
       FragmentUtils.showAlertAndExit(
@@ -94,23 +97,19 @@ public class InputNetworkPasswordFragment extends Fragment {
     }
 
     FragmentUtils.moveToNextFragment(
-        this, new ScanQrCodeFragment(fragmentCallback, selectedNetwork, pskc));
+        this, new ScanQrCodeFragment(fragmentCallback, selectedBorderAgent, pskc));
   }
 
-  private byte[] computePskc(ThreadNetworkInfo threadNetworkInfo, String password) {
-    ByteArray extendedPanId = new ByteArray(threadNetworkInfo.getExtendedPanId());
+  private byte[] computePskc(String networkName, byte[] extendedPanId, String password) {
     ByteArray pskc = new ByteArray();
     Error error =
-        Commissioner.generatePSKc(
-            pskc, password, threadNetworkInfo.getNetworkName(), extendedPanId);
+        Commissioner.generatePSKc(pskc, password, networkName, new ByteArray(extendedPanId));
     if (error.getCode() != ErrorCode.kNone) {
       Log.e(
           TAG,
           String.format(
               "failed to generate PSKc: %s; network-name=%s, extended-pan-id=%s",
-              error,
-              threadNetworkInfo.getNetworkName(),
-              CommissionerUtils.getHexString(threadNetworkInfo.getExtendedPanId())));
+              error, networkName, CommissionerUtils.getHexString(extendedPanId)));
       return null;
     }
 
@@ -119,8 +118,8 @@ public class InputNetworkPasswordFragment extends Fragment {
         String.format(
             "generated pskc=%s, network-name=%s, extended-pan-id=%s",
             CommissionerUtils.getHexString(pskc),
-            threadNetworkInfo.getNetworkName(),
-            CommissionerUtils.getHexString(threadNetworkInfo.getExtendedPanId())));
+            networkName,
+            CommissionerUtils.getHexString(extendedPanId)));
     return CommissionerUtils.getByteArray(pskc);
   }
 }

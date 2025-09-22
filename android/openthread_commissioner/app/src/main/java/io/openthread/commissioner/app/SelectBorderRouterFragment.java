@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2024, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -36,36 +36,32 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 
-public class SelectNetworkFragment extends Fragment {
+public class SelectBorderRouterFragment extends Fragment {
 
-  private static final String TAG = SelectNetworkFragment.class.getSimpleName();
+  private static final String TAG = SelectBorderRouterFragment.class.getSimpleName();
 
-  private FragmentCallback fragmentCallback;
+  private final FragmentCallback fragmentCallback;
 
-  @Nullable private JoinerDeviceInfo joinerDeviceInfo;
+  private BorderAgentAdapter borderAgentAdapter;
 
-  private NetworkAdapter networksAdapter;
-
-  private ThreadNetworkInfoHolder selectedNetwork;
+  private Button retrieveDatasetButton;
+  private Button setDatasetButton;
   private Button addDeviceButton;
 
-  private BorderAgentDiscoverer borderAgentDiscoverer;
+  private BorderAgentDiscoverer meshcopDiscoverer;
+  private BorderAgentDiscoverer meshcopEpskcDiscoverer;
 
-  public SelectNetworkFragment() {}
+  private BorderAgentInfo selectedBorderAgent;
 
-  public SelectNetworkFragment(
-      @NonNull FragmentCallback fragmentCallback, @Nullable JoinerDeviceInfo joinerDeviceInfo) {
+  public SelectBorderRouterFragment(FragmentCallback fragmentCallback) {
     this.fragmentCallback = fragmentCallback;
-    this.joinerDeviceInfo = joinerDeviceInfo;
   }
 
   @Override
@@ -74,9 +70,15 @@ public class SelectNetworkFragment extends Fragment {
 
     Log.d(TAG, "::onCreate");
 
-    networksAdapter = new NetworkAdapter(getContext());
-    borderAgentDiscoverer = new BorderAgentDiscoverer(getContext(), networksAdapter);
-    borderAgentDiscoverer.start();
+    borderAgentAdapter = new BorderAgentAdapter(requireContext());
+    meshcopDiscoverer =
+        new BorderAgentDiscoverer(
+            requireContext(), BorderAgentDiscoverer.MESHCOP_SERVICE_TYPE, borderAgentAdapter);
+    meshcopDiscoverer.start();
+    meshcopEpskcDiscoverer =
+        new BorderAgentDiscoverer(
+            requireContext(), BorderAgentDiscoverer.MESHCOP_E_SERVICE_TYPE, borderAgentAdapter);
+    meshcopEpskcDiscoverer.start();
   }
 
   @Override
@@ -85,7 +87,9 @@ public class SelectNetworkFragment extends Fragment {
 
     Log.d(TAG, "::onDestroy");
 
-    borderAgentDiscoverer.stop();
+    meshcopDiscoverer.stop();
+    meshcopEpskcDiscoverer.stop();
+    borderAgentAdapter.clear();
   }
 
   @Override
@@ -94,7 +98,8 @@ public class SelectNetworkFragment extends Fragment {
 
     Log.d(TAG, "::onResume");
 
-    borderAgentDiscoverer.start();
+    meshcopDiscoverer.start();
+    meshcopEpskcDiscoverer.start();
   }
 
   @Override
@@ -103,68 +108,72 @@ public class SelectNetworkFragment extends Fragment {
 
     Log.d(TAG, "::onPause");
 
-    borderAgentDiscoverer.stop();
+    meshcopDiscoverer.stop();
+    meshcopEpskcDiscoverer.stop();
+    borderAgentAdapter.clear();
   }
 
   @Override
   public View onCreateView(
       LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    return inflater.inflate(R.layout.fragment_select_network, container, false);
+    return inflater.inflate(R.layout.fragment_select_border_router, container, false);
   }
 
   @Override
   public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    // Hide the buttons
+    retrieveDatasetButton = view.findViewById(R.id.retrieve_dataset_button);
+    retrieveDatasetButton.setVisibility(View.INVISIBLE);
+    setDatasetButton = view.findViewById(R.id.set_dataset_button);
+    setDatasetButton.setVisibility(View.INVISIBLE);
     addDeviceButton = view.findViewById(R.id.add_device_button);
-    addDeviceButton.setVisibility(View.GONE);
-    addDeviceButton.setOnClickListener(v -> onAddDeviceButtonClicked());
+    addDeviceButton.setVisibility(View.INVISIBLE);
 
-    if (joinerDeviceInfo != null) {
-      String deviceInfoString =
-          String.format(
-              "eui64: %s\npskd: %s",
-              CommissionerUtils.getHexString(joinerDeviceInfo.getEui64()),
-              joinerDeviceInfo.getPskd());
-      TextView deviceInfoView = view.findViewById(R.id.device_info);
-      deviceInfoView.setText(deviceInfoString);
-    } else {
-      view.findViewById(R.id.your_device).setVisibility(View.INVISIBLE);
-      view.findViewById(R.id.device_info).setVisibility(View.INVISIBLE);
-    }
+    final ListView borderAgentListView = view.findViewById(R.id.networks);
+    borderAgentListView.setAdapter(borderAgentAdapter);
 
-    final ListView networkListView = view.findViewById(R.id.networks);
-    networkListView.setAdapter(networksAdapter);
-
-    networkListView.setOnItemClickListener(
+    borderAgentListView.setOnItemClickListener(
         (AdapterView<?> adapterView, View v, int position, long id) -> {
-          selectedNetwork = (ThreadNetworkInfoHolder) adapterView.getItemAtPosition(position);
+          selectedBorderAgent = (BorderAgentInfo) adapterView.getItemAtPosition(position);
+          retrieveDatasetButton.setVisibility(View.VISIBLE);
+          setDatasetButton.setVisibility(View.VISIBLE);
           addDeviceButton.setVisibility(View.VISIBLE);
         });
+
+    retrieveDatasetButton.setOnClickListener(
+        v -> {
+          if (validateSelectedBorderAgent()) {
+            FragmentUtils.moveToNextFragment(
+                this,
+                new GetAdminPasscodeFragment(
+                    fragmentCallback,
+                    selectedBorderAgent,
+                    GetAdminPasscodeFragment.FLOW_RETRIEVE_DATASET));
+          }
+        });
+    setDatasetButton.setOnClickListener(
+        v -> {
+          if (validateSelectedBorderAgent()) {
+            FragmentUtils.moveToNextFragment(
+                this,
+                new GetAdminPasscodeFragment(
+                    fragmentCallback,
+                    selectedBorderAgent,
+                    GetAdminPasscodeFragment.FLOW_SET_DATASET));
+          }
+        });
+
+    addDeviceButton.setOnClickListener(v -> onAddDeviceButtonClicked());
   }
 
   private void onAddDeviceButtonClicked() {
-    BorderAgentInfo selectedBorderAgent = selectedNetwork.getBorderAgents().get(0);
-
-    if (selectedBorderAgent.id == null) {
-      FragmentUtils.showAlertAndExit(
-          getActivity(),
-          fragmentCallback,
-          "Invalid Border Router",
-          "No \"id\" TXT entry found in Border Router mDNS service");
+    if (!validateSelectedBorderAgent()) {
       return;
     }
 
-    if (selectedBorderAgent.extendedPanId == null) {
-      FragmentUtils.showAlertAndExit(
-          getActivity(),
-          fragmentCallback,
-          "Invalid Border Router",
-          "No \"xp\" TXT entry found in Border Router mDNS service");
-      return;
-    }
-
-    ThreadCommissionerServiceImpl commissionerService =
+    ThreadCommissionerService commissionerService =
         ThreadCommissionerServiceImpl.newInstance(
             getActivity(), /* intermediateStateCallback= */ null);
 
@@ -175,13 +184,13 @@ public class SelectNetworkFragment extends Fragment {
               public void onSuccess(ThreadNetworkCredentials credentials) {
                 if (credentials != null) {
                   FragmentUtils.moveToNextFragment(
-                      SelectNetworkFragment.this,
+                      SelectBorderRouterFragment.this,
                       new ScanQrCodeFragment(
-                          fragmentCallback, selectedNetwork, credentials.getPskc()));
+                          fragmentCallback, selectedBorderAgent, credentials.getPskc()));
                 } else {
                   FragmentUtils.moveToNextFragment(
-                      SelectNetworkFragment.this,
-                      new InputNetworkPasswordFragment(fragmentCallback, selectedNetwork));
+                      SelectBorderRouterFragment.this,
+                      new InputNetworkPasswordFragment(fragmentCallback, selectedBorderAgent));
                 }
               }
 
@@ -196,5 +205,27 @@ public class SelectNetworkFragment extends Fragment {
               }
             },
             ContextCompat.getMainExecutor(getActivity()));
+  }
+
+  private boolean validateSelectedBorderAgent() {
+    if (selectedBorderAgent.id == null) {
+      FragmentUtils.showAlertAndExit(
+          getActivity(),
+          fragmentCallback,
+          "Invalid Border Router",
+          "No \"id\" TXT entry found in Border Router mDNS service");
+      return false;
+    }
+
+    if (selectedBorderAgent.extendedPanId == null) {
+      FragmentUtils.showAlertAndExit(
+          getActivity(),
+          fragmentCallback,
+          "Invalid Border Router",
+          "No \"xp\" TXT entry found in Border Router mDNS service");
+      return false;
+    }
+
+    return true;
   }
 }
