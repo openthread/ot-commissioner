@@ -261,11 +261,6 @@ static void from_json(const Json &aJson, Config &aConfig)
     {
         aConfig.mThreadSMRoot = aJson["ThreadSMRoot"];
     }
-
-    if (aJson.contains("DtlsHostname"))
-    {
-        aConfig.mDtlsHostname = aJson["DtlsHostname"];
-    }
 }
 
 static void to_json(Json &aJson, const CommissionerDataset &aDataset)

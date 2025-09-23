@@ -106,10 +106,10 @@ DtlsConfig GetDtlsConfig(const Config &aConfig)
 
     dtlsConfig.mEnableDebugLogging = aConfig.mEnableDtlsDebugLogging;
 
-    dtlsConfig.mPSK      = aConfig.mPSKc;
-    dtlsConfig.mOwnKey   = aConfig.mPrivateKey;
-    dtlsConfig.mOwnCert  = aConfig.mCertificate;
-    dtlsConfig.mCaChain  = aConfig.mTrustAnchor;
+    dtlsConfig.mPSK     = aConfig.mPSKc;
+    dtlsConfig.mOwnKey  = aConfig.mPrivateKey;
+    dtlsConfig.mOwnCert = aConfig.mCertificate;
+    dtlsConfig.mCaChain = aConfig.mTrustAnchor;
     dtlsConfig.mHostname = aConfig.mDtlsHostname; // Assuming this field exists in Config
 
     return dtlsConfig;
@@ -257,7 +257,8 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     {
         if (int fail = mbedtls_ssl_set_hostname(&mSsl, aConfig.mHostname.c_str()))
         {
-            ExitNow(error = ERROR_SECURITY("set DTLS hostname failed; {}", ErrorFromMbedtlsError(fail).GetMessage()));
+            ExitNow(error = ERROR_SECURITY("set DTLS hostname failed; {}", 
+                                         ErrorFromMbedtlsError(fail).GetMessage()));
         }
     }
     else if (!mIsServer)
@@ -265,8 +266,8 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
         // For client without hostname, explicitly set NULL to disable hostname verification
         if (int fail = mbedtls_ssl_set_hostname(&mSsl, nullptr))
         {
-            ExitNow(error = ERROR_SECURITY("set DTLS hostname to NULL failed; {}",
-                                           ErrorFromMbedtlsError(fail).GetMessage()));
+            ExitNow(error = ERROR_SECURITY("set DTLS hostname to NULL failed; {}", 
+                                         ErrorFromMbedtlsError(fail).GetMessage()));
         }
     }
 
