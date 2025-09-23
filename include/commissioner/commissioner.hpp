@@ -130,6 +130,9 @@ struct Config
 
     // Thread Security Materials Root path
     std::string mThreadSMRoot;
+
+    // Optional DTLS hostname for certificate verification (client-side)
+    std::string mDtlsHostname; ///< The expected hostname in the certificate.
 };
 
 /**
