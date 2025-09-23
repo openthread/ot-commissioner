@@ -108,17 +108,4 @@
 
 #include "mbedtls/version.h"
 
-#if (MBEDTLS_VERSION_NUMBER >= 0x03050000)
-    // This is from build_info.h of 3.X mbedtls to workaround building issues
-#if defined(MBEDTLS_PSA_CRYPTO_CONFIG) /* PSA_WANT_xxx influences MBEDTLS_xxx */ || \
-    defined(MBEDTLS_PSA_CRYPTO_C) /* MBEDTLS_xxx influences PSA_WANT_xxx */
-    #include "mbedtls/config_psa.h"
-#endif
-
-    // Include in the legacy config name adjustment file for mbedtls >= 3.5.0
-    #include "mbedtls/config_adjust_legacy_crypto.h"
-#endif
-
-#include "mbedtls/check_config.h"
-
 #endif /* OT_COMM_MBEDTLS_CONFIG_H */
