@@ -108,6 +108,7 @@
 
 // Enable weak certificate verification without hostname for compatibility
 // This restores the pre-3.6.0 behavior where hostname verification was optional
+// TODO remove this after adding hostname verification
 #define MBEDTLS_SSL_CLI_ALLOW_WEAK_CERTIFICATE_VERIFICATION_WITHOUT_HOSTNAME
 
 #include "mbedtls/version.h"
