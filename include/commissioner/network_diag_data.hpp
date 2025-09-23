@@ -137,6 +137,7 @@ struct Connectivity
     static constexpr uint16_t kRxOffChildBufferSizeBit    = 1 << 0;
     static constexpr uint16_t kRxOffChildDatagramCountBit = 1 << 1;
 
+    uint16_t mRxOffChildBufferSize    = 0;
     uint8_t  mPresentFlags            = 0;
     int8_t   mParentPriority          = 0;
     uint8_t  mLinkQuality1            = 0;
@@ -145,7 +146,6 @@ struct Connectivity
     uint8_t  mLeaderCost              = 0;
     uint8_t  mIdSequence              = 0;
     uint8_t  mActiveRouters           = 0;
-    uint16_t mRxOffChildBufferSize    = 0;
     uint8_t  mRxOffChildDatagramCount = 0;
 };
 
@@ -154,28 +154,27 @@ struct Connectivity
  */
 struct Child
 {
-    bool mIsRxOnWhenIdle     = false;
-    bool mIsDeviceTypeMtd    = false;
-    bool mHasNetworkData     = false;
-    bool mSupportsCsl        = false;
-    bool mSupportsErrorRates = false;
-
-    uint16_t  mRloc16 = 0;
     ByteArray mExtAddress;
-    uint16_t  mThreadVersion       = 0;
     uint32_t  mTimeout             = 0;
     uint32_t  mAge                 = 0;
     uint32_t  mConnectionTime      = 0;
+    uint32_t  mCslTimeout          = 0;
+    uint16_t  mRloc16              = 0;
     uint16_t  mSupervisionInterval = 0;
-    uint8_t   mLinkMargin          = 0;
-    int8_t    mAverageRssi         = 127;
-    int8_t    mLastRssi            = 127;
+    uint16_t  mThreadVersion       = 0;
     uint16_t  mFrameErrorRate      = 0;
     uint16_t  mMessageErrorRate    = 0;
     uint16_t  mQueuedMessageCount  = 0;
     uint16_t  mCslPeriod           = 0;
-    uint32_t  mCslTimeout          = 0;
+    uint8_t   mLinkMargin          = 0;
     uint8_t   mCslChannel          = 0;
+    int8_t    mAverageRssi         = 127;
+    int8_t    mLastRssi            = 127;
+    bool      mIsRxOnWhenIdle      = false;
+    bool      mIsDeviceTypeMtd     = false;
+    bool      mHasNetworkData      = false;
+    bool      mSupportsCsl         = false;
+    bool      mSupportsErrorRates  = false;
 };
 
 /**
@@ -184,17 +183,16 @@ struct Child
  */
 struct RouterNeighbor
 {
-    bool mSupportsErrorRates = false;
-
-    uint16_t  mRloc16 = 0;
     ByteArray mExtAddress;
-    uint16_t  mThreadVersion    = 0;
-    uint32_t  mConnectionTime   = 0;
-    uint8_t   mLinkMargin       = 0;
-    int8_t    mAverageRssi      = 127;
-    int8_t    mLastRssi         = 127;
-    uint16_t  mFrameErrorRate   = 0;
-    uint16_t  mMessageErrorRate = 0;
+    uint32_t  mConnectionTime     = 0;
+    uint16_t  mRloc16             = 0;
+    uint16_t  mThreadVersion      = 0;
+    uint16_t  mFrameErrorRate     = 0;
+    uint16_t  mMessageErrorRate   = 0;
+    uint8_t   mLinkMargin         = 0;
+    int8_t    mAverageRssi        = 127;
+    int8_t    mLastRssi           = 127;
+    bool      mSupportsErrorRates = false;
 };
 
 /**
@@ -203,6 +201,12 @@ struct RouterNeighbor
  */
 struct MleCounters
 {
+    uint64_t mTotalTrackingTime                    = 0;
+    uint64_t mRadioDisabledTime                    = 0;
+    uint64_t mDetachedRoleTime                     = 0;
+    uint64_t mChildRoleTime                        = 0;
+    uint64_t mRouterRoleTime                       = 0;
+    uint64_t mLeaderRoleTime                       = 0;
     uint16_t mRadioDisabledCounter                 = 0;
     uint16_t mDetachedRoleCounter                  = 0;
     uint16_t mChildRoleCounter                     = 0;
@@ -212,12 +216,6 @@ struct MleCounters
     uint16_t mPartitionIdChangesCounter            = 0;
     uint16_t mBetterPartitionAttachAttemptsCounter = 0;
     uint16_t mNewParentCounter                     = 0;
-    uint64_t mTotalTrackingTime                    = 0;
-    uint64_t mRadioDisabledTime                    = 0;
-    uint64_t mDetachedRoleTime                     = 0;
-    uint64_t mChildRoleTime                        = 0;
-    uint64_t mRouterRoleTime                       = 0;
-    uint64_t mLeaderRoleTime                       = 0;
 };
 
 /**
@@ -229,20 +227,16 @@ struct MleCounters
  */
 struct NetDiagData
 {
-    ModeData                       mMode;
     ByteArray                      mEui64;
     ByteArray                      mExtMacAddr;
     ByteArray                      mChannelPages;
     ByteArray                      mTypeList;
-    uint8_t                        mBatteryLevel    = 0;
+    uint32_t                       mMaxChildTimeout = 0;
+    uint32_t                       mTimeout         = 0;
     uint16_t                       mMacAddr         = 0;
     uint16_t                       mSupplyVoltage   = 0;
-    uint32_t                       mTimeout         = 0;
     uint16_t                       mVersion         = 0;
-    uint32_t                       mMaxChildTimeout = 0;
-    Route64                        mRoute64;
-    LeaderData                     mLeaderData;
-    MacCounters                    mMacCounters;
+    uint8_t                        mBatteryLevel    = 0;
     std::string                    mVendorName;
     std::string                    mVendorModel;
     std::string                    mVendorSWVersion;
@@ -253,6 +247,10 @@ struct NetDiagData
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
     std::vector<Child>             mChild;
     std::vector<RouterNeighbor>    mRouterNeighbor;
+    Route64                        mRoute64;
+    LeaderData                     mLeaderData;
+    MacCounters                    mMacCounters;
+    ModeData                       mMode;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
     MleCounters                    mMleCounters;
