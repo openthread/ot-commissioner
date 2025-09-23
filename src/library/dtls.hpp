@@ -75,6 +75,7 @@ struct DtlsConfig
     ByteArray mOwnKey;
     ByteArray mOwnCert;
     ByteArray mCaChain;
+    std::string mHostname; // Add hostname for certificate verification >= v3.6.0
 };
 
 DtlsConfig GetDtlsConfig(const Config &aConfig);

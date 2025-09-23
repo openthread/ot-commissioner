@@ -119,6 +119,8 @@ TEST(CoapsTest, CoapsClientServerHello)
     config.mOwnCert.push_back(0);
     config.mOwnKey.push_back(0);
 
+    config.mHostname = "ThreadRegistrar"; // Set expected hostname for certificate verification
+
     auto eventBase = event_base_new();
     ASSERT_NE(eventBase, nullptr);
 
