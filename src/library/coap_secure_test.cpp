@@ -153,8 +153,6 @@ TEST(CoapsTest, CoapsClientServerHello)
     config.mOwnCert.push_back(0);
     config.mOwnKey.push_back(0);
 
-    config.mHostname = "ThreadRegistrar"; // Set expected hostname for certificate verification
-
     CoapSecure coapsClient{eventBase, false};
     EXPECT_EQ(coapsClient.Init(config), ErrorCode::kNone);
     auto onClientConnected = [&coapsClient, eventBase](const DtlsSession &aSession, Error aError) {
