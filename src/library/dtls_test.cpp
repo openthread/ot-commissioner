@@ -151,8 +151,6 @@ TEST(DtlsTest, MbedtlsClientServer)
     config.mOwnCert.push_back(0);
     config.mOwnKey.push_back(0);
 
-    config.mHostname = "ThreadRegistrar"; // Set expected hostname for certificate verification
-
     auto clientSocket = std::make_shared<UdpSocket>(eventBase);
     EXPECT_EQ(clientSocket->Connect(kServerAddr, kServerPort), 0);
 
