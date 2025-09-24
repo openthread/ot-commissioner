@@ -175,14 +175,6 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
             ExitNow(error = ERROR_SECURITY("set DTLS hostname failed; {}", ErrorFromMbedtlsError(fail).GetMessage()));
         }
     }
-    else if (!mIsServer)
-    {
-        if (int fail = mbedtls_ssl_set_hostname(&mSsl, nullptr))
-        {
-            ExitNow(error = ERROR_SECURITY("set DTLS hostname to NULL failed; {}",
-                                           ErrorFromMbedtlsError(fail).GetMessage()));
-        }
-    }
 
     mbedtls_ssl_conf_authmode(&mConfig, kAuthMode);
 
