@@ -330,6 +330,64 @@ TEST(DtlsTest, ClientHostnameVerificationIntegration)
     event_base_free(eventBase);
 }
 
+TEST(DtlsTest, ClientHostnameVerificationInvalid)
+{
+    bool connectionFailed = false;
+
+    DtlsConfig config;
+
+    // Setup dtls server
+    SetUpServerConfig(config);
+
+    auto eventBase = CreateEventBase();
+
+    auto serverSocket = std::make_shared<UdpSocket>(eventBase);
+    EXPECT_EQ(serverSocket->Bind(kServerAddr, kServerPort + 2), 0); // Use different port
+
+    DtlsSession dtlsServer{eventBase, true, serverSocket};
+    EXPECT_EQ(dtlsServer.Init(config), ErrorCode::kNone);
+
+    dtlsServer.SetReceiver([&](Endpoint &, const ByteArray &) {
+        FAIL() << "Server should not receive data from client with invalid hostname";
+    });
+
+    auto serverConnected = [&](const DtlsSession &, Error) {
+        FAIL() << "Server should not connect to client with invalid hostname";
+        event_base_loopbreak(eventBase);
+    };
+    dtlsServer.Connect(serverConnected);
+
+    // Setup dtls client with invalid hostname verification
+    SetUpClientConfig(config);
+    config.mHostname = "InvalidHostname"; // Use incorrect hostname
+
+    auto clientSocket = std::make_shared<UdpSocket>(eventBase);
+    EXPECT_EQ(clientSocket->Connect(kServerAddr, kServerPort + 2), 0);
+
+    DtlsSession dtlsClient{eventBase, false, clientSocket};
+    EXPECT_EQ(dtlsClient.Init(config), ErrorCode::kNone);
+
+    auto clientConnected = [&](DtlsSession &aSession, Error aError) {
+        EXPECT_NE(aError.GetCode(), ErrorCode::kNone);
+        EXPECT_EQ(aSession.GetState(), DtlsSession::State::kDisconnected);
+        connectionFailed = true;
+        event_base_loopbreak(eventBase);
+    };
+    dtlsClient.Connect(clientConnected);
+
+    // Set a timeout to prevent hanging
+    struct timeval timeout = {5, 0}; // 5 seconds
+    event_base_loopexit(eventBase, &timeout);
+
+    int fail = event_base_loop(eventBase, EVLOOP_NO_EXIT_ON_EMPTY);
+    ASSERT_EQ(fail, 0);
+
+    // Verify that the connection failed
+    EXPECT_TRUE(connectionFailed);
+
+    event_base_free(eventBase);
+}
+
 } // namespace commissioner
 
 } // namespace ot
