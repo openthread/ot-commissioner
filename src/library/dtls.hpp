@@ -120,10 +120,7 @@ public:
 #if OT_COMM_CONFIG_CCM_ENABLE
     const mbedtls_x509_crt *GetPeerCertificate() const;
 #endif
-    const ByteArray &GetKek() const
-    {
-        return mKek;
-    }
+    const ByteArray &GetKek() const { return mKek; }
 
     void HandleEvent(short aFlags);
 

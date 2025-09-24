@@ -132,7 +132,7 @@ struct Config
     std::string mThreadSMRoot;
 
     // Optional for DTLS hostname verification.
-    std::string mDtlsHostname = "ThreadRegistrar"; ///< The expected hostname in the certificate of the border agent.
+    std::string mDtlsHostname = "localhost"; ///< The expected hostname in the certificate of the border agent.
 };
 
 /**
