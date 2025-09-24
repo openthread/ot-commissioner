@@ -69,12 +69,13 @@ static constexpr uint32_t kDtlsHandshakeTimeoutMax = 60;
 
 struct DtlsConfig
 {
-    bool      mEnableDebugLogging = false;
-    int       mLogLevel           = 3;
-    ByteArray mPSK;
-    ByteArray mOwnKey;
-    ByteArray mOwnCert;
-    ByteArray mCaChain;
+    bool        mEnableDebugLogging = false;
+    int         mLogLevel           = 3;
+    ByteArray   mPSK;
+    ByteArray   mOwnKey;
+    ByteArray   mOwnCert;
+    ByteArray   mCaChain;
+    std::string mHostname;
 };
 
 DtlsConfig GetDtlsConfig(const Config &aConfig);
