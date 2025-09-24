@@ -108,13 +108,21 @@ static const std::string kServerKey = "-----BEGIN EC PARAMETERS-----\r\n"
 static const char        *kServerAddr = "::";
 static constexpr uint16_t kServerPort = 5683;
 
-TEST(DtlsTest, MbedtlsClientServer)
+// Helper function to set up client configuration
+void SetUpClientConfig(DtlsConfig &config)
 {
-    const ByteArray kHello{'h', 'e', 'l', 'l', 'o'};
+    config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
+    config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
+    config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
 
-    DtlsConfig config;
+    config.mCaChain.push_back(0);
+    config.mOwnCert.push_back(0);
+    config.mOwnKey.push_back(0);
+}
 
-    // Setup dtls server
+// Helper function to set up server configuration
+void SetUpServerConfig(DtlsConfig &config)
+{
     config.mCaChain = ByteArray{kServerTrustAnchor.begin(), kServerTrustAnchor.end()};
     config.mOwnCert = ByteArray{kServerCert.begin(), kServerCert.end()};
     config.mOwnKey  = ByteArray{kServerKey.begin(), kServerKey.end()};
@@ -122,9 +130,26 @@ TEST(DtlsTest, MbedtlsClientServer)
     config.mCaChain.push_back(0);
     config.mOwnCert.push_back(0);
     config.mOwnKey.push_back(0);
+}
 
+// Helper function to create and configure event base
+struct event_base *CreateEventBase()
+{
     auto eventBase = event_base_new();
-    ASSERT_NE(eventBase, nullptr);
+    EXPECT_NE(eventBase, nullptr);
+    return eventBase;
+}
+
+TEST(DtlsTest, MbedtlsClientServer)
+{
+    const ByteArray kHello{'h', 'e', 'l', 'l', 'o'};
+
+    DtlsConfig config;
+
+    // Setup dtls server
+    SetUpServerConfig(config);
+
+    auto eventBase = CreateEventBase();
 
     auto serverSocket = std::make_shared<UdpSocket>(eventBase);
     EXPECT_EQ(serverSocket->Bind(kServerAddr, kServerPort), 0);
@@ -145,14 +170,7 @@ TEST(DtlsTest, MbedtlsClientServer)
     dtlsServer.Connect(serverConnected);
 
     // Setup dtls client
-    config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
-    config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
-
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
+    SetUpClientConfig(config);
     config.mHostname = "ThreadRegistrar";
 
     auto clientSocket = std::make_shared<UdpSocket>(eventBase);
@@ -178,19 +196,10 @@ TEST(DtlsTest, ClientHostnameVerificationValid)
     DtlsConfig config;
 
     // Setup client configuration with valid hostname
-    config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
-    config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
-
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
-    // Set valid hostname that matches server certificate
+    SetUpClientConfig(config);
     config.mHostname = "ThreadRegistrar";
 
-    auto eventBase = event_base_new();
-    ASSERT_NE(eventBase, nullptr);
+    auto eventBase = CreateEventBase();
 
     auto        clientSocket = std::make_shared<UdpSocket>(eventBase);
     DtlsSession dtlsClient{eventBase, false, clientSocket};
@@ -206,19 +215,10 @@ TEST(DtlsTest, ClientHostnameVerificationEmpty)
     DtlsConfig config;
 
     // Setup client configuration without hostname
-    config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
-    config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
+    SetUpClientConfig(config);
+    config.mHostname = ""; // Leave hostname empty - should skip hostname verification
 
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
-    // Leave hostname empty - should skip hostname verification
-    config.mHostname = "";
-
-    auto eventBase = event_base_new();
-    ASSERT_NE(eventBase, nullptr);
+    auto eventBase = CreateEventBase();
 
     auto        clientSocket = std::make_shared<UdpSocket>(eventBase);
     DtlsSession dtlsClient{eventBase, false, clientSocket};
@@ -234,19 +234,10 @@ TEST(DtlsTest, ServerIgnoresHostname)
     DtlsConfig config;
 
     // Setup server configuration with hostname (should be ignored)
-    config.mCaChain = ByteArray{kServerTrustAnchor.begin(), kServerTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kServerCert.begin(), kServerCert.end()};
-    config.mOwnKey  = ByteArray{kServerKey.begin(), kServerKey.end()};
+    SetUpServerConfig(config);
+    config.mHostname = "SomeHostname"; // Set hostname on server - should be ignored
 
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
-    // Set hostname on server - should be ignored
-    config.mHostname = "SomeHostname";
-
-    auto eventBase = event_base_new();
-    ASSERT_NE(eventBase, nullptr);
+    auto eventBase = CreateEventBase();
 
     auto        serverSocket = std::make_shared<UdpSocket>(eventBase);
     DtlsSession dtlsServer{eventBase, true, serverSocket};
@@ -262,19 +253,10 @@ TEST(DtlsTest, ClientHostnameVerificationWithSpecialCharacters)
     DtlsConfig config;
 
     // Setup client configuration
-    config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
-    config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
+    SetUpClientConfig(config);
+    config.mHostname = "thread-registrar.local"; // Test hostname with special characters
 
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
-    // Test hostname with special characters
-    config.mHostname = "thread-registrar.local";
-
-    auto eventBase = event_base_new();
-    ASSERT_NE(eventBase, nullptr);
+    auto eventBase = CreateEventBase();
 
     auto        clientSocket = std::make_shared<UdpSocket>(eventBase);
     DtlsSession dtlsClient{eventBase, false, clientSocket};
@@ -294,16 +276,9 @@ TEST(DtlsTest, ClientHostnameVerificationIntegration)
     DtlsConfig config;
 
     // Setup dtls server
-    config.mCaChain = ByteArray{kServerTrustAnchor.begin(), kServerTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kServerCert.begin(), kServerCert.end()};
-    config.mOwnKey  = ByteArray{kServerKey.begin(), kServerKey.end()};
+    SetUpServerConfig(config);
 
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
-    auto eventBase = event_base_new();
-    ASSERT_NE(eventBase, nullptr);
+    auto eventBase = CreateEventBase();
 
     auto serverSocket = std::make_shared<UdpSocket>(eventBase);
     EXPECT_EQ(serverSocket->Bind(kServerAddr, kServerPort + 1), 0); // Use different port
@@ -324,16 +299,8 @@ TEST(DtlsTest, ClientHostnameVerificationIntegration)
     dtlsServer.Connect(serverConnected);
 
     // Setup dtls client with hostname verification
-    config.mCaChain = ByteArray{kClientTrustAnchor.begin(), kClientTrustAnchor.end()};
-    config.mOwnCert = ByteArray{kClientCert.begin(), kClientCert.end()};
-    config.mOwnKey  = ByteArray{kClientKey.begin(), kClientKey.end()};
-
-    config.mCaChain.push_back(0);
-    config.mOwnCert.push_back(0);
-    config.mOwnKey.push_back(0);
-
-    // Use correct hostname that matches server certificate CN
-    config.mHostname = "ThreadRegistrar";
+    SetUpClientConfig(config);
+    config.mHostname = "ThreadRegistrar"; // Use correct hostname that matches server certificate CN
 
     auto clientSocket = std::make_shared<UdpSocket>(eventBase);
     EXPECT_EQ(clientSocket->Connect(kServerAddr, kServerPort + 1), 0);
