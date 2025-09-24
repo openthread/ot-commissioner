@@ -69,12 +69,13 @@ static constexpr uint32_t kDtlsHandshakeTimeoutMax = 60;
 
 struct DtlsConfig
 {
-    bool      mEnableDebugLogging = false;
-    int       mLogLevel           = 3;
-    ByteArray mPSK;
-    ByteArray mOwnKey;
-    ByteArray mOwnCert;
-    ByteArray mCaChain;
+    bool        mEnableDebugLogging = false;
+    int         mLogLevel           = 3;
+    ByteArray   mPSK;
+    ByteArray   mOwnKey;
+    ByteArray   mOwnCert;
+    ByteArray   mCaChain;
+    std::string mHostname;
 };
 
 DtlsConfig GetDtlsConfig(const Config &aConfig);
@@ -119,10 +120,7 @@ public:
 #if OT_COMM_CONFIG_CCM_ENABLE
     const mbedtls_x509_crt *GetPeerCertificate() const;
 #endif
-    const ByteArray &GetKek() const
-    {
-        return mKek;
-    }
+    const ByteArray &GetKek() const { return mKek; }
 
     void HandleEvent(short aFlags);
 

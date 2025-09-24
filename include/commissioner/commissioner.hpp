@@ -130,6 +130,9 @@ struct Config
 
     // Thread Security Materials Root path
     std::string mThreadSMRoot;
+
+    // Optional for DTLS hostname verification.
+    std::string mDtlsHostname = "localhost"; ///< The expected hostname in the certificate of the border agent.
 };
 
 /**
