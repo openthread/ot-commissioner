@@ -106,10 +106,6 @@
 #define MBEDTLS_SSL_OUT_CONTENT_LEN      MBEDTLS_SSL_MAX_CONTENT_LEN
 #define MBEDTLS_SSL_CIPHERSUITES         MBEDTLS_TLS_ECJPAKE_WITH_AES_128_CCM_8
 
-// Enable weak certificate verification without hostname for compatibility
-// This restores the pre-3.6.0 behavior where hostname verification was optional
-#define MBEDTLS_SSL_CLI_ALLOW_WEAK_CERTIFICATE_VERIFICATION_WITHOUT_HOSTNAME
-
 #include "mbedtls/version.h"
 
 #endif /* OT_COMM_MBEDTLS_CONFIG_H */
