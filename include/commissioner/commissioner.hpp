@@ -131,8 +131,8 @@ struct Config
     // Thread Security Materials Root path
     std::string mThreadSMRoot;
 
-    // Optional for DTLS hostname verification.
-    std::string mDtlsHostname = "ThreadRegistrar"; ///< The expected hostname in the certificate of the border agent.
+    // Optional registrar hostname which is used for only CCM Thread network
+    std::string mRegistrarHostname = "ThreadRegistrar";
 };
 
 /**
