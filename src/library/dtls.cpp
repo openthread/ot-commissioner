@@ -172,7 +172,7 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     {
         if (int fail = mbedtls_ssl_set_hostname(&mSsl, aConfig.mHostname.c_str()))
         {
-            ExitNow(error = ERROR_SECURITY("set DTLS hostname failed; {}", ErrorFromMbedtlsError(fail).GetMessage()));
+            ExitNow(error = ERROR_SECURITY("set server hostname failed: {}", ErrorFromMbedtlsError(fail).GetMessage()));
         }
     }
 
