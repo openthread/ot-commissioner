@@ -130,6 +130,9 @@ struct Config
 
     // Thread Security Materials Root path
     std::string mThreadSMRoot;
+
+    // Optional registrar hostname which is used for only CCM Thread network
+    std::string mRegistrarHostname = "ThreadRegistrar";
 };
 
 /**
