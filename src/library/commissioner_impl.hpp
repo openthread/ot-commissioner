@@ -195,6 +195,8 @@ public:
 
     void  CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagGetQuery(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
+    void  CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aPeerAloc16, uint64_t aDiagDataFlags) override;
+    Error CommandDiagGetQuery(uint16_t, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
     void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagReset(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
 

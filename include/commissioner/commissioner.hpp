@@ -1168,12 +1168,42 @@ public:
      *
      * @param[in, out] aHandler        A handler to process the response or any errors.
      *                                 This handler is guaranteed to be called.
+     * @param[in]      aPeerAloc16     ALOC of the local target Thread device.
+     * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
+     *
+     */
+    virtual void CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aPeerAloc16, uint64_t aDiagDataFlags) = 0;
+
+    /**
+     * @brief Asynchronously query diagnostic decoded data from a Thread device.
+     *
+     * This method sends a DIAG_GET.qry message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagDataFlags`.
+     * The ACK, or any errors encountered, will be delivered to the provided `aHandler`,
+     * and the diag data will be obtained by the callback of OnDiagGetAnswerMessage.
+     *
+     * @param[in, out] aHandler        A handler to process the response or any errors.
+     *                                 This handler is guaranteed to be called.
      * @param[in]      aAddr           Unicast mesh local address of the target Thread device,
      *                                 the leader ALOC will be set by default if it is empty.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
      *
      */
     virtual void CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
+
+    /**
+     * @brief Asynchronously query diagnostic decoded data from a Thread device.
+     *
+     * This method sends a DIAG_GET.qry message to the specified Thread device,
+     * requesting the set of diagnostic data indicated by `aDiagDataFlags`.
+     * The ACK, or any errors encountered, will be delivered to the provided `aHandler`,
+     * and the diag data will be obtained by the callback of OnDiagGetAnswerMessage.
+     *
+     * @param[in]      aPeerAloc16     ALOC of the local target Thread device.
+     * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
+     *
+     */
+    virtual Error CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagDataFlags) = 0;
 
     /**
      * @brief Synchronously query diagnostic decoded data from a Thread device.

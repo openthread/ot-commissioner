@@ -554,6 +554,20 @@ void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
     PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aAddr, aDiagDataFlags); });
 }
 
+void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aPeerAloc16, uint64_t aDiagDataFlags)
+{
+    PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aPeerAloc16, aDiagDataFlags); });
+}
+
+
+Error CommissionerSafe::CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagDataFlags)
+{
+    std::promise<Error> pro;
+    auto                wait = [&pro](Error error) { pro.set_value(error); };
+    CommandDiagGetQuery(wait, aPeerAloc16, aDiagDataFlags);
+    return pro.get_future().get();
+}
+
 Error CommissionerSafe::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags)
 {
     std::promise<Error> pro;

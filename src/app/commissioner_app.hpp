@@ -236,6 +236,8 @@ public:
 
     // Network Diagnostic
     MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags);
+    MOCKABLE Error CommandDiagGetQuery(uint64_t aPeerAloc16, uint64_t aDiagDataFlags);
+
     MOCKABLE Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags);
 
     /*

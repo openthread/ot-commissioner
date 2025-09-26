@@ -624,6 +624,42 @@ exit:
     }
 }
 
+void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aPeerAloc16, uint64_t aDiagDataFlags)
+{
+    Error         error;
+    coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
+    auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
+        Error error;
+
+        SuccessOrExit(error = aError);
+        SuccessOrExit(error = CheckCoapResponseCode(*aResponse));
+
+    exit:
+        aHandler(error);
+    };
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("commissioner is not active"));
+    SuccessOrExit(error = request.SetUriPath(uri::kDiagGetQuery));
+    SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagTypeList, GetNetDiagTlvTypes(aDiagDataFlags),
+                                              tlv::Scope::kNetworkDiag}));
+
+#if OT_COMM_CONFIG_CCM_ENABLE
+    if (IsCcmMode())
+    {
+        SuccessOrExit(error = SignRequest(request));
+    }
+#endif
+
+    mProxyClient.SendRequest(request, onResponse, aPeerAloc16, kDefaultMmPort);
+    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
+
+exit:
+    if (error != ErrorCode::kNone)
+    {
+        aHandler(error);
+    }
+}
+
 void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags)
 {
     Error         error;
