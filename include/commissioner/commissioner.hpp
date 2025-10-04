@@ -1192,17 +1192,18 @@ public:
     virtual void CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
 
     /**
-     * @brief Asynchronously query diagnostic decoded data from a Thread device.
+     * @brief Synchronously query diagnostic decoded data from a Thread device.
      *
      * This method sends a DIAG_GET.qry message to the specified Thread device,
      * requesting the set of diagnostic data indicated by `aDiagDataFlags`.
-     * The ACK, or any errors encountered, will be delivered to the provided `aHandler`,
-     * and the diag data will be obtained by the callback of OnDiagGetAnswerMessage.
+     * The method blocks until an ACK is received or an error occurs. The diagnostic data
+     * will be obtained by the callback OnDiagGetAnswerMessage of CommissionerHandler.
      *
      * @param[in]      aPeerAloc16     ALOC of the local target Thread device.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
      *
-     */
+     * @return Error::kNone, succeed; Otherwise, failed.
+     
     virtual Error CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagDataFlags) = 0;
 
     /**
