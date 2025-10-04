@@ -531,6 +531,13 @@ const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
     return sDiagAnsDataMap;
 }
 
+Error CommissionerApp::CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagTlvFlags)
+{
+    UNUSED(aPeerAloc16);
+    UNUSED(aDiagTlvFlags);
+    return Error{};
+}
+
 Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags)
 {
     UNUSED(aAddr);
