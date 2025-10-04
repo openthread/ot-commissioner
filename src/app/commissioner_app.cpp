@@ -1401,10 +1401,7 @@ Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aD
 
 Error CommissionerApp::CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagDataFlags)
 {
-    Error error;
-
-    error = mCommissioner->CommandDiagGetQuery(aPeerAloc16, aDiagDataFlags);
-    return error;
+    return mCommissioner->CommandDiagGetQuery(aPeerAloc16, aDiagDataFlags);
 }
 
 void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
