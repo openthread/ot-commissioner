@@ -559,7 +559,6 @@ void CommissionerSafe::CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aPeer
     PushAsyncRequest([=]() { mImpl->CommandDiagGetQuery(aHandler, aPeerAloc16, aDiagDataFlags); });
 }
 
-
 Error CommissionerSafe::CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagDataFlags)
 {
     std::promise<Error> pro;

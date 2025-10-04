@@ -180,6 +180,9 @@ namespace commissioner {
                                                     uint32_t                        aTimeout);
     %ignore Commissioner::RequestToken(Handler<ByteArray> aHandler, const std::string &aAddr, uint16_t aPort);
     %ignore Commissioner::CommandDiagGetQuery(ErrorHandler       aHandler,
+                                              uint16_t           aPeerAloc16,
+                                              uint64_t           aDiagDataFlags);
+    %ignore Commissioner::CommandDiagGetQuery(ErrorHandler       aHandler,
                                               const std::string &aAddr,
                                               uint64_t           aDiagDataFlags);
     %ignore Commissioner::CommandDiagReset(ErrorHandler          aHandler,
