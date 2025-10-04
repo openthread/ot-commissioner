@@ -1166,7 +1166,7 @@ public:
      * The ACK, or any errors encountered, will be delivered to the provided `aHandler`,
      * and the diag data will be obtained by the callback of OnDiagGetAnswerMessage.
      *
-     * @param[in, out] aHandler        A handler to process the response or any errors.
+     * @param[in]      aHandler        A handler to process the response or any errors.
      *                                 This handler is guaranteed to be called.
      * @param[in]      aPeerAloc16     ALOC of the local target Thread device.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
