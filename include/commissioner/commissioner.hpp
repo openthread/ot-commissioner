@@ -1203,7 +1203,7 @@ public:
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
      *
      * @return Error::kNone, succeed; Otherwise, failed.
-     */ 
+     */
     virtual Error CommandDiagGetQuery(uint16_t aPeerAloc16, uint64_t aDiagDataFlags) = 0;
 
     /**
