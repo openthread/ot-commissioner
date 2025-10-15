@@ -1170,7 +1170,6 @@ public:
      *                                 This handler is guaranteed to be called.
      * @param[in]      aPeerAloc16     ALOC of the local target Thread device.
      * @param[in]      aDiagDataFlags  Diagnostic data flags indicate which TLVs are wanted.
-     *
      */
     virtual void CommandDiagGetQuery(ErrorHandler aHandler, uint16_t aPeerAloc16, uint64_t aDiagDataFlags) = 0;
 
