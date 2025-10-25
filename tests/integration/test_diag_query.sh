@@ -35,7 +35,7 @@ test_diag_query() {
 
     start_commissioner "${NON_CCM_CONFIG}"
     petition_commissioner
-    send_command_to_commissioner "get /d/da ffdc::"
+    send_command_to_commissioner "get /d/da fc00"
     stop_commissioner
 
     stop_daemon
