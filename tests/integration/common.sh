@@ -30,7 +30,9 @@
 ## This file defines constants and common functions for test cases.
 
 if [[ "$(uname)" == "Darwin" ]]; then
-    readonly CUR_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    # Use cd -L and pwd -L to preserve the logical path,
+    # mimicking the behavior of realpath -s on Linux.
+    readonly CUR_DIR=$(cd -L "$(dirname "${BASH_SOURCE[0]}")" && pwd -L)
 else
     readonly CUR_DIR=$(dirname "$(realpath -s "${BASH_SOURCE[0]}")")
 fi
