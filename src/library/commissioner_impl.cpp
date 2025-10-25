@@ -659,7 +659,14 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
     else
     {
         SuccessOrExit(error = dstAddr.Set(aAddr));
-        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+        if (dstAddr.IsRloc16())
+        {
+            mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+        }
+        else
+        {
+            mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+        }
     }
     LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
 

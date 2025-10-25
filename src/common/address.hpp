@@ -57,7 +57,9 @@ public:
 
     bool IsIpv6() const { return mBytes.size() == kIpv6Size; }
 
-    bool IsMulticast() const { return IsValid() && mBytes[0] == kMulticastPrefix; }
+    bool IsRloc16() const { return mBytes.size() == kRloc16Size;  }
+
+    bool IsMulticast() const;
 
     Error Set(const ByteArray &aRawAddr);
 
@@ -65,7 +67,11 @@ public:
 
     Error Set(const sockaddr_storage &aSockAddr);
 
-    const ByteArray &GetRaw() const { return mBytes; }
+    Error Set(uint16_t aRloc16);
+
+    const ByteArray &GetRaw() const;
+
+    uint16_t GetRloc16() const;
 
     /**
      * Returns the string representation of the IP address.
@@ -82,6 +88,7 @@ public:
 private:
     static constexpr size_t  kIpv4Size        = 4;
     static constexpr size_t  kIpv6Size        = 16;
+    static constexpr size_t  kRloc16Size      = 2;
     static constexpr uint8_t kMulticastPrefix = 0xFF;
 
     ByteArray mBytes;

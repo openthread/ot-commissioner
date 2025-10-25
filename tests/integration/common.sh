@@ -29,10 +29,16 @@
 
 ## This file defines constants and common functions for test cases.
 
-readonly CUR_DIR=$(dirname "$(realpath -s $0)")
+if [[ "$(uname)" == "Darwin" ]]; then
+    readonly CUR_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+else
+    readonly CUR_DIR=$(dirname "$(realpath -s "${BASH_SOURCE[0]}")")
+fi
 readonly TEST_ROOT_DIR=${CUR_DIR}
 
 readonly RUNTIME_DIR=/tmp/test-ot-commissioner
+# mkdir -p "${RUNTIME_DIR}"
+#
 
 readonly OPENTHREAD_REPO=https://github.com/openthread/openthread
 readonly OPENTHREAD_BRANCH=main

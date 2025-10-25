@@ -134,7 +134,7 @@ else
     exit 1
 fi
 
-readonly CUR_DIR="$(dirname "$(realpath "$0")")"
+readonly CUR_DIR=$(cd "$(dirname "$0")" && pwd)
 
 cd "${CUR_DIR}/.."
 if [ "${WITH_CCM}" = "1" ]; then

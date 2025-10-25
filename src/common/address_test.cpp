@@ -49,6 +49,7 @@ TEST(AddressTest, AddressFromString_Ipv4LoopbackAddress)
     EXPECT_EQ(addr.Set("127.0.0.1"), ErrorCode::kNone);
     EXPECT_TRUE(addr.IsValid());
     EXPECT_TRUE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsRloc16());
 
     EXPECT_EQ(addr.ToString(), "127.0.0.1");
 }
@@ -60,6 +61,7 @@ TEST(AddressTest, AddressFromString_Ipv6LoopbackAddress)
     EXPECT_EQ(addr.Set("::1"), ErrorCode::kNone);
     EXPECT_TRUE(addr.IsValid());
     EXPECT_TRUE(addr.IsIpv6());
+    EXPECT_FALSE(addr.IsRloc16());
 
     EXPECT_EQ(addr.ToString(), "::1");
 }
@@ -72,6 +74,7 @@ TEST(AddressTest, AddressFromString_Ipv6Prefix)
     EXPECT_EQ(addr.Set(kPrefix), ErrorCode::kNone);
     EXPECT_TRUE(addr.IsValid());
     EXPECT_TRUE(addr.IsIpv6());
+    EXPECT_FALSE(addr.IsRloc16());
 
     EXPECT_EQ(addr.ToString(), kPrefix);
 }
@@ -88,6 +91,7 @@ TEST(AddressTest, AddressFromSockaddr_Ipv4SocketAddress)
     EXPECT_EQ(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)), ErrorCode::kNone);
     EXPECT_TRUE(addr.IsValid());
     EXPECT_TRUE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsRloc16());
 
     EXPECT_EQ(addr.ToString(), "127.0.0.1");
 }
@@ -104,6 +108,7 @@ TEST(AddressTest, AddressFromSockaddr_Ipv6SocketAddress)
     EXPECT_EQ(addr.Set(*reinterpret_cast<sockaddr_storage *>(&sockaddr)), ErrorCode::kNone);
     EXPECT_TRUE(addr.IsValid());
     EXPECT_TRUE(addr.IsIpv6());
+    EXPECT_FALSE(addr.IsRloc16());
 
     EXPECT_EQ(addr.ToString(), "::1");
 }
@@ -146,6 +151,34 @@ TEST(AddressTest, AddressNegativeTests_InvalidIpv6Address)
     EXPECT_FALSE(addr.IsValid());
     EXPECT_FALSE(addr.IsIpv4());
     EXPECT_FALSE(addr.IsIpv6());
+}
+
+TEST(AddressTest, AddressFromString_Rloc16Address)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set("3039"), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsRloc16());
+
+    EXPECT_EQ(addr.ToString(), "3039");
+}
+
+TEST(AddressTest, AddressNegativeTests_InvalidRloc16Address)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set("not-a-valid-hex-string"), ErrorCode::kInvalidArgs);
+    EXPECT_FALSE(addr.IsValid());
+}
+
+TEST(AddressTest, AddressNegativeTests_Rloc16AddressOutOfRange)
+{
+    Address addr;
+
+    // A 3-byte hex string is not a valid rloc16.
+    EXPECT_EQ(addr.Set("10000"), ErrorCode::kInvalidArgs);
+    EXPECT_FALSE(addr.IsValid());
 }
 
 } // namespace commissioner

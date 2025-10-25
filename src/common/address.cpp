@@ -44,13 +44,14 @@ namespace ot {
 
 namespace commissioner {
 
+
 Error Address::Set(const ByteArray &aRawAddr)
 {
     Error error;
 
-    if (aRawAddr.size() != kIpv4Size && aRawAddr.size() != kIpv6Size)
+    if (aRawAddr.size() != kIpv4Size && aRawAddr.size() != kIpv6Size && aRawAddr.size() != kRloc16Size)
     {
-        ExitNow(error = ERROR_INVALID_ARGS("IP address must has length of 4(IPv4) or 16(IPv6)"));
+        ExitNow(error = ERROR_INVALID_ARGS("IP address must has length of 2 (RLOC16), 4(IPv4) or 16(IPv6)"));
     }
 
     mBytes = aRawAddr;
@@ -70,7 +71,19 @@ Error Address::Set(const std::string &aIp)
         bytes.resize(kIpv6Size);
         if (inet_pton(AF_INET6, aIp.c_str(), bytes.data()) != 1)
         {
-            ExitNow(error = ERROR_INVALID_ARGS("{} is not a valid IP address", aIp));
+            std::string hexStr = aIp;
+            if (aIp.rfind("0x", 0) == 0) // starts with 0x
+            {
+                hexStr = aIp.substr(2);
+            }
+
+            ByteArray rloc16Bytes;
+            error = utils::Hex(rloc16Bytes, hexStr);
+            if (error == ErrorCode::kNone && rloc16Bytes.size() == kRloc16Size)
+            {
+                ExitNow(error = Set(rloc16Bytes));
+            }
+            ExitNow(error = ERROR_INVALID_ARGS("{} is not a valid IPv4, IPv6, or rloc16 hex string address", aIp));
         }
     }
 
@@ -85,7 +98,7 @@ Error Address::Set(const sockaddr_storage &aSockAddr)
     Error error;
 
     VerifyOrExit(aSockAddr.ss_family == AF_INET || aSockAddr.ss_family == AF_INET6,
-                 error = ERROR_INVALID_ARGS("only AF_INET and AF_INET6 address families are supported"));
+                 error = ERROR_INVALID_ARGS("only AF_INET and AF_INET6 address families are supported by this Address::Set version"));
 
     if (aSockAddr.ss_family == AF_INET)
     {
@@ -104,12 +117,34 @@ exit:
     return error;
 }
 
+Error Address::Set(uint16_t aRloc16)
+{
+    mBytes.resize(kRloc16Size);
+    mBytes[0] = static_cast<uint8_t>(aRloc16 >> 8);
+    mBytes[1] = static_cast<uint8_t>(aRloc16 & 0xFF);
+    return Error{};
+}
+
+const ByteArray &Address::GetRaw() const
+{
+    return mBytes;
+}
+
+uint16_t Address::GetRloc16() const
+{
+    return static_cast<uint16_t>((mBytes[0] << 8) | mBytes[1]);
+}
+
 std::string Address::ToString() const
 {
     static const char *kInvalidAddr = "INVALID_ADDR";
     std::string        result;
 
-    if (mBytes.size() == kIpv4Size)
+    if (mBytes.size() == kRloc16Size)
+    {
+        result = utils::Hex(mBytes);
+    }
+    else if (mBytes.size() == kIpv4Size)
     {
         char ipv4[INET_ADDRSTRLEN];
         auto ret = inet_ntop(AF_INET, mBytes.data(), ipv4, sizeof(ipv4));
@@ -138,6 +173,11 @@ Address Address::FromString(const std::string &aAddr)
 
     SuccessOrDie(ret.Set(aAddr));
     return ret;
+}
+
+bool Address::IsMulticast() const
+{
+    return IsIpv6() && mBytes[0] == kMulticastPrefix;
 }
 
 } // namespace commissioner
