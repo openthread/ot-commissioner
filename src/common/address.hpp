@@ -57,7 +57,7 @@ public:
 
     bool IsIpv6() const { return mBytes.size() == kIpv6Size; }
 
-    bool IsRloc16() const { return mBytes.size() == kRloc16Size;  }
+    bool IsRloc16() const { return mBytes.size() == kRloc16Size; }
 
     bool IsMulticast() const;
 

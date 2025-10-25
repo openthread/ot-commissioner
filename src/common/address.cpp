@@ -44,7 +44,6 @@ namespace ot {
 
 namespace commissioner {
 
-
 Error Address::Set(const ByteArray &aRawAddr)
 {
     Error error;
@@ -98,7 +97,8 @@ Error Address::Set(const sockaddr_storage &aSockAddr)
     Error error;
 
     VerifyOrExit(aSockAddr.ss_family == AF_INET || aSockAddr.ss_family == AF_INET6,
-                 error = ERROR_INVALID_ARGS("only AF_INET and AF_INET6 address families are supported by this Address::Set version"));
+                 error = ERROR_INVALID_ARGS(
+                     "only AF_INET and AF_INET6 address families are supported by this Address::Set version"));
 
     if (aSockAddr.ss_family == AF_INET)
     {
