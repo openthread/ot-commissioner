@@ -132,6 +132,7 @@ const ByteArray &Address::GetRaw() const
 
 uint16_t Address::GetRloc16() const
 {
+    VerifyOrDie(IsRloc16());
     return static_cast<uint16_t>((mBytes[0] << 8) | mBytes[1]);
 }
 
