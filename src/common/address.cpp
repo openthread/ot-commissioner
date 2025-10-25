@@ -72,7 +72,7 @@ Error Address::Set(const std::string &aIp)
         if (inet_pton(AF_INET6, aIp.c_str(), bytes.data()) != 1)
         {
             std::string hexStr = aIp;
-            if (aIp.compare(0, 2, "0x") == 0) // starts with 0x
+            if (aIp.find("0x") == 0) // starts with 0x
             {
                 hexStr = aIp.substr(2);
             }
