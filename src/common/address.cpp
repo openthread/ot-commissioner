@@ -51,7 +51,7 @@ Error Address::Set(const ByteArray &aRawAddr)
 
     if (aRawAddr.size() != kIpv4Size && aRawAddr.size() != kIpv6Size && aRawAddr.size() != kRloc16Size)
     {
-        ExitNow(error = ERROR_INVALID_ARGS("IP address must has length of 2 (RLOC16), 4(IPv4) or 16(IPv6)"));
+        ExitNow(error = ERROR_INVALID_ARGS("IP address must have length of 2 (RLOC16), 4(IPv4) or 16(IPv6)"));
     }
 
     mBytes = aRawAddr;
