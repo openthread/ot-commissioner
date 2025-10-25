@@ -134,7 +134,11 @@ else
     exit 1
 fi
 
-readonly CUR_DIR=$(cd "$(dirname "$0")" && pwd)
+if [[ "$(uname)" == "Darwin" ]]; then
+    readonly CUR_DIR=$(cd "$(dirname "$0")" && pwd)
+else
+    readonly CUR_DIR=$(dirname "$(realpath "$0")")
+fi
 
 cd "${CUR_DIR}/.."
 if [ "${WITH_CCM}" = "1" ]; then
