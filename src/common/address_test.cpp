@@ -181,6 +181,37 @@ TEST(AddressTest, AddressNegativeTests_Rloc16AddressOutOfRange)
     EXPECT_FALSE(addr.IsValid());
 }
 
+TEST(AddressTest, AddressFromString_Rloc16AddressWithPrefix)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set("0x3039"), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsRloc16());
+    EXPECT_EQ(addr.ToString(), "3039");
+}
+
+TEST(AddressTest, AddressFromUint16_Rloc16Address)
+{
+    Address addr;
+    uint16_t rloc16 = 0x3039;
+
+    EXPECT_EQ(addr.Set(rloc16), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsRloc16());
+    EXPECT_EQ(addr.GetRloc16(), rloc16);
+    EXPECT_EQ(addr.ToString(), "3039");
+}
+
+TEST(AddressTest, AddressNegativeTests_IsMulticast)
+{
+    Address addr;
+
+
+    EXPECT_EQ(addr.Set("3039"), ErrorCode::kNone);
+    EXPECT_FALSE(addr.IsMulticast());
+}
+
 } // namespace commissioner
 
 } // namespace ot
