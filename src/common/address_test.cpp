@@ -193,7 +193,7 @@ TEST(AddressTest, AddressFromString_Rloc16AddressWithPrefix)
 
 TEST(AddressTest, AddressFromUint16_Rloc16Address)
 {
-    Address addr;
+    Address  addr;
     uint16_t rloc16 = 0x3039;
 
     EXPECT_EQ(addr.Set(rloc16), ErrorCode::kNone);
@@ -206,7 +206,6 @@ TEST(AddressTest, AddressFromUint16_Rloc16Address)
 TEST(AddressTest, AddressNegativeTests_IsMulticast)
 {
     Address addr;
-
 
     EXPECT_EQ(addr.Set("3039"), ErrorCode::kNone);
     EXPECT_FALSE(addr.IsMulticast());
