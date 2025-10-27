@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2018, The OpenThread Authors.
+#  Copyright (c) 2022, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
 #     derived from this software without specific prior written permission.
 #
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  AND ANY EXPRESS OR-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 #  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 #  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
 #  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
@@ -27,50 +27,22 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-CLANG_FORMAT_VERSION="clang-format version 9.0"
+[ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-die()
-{
-    echo " *** ERROR: $*"
-    exit 1
+test_diag_query() {
+    start_daemon
+    form_network "${PSKC}"
+
+    start_commissioner "${NON_CCM_CONFIG}"
+    petition_commissioner
+    send_command_to_commissioner "get /d/da fc00"
+    stop_commissioner
+
+    stop_daemon
 }
 
-# Aliases are not expanded when the shell is not interactive, unless the
-# expand_aliases shell option is set using shopt.
-shopt -s expand_aliases
-
-if command -v clang-format-14 >/dev/null; then
-    alias clang-format=clang-format-14
-elif command -v clang-format-17 >/dev/null; then
-	alias clang-format=clang-format-17
-elif command -v clang-format >/dev/null; then
-    case "$(clang-format --version)" in
-        "$CLANG_FORMAT_VERSION"*) ;;
-
-        *)
-            die "$(clang-format --version); clang-format 9.0 required"
-            ;;
-    esac
-else
-    die "clang-format 9.0 required"
-fi
-
-clang-format "$@" || die
-
-# ensure EOF newline
-REPLACE=no
-for arg; do
-    case $arg in
-        -i)
-            REPLACE=yes
-            ;;
-    esac
-done
-
-file=$arg
-
-[ $REPLACE != yes ] || {
-    [ -n "$(tail -c1 "$file")" ] && echo >>"$file"
+main() {
+    test_diag_query
 }
 
-exit 0
+main "$@"

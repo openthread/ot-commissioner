@@ -627,7 +627,6 @@ exit:
 void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags)
 {
     Error         error;
-    Address       dstAddr;
     coap::Request request{coap::Type::kConfirmable, coap::Code::kPost};
     auto          onResponse = [aHandler](const coap::Response *aResponse, Error aError) {
         Error error;
@@ -658,8 +657,16 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
     }
     else
     {
+        Address dstAddr;
         SuccessOrExit(error = dstAddr.Set(aAddr));
-        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+        if (dstAddr.IsRloc16())
+        {
+            mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+        }
+        else
+        {
+            mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+        }
     }
     LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
 
