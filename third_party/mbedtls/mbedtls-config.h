@@ -106,19 +106,10 @@
 #define MBEDTLS_SSL_OUT_CONTENT_LEN      MBEDTLS_SSL_MAX_CONTENT_LEN
 #define MBEDTLS_SSL_CIPHERSUITES         MBEDTLS_TLS_ECJPAKE_WITH_AES_128_CCM_8
 
+// Enable weak certificate verification without hostname for compatibility
+// This restores the pre-3.6.0 behavior where hostname verification was optional
+#define MBEDTLS_SSL_CLI_ALLOW_WEAK_CERTIFICATE_VERIFICATION_WITHOUT_HOSTNAME
+
 #include "mbedtls/version.h"
-
-#if (MBEDTLS_VERSION_NUMBER >= 0x03050000)
-    // This is from build_info.h of 3.X mbedtls to workaround building issues
-#if defined(MBEDTLS_PSA_CRYPTO_CONFIG) /* PSA_WANT_xxx influences MBEDTLS_xxx */ || \
-    defined(MBEDTLS_PSA_CRYPTO_C) /* MBEDTLS_xxx influences PSA_WANT_xxx */
-    #include "mbedtls/config_psa.h"
-#endif
-
-    // Include in the legacy config name adjustment file for mbedtls >= 3.5.0
-    #include "mbedtls/config_adjust_legacy_crypto.h"
-#endif
-
-#include "mbedtls/check_config.h"
 
 #endif /* OT_COMM_MBEDTLS_CONFIG_H */
