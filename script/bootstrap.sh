@@ -134,13 +134,7 @@ else
     exit 1
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
-    # Use cd -L and pwd -L to preserve the logical path,
-    # mimicking the behavior of realpath -s on Linux.
-    readonly CUR_DIR=$(cd -L "$(dirname "$0")" && pwd -L)
-else
-    readonly CUR_DIR=$(dirname "$(realpath -s "$0")")
-fi
+readonly CUR_DIR="$(dirname "$(realpath "$0")")"
 
 cd "${CUR_DIR}/.."
 if [ "${WITH_CCM}" = "1" ]; then

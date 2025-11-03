@@ -732,7 +732,14 @@ void CommissionerImpl::CommandDiagReset(ErrorHandler aHandler, const std::string
     else
     {
         SuccessOrExit(error = dstAddr.Set(aAddr));
-        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+        if (dstAddr.IsRloc16())
+        {
+            mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+        }
+        else
+        {
+            mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+        }
     }
     LOG_INFO(LOG_REGION_MESHDIAG, "sent DIAG_RST.ntf");
 
@@ -992,7 +999,14 @@ void CommissionerImpl::CommandMigrate(ErrorHandler       aHandler,
         SuccessOrExit(error = SignRequest(request));
     }
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    if (dstAddr.IsRloc16())
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+    }
+    else
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
 
     LOG_DEBUG(LOG_REGION_MGMT, "sent MGMT_NET_MIGRATE.req");
 
@@ -1196,7 +1210,14 @@ void CommissionerImpl::AnnounceBegin(ErrorHandler       aHandler,
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    if (dstAddr.IsRloc16())
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+    }
+    else
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
 
 exit:
     if (error != ErrorCode::kNone || request.IsNonConfirmable())
@@ -1246,7 +1267,14 @@ void CommissionerImpl::PanIdQuery(ErrorHandler       aHandler,
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    if (dstAddr.IsRloc16())
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+    }
+    else
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
 
 exit:
     if (error != ErrorCode::kNone || request.IsNonConfirmable())
@@ -1300,7 +1328,14 @@ void CommissionerImpl::EnergyScan(ErrorHandler       aHandler,
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    if (dstAddr.IsRloc16())
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+    }
+    else
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
 
 exit:
     if (error != ErrorCode::kNone || request.IsNonConfirmable())
@@ -2732,7 +2767,14 @@ void CommissionerImpl::SendProxyMessage(ErrorHandler aHandler, const std::string
     }
 #endif
 
-    mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    if (dstAddr.IsRloc16())
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr.GetRloc16(), kDefaultMmPort);
+    }
+    else
+    {
+        mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
+    }
 
 exit:
     if (error != ErrorCode::kNone)

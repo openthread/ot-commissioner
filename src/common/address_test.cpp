@@ -191,6 +191,16 @@ TEST(AddressTest, AddressFromString_Rloc16AddressWithPrefix)
     EXPECT_EQ(addr.ToString(), "3039");
 }
 
+TEST(AddressTest, AddressFromString_Rloc16AddressWithCapitalXPrefix)
+{
+    Address addr;
+
+    EXPECT_EQ(addr.Set("0XFC00"), ErrorCode::kNone);
+    EXPECT_TRUE(addr.IsValid());
+    EXPECT_TRUE(addr.IsRloc16());
+    EXPECT_EQ(addr.ToString(), "fc00");
+}
+
 TEST(AddressTest, AddressFromUint16_Rloc16Address)
 {
     Address  addr;
