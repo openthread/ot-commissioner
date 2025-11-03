@@ -2847,7 +2847,7 @@ Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
     Child   childInfo;
     uint8_t flags;
 
-    VerifyOrExit(aBuf.size() == kChildBytes, error = {ErrorCode::kBadFormat, "invalid child tlv length"});
+    VerifyOrExit(aBuf.size() >= kChildBytes, error = {ErrorCode::kBadFormat, "invalid child tlv length"});
 
     // Flags (1 byte at offset 0)
     flags                         = aBuf[0];
@@ -2887,7 +2887,7 @@ Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbo
     RouterNeighbor neighborInfo;
     uint8_t        flags;
 
-    VerifyOrExit(aBuf.size() == kRouterNeighborBytes,
+    VerifyOrExit(aBuf.size() >= kRouterNeighborBytes,
                  error = {ErrorCode::kBadFormat, "invalid router neighbor tlv length"});
 
     flags                            = aBuf[0];
@@ -2913,7 +2913,7 @@ Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
 {
     Error error;
 
-    VerifyOrExit(aBuf.size() == kMleCountersBytes, error = {ErrorCode::kBadFormat, "invalid mle counters tlv length"});
+    VerifyOrExit(aBuf.size() >= kMleCountersBytes, error = {ErrorCode::kBadFormat, "invalid mle counters tlv length"});
 
     aCounters.mRadioDisabledCounter                 = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
     aCounters.mDetachedRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 2, 2);
