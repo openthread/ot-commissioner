@@ -2958,7 +2958,7 @@ Error internal::DecodeNonPreferredChannelsMask(ChannelMask &aChannelMask, const 
         offset += entryLength;
     }
 
-    ASSERT(offset == length);
+    VerifyOrExit(offset == length, error = ERROR_BAD_FORMAT("trailing bytes in Channel Mask TLV"));
 
     aChannelMask = channelMask;
 
