@@ -120,10 +120,10 @@ elif [ "$(uname)" = "Darwin" ]; then
                      lcov && true
 
         brew install llvm@14 && \
-        sudo ln -s "$(brew --prefix llvm@14)/bin/clang-format" /usr/local/bin/clang-format-14 && \
-        sudo ln -s "$(brew --prefix llvm@14)/bin/clang-tidy" /usr/local/bin/clang-tidy-14 && \
-        sudo ln -s "$(brew --prefix llvm@14)/bin/clang-apply-replacements" /usr/local/bin/clang-apply-replacements-14 && \
-        sudo ln -s "$(brew --prefix llvm@14)/bin/run-clang-tidy" /usr/local/bin/run-clang-tidy-14 || \
+        sudo ln -sf "$(brew --prefix llvm@14)/bin/clang-format" /usr/local/bin/clang-format-14 && \
+        sudo ln -sf "$(brew --prefix llvm@14)/bin/clang-tidy" /usr/local/bin/clang-tidy-14 && \
+        sudo ln -sf "$(brew --prefix llvm@14)/bin/clang-apply-replacements" /usr/local/bin/clang-apply-replacements-14 && \
+        sudo ln -sf "$(brew --prefix llvm@14)/bin/run-clang-tidy" /usr/local/bin/run-clang-tidy-14 || \
         echo 'WARNING: could not install clang-format-14, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
 
         ## Install latest cmake
