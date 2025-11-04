@@ -109,7 +109,7 @@ elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
 
     if command -v brew &>/dev/null; then
-    	echo "Using Brew"
+        echo "Using Brew"
         ## Install packages with Homebrew
         brew update
         brew install coreutils \
