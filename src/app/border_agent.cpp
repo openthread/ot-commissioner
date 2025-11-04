@@ -30,8 +30,6 @@
 
 #include <fmt/format.h>
 
-#include "mdns_handler.hpp"
-
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 
