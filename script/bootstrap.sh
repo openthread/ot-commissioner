@@ -139,7 +139,7 @@ elif [ "$(uname)" = "Darwin" ]; then
                          cmake \
                          ninja \
                          swig  \
-                         lcov
+                         lcov && true
 
         sudo port install clang-14 && \
         sudo ln -sf /opt/local/bin/clang-format-mp-14 /usr/local/bin/clang-format-14 && \
