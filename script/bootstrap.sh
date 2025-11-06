@@ -160,8 +160,6 @@ elif [ "$(uname)" = "Darwin" ]; then
         exit 1
     fi
 
-    python3 -m pip install yapf==0.29.0 || echo 'WARNING: could not install yapf, which is useful if you plan to contribute python code to the OpenThread project.'
-
 else
     echo "platform $(uname) is not fully supported"
     exit 1
