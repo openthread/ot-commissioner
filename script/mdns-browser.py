@@ -37,18 +37,27 @@
 #
 # The script will continuously listen for services. Press Ctrl+C to stop the scan.
 
-import time
 import sys
 import queue
+import time
+import argparse
 import threading
-from zeroconf import ServiceBrowser, Zeroconf, IPVersion
+from typing import Optional
+from zeroconf import ServiceBrowser, Zeroconf, IPVersion, ServiceInfo
+
+# Constants
+EVENT_DISCOVERED = "discovered"
+EVENT_UPDATED = "updated"
+SERVICE_RESOLVE_TIMEOUT_MS = 5000
 
 
-def print_service_info(zeroconf, type, name, event):
-    icon = "✅" if event == "discovered" else "🔄"
-    action = "Discovered" if event == "discovered" else "Updated"
+def print_service_info(zeroconf: Zeroconf, type: str, name: str,
+                       event: str) -> None:
+    icon = "✅" if event == EVENT_DISCOVERED else "🔄"
+    action = "Discovered" if event == EVENT_DISCOVERED else "Updated"
     print(f"\n{icon} Service {action}: {name}")
-    info = zeroconf.get_service_info(type, name, timeout=5000)
+    info: Optional[ServiceInfo] = zeroconf.get_service_info(
+        type, name, timeout=SERVICE_RESOLVE_TIMEOUT_MS)
     if not info:
         print("   Could not resolve details.")
         return
@@ -82,20 +91,20 @@ def print_service_info(zeroconf, type, name, event):
 
 class ServiceListener:
 
-    def __init__(self, q):
+    def __init__(self, q: queue.Queue) -> None:
         self.q = q
 
-    def remove_service(self, zeroconf, type, name):
+    def remove_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
         print(f"Service {name} removed")
 
-    def update_service(self, zeroconf, type, name):
-        self.q.put(("updated", type, name))
+    def update_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
+        self.q.put((EVENT_UPDATED, type, name))
 
-    def add_service(self, zeroconf, type, name):
-        self.q.put(("discovered", type, name))
+    def add_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
+        self.q.put((EVENT_DISCOVERED, type, name))
 
 
-def worker(q, zeroconf_instance):
+def worker(q: queue.Queue, zeroconf_instance: Zeroconf) -> None:
     while True:
         try:
             event, type, name = q.get()
@@ -109,10 +118,14 @@ def worker(q, zeroconf_instance):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="mDNS Service Scanner")
-    parser.add_argument('service_name', nargs='?', default="_meshcop._udp.local.", help="The mDNS service to scan for (default: %(default)s)")
+    parser.add_argument(
+        'service_name',
+        nargs='?',
+        default="_meshcop._udp.local.",
+        help="The mDNS service to scan for (default: %(default)s)")
     service_name = parser.parse_args().service_name
 
-    q = queue.Queue()
+    q: queue.Queue = queue.Queue()
     zeroconf = Zeroconf(ip_version=IPVersion.All)
     listener = ServiceListener(q)
     browser = ServiceBrowser(zeroconf, service_name, listener)
