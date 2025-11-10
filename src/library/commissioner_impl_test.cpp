@@ -458,13 +458,14 @@ TEST(CommissionerImplTest, DecodeChildInfoTlv)
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 
-    // Test Case 3: Malformed TLV (too long).
+    // Test Case 3: Valid TLV with extra bytes (44 bytes).
     {
-        ByteArray          buf(44, 0); // 44 bytes, should fail
+        ByteArray          buf(44, 0); // 44 bytes
         std::vector<Child> childInfo;
         Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
 
-        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(childInfo.size(), 1);
     }
 }
 
@@ -497,13 +498,14 @@ TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 
-    // Test Case 3: Malformed TLV (too long).
+    // Test Case 3: Valid TLV with extra bytes (25 bytes).
     {
-        ByteArray                   buf(25, 0); // 25 bytes, should fail
+        ByteArray                   buf(25, 0); // 25 bytes
         std::vector<RouterNeighbor> routerNeighborInfo;
         Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
 
-        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(routerNeighborInfo.size(), 1);
     }
 }
 
@@ -536,13 +538,13 @@ TEST(CommissionerImplTest, DecodeMleCountersTlv)
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 
-    // Test Case 3: Malformed TLV (too long).
+    // Test Case 3: Valid TLV with extra bytes (67 bytes).
     {
-        ByteArray   buf(67, 0); // 67 bytes, should fail
+        ByteArray   buf(67, 0); // 67 bytes
         MleCounters counters;
         Error       error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
 
-        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+        EXPECT_EQ(error, ErrorCode::kNone);
     }
 }
 
