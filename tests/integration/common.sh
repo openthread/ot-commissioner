@@ -29,13 +29,7 @@
 
 ## This file defines constants and common functions for test cases.
 
-if [[ "$(uname)" == "Darwin" ]]; then
-    # Use cd -L and pwd -L to preserve the logical path,
-    # mimicking the behavior of realpath -s on Linux.
-    readonly CUR_DIR=$(cd -L "$(dirname "${BASH_SOURCE[0]}")" && pwd -L)
-else
-    readonly CUR_DIR=$(dirname "$(realpath -s "${BASH_SOURCE[0]}")")
-fi
+readonly CUR_DIR=$(dirname "$(realpath $0)")
 readonly TEST_ROOT_DIR=${CUR_DIR}
 
 readonly RUNTIME_DIR=/tmp/test-ot-commissioner
