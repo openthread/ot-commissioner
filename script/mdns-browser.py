@@ -39,71 +39,97 @@
 
 import time
 import sys
-from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo, IPVersion
+import queue
+import threading
+from zeroconf import ServiceBrowser, Zeroconf, IPVersion
+
+
+def print_service_info(zeroconf, type, name, event):
+    icon = "✅" if event == "discovered" else "🔄"
+    action = "Discovered" if event == "discovered" else "Updated"
+    print(f"\n{icon} Service {action}: {name}")
+    info = zeroconf.get_service_info(type, name, timeout=5000)
+    if not info:
+        print("   Could not resolve details.")
+        return
+
+    print(
+        f"   Host: {getattr(info, 'server', 'N/A')}:{getattr(info, 'port', 'N/A')}"
+    )
+    print(f"   Host TTL: {getattr(info, 'host_ttl', 'N/A')}")
+    print(f"   Other TTL: {getattr(info, 'other_ttl', 'N/A')}")
+    print(f"   Priority: {getattr(info, 'priority', 'N/A')}")
+    print(f"   Weight: {getattr(info, 'weight', 'N/A')}")
+
+    for ip_address in info.parsed_addresses():
+        print(f"   IP Address: {ip_address}")
+
+    if info.properties:
+        print("   --- TXT Records ---")
+        for key, value in info.properties.items():
+            key_str = key.decode("utf-8")
+            if value is None:
+                val_str = ""
+            else:
+                try:
+                    val_str = value.decode("utf-8")
+                except UnicodeDecodeError:
+                    val_str = f"0x{value.hex()}"
+            print(f"   {key_str} = {val_str}")
+    else:
+        print("   No TXT records found.")
+
 
 class ServiceListener:
+
+    def __init__(self, q):
+        self.q = q
+
     def remove_service(self, zeroconf, type, name):
         print(f"Service {name} removed")
 
     def update_service(self, zeroconf, type, name):
-        self._print_service_info(zeroconf, type, name, "updated")
+        self.q.put(("updated", type, name))
 
     def add_service(self, zeroconf, type, name):
-        self._print_service_info(zeroconf, type, name, "discovered")
+        self.q.put(("discovered", type, name))
 
-    def _print_service_info(self, zeroconf, type, name, event):
-        icon = "✅" if event == "discovered" else "🔄"
-        action = "Discovered" if event == "discovered" else "Updated"
-        print(f"\n{icon} Service {action}: {name}")
-        # The info object contains all the resolved details
-        info = zeroconf.get_service_info(type, name, timeout=5000)
-        if not info:
-            print("   Could not resolve details.")
-            return
 
-        print(f"   Host: {info.server}:{info.port}")
+def worker(q, zeroconf_instance):
+    while True:
+        try:
+            event, type, name = q.get()
+            if event is None:
+                break
+            print_service_info(zeroconf_instance, type, name, event)
+            q.task_done()
+        except Exception as e:
+            print(f"Error in worker thread: {e}")
 
-        # Print all IP addresses
-        for ip_address in info.parsed_addresses():
-            print(f"   IP Address: {ip_address}")
-        
-        # Print all TXT records (properties)
-        if info.properties:
-            print("   --- TXT Records ---")
-            for key, value in info.properties.items():
-                key_str = key.decode("utf-8")
-                if value is None:
-                    val_str = ""
-                else:
-                    try:
-                        # Try to decode value as a string
-                        val_str = value.decode("utf-8")
-                    except UnicodeDecodeError:
-                        # If it fails, it's binary data, so print as hex
-                        val_str = f"0x{value.hex()}"
-                print(f"   {key_str} = {val_str}")
-        else:
-            print("   No TXT records found.")
 
-# Main script execution
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="mDNS Service Scanner")
     parser.add_argument('service_name', nargs='?', default="_meshcop._udp.local.", help="The mDNS service to scan for (default: %(default)s)")
     service_name = parser.parse_args().service_name
 
+    q = queue.Queue()
     zeroconf = Zeroconf(ip_version=IPVersion.All)
-    listener = ServiceListener()
-    # Browse for the specified service
+    listener = ServiceListener(q)
     browser = ServiceBrowser(zeroconf, service_name, listener)
-    
+
+    resolver_thread = threading.Thread(target=worker,
+                                       args=(q, zeroconf),
+                                       daemon=True)
+    resolver_thread.start()
+
     print(f"🔍 Starting mDNS scan for {service_name} services...")
     print("Press Ctrl+C to exit.")
-    
+
     try:
-        # Let the script run and listen for services
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nShutting down...")
+        q.put((None, None, None))
     finally:
         zeroconf.close()
