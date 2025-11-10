@@ -37,7 +37,6 @@
 #
 # The script will continuously listen for services. Press Ctrl+C to stop the scan.
 
-import sys
 import queue
 import time
 import argparse
