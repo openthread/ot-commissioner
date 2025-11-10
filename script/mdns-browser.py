@@ -95,7 +95,7 @@ class ServiceListener:
         self.q = q
 
     def remove_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
-        print(f"Service {name} removed")
+        print(f"\n❌ Service Removed: {name}")
 
     def update_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
         self.q.put((EVENT_UPDATED, type, name))
