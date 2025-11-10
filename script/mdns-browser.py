@@ -129,8 +129,7 @@ if __name__ == "__main__":
     listener = ServiceListener(q)
     browser = ServiceBrowser(zeroconf, service_name, listener)
 
-    resolver_thread = threading.Thread(target=worker,
-                                       args=(q, zeroconf))
+    resolver_thread = threading.Thread(target=worker, args=(q, zeroconf))
     resolver_thread.start()
 
     print(f"🔍 Starting mDNS scan for {service_name} services...")
