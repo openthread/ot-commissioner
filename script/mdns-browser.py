@@ -37,7 +37,6 @@
 #
 # The script will continuously listen for services. Press Ctrl+C to stop the scan.
 
-import socket
 import time
 import sys
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo, IPVersion
@@ -57,7 +56,7 @@ class ServiceListener:
         action = "Discovered" if event == "discovered" else "Updated"
         print(f"\n{icon} Service {action}: {name}")
         # The info object contains all the resolved details
-        info = zeroconf.get_service_info(type, name)
+        info = zeroconf.get_service_info(type, name, timeout=5000)
         if not info:
             print("   Could not resolve details.")
             return
@@ -93,7 +92,7 @@ if __name__ == "__main__":
         service_name = sys.argv[1]
 
     zeroconf = Zeroconf(ip_version=IPVersion.All)
-    listener = MeshcopListener()
+    listener = ServiceListener()
     # Browse for the specified service
     browser = ServiceBrowser(zeroconf, service_name, listener)
     
