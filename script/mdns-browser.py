@@ -42,18 +42,20 @@ import time
 import sys
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo, IPVersion
 
-class MeshcopListener:
+class ServiceListener:
     def remove_service(self, zeroconf, type, name):
         print(f"Service {name} removed")
 
     def update_service(self, zeroconf, type, name):
-        self._print_service_info(zeroconf, type, name, "🔄")
+        self._print_service_info(zeroconf, type, name, "updated")
 
     def add_service(self, zeroconf, type, name):
-        self._print_service_info(zeroconf, type, name, "✅")
+        self._print_service_info(zeroconf, type, name, "discovered")
 
-    def _print_service_info(self, zeroconf, type, name, icon):
-        print(f"\n{icon} Service {'Discovered' if icon == '✅' else 'Updated'}: {name}")
+    def _print_service_info(self, zeroconf, type, name, event):
+        icon = "✅" if event == "discovered" else "🔄"
+        action = "Discovered" if event == "discovered" else "Updated"
+        print(f"\n{icon} Service {action}: {name}")
         # The info object contains all the resolved details
         info = zeroconf.get_service_info(type, name)
         if not info:
