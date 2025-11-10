@@ -131,8 +131,7 @@ if __name__ == "__main__":
     browser = ServiceBrowser(zeroconf, service_name, listener)
 
     resolver_thread = threading.Thread(target=worker,
-                                       args=(q, zeroconf),
-                                       daemon=True)
+                                       args=(q, zeroconf))
     resolver_thread.start()
 
     print(f"🔍 Starting mDNS scan for {service_name} services...")
@@ -144,5 +143,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nShutting down...")
         q.put((None, None, None))
+        resolver_thread.join()
     finally:
         zeroconf.close()
