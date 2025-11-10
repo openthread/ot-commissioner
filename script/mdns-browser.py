@@ -87,9 +87,9 @@ class ServiceListener:
 
 # Main script execution
 if __name__ == "__main__":
-    service_name = "_meshcop._udp.local."
-    if len(sys.argv) > 1:
-        service_name = sys.argv[1]
+    parser = argparse.ArgumentParser(description="mDNS Service Scanner")
+    parser.add_argument('service_name', nargs='?', default="_meshcop._udp.local.", help="The mDNS service to scan for (default: %(default)s)")
+    service_name = parser.parse_args().service_name
 
     zeroconf = Zeroconf(ip_version=IPVersion.All)
     listener = ServiceListener()
