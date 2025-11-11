@@ -852,7 +852,7 @@ static void to_json(Json &aJson, const RouterNeighbor &aRouterNeighbor)
 
 static void to_json(Json &aJson, const MleCounters &aMleCounters)
 {
-#define SET(name) aJson[#name] = aMleCounters.m##name
+#define SET(name) aJson[#name] = aMleCounters.m##name;
     SET(RadioDisabledCounter);
     SET(DetachedRoleCounter);
     SET(ChildRoleCounter);
