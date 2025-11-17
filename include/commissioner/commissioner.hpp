@@ -100,6 +100,12 @@ struct Config
 {
     bool mEnableCcm = true; ///< If enable CCM feature.
 
+    /**
+     * When proxy mode is enabled, messages from a Joiner having no matching PSKd will be delivered to
+     * @ref CommissionerHandler::OnJoinerMessage().
+     */
+    bool mProxyMode = false;
+
     // Allowed range: [30, 45] seconds.
     uint32_t mKeepAliveInterval = 40;  ///< The interval of keep-alive message. In seconds.
     uint32_t mMaxConnectionNum  = 100; ///< Max number of parallel connection from joiner.
@@ -281,6 +287,21 @@ public:
      *
      */
     virtual void OnDatasetChanged() {}
+
+    /**
+     *
+     * This function forwards the UDP payload from a joiner when no matching PSKd is found for a Joiner.
+     *
+     * @param[in]   aJoinerId   A joiner ID.
+     * @param[in]   aPort       The source UDP port from the joiner.
+     * @param[in]   aPayload    The UDP payload.
+     */
+    virtual void OnJoinerMessage(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload)
+    {
+        (void)aJoinerId;
+        (void)aPort;
+        (void)aPayload;
+    }
 
     virtual ~CommissionerHandler() = default;
 };
@@ -1223,6 +1244,19 @@ public:
      *
      */
     virtual Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags) = 0;
+
+    /**
+     * @brief Delivers the UDP payload to the joiner.
+     *
+     * This method delivers the UDP payload to the joiner targetting at the UDP Port given by @p aPort.
+     *
+     * @param[in]   aJoinerId   A joiner ID.
+     * @param[in]   aPort       The destination UDP port from the joiner.
+     * @param[in]   aPayload    The UDP payload.
+     *
+     * @return Error::kNone, successfully delivered; Otherwise, failed.
+     */
+    virtual Error SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload) = 0;
 };
 
 } // namespace commissioner
