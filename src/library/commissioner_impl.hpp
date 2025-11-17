@@ -202,6 +202,8 @@ public:
 
     struct event_base *GetEventBase() { return mEventBase; }
 
+    virtual Error SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload) override;
+
 private:
     using AsyncRequest = std::function<void()>;
 
