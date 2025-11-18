@@ -71,9 +71,9 @@ rm -rf "$BUILD_DIR"/libs && mkdir -p "$BUILD_DIR"/libs
 ## Check JNI contains any raw swig wrapper files
 
 if find "$BUILD_DIR"/src/java/io/openthread/commissioner -name "SWIGTYPE_*" -print -quit | grep -q .; then
-  echo "***********  please check SWIG file \"commissioner.i\"  ***********"
-  echo "Failed to create JAR library due to raw swig wrapper files under $BUILD_DIR/src/java/io/openthread/commissioner"
-  exit -1
+    echo '***********  please check SWIG file "commissioner.i"  ***********'
+    echo "Failed to create JAR library due to raw swig wrapper files under $BUILD_DIR/src/java/io/openthread/commissioner"
+    exit -1
 fi
 
 ## Create JAR library

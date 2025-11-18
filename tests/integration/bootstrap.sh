@@ -34,7 +34,8 @@ set -euo pipefail
 
 . "$(dirname "$0")"/common.sh
 
-setup_openthread() {
+setup_openthread()
+{
     if [[ ! -d ${OPENTHREAD} ]]; then
         git clone "${OPENTHREAD_REPO}" "${OPENTHREAD}" --recurse-submodules --branch "${OPENTHREAD_BRANCH}" --depth=1
     fi
@@ -56,17 +57,20 @@ setup_openthread() {
     cd -
 }
 
-setup_commissioner() {
+setup_commissioner()
+{
     sudo apt-get install -y --no-install-recommends expect
     pip install --user -r "${TEST_ROOT_DIR}"/../../tools/commissioner_thci/requirements.txt
 }
 
-setup_border_agent_mdns_service() {
+setup_border_agent_mdns_service()
+{
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends dbus avahi-daemon avahi-utils
 }
 
-main() {
+main()
+{
     mkdir -p "${RUNTIME_DIR}"
 
     setup_openthread

@@ -96,10 +96,7 @@ void JobManager::UpdateDefaultConfigCommissionerToken()
     mDefaultConf.mCommissionerToken = mDefaultCommissioner->GetToken();
 }
 
-std::string JobManager::GetDefaultConfigPSKc() const
-{
-    return utils::Hex(mDefaultConf.mPSKc);
-}
+std::string JobManager::GetDefaultConfigPSKc() const { return utils::Hex(mDefaultConf.mPSKc); }
 
 void JobManager::CleanupJobs()
 {
@@ -112,10 +109,7 @@ void JobManager::CleanupJobs()
     mImportFile.clear();
 }
 
-void JobManager::SetImportFile(const std::string &importFile)
-{
-    mImportFile = importFile;
-}
+void JobManager::SetImportFile(const std::string &importFile) { mImportFile = importFile; }
 
 Error JobManager::CreateJob(CommissionerAppPtr &aCommissioner, const Interpreter::Expression &aExpr, uint64_t aXpanId)
 {
@@ -762,10 +756,7 @@ JobManager::JobManager(Interpreter &aInterpreter)
 {
 }
 
-bool JobManager::IsClean()
-{
-    return mJobPool.size() == 0 && mImportFile.size() == 0;
-}
+bool JobManager::IsClean() { return mJobPool.size() == 0 && mImportFile.size() == 0; }
 
 void JobManager::ErrorMsg(uint64_t aNid, std::string aMessage)
 {

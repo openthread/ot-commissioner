@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_discover() {
+test_discover()
+{
     set -e
 
     install_borderagent_mdns_data "${CUR_DIR}/../etc/avahi/services"

@@ -60,7 +60,7 @@ struct UnixTime
     static Error FromString(UnixTime &aTime, const std::string &aTimeStr);
 
     bool operator==(const UnixTime &other) const;
-         operator std::string() const;
+    operator std::string() const;
 };
 
 /**

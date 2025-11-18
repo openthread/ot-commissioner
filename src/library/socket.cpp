@@ -115,10 +115,7 @@ UdpSocket::UdpSocket(struct event_base *aEventBase)
     mbedtls_net_init(&mNetCtx);
 }
 
-UdpSocket::~UdpSocket()
-{
-    mbedtls_net_free(&mNetCtx);
-}
+UdpSocket::~UdpSocket() { mbedtls_net_free(&mNetCtx); }
 
 UdpSocket::UdpSocket(UdpSocket &&aOther)
     : Socket(aOther.mEventBase)

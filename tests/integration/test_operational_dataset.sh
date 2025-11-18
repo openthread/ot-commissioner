@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_active_dataset_set_network_name() {
+test_active_dataset_set_network_name()
+{
     start_daemon
     form_network "${PSKC}"
 
@@ -45,7 +46,8 @@ test_active_dataset_set_network_name() {
     stop_daemon
 }
 
-test_pending_dataset_set_channel() {
+test_pending_dataset_set_channel()
+{
     start_daemon
     form_network "${PSKC}"
 
@@ -61,7 +63,8 @@ test_pending_dataset_set_channel() {
     stop_daemon
 }
 
-test_secure_pending_dataset() {
+test_secure_pending_dataset()
+{
     ## TODO(wgtdkp): openthread-ccm doesn't implement SEC_PEDNING_SET yet.
     echo "not implemented yet."
 }

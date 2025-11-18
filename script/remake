@@ -31,15 +31,13 @@ BUILD_DIR=${BUILD_DIR:-./build}
 
 build_type=${1:-"-d"}
 # echo "build_type = $build_type"
-if [ $build_type = "-d" ] || [ $build_type = "--debug" ];
-then
+if [ $build_type = "-d" ] || [ $build_type = "--debug" ]; then
     [ -n "$1" ] && shift
     BUILD_OPT=-DCMAKE_BUILD_TYPE=Debug
     echo "Configure for debugging..."
 fi
 
-if [ $build_type = "-r" ] || [ $build_type = "--release" ];
-then
+if [ $build_type = "-r" ] || [ $build_type = "--release" ]; then
     shift
     BUILD_OPT=-DCMAKE_BUILD_TYPE=Release
     echo "Configure for releasing..."
@@ -56,7 +54,7 @@ NO_WARN=${NO_WARN:--Wno-dev}
 
 remake_dir()
 {
-    echo remaking `pwd`
+    echo remaking $(pwd)
     [ -d $BUILD_DIR ] || mkdir $BUILD_DIR
     rm -fR $BUILD_DIR/*
     cd $BUILD_DIR
@@ -78,4 +76,3 @@ case "$TARGET" in
         remake_dir
         ;;
 esac
-

@@ -67,8 +67,7 @@ class Application(object):
                 os.makedirs(SOCKET_DIR)
         except OSError:
             pass
-        self._listener = multiprocessing.connection.Listener(SOCKET_PATH,
-                                                             family='AF_UNIX')
+        self._listener = multiprocessing.connection.Listener(SOCKET_PATH, family='AF_UNIX')
 
         self._reset_states()
 
@@ -95,10 +94,8 @@ class Application(object):
                         result = self._handle_message(message)
                     except self._AppException:
                         result = {
-                            'status':
-                                'failure',
-                            'traceback':
-                                traceback.format_exception(*sys.exc_info()),
+                            'status': 'failure',
+                            'traceback': traceback.format_exception(*sys.exc_info()),
                         }
 
                     print(result)
@@ -129,10 +126,7 @@ class Application(object):
                     'result': self._exit(),
                 }
             else:
-                result = {
-                    'status': 'success',
-                    'result': self._execute_command(message['command'])
-                }
+                result = {'status': 'success', 'result': self._execute_command(message['command'])}
 
         assert result is not None
         return result
@@ -156,10 +150,7 @@ class Application(object):
         if self._process:
             self._exit()
 
-        self._process = pexpect.spawn(self._cli_path,
-                                      args=[config_path],
-                                      timeout=self._timeout,
-                                      echo=False)
+        self._process = pexpect.spawn(self._cli_path, args=[config_path], timeout=self._timeout, echo=False)
         self._process.expect(r'> $')
         return self._process.before.decode()
 

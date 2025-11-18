@@ -192,10 +192,7 @@ const OptionValue *Message::GetOption(OptionType aNumber) const
     return value == mOptions.end() ? nullptr : &value->second;
 }
 
-bool Message::IsTokenEqual(const Message &aMessage) const
-{
-    return GetToken() == aMessage.GetToken();
-}
+bool Message::IsTokenEqual(const Message &aMessage) const { return GetToken() == aMessage.GetToken(); }
 
 Error Message::AppendOption(OptionType aType, const OptionValue &aValue)
 {
@@ -343,10 +340,7 @@ exit:
     return error;
 }
 
-bool Message::Header::IsValid() const
-{
-    return mVersion == kVersion1 && mTokenLength <= kMaxTokenLength;
-}
+bool Message::Header::IsValid() const { return mVersion == kVersion1 && mTokenLength <= kMaxTokenLength; }
 
 Error Message::Serialize(OptionType         aOptionNumber,
                          const OptionValue &aOptionValue,
@@ -546,15 +540,9 @@ exit:
     return error;
 }
 
-void Coap::RemoveResource(const Resource &aResource)
-{
-    mResources.erase(aResource.GetUriPath());
-}
+void Coap::RemoveResource(const Resource &aResource) { mResources.erase(aResource.GetUriPath()); }
 
-void Coap::SetDefaultHandler(RequestHandler aHandler)
-{
-    mDefaultHandler = aHandler;
-}
+void Coap::SetDefaultHandler(RequestHandler aHandler) { mDefaultHandler = aHandler; }
 
 void Coap::SendRequest(const Request &aRequest, ResponseHandler aHandler)
 {
@@ -934,10 +922,7 @@ void Coap::ResponsesCache::Eliminate()
     }
 }
 
-void Coap::RequestsCache::Put(const RequestPtr &aRequest, ResponseHandler aHandler)
-{
-    Put({aRequest, aHandler});
-}
+void Coap::RequestsCache::Put(const RequestPtr &aRequest, ResponseHandler aHandler) { Put({aRequest, aHandler}); }
 
 void Coap::RequestsCache::Put(const RequestHolder &aRequestHolder)
 {

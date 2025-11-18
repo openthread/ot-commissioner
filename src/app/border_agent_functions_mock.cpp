@@ -33,15 +33,9 @@ namespace commissioner {
 
 BorderAgentFunctionsMock *gBorderAgentFunctionsMock = nullptr;
 
-void SetBorderAgentFunctionsMock(ot::commissioner::BorderAgentFunctionsMock *ptr)
-{
-    gBorderAgentFunctionsMock = ptr;
-}
+void SetBorderAgentFunctionsMock(ot::commissioner::BorderAgentFunctionsMock *ptr) { gBorderAgentFunctionsMock = ptr; }
 
-void ClearBorderAgentFunctionsMock()
-{
-    gBorderAgentFunctionsMock = nullptr;
-}
+void ClearBorderAgentFunctionsMock() { gBorderAgentFunctionsMock = nullptr; }
 
 Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf)
 {

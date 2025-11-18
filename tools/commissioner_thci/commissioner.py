@@ -430,8 +430,7 @@ class ICommissioner(object):
         pass
 
     @abstractmethod
-    def MGMT_ED_SCAN(self, channelMask, count, period, scanDuration, dstAddr,
-                     timeout):
+    def MGMT_ED_SCAN(self, channelMask, count, period, scanDuration, dstAddr, timeout):
         """Request devices to measure energy on one or more channels.
 
         Args:

@@ -30,15 +30,9 @@
 
 static CommissionerAppStaticExpecter *gpCommissionerAppStaticExpecter = nullptr;
 
-void SetCommissionerAppStaticExpecter(CommissionerAppStaticExpecter *ptr)
-{
-    gpCommissionerAppStaticExpecter = ptr;
-}
+void SetCommissionerAppStaticExpecter(CommissionerAppStaticExpecter *ptr) { gpCommissionerAppStaticExpecter = ptr; }
 
-void ClearCommissionerAppStaticExpecter()
-{
-    gpCommissionerAppStaticExpecter = nullptr;
-}
+void ClearCommissionerAppStaticExpecter() { gpCommissionerAppStaticExpecter = nullptr; }
 
 namespace ot {
 namespace commissioner {

@@ -115,15 +115,9 @@ ByteArray JoinerSession::GetJoinerIid() const
     return joinerIid;
 }
 
-void JoinerSession::HandleConnect(Error aError)
-{
-    mCommImpl.mCommissionerHandler.OnJoinerConnected(mJoinerId, aError);
-}
+void JoinerSession::HandleConnect(Error aError) { mCommImpl.mCommissionerHandler.OnJoinerConnected(mJoinerId, aError); }
 
-void JoinerSession::RecvJoinerDtlsRecords(const ByteArray &aRecords)
-{
-    mRelaySocket->RecvJoinerDtlsRecords(aRecords);
-}
+void JoinerSession::RecvJoinerDtlsRecords(const ByteArray &aRecords) { mRelaySocket->RecvJoinerDtlsRecords(aRecords); }
 
 Error JoinerSession::SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek)
 {

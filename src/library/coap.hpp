@@ -78,7 +78,7 @@ enum class Type : uint8_t
  * Helper macro to define CoAP Code values.
  *
  */
-#define OT_COAP_CODE(c, d) ((((c)&0x7u) << 5u) | ((d)&0x1fu))
+#define OT_COAP_CODE(c, d) ((((c) & 0x7u) << 5u) | ((d) & 0x1fu))
 
 /**
  * CoAP Code values.
