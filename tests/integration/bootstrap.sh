@@ -40,6 +40,7 @@ setup_openthread() {
     fi
 
     cd "${OPENTHREAD}"
+    git submodule update --init --recursive
 
     OT_CMAKE_NINJA_TARGET="package" OT_CMAKE_BUILD_DIR="${OPENTHREAD}/build/package/openthread-sim" "${OPENTHREAD}/script/cmake-build" simulation -DOT_COVERAGE=ON
     OT_CMAKE_NINJA_TARGET="package" OT_CMAKE_BUILD_DIR="${OPENTHREAD}/build/package/openthread-daemon" "${OPENTHREAD}/script/cmake-build" posix -DOT_DAEMON=ON -DOT_PLATFORM_NETIF=ON -DOT_PLATFORM_UDP=ON -DOT_COVERAGE=ON
