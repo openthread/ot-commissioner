@@ -36,7 +36,7 @@ set -euo pipefail
 
 setup_openthread() {
     if [[ ! -d ${OPENTHREAD} ]]; then
-        git clone "${OPENTHREAD_REPO}" "${OPENTHREAD}" --branch "${OPENTHREAD_BRANCH}" --depth=1
+        git clone "${OPENTHREAD_REPO}" "${OPENTHREAD}" --recurse-submodules --branch "${OPENTHREAD_BRANCH}" --depth=1
     fi
 
     cd "${OPENTHREAD}"
