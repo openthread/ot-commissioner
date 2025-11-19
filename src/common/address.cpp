@@ -82,7 +82,7 @@ Error Address::Set(const std::string &aIp)
             {
                 ExitNow(error = Set(rloc16Bytes));
             }
-            ExitNow(error = ERROR_INVALID_ARGS("{} is not a valid IPv4, IPv6, or rloc16 hex string address", aIp));
+            ExitNow(error = ERROR_INVALID_ARGS("{} is not a valid IPv4, IPv6, or RLOC16 hex string address", aIp));
         }
     }
 

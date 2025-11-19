@@ -35,7 +35,9 @@ test_diag_query() {
 
     start_commissioner "${NON_CCM_CONFIG}"
     petition_commissioner
-    send_command_to_commissioner "get /d/da fc00"
+    local diag_result
+    diag_result=$(send_command_to_commissioner "get /d/da fc00")
+    echo "${diag_result}" | grep -q '"IPv6Addresses":' || die "Diagnostic query result does not contain IPv6Addresses"
     stop_commissioner
 
     stop_daemon
