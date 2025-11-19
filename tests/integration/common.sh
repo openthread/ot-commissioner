@@ -31,6 +31,7 @@
 
 readonly CUR_DIR=$(dirname "$(realpath -s $0)")
 readonly TEST_ROOT_DIR=${CUR_DIR}
+readonly INSTALL_PREFIX="${INSTALL_PREFIX:-}"
 
 readonly RUNTIME_DIR=/tmp/test-ot-commissioner
 
@@ -46,16 +47,24 @@ readonly OT_DAEMON=${RUNTIME_DIR}/ot-daemon
 readonly OT_DAEMON_SETTINGS_PATH=${RUNTIME_DIR}/tmp
 readonly OT_DAEMON_LOG=${RUNTIME_DIR}/ot-daemon.log
 
-## '/usr/local' is the by default installing directory.
-readonly COMMISSIONER_CLI=/usr/local/bin/commissioner-cli
-readonly COMMISSIONER_DAEMON=/usr/local/bin/commissionerd.py
-readonly COMMISSIONER_CTL=/usr/local/bin/commissioner_ctl.py
 readonly COMMISSIONER_DAEMON_LOG=${RUNTIME_DIR}/commissioner-daemon.log
-readonly COMMISSIONER_LOG=./commissioner.log
+readonly COMMISSIONER_LOG=${RUNTIME_DIR}/commissioner.log
 
-readonly CCM_TOKEN=/usr/local/etc/commissioner/credentials/token.hex
-readonly CCM_CA_CERT=/usr/local/etc/commissioner/credentials/trust-anchor.pem
-readonly NON_CCM_CONFIG=/usr/local/etc/commissioner/non-ccm-config.json
+if [[ -n $INSTALL_PREFIX ]]; then
+    readonly COMMISSIONER_CLI="${INSTALL_PREFIX}/bin/commissioner-cli"
+    readonly COMMISSIONER_DAEMON="${INSTALL_PREFIX}/bin/commissionerd.py"
+    readonly COMMISSIONER_CTL="${INSTALL_PREFIX}/bin/commissioner_ctl.py"
+    readonly CCM_TOKEN="${INSTALL_PREFIX}/etc/commissioner/credentials/token.hex"
+    readonly CCM_CA_CERT="${INSTALL_PREFIX}/etc/commissioner/credentials/trust-anchor.pem"
+    readonly NON_CCM_CONFIG="${INSTALL_PREFIX}/etc/commissioner/non-ccm-config.json"
+else
+    readonly COMMISSIONER_CLI="${CUR_DIR}/../../build/src/app/cli/commissioner-cli"
+    readonly COMMISSIONER_DAEMON="${CUR_DIR}/../../tools/commissioner_thci/commissionerd.py"
+    readonly COMMISSIONER_CTL="${CUR_DIR}/../../tools/commissioner_thci/commissioner_ctl.py"
+    readonly CCM_TOKEN="${CUR_DIR}/../../src/app/etc/commissioner/credentials/token.hex"
+    readonly CCM_CA_CERT="${CUR_DIR}/../../src/app/etc/commissioner/credentials/trust-anchor.pem"
+    readonly NON_CCM_CONFIG="${CUR_DIR}/../../src/app/etc/commissioner/non-ccm-config.json"
+fi
 
 readonly JOINER_NODE_ID=2
 readonly JOINER_EUI64=0x18b4300000000002

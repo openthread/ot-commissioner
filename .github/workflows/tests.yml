@@ -33,6 +33,8 @@ on: [push, pull_request]
 jobs:
   integration-tests:
     runs-on: ubuntu-22.04
+    env:
+      INSTALL_PREFIX: "/usr/local"
     steps:
       - uses: actions/checkout@v3
       - name: Bootstrap
@@ -45,7 +47,7 @@ jobs:
                 -DCMAKE_CXX_STANDARD=11           \
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
                 -DCMAKE_BUILD_TYPE=Release        \
-                -DCMAKE_INSTALL_PREFIX=/usr/local \
+                -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
                 -DOT_COMM_COVERAGE=ON             \
                 -DOT_COMM_REFERENCE_DEVICE=ON     \
                 -DOT_COMM_CCM=OFF                 \
