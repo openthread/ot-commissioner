@@ -86,45 +86,21 @@ private:
         }                                                                        \
     } while (false)
 
-void to_json(json &aJson, const RegistrarId &aValue)
-{
-    aJson = aValue.mId;
-}
+void to_json(json &aJson, const RegistrarId &aValue) { aJson = aValue.mId; }
 
-void from_json(const json &aJson, RegistrarId &aValue)
-{
-    aValue.mId = aJson.get<unsigned int>();
-}
+void from_json(const json &aJson, RegistrarId &aValue) { aValue.mId = aJson.get<unsigned int>(); }
 
-void to_json(json &aJson, const DomainId &aValue)
-{
-    aJson = aValue.mId;
-}
+void to_json(json &aJson, const DomainId &aValue) { aJson = aValue.mId; }
 
-void from_json(const json &aJson, DomainId &aValue)
-{
-    aValue.mId = aJson.get<unsigned int>();
-}
+void from_json(const json &aJson, DomainId &aValue) { aValue.mId = aJson.get<unsigned int>(); }
 
-void to_json(json &aJson, const NetworkId &aValue)
-{
-    aJson = aValue.mId;
-}
+void to_json(json &aJson, const NetworkId &aValue) { aJson = aValue.mId; }
 
-void from_json(const json &aJson, NetworkId &aValue)
-{
-    aValue.mId = aJson.get<unsigned int>();
-}
+void from_json(const json &aJson, NetworkId &aValue) { aValue.mId = aJson.get<unsigned int>(); }
 
-void to_json(json &aJson, const BorderRouterId &aValue)
-{
-    aJson = aValue.mId;
-}
+void to_json(json &aJson, const BorderRouterId &aValue) { aJson = aValue.mId; }
 
-void from_json(const json &aJson, BorderRouterId &aValue)
-{
-    aValue.mId = aJson.get<unsigned int>();
-}
+void from_json(const json &aJson, BorderRouterId &aValue) { aValue.mId = aJson.get<unsigned int>(); }
 
 void to_json(json &aJson, const Registrar &aValue)
 {
@@ -140,10 +116,7 @@ void from_json(const json &aJson, Registrar &aValue)
     aJson.at(JSON_DOMAINS).get_to(aValue.mDomains);
 }
 
-void to_json(json &aJson, const Domain &aValue)
-{
-    aJson = json{{JSON_ID, aValue.mId}, {JSON_NAME, aValue.mName}};
-}
+void to_json(json &aJson, const Domain &aValue) { aJson = json{{JSON_ID, aValue.mId}, {JSON_NAME, aValue.mName}}; }
 
 void from_json(const json &aJson, Domain &aValue)
 {

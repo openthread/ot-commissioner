@@ -51,10 +51,7 @@ static std::mt19937_64 sRng(sRandomDevice());
 
 static std::uniform_int_distribution<uint32_t> sUniform;
 
-uint32_t GetUint32(void)
-{
-    return sUniform(sRng);
-}
+uint32_t GetUint32(void) { return sUniform(sRng); }
 
 } // namespace non_crypto
 

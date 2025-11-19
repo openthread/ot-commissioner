@@ -88,10 +88,7 @@ std::shared_ptr<SysLogger> SysLogger::Create(LogLevel aLogLevel)
     return logger;
 }
 
-SysLogger::~SysLogger()
-{
-    closelog();
-}
+SysLogger::~SysLogger() { closelog(); }
 
 void SysLogger::Init(LogLevel aLogLevel)
 {

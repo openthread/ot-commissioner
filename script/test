@@ -37,8 +37,7 @@ run_unit_tests()
 {
     echo "run-ut: $@"
     case $1 in
-        -l)
-            ;;
+        -l) ;;
 
         *)
             FILTER=$1
@@ -47,8 +46,7 @@ run_unit_tests()
             fi
             ;;
     esac
-    for test_item in $(ls $FILTER*-test)
-    do
+    for test_item in $(ls $FILTER*-test); do
         if [ "$1" != "-l" ]; then
             # run tests
             echo "----- $test_item -----"
@@ -97,7 +95,7 @@ help()
 }
 
 case $1 in
-   -ut)
+    -ut)
         shift
         cd $TEST_DIR
         run_unit_tests $@

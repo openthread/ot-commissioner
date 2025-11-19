@@ -92,10 +92,7 @@ exit:
     return error;
 }
 
-CommissionerSafe::~CommissionerSafe()
-{
-    StopEventLoopThread();
-}
+CommissionerSafe::~CommissionerSafe() { StopEventLoopThread(); }
 
 const Config &CommissionerSafe::GetConfig() const
 {
@@ -158,30 +155,15 @@ void CommissionerSafe::Disconnect()
 /**
  * FIXME(wgtdkp): this is not thread safe.
  */
-uint16_t CommissionerSafe::GetSessionId() const
-{
-    return mImpl->GetSessionId();
-}
+uint16_t CommissionerSafe::GetSessionId() const { return mImpl->GetSessionId(); }
 
-State CommissionerSafe::GetState() const
-{
-    return mImpl->GetState();
-}
+State CommissionerSafe::GetState() const { return mImpl->GetState(); }
 
-bool CommissionerSafe::IsActive() const
-{
-    return mImpl->IsActive();
-}
+bool CommissionerSafe::IsActive() const { return mImpl->IsActive(); }
 
-bool CommissionerSafe::IsCcmMode() const
-{
-    return mImpl->IsCcmMode();
-}
+bool CommissionerSafe::IsCcmMode() const { return mImpl->IsCcmMode(); }
 
-const std::string &CommissionerSafe::GetDomainName() const
-{
-    return mImpl->GetDomainName();
-}
+const std::string &CommissionerSafe::GetDomainName() const { return mImpl->GetDomainName(); }
 
 void CommissionerSafe::CancelRequests()
 {
@@ -615,15 +597,9 @@ CommissionerSafe::EventBaseHolder::EventBaseHolder()
 {
 }
 
-CommissionerSafe::EventBaseHolder::~EventBaseHolder()
-{
-    event_base_free(mEventBase);
-}
+CommissionerSafe::EventBaseHolder::~EventBaseHolder() { event_base_free(mEventBase); }
 
-struct event_base *CommissionerSafe::EventBaseHolder::Get()
-{
-    return mEventBase;
-}
+struct event_base *CommissionerSafe::EventBaseHolder::Get() { return mEventBase; }
 
 } // namespace commissioner
 

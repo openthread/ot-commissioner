@@ -65,7 +65,10 @@
 #define VerifyOrDie(aCondition)             \
     do                                      \
     {                                       \
-        if (!(aCondition))                  \
+        if (aCondition)                     \
+        {                                   \
+        }                                   \
+        else                                \
         {                                   \
             /* TODO(wgtdkp): print trace */ \
             abort();                        \
@@ -84,7 +87,10 @@
 #define VerifyOrExit(aCondition, ...) \
     do                                \
     {                                 \
-        if (!(aCondition))            \
+        if (aCondition)               \
+        {                             \
+        }                             \
+        else                          \
         {                             \
             __VA_ARGS__;              \
             goto exit;                \
@@ -98,10 +104,7 @@
         goto exit;   \
     } while (false)
 
-static inline void IgnoreError(ot::commissioner::Error aError)
-{
-    (void)aError;
-}
+static inline void IgnoreError(ot::commissioner::Error aError) { (void)aError; }
 
 namespace ot {
 
@@ -168,10 +171,7 @@ template <typename T> T Decode(const uint8_t *aBuf, size_t aLength)
     return ret;
 }
 
-template <typename T> T Decode(const ByteArray &aBuf)
-{
-    return Decode<T>(aBuf.data(), aBuf.size());
-}
+template <typename T> T Decode(const ByteArray &aBuf) { return Decode<T>(aBuf.data(), aBuf.size()); }
 
 template <> void Encode<uint8_t>(ByteArray &aBuf, uint8_t aInteger);
 
@@ -194,10 +194,7 @@ bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs);
  *
  * For example, it returns "0xface" for integer 0xface.
  */
-template <typename T> std::string Hex(T aInteger)
-{
-    return std::string("0x") + Hex(Encode(aInteger));
-}
+template <typename T> std::string Hex(T aInteger) { return std::string("0x") + Hex(Encode(aInteger)); }
 
 template <typename T> Error ParseInteger(T &aInteger, const std::string &aStr)
 {

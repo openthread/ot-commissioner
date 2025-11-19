@@ -36,7 +36,8 @@ readonly MIN_CMAKE_VERSION="3.20.1"
 ## Match the version to see if current version is greater than or euqal to required version.
 ## Args: $1 current version
 ##       $2 required version
-match_version() {
+match_version()
+{
     local current_version=$1
     local required_version=$2
     local min_version
@@ -51,7 +52,8 @@ match_version() {
 
 ## Args: $1 CMake Version. for example, "3.16.1". Reference to
 ##       https://cmake.org/files/ for all available versions.
-install_cmake() {
+install_cmake()
+{
     local version=$1
     local short_version=${version%.*}
 
@@ -62,7 +64,7 @@ install_cmake() {
 
     local cpu_num=$(grep -c ^processor /proc/cpuinfo)
     if [ ${cpu_num} -gt 1 ]; then
-        concurrency=$((cpu_num/2))
+        concurrency=$((cpu_num / 2))
     else
         concurrency=1
     fi
@@ -84,16 +86,16 @@ if [ "$(uname)" = "Linux" ]; then
     ## Install packages
     sudo apt-get update
     sudo apt-get install -y \
-                         build-essential \
-                         libreadline-dev \
-                         cmake \
-                         ninja-build \
-                         swig \
-                         lcov \
-                         jsonlint
+        build-essential \
+        libreadline-dev \
+        cmake \
+        ninja-build \
+        swig \
+        lcov \
+        jsonlint
 
-    sudo apt-get --no-install-recommends install -y clang-format-14 clang-tidy-14 || echo 'WARNING: could not install clang-format-14 and clang-tidy-14, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
-    python3 -m pip install yapf==0.29.0 || echo 'WARNING: could not install yapf, which is useful if you plan to contribute python code to the OpenThread project.'
+    sudo apt-get --no-install-recommends install -y clang-format-19 clang-tidy-19 || echo 'WARNING: could not install clang-format-19 and clang-tidy-19, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
+    python3 -m pip install yapf==0.43.0 || echo 'WARNING: could not install yapf, which is useful if you plan to contribute python code to the OpenThread project.'
 
     ## Install newest CMake
     match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
@@ -108,27 +110,58 @@ if [ "$(uname)" = "Linux" ]; then
 elif [ "$(uname)" = "Darwin" ]; then
     echo "OS is Darwin"
 
-    ## Install packages
-    brew update
-    brew install coreutils \
-                 readline \
-                 cmake \
-                 ninja \
-                 swig  \
-                 lcov && true
+    if command -v brew &>/dev/null; then
+        echo "Using Brew"
+        ## Install packages with Homebrew
+        brew update
+        brew install coreutils \
+            readline \
+            cmake \
+            ninja \
+            swig \
+            lcov && true
 
-    brew install llvm@14 && \
-    sudo ln -s "$(brew --prefix llvm@14)/bin/clang-format" /usr/local/bin/clang-format-14 && \
-    sudo ln -s "$(brew --prefix llvm@14)/bin/clang-tidy" /usr/local/bin/clang-tidy-14 && \
-    sudo ln -s "$(brew --prefix llvm@14)/bin/clang-apply-replacements" /usr/local/bin/clang-apply-replacements-14 && \
-    sudo ln -s "$(brew --prefix llvm@14)/bin/run-clang-tidy" /usr/local/bin/run-clang-tidy-14 || \
-    echo 'WARNING: could not install clang-format-14, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
+        brew install llvm@19 \
+            && sudo ln -sf "$(brew --prefix llvm@19)/bin/clang-format" /usr/local/bin/clang-format-19 \
+            && sudo ln -sf "$(brew --prefix llvm@19)/bin/clang-tidy" /usr/local/bin/clang-tidy-19 \
+            && sudo ln -sf "$(brew --prefix llvm@19)/bin/clang-apply-replacements" /usr/local/bin/clang-apply-replacements-19 \
+            && sudo ln -sf "$(brew --prefix llvm@19)/bin/run-clang-tidy" /usr/local/bin/run-clang-tidy-19 \
+            || echo 'WARNING: could not install clang-format-19, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
 
-    ## Install latest cmake
-    match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
-        brew unlink cmake
-        brew install cmake --HEAD
-    }
+        ## Install latest cmake
+        match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
+            brew unlink cmake
+            brew install cmake --HEAD
+        }
+    elif command -v port &>/dev/null; then
+        echo "Using MacPorts"
+        ## Install packages with MacPorts
+        sudo port install coreutils \
+            readline \
+            cmake \
+            ninja \
+            swig \
+            lcov && true
+
+        sudo port install clang-19 \
+            && sudo ln -sf /opt/local/bin/clang-format-mp-19 /usr/local/bin/clang-format-19 \
+            && sudo ln -sf /opt/local/bin/clang-tidy-mp-19 /usr/local/bin/clang-tidy-19 \
+            && sudo ln -sf /opt/local/bin/clang-apply-replacements-mp-19 /usr/local/bin/clang-apply-replacements-19 \
+            && sudo ln -sf /opt/local/bin/run-clang-tidy-mp-19 /usr/local/bin/run-clang-tidy-19 \
+            || echo 'WARNING: could not install clang-format-19, which is useful if you plan to contribute C/C++ code to the OpenThread project.'
+
+        ## Check latest cmake version
+        match_version "$(cmake --version | grep -E -o '[0-9].*')" "${MIN_CMAKE_VERSION}" || {
+            echo "error: cmake version($(cmake --version)) < ${MIN_CMAKE_VERSION}."
+            echo "Did you forget to add '/opt/local/bin' to beginning of your PATH?"
+            exit 1
+        }
+
+    else
+        echo "error: brew or port not found. Please install one of them."
+        exit 1
+    fi
+
 else
     echo "platform $(uname) is not fully supported"
     exit 1

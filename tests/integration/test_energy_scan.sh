@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_energy_scan() {
+test_energy_scan()
+{
     start_daemon
     form_network "${PSKC}"
 

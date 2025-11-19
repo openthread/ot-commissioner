@@ -978,10 +978,7 @@ void BorderAgentFromJson(BorderAgent &aAgent, const nlohmann::json &aJson)
     aAgent = agent;
 }
 
-static void to_json(nlohmann::json &aJson, const BorderAgent::State &aState)
-{
-    aJson = static_cast<uint32_t>(aState);
-}
+static void to_json(nlohmann::json &aJson, const BorderAgent::State &aState) { aJson = static_cast<uint32_t>(aState); }
 
 void BorderAgentToJson(const BorderAgent &aAgent, nlohmann::json &aJson)
 {

@@ -438,25 +438,13 @@ bool Tlv::IsValid() const
     }
 }
 
-Type Tlv::GetType() const
-{
-    return mType;
-}
+Type Tlv::GetType() const { return mType; }
 
-void Tlv::SetValue(const uint8_t *aBuf, size_t aLength)
-{
-    mValue.assign(aBuf, aBuf + aLength);
-}
+void Tlv::SetValue(const uint8_t *aBuf, size_t aLength) { mValue.assign(aBuf, aBuf + aLength); }
 
-void Tlv::SetValue(const ByteArray &aValue)
-{
-    mValue = aValue;
-}
+void Tlv::SetValue(const ByteArray &aValue) { mValue = aValue; }
 
-uint16_t Tlv::GetLength() const
-{
-    return static_cast<uint16_t>(mValue.size());
-}
+uint16_t Tlv::GetLength() const { return static_cast<uint16_t>(mValue.size()); }
 
 uint16_t Tlv::GetTotalLength() const
 {
@@ -482,19 +470,10 @@ uint16_t Tlv::GetValueAsUint16() const
     return utils::Decode<uint16_t>(mValue);
 }
 
-std::string Tlv::GetValueAsString() const
-{
-    return std::string{mValue.begin(), mValue.end()};
-}
+std::string Tlv::GetValueAsString() const { return std::string{mValue.begin(), mValue.end()}; }
 
-const ByteArray &Tlv::GetValue() const
-{
-    return mValue;
-}
-ByteArray &Tlv::GetValue()
-{
-    return mValue;
-}
+const ByteArray &Tlv::GetValue() const { return mValue; }
+ByteArray       &Tlv::GetValue() { return mValue; }
 
 Error GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope)
 {

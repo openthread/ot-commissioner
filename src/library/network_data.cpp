@@ -76,10 +76,7 @@ Timestamp Timestamp::Decode(uint64_t aValue)
     return ret;
 }
 
-uint64_t Timestamp::Encode() const
-{
-    return (mSeconds << 16) | (mTicks << 1) | mU;
-}
+uint64_t Timestamp::Encode() const { return (mSeconds << 16) | (mTicks << 1) | mU; }
 
 Error Ipv6PrefixFromString(ByteArray &aPrefix, const std::string &aStr)
 {

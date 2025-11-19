@@ -48,25 +48,13 @@ namespace commissioner {
 
 namespace utils {
 
-template <> void Encode<uint8_t>(ByteArray &aBuf, uint8_t aInteger)
-{
-    aBuf.emplace_back(aInteger);
-}
+template <> void Encode<uint8_t>(ByteArray &aBuf, uint8_t aInteger) { aBuf.emplace_back(aInteger); }
 
-template <> void Encode<int8_t>(ByteArray &aBuf, int8_t aInteger)
-{
-    aBuf.emplace_back(aInteger);
-}
+template <> void Encode<int8_t>(ByteArray &aBuf, int8_t aInteger) { aBuf.emplace_back(aInteger); }
 
-template <> ByteArray Encode<uint8_t>(uint8_t aInteger)
-{
-    return {aInteger};
-}
+template <> ByteArray Encode<uint8_t>(uint8_t aInteger) { return {aInteger}; }
 
-template <> ByteArray Encode<int8_t>(int8_t aInteger)
-{
-    return {static_cast<uint8_t>(aInteger)};
-}
+template <> ByteArray Encode<int8_t>(int8_t aInteger) { return {static_cast<uint8_t>(aInteger)}; }
 
 std::string Hex(const ByteArray &aBytes)
 {
@@ -115,10 +103,7 @@ std::string ToLower(const std::string &aStr)
     return ret;
 }
 
-bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs)
-{
-    return ToLower(aLhs) == ToLower(aRhs);
-}
+bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs) { return ToLower(aLhs) == ToLower(aRhs); }
 
 } // Namespace utils
 

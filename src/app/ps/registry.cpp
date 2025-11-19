@@ -81,10 +81,7 @@ const std::string ALIAS_OTHER{"other"};
 
 } // namespace
 
-Registry *CreateRegistry(const std::string &aFile)
-{
-    return new Registry(aFile);
-}
+Registry *CreateRegistry(const std::string &aFile) { return new Registry(aFile); }
 
 Registry::Registry(PersistentStorage *aStorage)
     : mManageStorage(false)
@@ -537,10 +534,7 @@ exit:
     return status;
 }
 
-Registry::Status Registry::ForgetCurrentNetwork()
-{
-    return SetCurrentNetwork(NetworkId{});
-}
+Registry::Status Registry::ForgetCurrentNetwork() { return SetCurrentNetwork(NetworkId{}); }
 
 Registry::Status Registry::SetCurrentNetwork(uint64_t aXpan)
 {
@@ -798,10 +792,7 @@ exit:
     return status;
 }
 
-Registry::Status Registry::Update(const Network &aNetwork)
-{
-    return MapStatus(mStorage->Update(aNetwork));
-}
+Registry::Status Registry::Update(const Network &aNetwork) { return MapStatus(mStorage->Update(aNetwork)); }
 
 } // namespace persistent_storage
 } // namespace commissioner

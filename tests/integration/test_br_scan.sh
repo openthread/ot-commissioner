@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_br_scan() {
+test_br_scan()
+{
     set -e
 
     install_borderagent_mdns_data etc/br_scan_initial
@@ -42,7 +43,8 @@ test_br_scan() {
     stop_commissioner
 }
 
-test_br_scan_export() {
+test_br_scan_export()
+{
     set -e
 
     start_border_agent_mdns_service
@@ -63,7 +65,8 @@ test_br_scan_export() {
     mdns_hosts_unmap_addresses
 }
 
-test_registry() {
+test_registry()
+{
     set -e
 
     start_border_agent_mdns_service
@@ -79,7 +82,8 @@ test_registry() {
     rm -f /tmp/br_scan_export.json
 }
 
-test_scan_filter() {
+test_scan_filter()
+{
     set -e
 
     rm -f /tmp/br_scan_export.json
@@ -101,11 +105,12 @@ test_scan_filter() {
 
     stop_commissioner
     mdns_hosts_unmap_addresses
- 
+
     rm -f /tmp/br_scan_export.json
 }
 
-test_br_update_on_add() {
+test_br_update_on_add()
+{
     set -e
 
     rm -f /tmp/br_scan_export.json /tmp/registry.json
