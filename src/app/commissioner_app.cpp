@@ -143,25 +143,13 @@ void CommissionerApp::Stop()
     mBbrDataset     = BbrDataset();
 }
 
-void CommissionerApp::CancelRequests()
-{
-    mCommissioner->CancelRequests();
-}
+void CommissionerApp::CancelRequests() { mCommissioner->CancelRequests(); }
 
-bool CommissionerApp::IsActive() const
-{
-    return mCommissioner->IsActive();
-}
+bool CommissionerApp::IsActive() const { return mCommissioner->IsActive(); }
 
-State CommissionerApp::GetState() const
-{
-    return mCommissioner->GetState();
-}
+State CommissionerApp::GetState() const { return mCommissioner->GetState(); }
 
-bool CommissionerApp::IsCcmMode() const
-{
-    return mCommissioner->IsCcmMode();
-}
+bool CommissionerApp::IsCcmMode() const { return mCommissioner->IsCcmMode(); }
 
 Error CommissionerApp::SaveNetworkData(const std::string &aFilename)
 {
@@ -940,15 +928,9 @@ exit:
     return error;
 }
 
-Error CommissionerApp::Reenroll(const std::string &aDstAddr)
-{
-    return mCommissioner->CommandReenroll(aDstAddr);
-}
+Error CommissionerApp::Reenroll(const std::string &aDstAddr) { return mCommissioner->CommandReenroll(aDstAddr); }
 
-Error CommissionerApp::DomainReset(const std::string &aDstAddr)
-{
-    return mCommissioner->CommandDomainReset(aDstAddr);
-}
+Error CommissionerApp::DomainReset(const std::string &aDstAddr) { return mCommissioner->CommandDomainReset(aDstAddr); }
 
 Error CommissionerApp::Migrate(const std::string &aDstAddr, const std::string &aDesignatedNetwork)
 {
@@ -997,10 +979,7 @@ exit:
     return error;
 }
 
-bool CommissionerApp::HasPanIdConflict(uint16_t aPanId) const
-{
-    return mPanIdConflicts.count(aPanId) != 0;
-}
+bool CommissionerApp::HasPanIdConflict(uint16_t aPanId) const { return mPanIdConflicts.count(aPanId) != 0; }
 
 Error CommissionerApp::EnergyScan(uint32_t           aChannelMask,
                                   uint8_t            aCount,
@@ -1028,20 +1007,11 @@ const EnergyReport *CommissionerApp::GetEnergyReport(const Address &aDstAddr) co
     return &report->second;
 }
 
-const EnergyReportMap &CommissionerApp::GetAllEnergyReports() const
-{
-    return mEnergyReports;
-}
+const EnergyReportMap &CommissionerApp::GetAllEnergyReports() const { return mEnergyReports; }
 
-const std::string &CommissionerApp::GetDomainName() const
-{
-    return mCommissioner->GetDomainName();
-}
+const std::string &CommissionerApp::GetDomainName() const { return mCommissioner->GetDomainName(); }
 
-const ByteArray &CommissionerApp::GetToken() const
-{
-    return mSignedToken;
-}
+const ByteArray &CommissionerApp::GetToken() const { return mSignedToken; }
 
 Error CommissionerApp::RequestToken(const std::string &aAddr, uint16_t aPort)
 {
@@ -1408,10 +1378,7 @@ void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const
     mDiagAnsDataMap[addr] = aDiagAnsMsg;
 }
 
-const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
-{
-    return mDiagAnsDataMap;
-}
+const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const { return mDiagAnsDataMap; }
 
 Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags)
 {

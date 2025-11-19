@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-mdns_announce_add_th() {
+mdns_announce_add_th()
+{
     sudo cp ${CUR_DIR}/etc/test_harness/* /etc/avahi/services/
 
     local ba_port
@@ -49,7 +50,8 @@ mdns_announce_add_th() {
     sudo rm -f /etc/avahi/services/*.service
 }
 
-test_network_list() {
+test_network_list()
+{
     set -e
 
     start_border_agent_mdns_service
@@ -63,7 +65,8 @@ test_network_list() {
     mdns_hosts_unmap_addresses
 }
 
-test_select_identify() {
+test_select_identify()
+{
     set -e
 
     start_border_agent_mdns_service
@@ -85,7 +88,8 @@ test_select_identify() {
     mdns_hosts_unmap_addresses
 }
 
-test_start_stop_selected() {
+test_start_stop_selected()
+{
     set -e
 
     start_daemon
@@ -110,7 +114,8 @@ test_start_stop_selected() {
     stop_daemon
 }
 
-test_start_stop_mn_explicit() {
+test_start_stop_mn_explicit()
+{
     set -e
 
     aods_fn="/tmp/aods.json"
@@ -135,7 +140,8 @@ test_start_stop_mn_explicit() {
     mdns_hosts_unmap_addresses
 }
 
-test_start_stop_mn_all() {
+test_start_stop_mn_all()
+{
     set -e
 
     aods_fn="/tmp/aods.json"
@@ -164,7 +170,8 @@ test_start_stop_mn_all() {
     mdns_hosts_unmap_addresses
 }
 
-test_start_stop_mn_other() {
+test_start_stop_mn_other()
+{
     set -e
 
     aods_fn="/tmp/aods.json"
@@ -195,7 +202,8 @@ test_start_stop_mn_other() {
     mdns_hosts_unmap_addresses
 }
 
-test_start_stop_mn_dom() {
+test_start_stop_mn_dom()
+{
     set -e
 
     aods_fn="/tmp/aods.json"
@@ -227,7 +235,8 @@ test_start_stop_mn_dom() {
     mdns_hosts_unmap_addresses
 }
 
-test_network_management() {
+test_network_management()
+{
     set -e
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -273,7 +282,8 @@ test_network_management() {
     mdns_hosts_unmap_addresses
 }
 
-test_mn_input_data() {
+test_mn_input_data()
+{
     set -e
 
     start_commissioner "${NON_CCM_CONFIG}"
@@ -291,7 +301,8 @@ test_mn_input_data() {
     stop_commissioner
 }
 
-test_mn_input_data_export_import() {
+test_mn_input_data_export_import()
+{
     set -e
 
     start_daemon
@@ -317,7 +328,8 @@ test_mn_input_data_export_import() {
     rm -f /tmp/aods.json
 }
 
-test_start_on_fake_br_data() {
+test_start_on_fake_br_data()
+{
     set -e
 
     start_daemon

@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_joining() {
+test_joining()
+{
     start_daemon
     form_network "${PSKC}"
 
@@ -47,7 +48,8 @@ test_joining() {
     stop_daemon
 }
 
-test_joining_default_config() {
+test_joining_default_config()
+{
     start_daemon
     form_network "${PSKC}"
 
@@ -67,7 +69,8 @@ test_joining_default_config() {
     stop_daemon
 }
 
-test_joining_fail() {
+test_joining_fail()
+{
     start_daemon
     form_network "${PSKC}"
 

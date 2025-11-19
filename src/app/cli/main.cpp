@@ -82,10 +82,7 @@ static void PrintUsage(const std::string &aProgram)
     Console::Write(usage, Console::Color::kWhite);
 }
 
-static void PrintVersion()
-{
-    Console::Write(Commissioner::GetVersion(), Console::Color::kWhite);
-}
+static void PrintVersion() { Console::Write(Commissioner::GetVersion(), Console::Color::kWhite); }
 
 static Interpreter gInterpreter;
 static sigset_t    gSignalSet;

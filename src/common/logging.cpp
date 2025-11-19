@@ -43,15 +43,9 @@ namespace commissioner {
 
 static std::shared_ptr<Logger> sLogger = nullptr;
 
-void InitLogger(std::shared_ptr<Logger> aLogger)
-{
-    sLogger = aLogger;
-}
+void InitLogger(std::shared_ptr<Logger> aLogger) { sLogger = aLogger; }
 
-std::shared_ptr<Logger> GetLogger(void)
-{
-    return sLogger;
-}
+std::shared_ptr<Logger> GetLogger(void) { return sLogger; }
 
 void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMessage)
 {

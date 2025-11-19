@@ -210,10 +210,7 @@ PersistentStorage::Status PersistentStorageJson::Open()
     return CacheToFile();
 }
 
-PersistentStorage::Status PersistentStorageJson::Close()
-{
-    return CacheToFile();
-}
+PersistentStorage::Status PersistentStorageJson::Close() { return CacheToFile(); }
 
 PersistentStorage::Status PersistentStorageJson::Add(Registrar const &aValue, RegistrarId &aRetId)
 {

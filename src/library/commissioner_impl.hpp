@@ -242,10 +242,7 @@ private:
     Error SignRequest(coap::Request &aRequest, tlv::Scope aScope = tlv::Scope::kMeshCoP, bool aAppendToken = true);
 #endif
 
-    Duration GetKeepAliveInterval() const
-    {
-        return std::chrono::seconds(mConfig.mKeepAliveInterval);
-    };
+    Duration GetKeepAliveInterval() const { return std::chrono::seconds(mConfig.mKeepAliveInterval); };
 
     void SendProxyMessage(ErrorHandler aHandler, const std::string &aDstAddr, const std::string &aUriPath);
 
@@ -261,10 +258,7 @@ private:
 
     void HandleDiagGetAnswer(const coap::Request &aRequest);
 
-    bool IsActiveOrConnected() const
-    {
-        return (mState == State::kActive || mState == State::kConnected);
-    }
+    bool IsActiveOrConnected() const { return (mState == State::kActive || mState == State::kConnected); }
 
 private:
     State    mState;

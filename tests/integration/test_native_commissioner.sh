@@ -31,7 +31,8 @@
 
 LEADER_OUTPUT=${RUNTIME_DIR}/leader-output
 
-start_leader() {
+start_leader()
+{
     expect <<EOF | tee "${LEADER_OUTPUT}" &
 spawn ${NON_CCM_CLI} 9
 send "factoryreset\r\n"
@@ -64,12 +65,14 @@ wait eof
 EOF
 }
 
-stop_leader() {
+stop_leader()
+{
     killall expect
     killall "${NON_CCM_CLI}"
 }
 
-test_native_commissioner() {
+test_native_commissioner()
+{
     set -x
     start_leader
     sleep 15

@@ -124,10 +124,7 @@ DtlsSession::DtlsSession(struct event_base *aEventBase, bool aIsServer, SocketPt
     InitMbedtls();
 }
 
-DtlsSession::~DtlsSession()
-{
-    FreeMbedtls();
-}
+DtlsSession::~DtlsSession() { FreeMbedtls(); }
 
 void DtlsSession::InitMbedtls()
 {

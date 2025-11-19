@@ -61,10 +61,7 @@ uint32_t GetUint32(void);
  * @returns A random `uint8_t` value.
  *
  */
-inline uint8_t GetUint8(void)
-{
-    return static_cast<uint8_t>(GetUint32() & 0xff);
-}
+inline uint8_t GetUint8(void) { return static_cast<uint8_t>(GetUint32() & 0xff); }
 
 /**
  * This function generates and returns a random `uint16_t` value.
@@ -72,10 +69,7 @@ inline uint8_t GetUint8(void)
  * @returns A random `uint16_t` value.
  *
  */
-inline uint16_t GetUint16(void)
-{
-    return static_cast<uint16_t>(GetUint32() & 0xffff);
-}
+inline uint16_t GetUint16(void) { return static_cast<uint16_t>(GetUint32() & 0xffff); }
 
 /**
  * This function generates and returns a random `uint8_t` value within a given range `[aMin, aMax)`.
@@ -85,10 +79,7 @@ inline uint16_t GetUint16(void)
  *
  * @returns    A random `uint8_t` value in the given range (i.e., aMin <= random value < aMax).
  */
-inline uint8_t GetUint8InRange(uint8_t aMin, uint8_t aMax)
-{
-    return (aMin + (GetUint8() % (aMax - aMin)));
-}
+inline uint8_t GetUint8InRange(uint8_t aMin, uint8_t aMax) { return (aMin + (GetUint8() % (aMax - aMin))); }
 
 /**
  * This function generates and returns a random `uint16_t` value within a given range `[aMin,
@@ -101,10 +92,7 @@ inline uint8_t GetUint8InRange(uint8_t aMin, uint8_t aMax)
  *
  * @returns    A random `uint16_t` value in the given range (i.e., aMin <= random value < aMax).
  */
-inline uint16_t GetUint16InRange(uint16_t aMin, uint16_t aMax)
-{
-    return (aMin + (GetUint16() % (aMax - aMin)));
-}
+inline uint16_t GetUint16InRange(uint16_t aMin, uint16_t aMax) { return (aMin + (GetUint16() % (aMax - aMin))); }
 
 /**
  * This function generates and returns a random `uint32_t` value within a given range `[aMin,
@@ -118,10 +106,7 @@ inline uint16_t GetUint16InRange(uint16_t aMin, uint16_t aMax)
  * @returns    A random `uint32_t` value in the given range (i.e., aMin <= random value < aMax).
  *
  */
-inline uint32_t GetUint32InRange(uint32_t aMin, uint32_t aMax)
-{
-    return (aMin + (GetUint32() % (aMax - aMin)));
-}
+inline uint32_t GetUint32InRange(uint32_t aMin, uint32_t aMax) { return (aMin + (GetUint32() % (aMax - aMin))); }
 
 /**
  * This function fills a given buffer with random bytes.
