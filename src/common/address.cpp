@@ -77,6 +77,11 @@ Error Address::Set(const std::string &aIp)
             }
 
             ByteArray rloc16Bytes;
+
+            // pad with zeros if necessary
+            for (size_t i = hexStr.size(); i < 4; i++) {
+                hexStr.insert(0, "0");
+            }
             error = utils::Hex(rloc16Bytes, hexStr);
             if (error == ErrorCode::kNone && rloc16Bytes.size() == kRloc16Size)
             {
