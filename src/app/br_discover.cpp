@@ -37,13 +37,14 @@
 #include <thread>
 
 #include "common/error_macros.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf)
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, MilliSeconds aTimeout, const std::string &aNetIf)
 {
     static constexpr size_t             kDefaultBufferSize = 1024 * 16;
     static constexpr mdns_record_type_t kMdnsQueryType     = MDNS_RECORDTYPE_PTR;
@@ -74,7 +75,7 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
         ExitNow(error = ERROR_IO_ERROR("failed to send mDNS query"));
     }
 
-    while (begin + std::chrono::milliseconds(aTimeout) >= std::chrono::system_clock::now())
+    while (begin + aTimeout >= std::chrono::system_clock::now())
     {
         BorderAgentOrErrorMsg curBorderAgentOrErrorMsg;
 
@@ -89,7 +90,7 @@ Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeou
             aBorderAgentHandler(&curBorderAgentOrErrorMsg.mBorderAgent, ERROR_NONE);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(MilliSeconds(100));
     }
 
 exit:

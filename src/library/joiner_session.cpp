@@ -92,7 +92,7 @@ void JoinerSession::Connect()
     auto dtlsConfig = GetDtlsConfig(mCommImpl.GetConfig());
     dtlsConfig.mPSK = {mJoinerPSKd.begin(), mJoinerPSKd.end()};
 
-    mExpirationTime = Clock::now() + MilliSeconds(kDtlsHandshakeTimeoutMax * 1000 + kJoinerTimeout * 1000);
+    mExpirationTime = Clock::now() + kDtlsHandshakeTimeoutMax + kJoinerTimeout;
 
     SuccessOrExit(error = mDtlsSession->Init(dtlsConfig));
 

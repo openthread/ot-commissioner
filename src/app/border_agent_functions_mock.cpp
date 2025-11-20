@@ -28,6 +28,8 @@
 
 #include "border_agent_functions_mock.hpp"
 
+#include "common/time.hpp"
+
 namespace ot {
 namespace commissioner {
 
@@ -37,7 +39,7 @@ void SetBorderAgentFunctionsMock(ot::commissioner::BorderAgentFunctionsMock *ptr
 
 void ClearBorderAgentFunctionsMock() { gBorderAgentFunctionsMock = nullptr; }
 
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf)
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, MilliSeconds aTimeout, const std::string &aNetIf)
 {
     return gBorderAgentFunctionsMock->DiscoverBorderAgent(aBorderAgentHandler, aTimeout, aNetIf);
 }

@@ -35,6 +35,7 @@
 
 #include "border_agent.hpp"
 #include "mdns_handler.hpp"
+#include "common/time.hpp"
 
 namespace ot {
 
@@ -60,7 +61,7 @@ using BorderAgentHandler = std::function<void(const BorderAgent *aBorderAgent, c
  *
  *
  */
-Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, size_t aTimeout, const std::string &aNetIf);
+Error DiscoverBorderAgent(BorderAgentHandler aBorderAgentHandler, MilliSeconds aTimeout, const std::string &aNetIf);
 
 } // namespace commissioner
 

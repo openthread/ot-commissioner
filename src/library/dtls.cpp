@@ -70,6 +70,8 @@ namespace ot {
 
 namespace commissioner {
 
+using std::chrono::duration_cast;
+
 static const int    kAuthMode              = MBEDTLS_SSL_VERIFY_REQUIRED;
 static const size_t kMaxContentLength      = MBEDTLS_SSL_IN_CONTENT_LEN;
 static const size_t KMaxFragmentLengthCode = MBEDTLS_SSL_MAX_FRAG_LEN_1024;
@@ -174,7 +176,8 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     }
 
     // Timeouts
-    mbedtls_ssl_conf_handshake_timeout(&mConfig, kDtlsHandshakeTimeoutMin * 1000, kDtlsHandshakeTimeoutMax * 1000);
+    mbedtls_ssl_conf_handshake_timeout(&mConfig, duration_cast<MilliSeconds>(kDtlsHandshakeTimeoutMin).count(),
+                                       duration_cast<MilliSeconds>(kDtlsHandshakeTimeoutMax).count());
 
     mCipherSuites.clear();
 
@@ -656,11 +659,11 @@ int DtlsSession::DtlsTimer::GetDelay(void *aDtlsTimer)
     return rval;
 }
 
-void DtlsSession::DtlsTimer::SetDelay(void *aDtlsTimer, uint32_t aIntermediate, uint32_t aFinish)
+void DtlsSession::DtlsTimer::SetDelay(void *aDtlsTimer, uint32_t aIntermediateMillis, uint32_t aFinishMillis)
 {
     auto timer = reinterpret_cast<DtlsTimer *>(aDtlsTimer);
 
-    if (aFinish == 0)
+    if (aFinishMillis == 0)
     {
         timer->mCancelled = true;
         timer->Stop();
@@ -668,8 +671,8 @@ void DtlsSession::DtlsTimer::SetDelay(void *aDtlsTimer, uint32_t aIntermediate, 
     else
     {
         timer->mCancelled = false;
-        timer->Start(std::chrono::milliseconds(aFinish));
-        timer->mIntermediate = Clock::now() + std::chrono::milliseconds(aIntermediate);
+        timer->Start(MilliSeconds(aFinishMillis));
+        timer->mIntermediate = Clock::now() + MilliSeconds(aIntermediateMillis);
     }
 }
 

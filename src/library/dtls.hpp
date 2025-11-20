@@ -64,8 +64,8 @@ namespace ot {
 
 namespace commissioner {
 
-static constexpr uint32_t kDtlsHandshakeTimeoutMin = 8;
-static constexpr uint32_t kDtlsHandshakeTimeoutMax = 60;
+static constexpr Seconds kDtlsHandshakeTimeoutMin{8};
+static constexpr Seconds kDtlsHandshakeTimeoutMax{60};
 
 struct DtlsConfig
 {
@@ -137,7 +137,7 @@ private:
         }
 
         static int  GetDelay(void *aDtlsTimer);
-        static void SetDelay(void *aDtlsTimer, uint32_t aIntermediate, uint32_t aFinish);
+        static void SetDelay(void *aDtlsTimer, uint32_t aIntermediateMillis, uint32_t aFinishMillis);
 
     private:
         TimePoint mIntermediate;
