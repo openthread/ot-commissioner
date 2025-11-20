@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2022, The OpenThread Commissioner Authors.
+#  Copyright (c) 2025, The OpenThread Commissioner Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
