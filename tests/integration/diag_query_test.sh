@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-main() {
+main()
+{
     local ip=$1
     local port=$2
     local pskc=$3

@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_diag_query() {
+test_diag_query()
+{
     start_daemon
     form_network "${PSKC}"
 
@@ -43,7 +44,8 @@ test_diag_query() {
     stop_daemon
 }
 
-main() {
+main()
+{
     test_diag_query
 }
 
