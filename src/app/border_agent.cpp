@@ -56,10 +56,7 @@ Error UnixTime::FromString(UnixTime &aTime, const std::string &aTimeStr)
     return ERROR_BAD_FORMAT("ill formed time string {}", aTimeStr);
 }
 
-bool UnixTime::operator==(const UnixTime &other) const
-{
-    return mTime == other.mTime;
-}
+bool UnixTime::operator==(const UnixTime &other) const { return mTime == other.mTime; }
 
 UnixTime::operator std::string() const
 {

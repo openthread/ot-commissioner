@@ -49,10 +49,7 @@ namespace ot {
 
 namespace commissioner {
 
-static inline std::string ToString(const mdns_string_t &aString)
-{
-    return std::string(aString.str, aString.length);
-}
+static inline std::string ToString(const mdns_string_t &aString) { return std::string(aString.str, aString.length); }
 
 static inline ByteArray ToByteArray(const mdns_string_t &aString)
 {

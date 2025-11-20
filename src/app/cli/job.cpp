@@ -59,10 +59,7 @@ void Job::Wait()
     }
 }
 
-void Job::Cancel()
-{
-    mCommissioner->CancelRequests();
-}
+void Job::Cancel() { mCommissioner->CancelRequests(); }
 
 std::string Job::GetCommandString()
 {
@@ -88,20 +85,11 @@ Job::Job(Interpreter              &aInterpreter,
 {
 }
 
-bool Job::IsStopped()
-{
-    return !mJobThread.joinable();
-}
+bool Job::IsStopped() { return !mJobThread.joinable(); }
 
-uint64_t Job::GetXpanId() const
-{
-    return mXpanId;
-}
+uint64_t Job::GetXpanId() const { return mXpanId; }
 
-Interpreter::Value Job::GetValue() const
-{
-    return mValue;
-}
+Interpreter::Value Job::GetValue() const { return mValue; }
 
 } // namespace commissioner
 

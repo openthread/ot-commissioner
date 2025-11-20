@@ -116,9 +116,7 @@ TLV_TYPE_TO_STRING = {
     TLV_TYPE_REGISTRAR_IPv6_ADDR: 'RegistrarIpv6Addr',
 }
 
-TLV_TYPE_FROM_STRING = {
-    TLV_TYPE_TO_STRING[key]: key for key in TLV_TYPE_TO_STRING
-}
+TLV_TYPE_FROM_STRING = {TLV_TYPE_TO_STRING[key]: key for key in TLV_TYPE_TO_STRING}
 
 JOINER_TYPE_TO_STRING = {
     JOINER_TYPE_MESHCOP: 'meshcop',
@@ -149,8 +147,7 @@ class OTCommissioner(ICommissioner):
 
         response = self._command(f'{COMMISSIONER_CTL} init "{config_path}"')
         if self._command('echo $?')[0] != '0':
-            raise commissioner.Error(
-                f"Failed to init, error:\n{'\n'.join(response)}")
+            raise commissioner.Error(f"Failed to init, error:\n{'\n'.join(response)}")
 
     @staticmethod
     def makeLocalCommissioner(config, simulator):
@@ -197,10 +194,7 @@ class OTCommissioner(ICommissioner):
             result = json.loads(' '.join(response[:-1]))
             result = {TLV_TYPE_FROM_STRING[key]: result[key] for key in result}
 
-            for key in [
-                    TLV_TYPE_STEERING_DATA, TLV_TYPE_AE_STEERING_DATA,
-                    TLV_TYPE_NMKP_STEERING_DATA
-            ]:
+            for key in [TLV_TYPE_STEERING_DATA, TLV_TYPE_AE_STEERING_DATA, TLV_TYPE_NMKP_STEERING_DATA]:
                 if key in result:
                     result[key] = OTCommissioner._hex_to_bytes(result[key])
 
@@ -209,17 +203,11 @@ class OTCommissioner(ICommissioner):
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_COMMISSIONER_SET(self, commDataset):
-        for key in [
-                TLV_TYPE_STEERING_DATA, TLV_TYPE_AE_STEERING_DATA,
-                TLV_TYPE_NMKP_STEERING_DATA
-        ]:
+        for key in [TLV_TYPE_STEERING_DATA, TLV_TYPE_AE_STEERING_DATA, TLV_TYPE_NMKP_STEERING_DATA]:
             if key in commDataset:
-                commDataset[key] = OTCommissioner._bytes_to_hex(
-                    commDataset[key])
+                commDataset[key] = OTCommissioner._bytes_to_hex(commDataset[key])
 
-        dataset = {
-            TLV_TYPE_TO_STRING[key]: commDataset[key] for key in commDataset
-        }
+        dataset = {TLV_TYPE_TO_STRING[key]: commDataset[key] for key in commDataset}
         data = json.dumps(dataset)
         self._execute_and_check(f"commdataset set '{data}'")
 
@@ -251,30 +239,25 @@ class OTCommissioner(ICommissioner):
         result = self._execute_and_check(f'opdataset get active {types}')
 
         try:
-            return OTCommissioner._active_op_dataset_from_json(' '.join(
-                result[:-1]))
+            return OTCommissioner._active_op_dataset_from_json(' '.join(result[:-1]))
         except Exception as e:
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_ACTIVE_SET(self, activeOpDataset):
-        self._execute_and_check(
-            f"opdataset set active '{OTCommissioner._active_op_dataset_to_json(activeOpDataset)}'"
-        )
+        self._execute_and_check(f"opdataset set active '{OTCommissioner._active_op_dataset_to_json(activeOpDataset)}'")
 
     def MGMT_PENDING_GET(self, tlvTypes):
         types = ' '.join([TLV_TYPE_TO_STRING[x] for x in tlvTypes])
         result = self._execute_and_check(f'opdataset get pending {types}')
 
         try:
-            return OTCommissioner._pending_op_dataset_from_json(' '.join(
-                result[:-1]))
+            return OTCommissioner._pending_op_dataset_from_json(' '.join(result[:-1]))
         except Exception as e:
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_PENDING_SET(self, pendingOpDataset):
         self._execute_and_check(
-            f"opdataset set pending '{OTCommissioner._pending_op_dataset_to_json(pendingOpDataset)}'"
-        )
+            f"opdataset set pending '{OTCommissioner._pending_op_dataset_to_json(pendingOpDataset)}'")
 
     def MGMT_BBR_GET(self, tlvTypes):
         types = ' '.join([TLV_TYPE_TO_STRING[x] for x in tlvTypes])
@@ -287,19 +270,15 @@ class OTCommissioner(ICommissioner):
             raise_(commissioner.Error, repr(e), sys.exc_info()[2])
 
     def MGMT_BBR_SET(self, bbrDataset):
-        dataset = {
-            TLV_TYPE_TO_STRING[key]: bbrDataset[key] for key in bbrDataset
-        }
+        dataset = {TLV_TYPE_TO_STRING[key]: bbrDataset[key] for key in bbrDataset}
         dataset = json.dumps(dataset)
         self._execute_and_check(f"bbrdataset set '{dataset}'")
 
     def MLR(self, multicastAddrs, timeout):
-        self._execute_and_check(f"mlr {' '.join(multicastAddrs)} {timeout}",
-                                check=False)
+        self._execute_and_check(f"mlr {' '.join(multicastAddrs)} {timeout}", check=False)
 
     def MGMT_ANNOUNCE_BEGIN(self, channelMask, count, period, dstAddr):
-        self._execute_and_check(
-            f'announce {channelMask} {count} {period} {dstAddr}')
+        self._execute_and_check(f'announce {channelMask} {count} {period} {dstAddr}')
 
     def MGMT_PANID_QUERY(self, channelMask, panId, dstAddr, timeout):
         self._execute_and_check(f'panid query {channelMask} {panId} {dstAddr}')
@@ -308,11 +287,8 @@ class OTCommissioner(ICommissioner):
         result = int(result[0])
         return False if result == 0 else True
 
-    def MGMT_ED_SCAN(self, channelMask, count, period, scanDuration, dstAddr,
-                     timeout):
-        self._execute_and_check(
-            f'energy scan {channelMask} {count} {period} {scanDuration} {dstAddr}'
-        )
+    def MGMT_ED_SCAN(self, channelMask, count, period, scanDuration, dstAddr, timeout):
+        self._execute_and_check(f'energy scan {channelMask} {count} {period} {scanDuration} {dstAddr}')
 
         self._sleep(timeout)
         result = self._execute_and_check(f'energy report {dstAddr}')
@@ -323,8 +299,7 @@ class OTCommissioner(ICommissioner):
             result = json.loads(' '.join(result[:-1]))
 
             return OTCommissioner.EnergyReport(
-                channelMask=self._channel_mask_from_json_obj(
-                    result['ChannelMask']),
+                channelMask=self._channel_mask_from_json_obj(result['ChannelMask']),
                 energyList=self._hex_to_bytes(result['EnergyList']),
             )
         except Exception as e:
@@ -340,8 +315,7 @@ class OTCommissioner(ICommissioner):
         self._execute_and_check(f'migrate {dstAddr} {designatedNetwork}')
 
     def requestCOM_TOK(self, registrarAddr, registrarPort):
-        self._execute_and_check(
-            f'token request {registrarAddr} {registrarPort}')
+        self._execute_and_check(f'token request {registrarAddr} {registrarPort}')
 
     def setCOM_TOK(self, signedCOM_TOK):
         path_token = f'/tmp/commissioner.token.{uuid.uuid4()}'
@@ -366,8 +340,7 @@ class OTCommissioner(ICommissioner):
                 encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.IN
                 encrypted_packet.Type = PlatformDiagnosticPacket_Type.JOIN_FIN_req
                 encrypted_packet.TLVsLength = len(payload)
-                encrypted_packet.TLVs = PlatformPackets.read(
-                    encrypted_packet.Type, payload)
+                encrypted_packet.TLVs = PlatformPackets.read(encrypted_packet.Type, payload)
                 processed_logs.append(encrypted_packet)
             elif "JOIN_FIN.rsp:" in log:
                 encrypted_packet = PlatformDiagnosticPacket()
@@ -376,8 +349,7 @@ class OTCommissioner(ICommissioner):
                 encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.OUT
                 encrypted_packet.Type = PlatformDiagnosticPacket_Type.JOIN_FIN_rsp
                 encrypted_packet.TLVsLength = len(payload)
-                encrypted_packet.TLVs = PlatformPackets.read(
-                    encrypted_packet.Type, payload)
+                encrypted_packet.TLVs = PlatformPackets.read(encrypted_packet.Type, payload)
                 processed_logs.append(encrypted_packet)
         return processed_logs
 
@@ -390,8 +362,7 @@ class OTCommissioner(ICommissioner):
             encrypted_packet.Direction = PlatformDiagnosticPacket_Direction.OUT
             encrypted_packet.Type = PlatformDiagnosticPacket_Type.MLR_rsp
             encrypted_packet.TLVsLength = len(payload)
-            encrypted_packet.TLVs = PlatformPackets.read(
-                encrypted_packet.Type, payload)
+            encrypted_packet.TLVs = PlatformPackets.read(encrypted_packet.Type, payload)
             processed_logs.append(encrypted_packet)
         return processed_logs
 
@@ -487,13 +458,11 @@ class OTCommissioner(ICommissioner):
 
         if TLV_TYPE_EXTENDED_PAN_ID in result:
             xpanid = result[TLV_TYPE_EXTENDED_PAN_ID]
-            result[TLV_TYPE_EXTENDED_PAN_ID] = OTCommissioner._hex_to_bytes(
-                xpanid)
+            result[TLV_TYPE_EXTENDED_PAN_ID] = OTCommissioner._hex_to_bytes(xpanid)
 
         if TLV_TYPE_NETWORK_MASTER_KEY in result:
             key = result[TLV_TYPE_NETWORK_MASTER_KEY]
-            result[TLV_TYPE_NETWORK_MASTER_KEY] = OTCommissioner._hex_to_bytes(
-                key)
+            result[TLV_TYPE_NETWORK_MASTER_KEY] = OTCommissioner._hex_to_bytes(key)
 
         if TLV_TYPE_SECURITY_POLICY in result:
             security_policy = result[TLV_TYPE_SECURITY_POLICY]
@@ -525,13 +494,11 @@ class OTCommissioner(ICommissioner):
 
         if TLV_TYPE_EXTENDED_PAN_ID in dataset:
             xpanid = dataset[TLV_TYPE_EXTENDED_PAN_ID]
-            dataset[TLV_TYPE_EXTENDED_PAN_ID] = OTCommissioner._bytes_to_hex(
-                xpanid)
+            dataset[TLV_TYPE_EXTENDED_PAN_ID] = OTCommissioner._bytes_to_hex(xpanid)
 
         if TLV_TYPE_NETWORK_MASTER_KEY in dataset:
             key = dataset[TLV_TYPE_NETWORK_MASTER_KEY]
-            dataset[TLV_TYPE_NETWORK_MASTER_KEY] = OTCommissioner._bytes_to_hex(
-                key)
+            dataset[TLV_TYPE_NETWORK_MASTER_KEY] = OTCommissioner._bytes_to_hex(key)
 
         if TLV_TYPE_SECURITY_POLICY in dataset:
             security_policy = dataset[TLV_TYPE_SECURITY_POLICY]

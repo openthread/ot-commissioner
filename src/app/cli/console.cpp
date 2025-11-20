@@ -46,10 +46,7 @@ bool gVerbose = false;
 
 std::string Console::mPrompt;
 
-void Console::SetPrompt(const std::string &aPrompt)
-{
-    mPrompt = aPrompt;
-}
+void Console::SetPrompt(const std::string &aPrompt) { mPrompt = aPrompt; }
 
 std::string Console::Read()
 {

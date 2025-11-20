@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_pan_id_query() {
+test_pan_id_query()
+{
     start_daemon
     form_network "${PSKC}"
 

@@ -138,10 +138,7 @@ void Commissioner::AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerI
     ComputeBloomFilter(aSteeringData, aJoinerId);
 }
 
-std::string Commissioner::GetVersion(void)
-{
-    return OT_COMM_VERSION;
-}
+std::string Commissioner::GetVersion(void) { return OT_COMM_VERSION; }
 
 CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase)
     : mState(State::kDisabled)
@@ -255,10 +252,7 @@ void CommissionerImpl::LoggingConfig()
     // Do not logging credentials
 }
 
-const Config &CommissionerImpl::GetConfig() const
-{
-    return mConfig;
-}
+const Config &CommissionerImpl::GetConfig() const { return mConfig; }
 
 void CommissionerImpl::Petition(PetitionHandler aHandler, const std::string &aAddr, uint16_t aPort)
 {
@@ -330,30 +324,15 @@ void CommissionerImpl::Disconnect()
     mState = State::kDisabled;
 }
 
-uint16_t CommissionerImpl::GetSessionId() const
-{
-    return mSessionId;
-}
+uint16_t CommissionerImpl::GetSessionId() const { return mSessionId; }
 
-State CommissionerImpl::GetState() const
-{
-    return mState;
-}
+State CommissionerImpl::GetState() const { return mState; }
 
-bool CommissionerImpl::IsActive() const
-{
-    return GetState() == State::kActive;
-}
+bool CommissionerImpl::IsActive() const { return GetState() == State::kActive; }
 
-bool CommissionerImpl::IsCcmMode() const
-{
-    return mConfig.mEnableCcm;
-}
+bool CommissionerImpl::IsCcmMode() const { return mConfig.mEnableCcm; }
 
-const std::string &CommissionerImpl::GetDomainName() const
-{
-    return mConfig.mDomainName;
-}
+const std::string &CommissionerImpl::GetDomainName() const { return mConfig.mDomainName; }
 
 void CommissionerImpl::CancelRequests()
 {

@@ -40,10 +40,7 @@ namespace ot {
 
 namespace commissioner {
 
-static void inline SetBit(ByteArray &aOut, uint8_t aBit)
-{
-    aOut[aOut.size() - 1 - (aBit / 8)] |= 1 << (aBit % 8);
-}
+static void inline SetBit(ByteArray &aOut, uint8_t aBit) { aOut[aOut.size() - 1 - (aBit / 8)] |= 1 << (aBit % 8); }
 
 void ComputeBloomFilter(ByteArray &aOut, const ByteArray &aIn)
 {

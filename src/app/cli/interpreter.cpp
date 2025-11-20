@@ -372,15 +372,9 @@ static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"channelpages", {NetDiagData::kChannelPagesBit, false}},
     {"typelist", {NetDiagData::kTypeListBit, false}}};
 
-template <typename T> static std::string ToHex(T aInteger)
-{
-    return "0x" + utils::Hex(utils::Encode(aInteger));
-};
+template <typename T> static std::string ToHex(T aInteger) { return "0x" + utils::Hex(utils::Encode(aInteger)); };
 
-static inline std::string ToLower(const std::string &aStr)
-{
-    return utils::ToLower(aStr);
-}
+static inline std::string ToLower(const std::string &aStr) { return utils::ToLower(aStr); }
 
 static inline bool CaseInsensitiveEqual(const std::string &aLhs, const std::string &aRhs)
 {
@@ -507,10 +501,7 @@ void Interpreter::CancelCommand()
     }
 }
 
-Interpreter::Expression Interpreter::Read()
-{
-    return ParseExpression(Console::Read());
-}
+Interpreter::Expression Interpreter::Read() { return ParseExpression(Console::Read()); }
 
 Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 {
@@ -521,8 +512,7 @@ Interpreter::Value Interpreter::Eval(const Expression &aExpr)
 
     mCancelCommand = false;
     // empty the pipe prior to starting command execution
-    while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
-        ;
+    while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1);
 
     // make sure first the command is known
     auto evaluator = mEvaluatorMap.find(ToLower(aExpr.front()));
@@ -623,10 +613,7 @@ bool Interpreter::IsMultiNetworkSyntax(const Expression &aExpr)
     return false;
 }
 
-bool Interpreter::IsMultiJob(const Expression &aExpr)
-{
-    return IsFeatureSupported(mMultiJobExecution, aExpr);
-}
+bool Interpreter::IsMultiJob(const Expression &aExpr) { return IsFeatureSupported(mMultiJobExecution, aExpr); }
 
 bool Interpreter::IsInactiveCommissionerAllowed(const Expression &aExpr)
 {
@@ -866,15 +853,9 @@ void Interpreter::PrintNetworkMessage(std::string alias, std::string aMessage, C
     Console::Write("\n");
 }
 
-std::string Interpreter::Value::ToString() const
-{
-    return HasNoError() ? mData : mError.ToString();
-}
+std::string Interpreter::Value::ToString() const { return HasNoError() ? mData : mError.ToString(); }
 
-bool Interpreter::Value::HasNoError() const
-{
-    return mError == ErrorCode::kNone;
-}
+bool Interpreter::Value::HasNoError() const { return mError == ErrorCode::kNone; }
 
 Interpreter::Expression Interpreter::ParseExpression(const std::string &aLiteral)
 {
@@ -1592,8 +1573,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         if (mCancelCommand)
         {
             int cancelData;
-            while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1)
-                ;
+            while (read(mCancelPipe[0], &cancelData, sizeof(cancelData)) != -1);
             ExitNow(value = ERROR_CANCELLED("Scan cancelled by user"));
         }
 
@@ -2901,15 +2881,9 @@ Interpreter::Value::Value(Error aError)
 {
 }
 
-bool Interpreter::Value::operator==(const ErrorCode &aErrorCode) const
-{
-    return mError.GetCode() == aErrorCode;
-}
+bool Interpreter::Value::operator==(const ErrorCode &aErrorCode) const { return mError.GetCode() == aErrorCode; }
 
-bool Interpreter::Value::operator!=(const ErrorCode &aErrorCode) const
-{
-    return !(*this == aErrorCode);
-}
+bool Interpreter::Value::operator!=(const ErrorCode &aErrorCode) const { return !(*this == aErrorCode); }
 
 } // namespace commissioner
 

@@ -244,25 +244,13 @@ inline Error &Error::operator=(Error &&aError) noexcept
     return *this;
 }
 
-inline bool operator==(const Error &aError, const ErrorCode &aErrorCode)
-{
-    return aError.GetCode() == aErrorCode;
-}
+inline bool operator==(const Error &aError, const ErrorCode &aErrorCode) { return aError.GetCode() == aErrorCode; }
 
-inline bool operator!=(const Error &aError, const ErrorCode &aErrorCode)
-{
-    return !(aError == aErrorCode);
-}
+inline bool operator!=(const Error &aError, const ErrorCode &aErrorCode) { return !(aError == aErrorCode); }
 
-inline bool operator==(const ErrorCode &aErrorCode, const Error &aError)
-{
-    return aError == aErrorCode;
-}
+inline bool operator==(const ErrorCode &aErrorCode, const Error &aError) { return aError == aErrorCode; }
 
-inline bool operator!=(const ErrorCode &aErrorCode, const Error &aError)
-{
-    return !(aErrorCode == aError);
-}
+inline bool operator!=(const ErrorCode &aErrorCode, const Error &aError) { return !(aErrorCode == aError); }
 
 std::string ErrorCodeToString(ErrorCode code);
 
@@ -271,15 +259,9 @@ std::string ErrorCodeToString(ErrorCode code);
  *
  * See https://google.github.io/googletest/advanced.html#teaching-googletest-how-to-print-your-values
  */
-inline void PrintTo(const Error &aError, std::ostream *os)
-{
-    *os << aError.ToString();
-}
+inline void PrintTo(const Error &aError, std::ostream *os) { *os << aError.ToString(); }
 
-inline void PrintTo(ErrorCode aErrorCode, std::ostream *os)
-{
-    *os << ErrorCodeToString(aErrorCode);
-}
+inline void PrintTo(ErrorCode aErrorCode, std::ostream *os) { *os << ErrorCodeToString(aErrorCode); }
 
 } // namespace commissioner
 

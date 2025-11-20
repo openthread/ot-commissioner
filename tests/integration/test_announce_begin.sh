@@ -29,7 +29,8 @@
 
 [ -z "${TEST_ROOT_DIR}" ] && . "$(dirname "$0")"/common.sh
 
-test_announce_begin() {
+test_announce_begin()
+{
     start_daemon
     form_network "${PSKC}"
 

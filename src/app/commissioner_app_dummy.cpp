@@ -75,10 +75,7 @@ bool CommissionerApp::OnJoinerFinalize(const ByteArray   &aJoinerId,
     return false;
 }
 
-void CommissionerApp::OnKeepAliveResponse(Error aError)
-{
-    UNUSED(aError);
-}
+void CommissionerApp::OnKeepAliveResponse(Error aError) { UNUSED(aError); }
 
 void CommissionerApp::OnPanIdConflict(const std::string &aPeerAddr, const ChannelMask &aChannelMask, uint16_t aPanId)
 {
@@ -96,9 +93,7 @@ void CommissionerApp::OnEnergyReport(const std::string &aPeerAddr,
     UNUSED(aEnergyList);
 }
 
-void CommissionerApp::OnDatasetChanged()
-{
-}
+void CommissionerApp::OnDatasetChanged() {}
 
 void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg)
 {
@@ -123,23 +118,13 @@ Error CommissionerApp::Connect(const std::string &aBorderAgentAddr, uint16_t aBo
     return Error{};
 }
 
-void CommissionerApp::Stop()
-{
-}
+void CommissionerApp::Stop() {}
 
-void CommissionerApp::CancelRequests()
-{
-}
+void CommissionerApp::CancelRequests() {}
 
-bool CommissionerApp::IsActive() const
-{
-    return false;
-}
+bool CommissionerApp::IsActive() const { return false; }
 
-State CommissionerApp::GetState() const
-{
-    return State::kDisabled;
-}
+State CommissionerApp::GetState() const { return State::kDisabled; }
 
 Error CommissionerApp::SaveNetworkData(const std::string &aFilename)
 {
@@ -147,10 +132,7 @@ Error CommissionerApp::SaveNetworkData(const std::string &aFilename)
     return Error{};
 };
 
-Error CommissionerApp::SyncNetworkData(void)
-{
-    return Error{};
-}
+Error CommissionerApp::SyncNetworkData(void) { return Error{}; }
 
 Error CommissionerApp::GetSessionId(uint16_t &aSessionId) const
 {

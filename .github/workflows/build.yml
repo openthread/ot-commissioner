@@ -41,13 +41,17 @@ jobs:
         if: "github.ref != 'refs/heads/main'"
 
   pretty:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
       - name: Bootstrap
         run: |
           sudo apt update
           script/bootstrap.sh
+          sudo bash script/install-llvm.sh
+          python3 -m pip install yapf==0.43.0
+          sudo snap install shfmt
+          npm install prettier@2.0.4
       - name: Check
         run: |
           script/make-pretty check
