@@ -131,10 +131,7 @@ Error Address::Set(uint16_t aRloc16)
     return Error{};
 }
 
-const ByteArray &Address::GetRaw() const
-{
-    return mBytes;
-}
+const ByteArray &Address::GetRaw() const { return mBytes; }
 
 uint16_t Address::GetRloc16() const
 {
@@ -182,10 +179,7 @@ Address Address::FromString(const std::string &aAddr)
     return ret;
 }
 
-bool Address::IsMulticast() const
-{
-    return IsIpv6() && mBytes[0] == kMulticastPrefix;
-}
+bool Address::IsMulticast() const { return IsIpv6() && mBytes[0] == kMulticastPrefix; }
 
 } // namespace commissioner
 
