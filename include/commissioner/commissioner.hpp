@@ -889,7 +889,7 @@ public:
      * @param[in]      aPeriod       A time period between successive MLE Announce transmissions;
      *                               in milliseconds;
      * @param[in]      aDstAddr      The destination address of the MGMT_ANNOUNCE_BEGIN.ntf message;
-     *                               Can be both IPv6 unicast and multicast address.
+     *                               Can be either IPv6 unicast, IPv6 multicast, RLOC16 or ALOC16 string.
      *
      * @note If @p aDstAddr is a multicast address, this method won't wait for the ACK and it doesn't
      *       indicate that the message has been successfully handled by the Thread device even if the
@@ -913,7 +913,7 @@ public:
      * @param[in] aPeriod       A time period between successive MLE Announce transmissions;
      *                          in milliseconds;
      * @param[in] aDstAddr      The destination address of the MGMT_ANNOUNCE_BEGIN.ntf message;
-     *                          Can be both IPv6 unicast and multicast address.
+     *                          Can be either IPv6 unicast, IPv6 multicast, RLOC16 or ALOC16 string.
      *
      * @return Error::kNone: if @p aDstAddr is a multicast address, the message has been successfully
      *         sent; if @p aDstAddr is a unicast address, the message & ACK has been successfully
@@ -936,7 +936,7 @@ public:
      *                               performing an IEEE 802.15.4 Active Scan.
      * @param[in]      aPanId        A PAN ID used to check for conflicts.
      * @param[in]      aDstAddr      The destination address of the MGMT_ANNOUNCE_BEGIN.ntf message;
-     *                               Can be both IPv6 unicast and multicast address.
+     *                               Can be either IPv6 unicast, IPv6 multicast, RLOC16 or ALOC16 string.
      *
      * @note If @p aDstAddr is a multicast address, this method won't wait for the ACK and it doesn't
      *       indicate that the message has been successfully handled by the Thread device even if the
@@ -962,7 +962,7 @@ public:
      *                          performing an IEEE 802.15.4 Active Scan.
      * @param[in] aPanId        A PAN ID used to check for conflicts.
      * @param[in] aDstAddr      The destination address of the MGMT_PANID_QUERY.qry message;
-     *                          Can be both IPv6 unicast and multicast address.
+     *                          Can be either IPv6 unicast, IPv6 multicast, RLOC16 or ALOC16 string.
      *
      * @return Error::kNone: if @p aDstAddr is a multicast address, the message has been successfully
      *         sent; if @p aDstAddr is a unicast address, the message & ACK has been successfully
@@ -990,7 +990,7 @@ public:
      * @param[in]      aScanDuration  The IEEE 802.15.4 ScanDuration to use when performing an IEEE
      *                                802.15.4 ED Scan; In milliseconds.
      * @param[in]      aDstAddr       The destination address of the MGMT_ED_SCAN.qry message;
-     *                                Can be both IPv6 unicast and multicast address.
+     *                                Can be either IPv6 unicast, IPv6 multicast, RLOC16 or ALOC16 string.
      *
      * @note If @p aDstAddr is a multicast address, this method won't wait for the ACK and it doesn't
      *       indicate that the message has been successfully handled by the Thread device even if the
@@ -1021,7 +1021,7 @@ public:
      * @param[in] aScanDuration  The IEEE 802.15.4 ScanDuration to use when performing an IEEE
      *                           802.15.4 ED Scan; In milliseconds.
      * @param[in] aDstAddr       The destination address of the MGMT_ED_SCAN.qry message;
-     *                           Can be both IPv6 unicast and multicast address.
+     *                           Can be either IPv6 unicast, IPv6 multicast, RLOC16 or ALOC16 string.
      *
      * @return Error::kNone: if @p aDstAddr is a multicast address, the message has been successfully
      *         sent; if @p aDstAddr is a unicast address, the message & ACK has been successfully

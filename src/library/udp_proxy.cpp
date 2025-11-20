@@ -129,7 +129,14 @@ void ProxyClient::SendRequest(const coap::Request  &aRequest,
                               const Address        &aPeerAddr,
                               uint16_t              aPeerPort)
 {
-    VerifyOrDie(aPeerAddr.IsValid() && aPeerAddr.IsIpv6());
+    VerifyOrDie(aPeerAddr.IsValid() && (aPeerAddr.IsIpv6() || aPeerAddr.IsRloc16()));
+
+    if (aPeerAddr.IsRloc16())
+    {
+        SendRequest(aRequest, aHandler, aPeerAddr.GetRloc16(), aPeerPort);
+        return;
+    }
+
     mEndpoint.SetPeerAddr(aPeerAddr);
     mEndpoint.SetPeerPort(aPeerPort);
 
