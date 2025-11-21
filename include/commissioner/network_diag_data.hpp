@@ -137,6 +137,7 @@ struct Connectivity
     static constexpr uint16_t kRxOffChildBufferSizeBit    = 1 << 0;
     static constexpr uint16_t kRxOffChildDatagramCountBit = 1 << 1;
 
+    uint16_t mRxOffChildBufferSize    = 0;
     uint8_t  mPresentFlags            = 0;
     int8_t   mParentPriority          = 0;
     uint8_t  mLinkQuality1            = 0;
@@ -145,8 +146,76 @@ struct Connectivity
     uint8_t  mLeaderCost              = 0;
     uint8_t  mIdSequence              = 0;
     uint8_t  mActiveRouters           = 0;
-    uint16_t mRxOffChildBufferSize    = 0;
     uint8_t  mRxOffChildDatagramCount = 0;
+};
+
+/**
+ * @brief Child TLV Data
+ */
+struct Child
+{
+    ByteArray mExtAddress;
+    uint32_t  mTimeout             = 0;
+    uint32_t  mAge                 = 0;
+    uint32_t  mConnectionTime      = 0;
+    uint32_t  mCslTimeout          = 0;
+    uint16_t  mRloc16              = 0;
+    uint16_t  mSupervisionInterval = 0;
+    uint16_t  mThreadVersion       = 0;
+    uint16_t  mFrameErrorRate      = 0;
+    uint16_t  mMessageErrorRate    = 0;
+    uint16_t  mQueuedMessageCount  = 0;
+    uint16_t  mCslPeriod           = 0;
+    uint8_t   mLinkMargin          = 0;
+    uint8_t   mCslChannel          = 0;
+    int8_t    mAverageRssi         = 127;
+    int8_t    mLastRssi            = 127;
+    bool      mIsRxOnWhenIdle      = false;
+    bool      mIsDeviceTypeMtd     = false;
+    bool      mHasNetworkData      = false;
+    bool      mSupportsCsl         = false;
+    bool      mSupportsErrorRates  = false;
+};
+
+/**
+ * @brief Router Neighbor TLV Data
+ *
+ */
+struct RouterNeighbor
+{
+    ByteArray mExtAddress;
+    uint32_t  mConnectionTime     = 0;
+    uint16_t  mRloc16             = 0;
+    uint16_t  mThreadVersion      = 0;
+    uint16_t  mFrameErrorRate     = 0;
+    uint16_t  mMessageErrorRate   = 0;
+    uint8_t   mLinkMargin         = 0;
+    int8_t    mAverageRssi        = 127;
+    int8_t    mLastRssi           = 127;
+    bool      mSupportsErrorRates = false;
+};
+
+/**
+ * @brief MLE Counters TLV Data
+ *
+ */
+struct MleCounters
+{
+    uint64_t mTotalTrackingTime                    = 0;
+    uint64_t mRadioDisabledTime                    = 0;
+    uint64_t mDetachedRoleTime                     = 0;
+    uint64_t mChildRoleTime                        = 0;
+    uint64_t mRouterRoleTime                       = 0;
+    uint64_t mLeaderRoleTime                       = 0;
+    uint16_t mRadioDisabledCounter                 = 0;
+    uint16_t mDetachedRoleCounter                  = 0;
+    uint16_t mChildRoleCounter                     = 0;
+    uint16_t mRouterRoleCounter                    = 0;
+    uint16_t mLeaderRoleCounter                    = 0;
+    uint16_t mAttachAttemptsCounter                = 0;
+    uint16_t mPartitionIdChangesCounter            = 0;
+    uint16_t mBetterPartitionAttachAttemptsCounter = 0;
+    uint16_t mNewParentCounter                     = 0;
 };
 
 /**
@@ -158,46 +227,68 @@ struct Connectivity
  */
 struct NetDiagData
 {
-    ModeData                       mMode;
     ByteArray                      mEui64;
     ByteArray                      mExtMacAddr;
     ByteArray                      mChannelPages;
     ByteArray                      mTypeList;
-    uint8_t                        mBatteryLevel  = 0;
-    uint16_t                       mMacAddr       = 0;
-    uint16_t                       mSupplyVoltage = 0;
-    uint32_t                       mTimeout       = 0;
-    Route64                        mRoute64;
-    LeaderData                     mLeaderData;
-    MacCounters                    mMacCounters;
+    uint32_t                       mMaxChildTimeout = 0;
+    uint32_t                       mTimeout         = 0;
+    uint16_t                       mMacAddr         = 0;
+    uint16_t                       mSupplyVoltage   = 0;
+    uint16_t                       mVersion         = 0;
+    uint8_t                        mBatteryLevel    = 0;
+    std::string                    mVendorName;
+    std::string                    mVendorModel;
+    std::string                    mVendorSWVersion;
+    std::string                    mThreadStackVersion;
+    std::string                    mVendorAppURL;
     std::vector<std::string>       mAddrs;
     std::vector<ChildTableEntry>   mChildTable;
     std::vector<ChildIpv6AddrInfo> mChildIpv6AddrsInfoList;
+    std::vector<Child>             mChild;
+    std::vector<RouterNeighbor>    mRouterNeighbor;
+    Route64                        mRoute64;
+    LeaderData                     mLeaderData;
+    MacCounters                    mMacCounters;
+    ModeData                       mMode;
     NetworkData                    mNetworkData;
     Connectivity                   mConnectivity;
+    MleCounters                    mMleCounters;
+    ChannelMask                    mNonPreferredChannelsMask;
 
     /**
      * Indicates which fields are included in the object.
      */
     uint64_t mPresentFlags = 0;
 
-    static constexpr uint64_t kExtMacAddrBit             = (1ull << 0);
-    static constexpr uint64_t kMacAddrBit                = (1ull << 1);
-    static constexpr uint64_t kModeBit                   = (1ull << 2);
-    static constexpr uint64_t kRoute64Bit                = (1ull << 3);
-    static constexpr uint64_t kLeaderDataBit             = (1ull << 4);
-    static constexpr uint64_t kAddrsBit                  = (1ull << 5);
-    static constexpr uint64_t kChildTableBit             = (1ull << 6);
-    static constexpr uint64_t kEui64Bit                  = (1ull << 7);
-    static constexpr uint64_t kMacCountersBit            = (1ull << 8);
-    static constexpr uint64_t kChildIpv6AddrsInfoListBit = (1ull << 9);
-    static constexpr uint64_t kNetworkDataBit            = (1ull << 10);
-    static constexpr uint64_t kTimeoutBit                = (1ull << 11);
-    static constexpr uint64_t kConnectivityBit           = (1ull << 12);
-    static constexpr uint64_t kBatteryLevelBit           = (1ull << 13);
-    static constexpr uint64_t kSupplyVoltageBit          = (1ull << 14);
-    static constexpr uint64_t kChannelPagesBit           = (1ull << 15);
-    static constexpr uint64_t kTypeListBit               = (1ull << 16);
+    static constexpr uint64_t kExtMacAddrBit               = (1ull << 0);
+    static constexpr uint64_t kMacAddrBit                  = (1ull << 1);
+    static constexpr uint64_t kModeBit                     = (1ull << 2);
+    static constexpr uint64_t kRoute64Bit                  = (1ull << 3);
+    static constexpr uint64_t kLeaderDataBit               = (1ull << 4);
+    static constexpr uint64_t kAddrsBit                    = (1ull << 5);
+    static constexpr uint64_t kChildTableBit               = (1ull << 6);
+    static constexpr uint64_t kEui64Bit                    = (1ull << 7);
+    static constexpr uint64_t kMacCountersBit              = (1ull << 8);
+    static constexpr uint64_t kChildIpv6AddrsInfoListBit   = (1ull << 9);
+    static constexpr uint64_t kNetworkDataBit              = (1ull << 10);
+    static constexpr uint64_t kTimeoutBit                  = (1ull << 11);
+    static constexpr uint64_t kConnectivityBit             = (1ull << 12);
+    static constexpr uint64_t kBatteryLevelBit             = (1ull << 13);
+    static constexpr uint64_t kSupplyVoltageBit            = (1ull << 14);
+    static constexpr uint64_t kChannelPagesBit             = (1ull << 15);
+    static constexpr uint64_t kTypeListBit                 = (1ull << 16);
+    static constexpr uint64_t kMaxChildTimeoutBit          = (1ull << 17);
+    static constexpr uint64_t kVersionBit                  = (1ull << 18);
+    static constexpr uint64_t kVendorNameBit               = (1ull << 19);
+    static constexpr uint64_t kVendorModelBit              = (1ull << 20);
+    static constexpr uint64_t kVendorSWVersionBit          = (1ull << 21);
+    static constexpr uint64_t kThreadStackVersionBit       = (1ull << 22);
+    static constexpr uint64_t kChildBit                    = (1ull << 23);
+    static constexpr uint64_t kRouterNeighborBit           = (1ull << 24);
+    static constexpr uint64_t kMleCountersBit              = (1ull << 25);
+    static constexpr uint64_t kVendorAppURLBit             = (1ull << 26);
+    static constexpr uint64_t kNonPreferredChannelsMaskBit = (1ull << 27);
 };
 
 } // namespace commissioner

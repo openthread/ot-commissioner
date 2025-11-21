@@ -2150,6 +2150,61 @@ ByteArray CommissionerImpl::GetNetDiagTlvTypes(uint64_t aDiagDataFlags)
         EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagTypeList);
     }
 
+    if (aDiagDataFlags & NetDiagData::kMaxChildTimeoutBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMaxChildTimeout);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVersionBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVersion);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVendorNameBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorName);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVendorModelBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorModel);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVendorSWVersionBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorSWVersion);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kThreadStackVersionBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagThreadStackVersion);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kChildBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagChild);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kRouterNeighborBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagRouterNeighbor);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kMleCountersBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagMleCounters);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kVendorAppURLBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagVendorAppURL);
+    }
+
+    if (aDiagDataFlags & NetDiagData::kNonPreferredChannelsMaskBit)
+    {
+        EncodeTlvType(tlvTypes, tlv::Type::kNetworkDiagNonPreferredChannelsMask);
+    }
+
     return tlvTypes;
 }
 
@@ -2286,6 +2341,89 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         const ByteArray &value = typeList->GetValue();
         diagData.mTypeList     = value;
         diagData.mPresentFlags |= NetDiagData::kTypeListBit;
+    }
+
+    if (auto maxChildTimeout = tlvSet[tlv::Type::kNetworkDiagMaxChildTimeout])
+    {
+        uint32_t value;
+        value                     = utils::Decode<uint32_t>(maxChildTimeout->GetValue());
+        diagData.mMaxChildTimeout = value;
+        diagData.mPresentFlags |= NetDiagData::kMaxChildTimeoutBit;
+    }
+
+    if (auto version = tlvSet[tlv::Type::kNetworkDiagVersion])
+    {
+        uint16_t value;
+        value             = utils::Decode<uint16_t>(version->GetValue());
+        diagData.mVersion = value;
+        diagData.mPresentFlags |= NetDiagData::kVersionBit;
+    }
+
+    if (auto vendorName = tlvSet[tlv::Type::kNetworkDiagVendorName])
+    {
+        diagData.mVendorName = vendorName->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorNameBit;
+    }
+
+    if (auto vendorModel = tlvSet[tlv::Type::kNetworkDiagVendorModel])
+    {
+        diagData.mVendorModel = vendorModel->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorModelBit;
+    }
+
+    if (auto vendorSWVersion = tlvSet[tlv::Type::kNetworkDiagVendorSWVersion])
+    {
+        diagData.mVendorSWVersion = vendorSWVersion->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorSWVersionBit;
+    }
+
+    if (auto threadStackVersion = tlvSet[tlv::Type::kNetworkDiagThreadStackVersion])
+    {
+        diagData.mThreadStackVersion = threadStackVersion->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kThreadStackVersionBit;
+    }
+
+    SuccessOrExit(error =
+                      tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChild, tlv::Scope::kNetworkDiag));
+
+    if (tlvList.size() > 0)
+    {
+        for (const auto &tlv : tlvList)
+        {
+            SuccessOrExit(error = DecodeChild(diagData.mChild, tlv.GetValue()));
+        }
+        diagData.mPresentFlags |= NetDiagData::kChildBit;
+    }
+
+    SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagRouterNeighbor,
+                                                tlv::Scope::kNetworkDiag));
+
+    if (tlvList.size() > 0)
+    {
+        for (const auto &tlv : tlvList)
+        {
+            SuccessOrExit(error = DecodeRouterNeighbor(diagData.mRouterNeighbor, tlv.GetValue()));
+        }
+        diagData.mPresentFlags |= NetDiagData::kRouterNeighborBit;
+    }
+
+    if (auto mleCounters = tlvSet[tlv::Type::kNetworkDiagMleCounters])
+    {
+        SuccessOrExit(error = internal::DecodeMleCounters(diagData.mMleCounters, mleCounters->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kMleCountersBit;
+    }
+
+    if (auto vendorAppURL = tlvSet[tlv::Type::kNetworkDiagVendorAppURL])
+    {
+        diagData.mVendorAppURL = vendorAppURL->GetValueAsString();
+        diagData.mPresentFlags |= NetDiagData::kVendorAppURLBit;
+    }
+
+    if (auto channelsMask = tlvSet[tlv::Type::kNetworkDiagNonPreferredChannelsMask])
+    {
+        SuccessOrExit(error = internal::DecodeNonPreferredChannelsMask(diagData.mNonPreferredChannelsMask,
+                                                                       channelsMask->GetValue()));
+        diagData.mPresentFlags |= NetDiagData::kNonPreferredChannelsMaskBit;
     }
 
     aNetDiagData = diagData;
@@ -2677,6 +2815,131 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     {
         LOG_WARN(LOG_REGION_MESHDIAG, "malformed connectivity tlv, {} trailing bytes", std::distance(cur, end));
     }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
+{
+    Error   error;
+    Child   childInfo;
+    uint8_t flags;
+
+    VerifyOrExit(aBuf.size() >= kChildBytes, error = {ErrorCode::kBadFormat, "invalid child tlv length"});
+
+    // Flags (1 byte at offset 0)
+    flags                         = aBuf[0];
+    childInfo.mIsRxOnWhenIdle     = (flags & 0x80) != 0;
+    childInfo.mIsDeviceTypeMtd    = (flags & 0x40) != 0;
+    childInfo.mHasNetworkData     = (flags & 0x20) != 0;
+    childInfo.mSupportsCsl        = (flags & 0x10) != 0;
+    childInfo.mSupportsErrorRates = (flags & 0x08) != 0;
+
+    // Decode all other fields into childInfo
+    childInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + 1, 2);
+    childInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
+    childInfo.mThreadVersion       = utils::Decode<uint16_t>(aBuf.data() + 11, 2);
+    childInfo.mTimeout             = utils::Decode<uint32_t>(aBuf.data() + 13, 4);
+    childInfo.mAge                 = utils::Decode<uint32_t>(aBuf.data() + 17, 4);
+    childInfo.mConnectionTime      = utils::Decode<uint32_t>(aBuf.data() + 21, 4);
+    childInfo.mSupervisionInterval = utils::Decode<uint16_t>(aBuf.data() + 25, 2);
+    childInfo.mLinkMargin          = aBuf[27];
+    childInfo.mAverageRssi         = static_cast<int8_t>(aBuf[28]);
+    childInfo.mLastRssi            = static_cast<int8_t>(aBuf[29]);
+    childInfo.mFrameErrorRate      = utils::Decode<uint16_t>(aBuf.data() + 30, 2);
+    childInfo.mMessageErrorRate    = utils::Decode<uint16_t>(aBuf.data() + 32, 2);
+    childInfo.mQueuedMessageCount  = utils::Decode<uint16_t>(aBuf.data() + 34, 2);
+    childInfo.mCslPeriod           = utils::Decode<uint16_t>(aBuf.data() + 36, 2);
+    childInfo.mCslTimeout          = utils::Decode<uint32_t>(aBuf.data() + 38, 4);
+    childInfo.mCslChannel          = aBuf[42];
+
+    aChild.emplace_back(childInfo);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbor, const ByteArray &aBuf)
+{
+    Error          error;
+    RouterNeighbor neighborInfo;
+    uint8_t        flags;
+
+    VerifyOrExit(aBuf.size() >= kRouterNeighborBytes,
+                 error = {ErrorCode::kBadFormat, "invalid router neighbor tlv length"});
+
+    flags                            = aBuf[0];
+    neighborInfo.mSupportsErrorRates = (flags & 0x80) != 0;
+
+    neighborInfo.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + 1, 2);
+    neighborInfo.mExtAddress.assign(aBuf.begin() + 3, aBuf.begin() + 11);
+    neighborInfo.mThreadVersion    = utils::Decode<uint16_t>(aBuf.data() + 11, 2);
+    neighborInfo.mConnectionTime   = utils::Decode<uint32_t>(aBuf.data() + 13, 4);
+    neighborInfo.mLinkMargin       = aBuf[17];
+    neighborInfo.mAverageRssi      = static_cast<int8_t>(aBuf[18]);
+    neighborInfo.mLastRssi         = static_cast<int8_t>(aBuf[19]);
+    neighborInfo.mFrameErrorRate   = utils::Decode<uint16_t>(aBuf.data() + 20, 2);
+    neighborInfo.mMessageErrorRate = utils::Decode<uint16_t>(aBuf.data() + 22, 2);
+
+    aRouterNeighbor.push_back(neighborInfo);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
+{
+    Error error;
+
+    VerifyOrExit(aBuf.size() >= kMleCountersBytes, error = {ErrorCode::kBadFormat, "invalid mle counters tlv length"});
+
+    aCounters.mRadioDisabledCounter                 = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
+    aCounters.mDetachedRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 2, 2);
+    aCounters.mChildRoleCounter                     = utils::Decode<uint16_t>(aBuf.data() + 4, 2);
+    aCounters.mRouterRoleCounter                    = utils::Decode<uint16_t>(aBuf.data() + 6, 2);
+    aCounters.mLeaderRoleCounter                    = utils::Decode<uint16_t>(aBuf.data() + 8, 2);
+    aCounters.mAttachAttemptsCounter                = utils::Decode<uint16_t>(aBuf.data() + 10, 2);
+    aCounters.mPartitionIdChangesCounter            = utils::Decode<uint16_t>(aBuf.data() + 12, 2);
+    aCounters.mBetterPartitionAttachAttemptsCounter = utils::Decode<uint16_t>(aBuf.data() + 14, 2);
+    aCounters.mNewParentCounter                     = utils::Decode<uint16_t>(aBuf.data() + 16, 2);
+    aCounters.mTotalTrackingTime                    = utils::Decode<uint64_t>(aBuf.data() + 18, 8);
+    aCounters.mRadioDisabledTime                    = utils::Decode<uint64_t>(aBuf.data() + 26, 8);
+    aCounters.mDetachedRoleTime                     = utils::Decode<uint64_t>(aBuf.data() + 34, 8);
+    aCounters.mChildRoleTime                        = utils::Decode<uint64_t>(aBuf.data() + 42, 8);
+    aCounters.mRouterRoleTime                       = utils::Decode<uint64_t>(aBuf.data() + 50, 8);
+    aCounters.mLeaderRoleTime                       = utils::Decode<uint64_t>(aBuf.data() + 58, 8);
+
+exit:
+    return error;
+}
+
+Error internal::DecodeNonPreferredChannelsMask(ChannelMask &aChannelMask, const ByteArray &aBuf)
+{
+    Error       error;
+    ChannelMask channelMask;
+    size_t      offset = 0;
+    size_t      length = aBuf.size();
+
+    while (offset < length)
+    {
+        ChannelMaskEntry entry;
+        uint8_t          entryLength;
+        VerifyOrExit(offset + 2 <= length, error = ERROR_BAD_FORMAT("premature end of Channel Mask Entry"));
+
+        entry.mPage = aBuf[offset++];
+        entryLength = aBuf[offset++];
+
+        VerifyOrExit(offset + entryLength <= length, error = ERROR_BAD_FORMAT("premature end of Channel Mask Entry"));
+        entry.mMasks = {aBuf.begin() + offset, aBuf.begin() + offset + entryLength};
+        channelMask.emplace_back(entry);
+
+        offset += entryLength;
+    }
+
+    VerifyOrExit(offset == length, error = ERROR_BAD_FORMAT("trailing bytes in Channel Mask TLV"));
+
+    aChannelMask = channelMask;
 
 exit:
     return error;

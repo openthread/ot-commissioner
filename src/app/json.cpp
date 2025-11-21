@@ -769,39 +769,6 @@ std::string EnergyReportMapToJson(const EnergyReportMap &aEnergyReportMap)
     return json.dump(JSON_INDENT_DEFAULT);
 }
 
-static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
-{
-#define SET_IF_PRESENT(name)                                    \
-    if (aNetDiagData.mPresentFlags & NetDiagData::k##name##Bit) \
-    {                                                           \
-        aJson[#name] = aNetDiagData.m##name;                    \
-    };
-
-    SET_IF_PRESENT(ExtMacAddr);
-    SET_IF_PRESENT(MacAddr);
-    SET_IF_PRESENT(Timeout);
-    SET_IF_PRESENT(BatteryLevel);
-    SET_IF_PRESENT(SupplyVoltage);
-    SET_IF_PRESENT(ChannelPages);
-    SET_IF_PRESENT(TypeList);
-#undef SET_IF_PRESENT
-    if (aNetDiagData.mPresentFlags & NetDiagData::kMacCountersBit)
-    {
-        aJson["MacCounters"] = MacCountersToJson(aNetDiagData.mMacCounters);
-    }
-    if (aNetDiagData.mPresentFlags & NetDiagData::kConnectivityBit)
-    {
-        aJson["Connectivity"] = ConnectivityToJson(aNetDiagData.mConnectivity);
-    }
-}
-
-std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
-{
-    Json json;
-    to_json(json, aNetDiagData);
-    return json.dump(JSON_INDENT_DEFAULT);
-}
-
 static void to_json(Json &aJson, const MacCounters &aMacCounters)
 {
 #define SET(name) aJson[#name] = aMacCounters.m##name;
@@ -815,13 +782,6 @@ static void to_json(Json &aJson, const MacCounters &aMacCounters)
     SET(IfOutBroadcastPkts);
     SET(IfOutDiscards);
 #undef SET
-}
-
-std::string MacCountersToJson(const MacCounters &aMacCounters)
-{
-    Json json;
-    to_json(json, aMacCounters);
-    return json.dump(JSON_INDENT_DEFAULT);
 }
 
 static void to_json(Json &aJson, const Connectivity &aConnectivity)
@@ -847,10 +807,105 @@ static void to_json(Json &aJson, const Connectivity &aConnectivity)
     }
 }
 
-std::string ConnectivityToJson(const Connectivity &aConnectivity)
+static void to_json(Json &aJson, const Child &aChild)
+{
+#define SET(name) aJson[#name] = aChild.m##name;
+    SET(IsRxOnWhenIdle);
+    SET(IsDeviceTypeMtd);
+    SET(HasNetworkData);
+    SET(SupportsCsl);
+    SET(SupportsErrorRates);
+    SET(Rloc16);
+    aJson["ExtAddress"] = utils::Hex(aChild.mExtAddress);
+    SET(ThreadVersion);
+    SET(Timeout);
+    SET(Age);
+    SET(ConnectionTime);
+    SET(SupervisionInterval);
+    SET(LinkMargin);
+    SET(AverageRssi);
+    SET(LastRssi);
+    SET(FrameErrorRate);
+    SET(MessageErrorRate);
+    SET(QueuedMessageCount);
+    SET(CslPeriod);
+    SET(CslTimeout);
+    SET(CslChannel);
+#undef SET
+}
+
+static void to_json(Json &aJson, const RouterNeighbor &aRouterNeighbor)
+{
+#define SET(name) aJson[#name] = aRouterNeighbor.m##name;
+    SET(SupportsErrorRates);
+    SET(Rloc16);
+    aJson["ExtAddress"] = utils::Hex(aRouterNeighbor.mExtAddress);
+    SET(ThreadVersion);
+    SET(ConnectionTime);
+    SET(LinkMargin);
+    SET(AverageRssi);
+    SET(LastRssi);
+    SET(FrameErrorRate);
+    SET(MessageErrorRate);
+#undef SET
+}
+
+static void to_json(Json &aJson, const MleCounters &aMleCounters)
+{
+#define SET(name) aJson[#name] = aMleCounters.m##name;
+    SET(RadioDisabledCounter);
+    SET(DetachedRoleCounter);
+    SET(ChildRoleCounter);
+    SET(RouterRoleCounter);
+    SET(LeaderRoleCounter);
+    SET(AttachAttemptsCounter);
+    SET(PartitionIdChangesCounter);
+    SET(BetterPartitionAttachAttemptsCounter);
+    SET(NewParentCounter);
+    SET(TotalTrackingTime);
+    SET(RadioDisabledTime);
+    SET(DetachedRoleTime);
+    SET(ChildRoleTime);
+    SET(RouterRoleTime);
+    SET(LeaderRoleTime);
+#undef SET
+}
+
+static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
+{
+#define SET_IF_PRESENT(name)                                    \
+    if (aNetDiagData.mPresentFlags & NetDiagData::k##name##Bit) \
+    {                                                           \
+        aJson[#name] = aNetDiagData.m##name;                    \
+    };
+
+    SET_IF_PRESENT(ExtMacAddr);
+    SET_IF_PRESENT(MacAddr);
+    SET_IF_PRESENT(Timeout);
+    SET_IF_PRESENT(BatteryLevel);
+    SET_IF_PRESENT(SupplyVoltage);
+    SET_IF_PRESENT(ChannelPages);
+    SET_IF_PRESENT(TypeList);
+    SET_IF_PRESENT(MaxChildTimeout);
+    SET_IF_PRESENT(Version);
+    SET_IF_PRESENT(VendorName);
+    SET_IF_PRESENT(VendorModel);
+    SET_IF_PRESENT(VendorSWVersion);
+    SET_IF_PRESENT(ThreadStackVersion);
+    SET_IF_PRESENT(MacCounters);
+    SET_IF_PRESENT(Connectivity);
+    SET_IF_PRESENT(Child);
+    SET_IF_PRESENT(RouterNeighbor);
+    SET_IF_PRESENT(MleCounters);
+    SET_IF_PRESENT(VendorAppURL);
+    SET_IF_PRESENT(NonPreferredChannelsMask);
+#undef SET_IF_PRESENT
+}
+
+std::string NetDiagDataToJson(const NetDiagData &aNetDiagData)
 {
     Json json;
-    to_json(json, aConnectivity);
+    to_json(json, aNetDiagData);
     return json.dump(JSON_INDENT_DEFAULT);
 }
 

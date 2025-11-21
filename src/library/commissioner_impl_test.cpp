@@ -157,7 +157,12 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
         "c31ff45feff4e75257420f1cbd46f5fd1100220000000034e5d9e28d1952c0077d030e0007fc0109e400108400109c000003140040fd27"
         "fd30e5ce0001070212400504e400f1000b0e8001010d09e4000a000500000e100b0881025cf40d029c0003130060fd6b51760904ffff00"
         "00000001039c00e00b1982015d0d149c00fd27fd30e5ce00018e250585edd6f1b0e5ec080b090284000b028dbc08010003040000012C04"
-        "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A0";
+        "0A0105123456789ABCDEF00E01640F021388110401020304120505060708A013040000025818020005190A56656E646F724E616D651A0B"
+        "56656E646F724D6F64656C1B0F56656E646F72535756657273696F6E1C12546872656164537461636B56657273696F6E1D2BA812340102"
+        "0304050607080004000000F00000000A0000100000781AC4C0000A00050003000000000000001F18805678112233445566778800030000"
+        "ABCD15C4C0001A000F2242000A000B000C000D000E000F0010001100120000000000000013000000000000001400000000000000150000"
+        "00000000001600000000000000170000000000000018231768747470733a2f2f6578616d706c652e636f6d2f617070240A000400078000"
+        "01020001";
 
     error = utils::Hex(buf, tlvsHexString);
     EXPECT_EQ(error, ErrorCode::kNone);
@@ -168,6 +173,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     ByteArray extMacAddrBytes;
     uint16_t  macAddr = 0xc800;
     error             = utils::Hex(extMacAddrBytes, "6ac6c2de12b212df");
+    EXPECT_EQ(error, ErrorCode::kNone);
 
     ByteArray channelPagesBytes;
     error = utils::Hex(channelPagesBytes, "01020304");
@@ -177,19 +183,32 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     error = utils::Hex(typeListBytes, "05060708A0");
     EXPECT_EQ(error, ErrorCode::kNone);
 
-    uint8_t  batteryLevel  = 0x64;
-    uint16_t supplyVoltage = 0x1388;
-    uint32_t timeout       = 0x12C;
+    uint8_t     batteryLevel       = 0x64;
+    uint16_t    supplyVoltage      = 0x1388;
+    uint16_t    version            = 0x05;
+    uint32_t    timeout            = 0x12C;
+    uint32_t    maxChildTimeout    = 0x258;
+    std::string vendorName         = "VendorName";
+    std::string vendorModel        = "VendorModel";
+    std::string vendorSWVersion    = "VendorSWVersion";
+    std::string threadStackVersion = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 130687);
+    EXPECT_EQ(diagData.mPresentFlags, 268435071);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
     EXPECT_EQ(diagData.mBatteryLevel, batteryLevel);
+    EXPECT_EQ(diagData.mVendorName, vendorName);
+    EXPECT_EQ(diagData.mVendorModel, vendorModel);
     EXPECT_EQ(diagData.mSupplyVoltage, supplyVoltage);
     EXPECT_EQ(diagData.mChannelPages, channelPagesBytes);
     EXPECT_EQ(diagData.mTypeList, typeListBytes);
+    EXPECT_EQ(diagData.mMaxChildTimeout, maxChildTimeout);
+    EXPECT_EQ(diagData.mVersion, version);
+    EXPECT_EQ(diagData.mVendorSWVersion, vendorSWVersion);
+    EXPECT_EQ(diagData.mThreadStackVersion, threadStackVersion);
+    EXPECT_EQ(diagData.mVendorAppURL, "https://example.com/app");
     EXPECT_EQ(diagData.mMode.mIsMtd, false);
     EXPECT_EQ(diagData.mRoute64.mRouteData.size(), 9);
     EXPECT_EQ(diagData.mAddrs.size(), 4);
@@ -253,6 +272,85 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     // Verify that the presence flags for the optional fields within the Connectivity struct have been set.
     uint16_t expectedConnFlags = Connectivity::kRxOffChildBufferSizeBit | Connectivity::kRxOffChildDatagramCountBit;
     EXPECT_EQ(connectivity.mPresentFlags, expectedConnFlags);
+
+    // Child TLV data
+    EXPECT_EQ(diagData.mChild.size(), 1);
+    const auto &child = diagData.mChild[0];
+    EXPECT_EQ(child.mIsRxOnWhenIdle, true);
+    EXPECT_EQ(child.mIsDeviceTypeMtd, false);
+    EXPECT_EQ(child.mHasNetworkData, true);
+    EXPECT_EQ(child.mSupportsCsl, false);
+    EXPECT_EQ(child.mSupportsErrorRates, true);
+    EXPECT_EQ(child.mRloc16, 0x1234);
+    ByteArray childExtAddr;
+    error = utils::Hex(childExtAddr, "0102030405060708");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(child.mExtAddress, childExtAddr);
+    EXPECT_EQ(child.mThreadVersion, 4);
+    EXPECT_EQ(child.mTimeout, 240);
+    EXPECT_EQ(child.mAge, 10);
+    EXPECT_EQ(child.mConnectionTime, 4096);
+    EXPECT_EQ(child.mSupervisionInterval, 120);
+    EXPECT_EQ(child.mLinkMargin, 26);
+    EXPECT_EQ(child.mAverageRssi, -60);
+    EXPECT_EQ(child.mLastRssi, -64);
+    EXPECT_EQ(child.mFrameErrorRate, 10);
+    EXPECT_EQ(child.mMessageErrorRate, 5);
+    EXPECT_EQ(child.mQueuedMessageCount, 3);
+    EXPECT_EQ(child.mCslPeriod, 0);
+    EXPECT_EQ(child.mCslTimeout, 0);
+    EXPECT_EQ(child.mCslChannel, 0);
+
+    // Router Neighbor TLV data
+    EXPECT_EQ(diagData.mRouterNeighbor.size(), 1);
+    const auto &routerNeighbor = diagData.mRouterNeighbor[0];
+    EXPECT_EQ(routerNeighbor.mSupportsErrorRates, true);
+    EXPECT_EQ(routerNeighbor.mRloc16, 0x5678);
+    ByteArray neighborExtAddr;
+    error = utils::Hex(neighborExtAddr, "1122334455667788");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(routerNeighbor.mExtAddress, neighborExtAddr);
+    EXPECT_EQ(routerNeighbor.mThreadVersion, 3);
+    EXPECT_EQ(routerNeighbor.mConnectionTime, 43981);
+    EXPECT_EQ(routerNeighbor.mLinkMargin, 21);
+    EXPECT_EQ(routerNeighbor.mAverageRssi, -60);
+    EXPECT_EQ(routerNeighbor.mLastRssi, -64);
+    EXPECT_EQ(routerNeighbor.mFrameErrorRate, 26);
+    EXPECT_EQ(routerNeighbor.mMessageErrorRate, 15);
+
+    // MLE Counters TLV data
+    const auto &mleCounters = diagData.mMleCounters;
+    EXPECT_EQ(mleCounters.mRadioDisabledCounter, 10);
+    EXPECT_EQ(mleCounters.mDetachedRoleCounter, 11);
+    EXPECT_EQ(mleCounters.mChildRoleCounter, 12);
+    EXPECT_EQ(mleCounters.mRouterRoleCounter, 13);
+    EXPECT_EQ(mleCounters.mLeaderRoleCounter, 14);
+    EXPECT_EQ(mleCounters.mAttachAttemptsCounter, 15);
+    EXPECT_EQ(mleCounters.mPartitionIdChangesCounter, 16);
+    EXPECT_EQ(mleCounters.mBetterPartitionAttachAttemptsCounter, 17);
+    EXPECT_EQ(mleCounters.mNewParentCounter, 18);
+    EXPECT_EQ(mleCounters.mTotalTrackingTime, 19);
+    EXPECT_EQ(mleCounters.mRadioDisabledTime, 20);
+    EXPECT_EQ(mleCounters.mDetachedRoleTime, 21);
+    EXPECT_EQ(mleCounters.mChildRoleTime, 22);
+    EXPECT_EQ(mleCounters.mRouterRoleTime, 23);
+    EXPECT_EQ(mleCounters.mLeaderRoleTime, 24);
+
+    // Non-Preferred Channels Mask TLV
+    const auto &nonPreferredMask = diagData.mNonPreferredChannelsMask;
+    EXPECT_EQ(nonPreferredMask.size(), 2);
+
+    EXPECT_EQ(nonPreferredMask[0].mPage, 0);
+    ByteArray expectedMask1;
+    error = utils::Hex(expectedMask1, "00078000");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(nonPreferredMask[0].mMasks, expectedMask1);
+
+    EXPECT_EQ(nonPreferredMask[1].mPage, 1);
+    ByteArray expectedMask2;
+    error = utils::Hex(expectedMask2, "0001");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    EXPECT_EQ(nonPreferredMask[1].mMasks, expectedMask2);
 }
 
 TEST(CommissionerImplTest, DecodeConnectivityTlv)
@@ -324,6 +422,188 @@ TEST(CommissionerImplTest, DecodeConnectivityTlv)
         Connectivity connectivity;
         Error        error = ot::commissioner::internal::DecodeConnectivity(connectivity, buf);
 
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeChildInfoTlv)
+{
+    // Test Case 1: Valid Child TLV (43 bytes).
+    {
+        ByteArray buf;
+        Error     error;
+        error =
+            utils::Hex(buf, "A8123401020304050607080004000000F00000000A0000100000781AC4C0000A0005000300000000000000");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        std::vector<Child> childInfo;
+        error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(childInfo.size(), 1);
+        const auto &child = childInfo[0];
+        EXPECT_EQ(child.mIsRxOnWhenIdle, true);
+        EXPECT_EQ(child.mHasNetworkData, true);
+        EXPECT_EQ(child.mSupportsErrorRates, true);
+        EXPECT_EQ(child.mRloc16, 0x1234);
+        EXPECT_EQ(child.mTimeout, 240);
+        EXPECT_EQ(child.mAverageRssi, -60);
+    }
+
+    // Test Case 2: Malformed TLV (too short).
+    {
+        ByteArray          buf(42, 0); // 42 bytes, should fail
+        std::vector<Child> childInfo;
+        Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Valid TLV with extra bytes (44 bytes).
+    {
+        ByteArray          buf(44, 0); // 44 bytes
+        std::vector<Child> childInfo;
+        Error              error = ot::commissioner::internal::DecodeChild(childInfo, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(childInfo.size(), 1);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeRouterNeighborInfoTlv)
+{
+    // Test Case 1: Valid Router Neighbor TLV (24 bytes).
+    {
+        ByteArray buf;
+        Error     error;
+        error = utils::Hex(buf, "805678112233445566778800030000ABCD15C4C0001A000F");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        std::vector<RouterNeighbor> routerNeighborInfo;
+        error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(routerNeighborInfo.size(), 1);
+        const auto &neighbor = routerNeighborInfo[0];
+        EXPECT_EQ(neighbor.mSupportsErrorRates, true);
+        EXPECT_EQ(neighbor.mRloc16, 0x5678);
+        EXPECT_EQ(neighbor.mConnectionTime, 43981);
+        EXPECT_EQ(neighbor.mAverageRssi, -60);
+    }
+
+    // Test Case 2: Malformed TLV (too short).
+    {
+        ByteArray                   buf(23, 0); // 23 bytes, should fail
+        std::vector<RouterNeighbor> routerNeighborInfo;
+        Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Valid TLV with extra bytes (25 bytes).
+    {
+        ByteArray                   buf(25, 0); // 25 bytes
+        std::vector<RouterNeighbor> routerNeighborInfo;
+        Error                       error = ot::commissioner::internal::DecodeRouterNeighbor(routerNeighborInfo, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(routerNeighborInfo.size(), 1);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeMleCountersTlv)
+{
+    // Test Case 1: Valid MLE Counters TLV (66 bytes).
+    {
+        ByteArray   buf;
+        MleCounters counters;
+        Error       error;
+        error = utils::Hex(
+            buf, "000A000B000C000D000E000F0010001100120000000000000013000000000000001400000000000000150000000000"
+                 "00001600000000000000170000000000000018");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(counters.mRadioDisabledCounter, 10);
+        EXPECT_EQ(counters.mNewParentCounter, 18);
+        EXPECT_EQ(counters.mTotalTrackingTime, 19);
+        EXPECT_EQ(counters.mLeaderRoleTime, 24);
+    }
+
+    // Test Case 2: Malformed TLV (too short).
+    {
+        ByteArray   buf(65, 0); // 65 bytes, should fail
+        MleCounters counters;
+        Error       error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
+
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Valid TLV with extra bytes (67 bytes).
+    {
+        ByteArray   buf(67, 0); // 67 bytes
+        MleCounters counters;
+        Error       error = ot::commissioner::internal::DecodeMleCounters(counters, buf);
+
+        EXPECT_EQ(error, ErrorCode::kNone);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeNonPreferredChannelsMaskTlv)
+{
+    // Test Case 1: Valid mask with multiple entries.
+    {
+        ByteArray   buf;
+        ChannelMask channelMask;
+        Error       error;
+
+        // Page 0, Length 4, Mask 0x00078000 (channels 11-15)
+        // Page 1, Length 2, Mask 0x0001 (channel 32)
+        error = utils::Hex(buf, "00040007800001020001");
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        EXPECT_EQ(channelMask.size(), 2);
+
+        EXPECT_EQ(channelMask[0].mPage, 0);
+        ByteArray expectedMask1;
+        error = utils::Hex(expectedMask1, "00078000");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(channelMask[0].mMasks, expectedMask1);
+
+        EXPECT_EQ(channelMask[1].mPage, 1);
+        ByteArray expectedMask2;
+        error = utils::Hex(expectedMask2, "0001");
+        EXPECT_EQ(error, ErrorCode::kNone);
+        EXPECT_EQ(channelMask[1].mMasks, expectedMask2);
+    }
+
+    // Test Case 2: Malformed TLV (premature end of mask data).
+    {
+        ByteArray   buf;
+        ChannelMask channelMask;
+        Error       error;
+
+        // Page 0, Length 4, but only 3 bytes of mask data provided
+        error = utils::Hex(buf, "0004000780");
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
+        EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Test Case 3: Malformed TLV (trailing bytes).
+    {
+        ByteArray   buf;
+        ChannelMask channelMask;
+        Error       error;
+
+        // Valid entry followed by an extra byte
+        error = utils::Hex(buf, "000400078000FF");
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
     }
 }

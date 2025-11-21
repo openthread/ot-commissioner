@@ -370,7 +370,18 @@ static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"batterylevel", {NetDiagData::kBatteryLevelBit, false}},
     {"supplyvoltage", {NetDiagData::kSupplyVoltageBit, false}},
     {"channelpages", {NetDiagData::kChannelPagesBit, false}},
-    {"typelist", {NetDiagData::kTypeListBit, false}}};
+    {"typelist", {NetDiagData::kTypeListBit, false}},
+    {"maxchildtimeout", {NetDiagData::kMaxChildTimeoutBit, false}},
+    {"version", {NetDiagData::kVersionBit, false}},
+    {"vendorname", {NetDiagData::kVendorNameBit, false}},
+    {"vendormodel", {NetDiagData::kVendorModelBit, false}},
+    {"vendorswversion", {NetDiagData::kVendorSWVersionBit, false}},
+    {"threadstackversion", {NetDiagData::kThreadStackVersionBit, false}},
+    {"child", {NetDiagData::kChildBit, false}},
+    {"routerneighbor", {NetDiagData::kRouterNeighborBit, false}},
+    {"mlecounters", {NetDiagData::kMleCountersBit, true}},
+    {"vendorappurl", {NetDiagData::kVendorAppURLBit, false}},
+    {"channelsmask", {NetDiagData::kNonPreferredChannelsMaskBit, true}}};
 
 template <typename T> static std::string ToHex(T aInteger) { return "0x" + utils::Hex(utils::Encode(aInteger)); };
 
@@ -2630,7 +2641,6 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
             value = resultStream.str();
         }
     }
-
 exit:
     return value;
 }
