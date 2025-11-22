@@ -36,6 +36,7 @@
 
 #include <event2/event.h>
 #include <event2/util.h>
+#include <gtest/gtest_prod.h>
 #include <stdint.h>
 
 #include <functional>
@@ -206,7 +207,6 @@ private:
 
     Error SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload) override;
 
-private:
     class EventBaseHolder
     {
     public:
@@ -241,6 +241,9 @@ private:
 
     // The even loop thread running in background.
     std::thread mEventThread;
+
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage);
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
 };
 
 } // namespace commissioner

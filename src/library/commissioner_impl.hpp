@@ -32,6 +32,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <gtest/gtest_prod.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -298,6 +299,8 @@ private:
 
     coap::Resource mResourceDiagAns;
     NetDiagData    mDiagAnsTlvs;
+
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
 };
 
 /*
