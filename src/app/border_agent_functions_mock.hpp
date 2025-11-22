@@ -36,6 +36,7 @@
 
 #include "app/border_agent.hpp"
 #include "app/br_discover.hpp"
+#include "common/time.hpp"
 
 namespace ot {
 namespace commissioner {
@@ -45,7 +46,7 @@ class BorderAgentFunctionsMock
 public:
     virtual ~BorderAgentFunctionsMock() = default;
 
-    MOCK_METHOD(Error, DiscoverBorderAgent, (BorderAgentHandler, size_t, const std::string &));
+    MOCK_METHOD(Error, DiscoverBorderAgent, (BorderAgentHandler, MilliSeconds, const std::string &));
 };
 
 void SetBorderAgentFunctionsMock(ot::commissioner::BorderAgentFunctionsMock *ptr);

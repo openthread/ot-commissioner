@@ -39,6 +39,7 @@
 
 #include <commissioner/error.hpp>
 
+#include "common/time.hpp"
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/dtls.hpp"
@@ -53,7 +54,7 @@ static constexpr uint16_t kListeningJoinerPort = 9527;
 // The joiner session timeout value starting from connected, in seconds.
 // This is the time duration of waiting for JOIN_FIN.req. After that,
 // the joiner session will be closed and removed.
-static constexpr uint32_t kJoinerTimeout = 20;
+static constexpr Seconds kJoinerTimeout{20};
 
 static constexpr uint8_t kLocalExternalAddrMask = 1 << 1;
 

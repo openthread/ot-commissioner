@@ -71,6 +71,7 @@
 #include "commissioner/network_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
 #include "event2/event.h"
 #include "event2/event_struct.h"
@@ -1862,12 +1863,12 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
 
     if (CaseInsensitiveEqual(aExpr[1], "discover"))
     {
-        uint64_t    timeout = 4000;
-        std::string netIf   = "";
+        uint64_t    timeoutMillis = 4000;
+        std::string netIf         = "";
 
         if (aExpr.size() >= 3)
         {
-            SuccessOrExit(value = ParseInteger(timeout, aExpr[2]));
+            SuccessOrExit(value = ParseInteger(timeoutMillis, aExpr[2]));
         }
 
         if (aExpr.size() == 4)
@@ -1875,7 +1876,7 @@ Interpreter::Value Interpreter::ProcessBorderAgent(const Expression &aExpr)
             netIf = aExpr[3];
         }
 
-        SuccessOrExit(value = DiscoverBorderAgent(BorderAgentHandler, static_cast<size_t>(timeout), netIf));
+        SuccessOrExit(value = DiscoverBorderAgent(BorderAgentHandler, MilliSeconds(timeoutMillis), netIf));
     }
     else if (CaseInsensitiveEqual(aExpr[1], "get"))
     {
@@ -2064,12 +2065,12 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
         Channel channel;
         if (isSet)
         {
-            uint32_t delay;
+            uint32_t delayMillis;
             VerifyOrExit(aExpr.size() >= 6, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
             SuccessOrExit(value = ParseInteger(channel.mPage, aExpr[3]));
             SuccessOrExit(value = ParseInteger(channel.mNumber, aExpr[4]));
-            SuccessOrExit(value = ParseInteger(delay, aExpr[5]));
-            SuccessOrExit(value = aCommissioner->SetChannel(channel, CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = ParseInteger(delayMillis, aExpr[5]));
+            SuccessOrExit(value = aCommissioner->SetChannel(channel, MilliSeconds(delayMillis)));
         }
         else
         {
@@ -2114,7 +2115,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             uint32_t delay;
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
             SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
-            SuccessOrExit(value = aCommissioner->SetMeshLocalPrefix(aExpr[3], CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetMeshLocalPrefix(aExpr[3], MilliSeconds(delay)));
         }
         else
         {
@@ -2131,7 +2132,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
             SuccessOrExit(value = utils::Hex(masterKey, aExpr[3]));
             SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
-            SuccessOrExit(value = aCommissioner->SetNetworkMasterKey(masterKey, CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetNetworkMasterKey(masterKey, MilliSeconds(delay)));
         }
         else
         {
@@ -2162,7 +2163,7 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
             VerifyOrExit(aExpr.size() >= 5, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
             SuccessOrExit(value = ParseInteger(panid, aExpr[3]));
             SuccessOrExit(value = ParseInteger(delay, aExpr[4]));
-            SuccessOrExit(value = aCommissioner->SetPanId(panid, CommissionerApp::MilliSeconds(delay)));
+            SuccessOrExit(value = aCommissioner->SetPanId(panid, MilliSeconds(delay)));
         }
         else
         {
@@ -2453,15 +2454,15 @@ exit:
 
 Interpreter::Value Interpreter::ProcessMlr(const Expression &aExpr)
 {
-    uint32_t           timeout;
+    uint32_t           timeoutSeconds;
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
 
     VerifyOrExit(aExpr.size() >= 3, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
     SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
-    SuccessOrExit(value = ParseInteger(timeout, aExpr.back()));
-    SuccessOrExit(value = commissioner->RegisterMulticastListener({aExpr.begin() + 1, aExpr.end() - 1},
-                                                                  CommissionerApp::Seconds(timeout)));
+    SuccessOrExit(value = ParseInteger(timeoutSeconds, aExpr.back()));
+    SuccessOrExit(
+        value = commissioner->RegisterMulticastListener({aExpr.begin() + 1, aExpr.end() - 1}, Seconds(timeoutSeconds)));
 exit:
     return value;
 }
@@ -2470,7 +2471,7 @@ Interpreter::Value Interpreter::ProcessAnnounce(const Expression &aExpr)
 {
     uint32_t           channelMask;
     uint8_t            count;
-    uint16_t           period;
+    uint16_t           periodMillis;
     Value              value;
     CommissionerAppPtr commissioner = nullptr;
 
@@ -2478,9 +2479,8 @@ Interpreter::Value Interpreter::ProcessAnnounce(const Expression &aExpr)
     SuccessOrExit(value = mJobManager->GetSelectedCommissioner(commissioner));
     SuccessOrExit(value = ParseInteger(channelMask, aExpr[1]));
     SuccessOrExit(value = ParseInteger(count, aExpr[2]));
-    SuccessOrExit(value = ParseInteger(period, aExpr[3]));
-    SuccessOrExit(value =
-                      commissioner->AnnounceBegin(channelMask, count, CommissionerApp::MilliSeconds(period), aExpr[4]));
+    SuccessOrExit(value = ParseInteger(periodMillis, aExpr[3]));
+    SuccessOrExit(value = commissioner->AnnounceBegin(channelMask, count, MilliSeconds(periodMillis), aExpr[4]));
 exit:
     return value;
 }

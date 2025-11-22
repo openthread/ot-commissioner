@@ -45,6 +45,7 @@
 #include "commissioner/network_data.hpp"
 #include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
+#include "common/time.hpp"
 #include "gmock/gmock-function-mocker.h"
 
 using namespace ::ot::commissioner;

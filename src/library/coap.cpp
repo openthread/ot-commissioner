@@ -493,8 +493,8 @@ Coap::RequestHolder::RequestHolder(const RequestPtr &aRequest, ResponseHandler a
 {
     uint32_t lowBound    = 1000 * kAckTimeout;
     uint32_t upperBound  = 1000 * kAckTimeout * kAckRandomFactorNumerator / kAckRandomFactorDenominator;
-    uint32_t delay       = random::non_crypto::GetUint32InRange(lowBound, upperBound);
-    mRetransmissionDelay = std::chrono::milliseconds(delay);
+    uint32_t delayMillis = random::non_crypto::GetUint32InRange(lowBound, upperBound);
+    mRetransmissionDelay = MilliSeconds(delayMillis);
     mNextTimerShot       = Clock::now() + mRetransmissionDelay;
 }
 

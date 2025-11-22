@@ -45,6 +45,7 @@ using Clock        = std::chrono::system_clock;
 using Duration     = std::chrono::milliseconds;
 using TimePoint    = std::chrono::time_point<Clock>;
 using MilliSeconds = std::chrono::milliseconds;
+using Seconds      = std::chrono::seconds;
 
 template <typename D> D NowSinceEpoch()
 {

@@ -49,6 +49,7 @@
 #include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/time.hpp"
 #include "common/utils.hpp"
 
 namespace ot {

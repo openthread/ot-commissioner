@@ -52,6 +52,7 @@
 #include "commissioner/network_data.hpp"
 #include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
+#include "common/time.hpp"
 
 namespace ot {
 
@@ -99,9 +100,6 @@ struct JoinerInfo
 class CommissionerApp : public CommissionerHandler
 {
 public:
-    using MilliSeconds = std::chrono::milliseconds;
-    using Seconds      = std::chrono::seconds;
-
     MOCKABLE ~CommissionerApp() = default;
 
     // Handle commissioner events.
