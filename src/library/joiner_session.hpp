@@ -34,15 +34,22 @@
 #ifndef OT_COMM_LIBRARY_JOINER_SESSION_HPP
 #define OT_COMM_LIBRARY_JOINER_SESSION_HPP
 
-#include <functional>
-#include <map>
+#include <stddef.h>
+#include <stdint.h>
 
+#include <memory>
+#include <queue>
+#include <string>
+#include <utility>
+
+#include <commissioner/defines.hpp>
 #include <commissioner/error.hpp>
 
+#include "common/address.hpp"
 #include "common/time.hpp"
 #include "library/coap.hpp"
-#include "library/coap_secure.hpp"
 #include "library/dtls.hpp"
+#include "library/socket.hpp"
 
 namespace ot {
 
@@ -85,18 +92,23 @@ public:
     ByteArray GetJoinerId() const { return mJoinerId; }
     uint16_t  GetJoinerUdpPort() const { return mJoinerUdpPort; }
     uint16_t  GetJoinerRouterLocator() const { return mJoinerRouterLocator; }
-    Address   GetPeerAddr() const { return mDtlsSession->GetPeerAddr(); }
-    uint16_t  GetPeerPort() const { return mDtlsSession->GetPeerPort(); }
+    Address   GetPeerAddr() const { return mRelaySocket->GetPeerAddr(); }
+    uint16_t  GetPeerPort() const { return mRelaySocket->GetPeerPort(); }
 
-    void Connect();
+    void Start();
 
     DtlsSession::State GetState() const { return mDtlsSession->GetState(); }
 
-    bool Disabled() const { return mDtlsSession->GetState() == DtlsSession::State::kOpen; }
+    bool Disabled() const { return mDtlsSession != nullptr && mDtlsSession->GetState() == DtlsSession::State::kOpen; }
 
-    void RecvJoinerDtlsRecords(const ByteArray &aRecords);
+    void RecvJoinerDtlsRecords(const ByteArray &aRecords, uint16_t aJoinerUdpPort);
 
     const TimePoint &GetExpirationTime() const { return mExpirationTime; }
+
+    Error SendTo(uint16_t aJoinerPort, const uint8_t *aBuffer, uint16_t aLength)
+    {
+        return SendRlyTx(ByteArray(aBuffer, aBuffer + aLength), false, aJoinerPort);
+    }
 
 private:
     friend class RelaySocket;
@@ -117,10 +129,12 @@ private:
         uint16_t GetPeerPort() const override { return mPeerPort; }
         Address  GetPeerAddr() const override { return mPeerAddr; }
 
-        int Send(const uint8_t *aBuf, size_t aLen) override;
+        int Send(const uint8_t *aBuf, size_t aLen) override { return Send(aBuf, aLen, mJoinerSession.mJoinerUdpPort); }
         int Receive(uint8_t *aBuf, size_t aMaxLen) override;
+        int Send(const uint8_t *aBuf, size_t aLen, uint16_t aPort);
+        int Receive(uint8_t *aBuf, size_t aMaxLen, uint16_t &aUdpPort);
 
-        void RecvJoinerDtlsRecords(const ByteArray &aRecords);
+        void RecvJoinerDtlsRecords(const ByteArray &aRecords, uint16_t aJoinerUdpPort);
 
     private:
         JoinerSession &mJoinerSession;
@@ -128,16 +142,18 @@ private:
         uint16_t       mPeerPort;
         Address        mLocalAddr;
         uint16_t       mLocalPort;
-        ByteArray      mRecvBuf;
+
+        std::queue<std::pair<ByteArray, uint16_t>> mRecvBufs;
     };
 
     using RelaySocketPtr = std::shared_ptr<RelaySocket>;
 
     ByteArray GetJoinerIid() const;
+    bool      IsProxyMode() const { return mJoinerPSKd.empty(); }
 
     void HandleConnect(Error aError);
 
-    Error SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek);
+    Error SendRlyTx(const ByteArray &aDtlsMessage, bool aIncludeKek, uint16_t aJoinerUdpPort);
     void  HandleJoinFin(const coap::Request &aJoinFin);
     void  SendJoinFinResponse(const coap::Request &aJoinFinReq, bool aAccept);
 
@@ -150,7 +166,8 @@ private:
 
     RelaySocketPtr mRelaySocket;
     DtlsSessionPtr mDtlsSession;
-    coap::Coap     mCoap;
+
+    std::shared_ptr<coap::Coap> mCoap;
 
     coap::Resource mResourceJoinFin;
 

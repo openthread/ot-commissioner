@@ -95,6 +95,7 @@ target_compile_definitions(commissioner
 
 target_include_directories(commissioner
     PUBLIC
+        ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
@@ -176,6 +177,7 @@ if (OT_COMM_TEST)
             event_core
             event_pthreads
             gtest
+            gmock
             gtest_main
     )
 
@@ -187,6 +189,8 @@ if (OT_COMM_TEST)
     target_include_directories(commissioner-test
         PRIVATE
             ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googletest/include
+            ${PROJECT_SOURCE_DIR}/third_party/googletest/repo/googlemock/include
     )
 
     set_target_properties(commissioner-test

@@ -601,6 +601,12 @@ CommissionerSafe::EventBaseHolder::~EventBaseHolder() { event_base_free(mEventBa
 
 struct event_base *CommissionerSafe::EventBaseHolder::Get() { return mEventBase; }
 
+Error CommissionerSafe::SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload)
+{
+    std::promise<Error> pro;
+    PushAsyncRequest([=, &pro] { pro.set_value(mImpl->SendToJoiner(aJoinerId, aPort, aPayload)); });
+    return pro.get_future().get();
+}
 } // namespace commissioner
 
 } // namespace ot
