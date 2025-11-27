@@ -50,11 +50,11 @@ EVENT_UPDATED = "updated"
 SERVICE_RESOLVE_TIMEOUT_MS = 5000
 
 
-def print_service_info(zeroconf: Zeroconf, type: str, name: str, event: str) -> None:
+def print_service_info(zeroconf: Zeroconf, service_type: str, name: str, event: str) -> None:
     icon = "✅" if event == EVENT_DISCOVERED else "🔄"
     action = "Discovered" if event == EVENT_DISCOVERED else "Updated"
     print(f"\n{icon} Service {action}: {name}")
-    info: Optional[ServiceInfo] = zeroconf.get_service_info(type, name, timeout=SERVICE_RESOLVE_TIMEOUT_MS)
+    info: Optional[ServiceInfo] = zeroconf.get_service_info(service_type, name, timeout=SERVICE_RESOLVE_TIMEOUT_MS)
     if not info:
         print("   Could not resolve details.")
         return
@@ -93,23 +93,23 @@ class ServiceListener:
     def __init__(self, q: queue.Queue) -> None:
         self.q = q
 
-    def remove_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
+    def remove_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
         print(f"\n❌ Service Removed: {name}")
 
-    def update_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
-        self.q.put((EVENT_UPDATED, type, name))
+    def update_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
+        self.q.put((EVENT_UPDATED, service_type, name))
 
-    def add_service(self, zeroconf: Zeroconf, type: str, name: str) -> None:
-        self.q.put((EVENT_DISCOVERED, type, name))
+    def add_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
+        self.q.put((EVENT_DISCOVERED, service_type, name))
 
 
 def worker(q: queue.Queue, zeroconf_instance: Zeroconf) -> None:
     while True:
         try:
-            event, type, name = q.get()
+            event, service_type, name = q.get()
             if event is None:
                 break
-            print_service_info(zeroconf_instance, type, name, event)
+            print_service_info(zeroconf_instance, service_type, name, event)
             q.task_done()
         except Exception as e:
             print(f"Error in worker thread: {e}")
