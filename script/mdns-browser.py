@@ -30,7 +30,7 @@
 # Examples:
 #
 # Scan for the default `_meshcop._udp.local.` service:
-# python3 scanner.py
+# python3 mdns-browser.py
 #
 # Scan for a custom service, e.g., `_http._tcp.local.`:
 # python3 scanner.py _http._tcp.local.
