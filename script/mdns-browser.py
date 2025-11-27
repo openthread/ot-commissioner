@@ -18,14 +18,14 @@
 #
 # Installation:
 # 1. Clone the repository or download the script.
-# 2. Install the required Python packages:
-#    pip install -r requirements.txt
+# 2. Install the required Python package:
+#    pip install zeroconf
 #
 # Usage:
 # Run the scanner from your terminal. You can optionally provide a service name
-# as an argument. If no service name is provided, it defaults to `_meshcop._udp.local.`:
+# as an argument. If no service name is provided, it defaults to `_meshcop._udp.local. `:
 #
-# python3 scanner.py [service_name]
+# python3 mdns-browser.py [service_name]
 #
 # Examples:
 #
@@ -62,12 +62,12 @@ def print_service_info(zeroconf: Zeroconf, type: str, name: str,
         return
 
     print(
-        f"   Host: {getattr(info, 'server', 'N/A')}:{getattr(info, 'port', 'N/A')}"
+        f"   Host: {info.server}:{info.port}"
     )
-    print(f"   Host TTL: {getattr(info, 'host_ttl', 'N/A')}")
-    print(f"   Other TTL: {getattr(info, 'other_ttl', 'N/A')}")
-    print(f"   Priority: {getattr(info, 'priority', 'N/A')}")
-    print(f"   Weight: {getattr(info, 'weight', 'N/A')}")
+    print(f"   Host TTL: {info.host_ttl}")
+    print(f"   Other TTL: {info.other_ttl}")
+    print(f"   Priority: {info.priority}")
+    print(f"   Weight: {info.weight}")
 
     for ip_address in info.parsed_addresses():
         print(f"   IP Address: {ip_address}")
