@@ -33,7 +33,7 @@
 # python3 mdns-browser.py
 #
 # Scan for a custom service, e.g., `_http._tcp.local.`:
-# python3 scanner.py _http._tcp.local.
+# python3 mdns-broser.py _http._tcp.local.
 #
 # The script will continuously listen for services. Press Ctrl+C to stop the scan.
 
