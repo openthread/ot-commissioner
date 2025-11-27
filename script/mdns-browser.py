@@ -122,7 +122,8 @@ if __name__ == "__main__":
                         nargs='?',
                         default="_meshcop._udp.local.",
                         help="The mDNS service to scan for (default: %(default)s)")
-    service_name = parser.parse_args().service_name
+    args = parser.parse_args()
+    service_name = args.service_name
 
     q: queue.Queue = queue.Queue()
     zeroconf = Zeroconf(ip_version=IPVersion.All)
