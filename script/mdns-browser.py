@@ -50,20 +50,16 @@ EVENT_UPDATED = "updated"
 SERVICE_RESOLVE_TIMEOUT_MS = 5000
 
 
-def print_service_info(zeroconf: Zeroconf, type: str, name: str,
-                       event: str) -> None:
+def print_service_info(zeroconf: Zeroconf, type: str, name: str, event: str) -> None:
     icon = "✅" if event == EVENT_DISCOVERED else "🔄"
     action = "Discovered" if event == EVENT_DISCOVERED else "Updated"
     print(f"\n{icon} Service {action}: {name}")
-    info: Optional[ServiceInfo] = zeroconf.get_service_info(
-        type, name, timeout=SERVICE_RESOLVE_TIMEOUT_MS)
+    info: Optional[ServiceInfo] = zeroconf.get_service_info(type, name, timeout=SERVICE_RESOLVE_TIMEOUT_MS)
     if not info:
         print("   Could not resolve details.")
         return
 
-    print(
-        f"   Host: {info.server}:{info.port}"
-    )
+    print(f"   Host: {info.server}:{info.port}")
     print(f"   Host TTL: {info.host_ttl}")
     print(f"   Other TTL: {info.other_ttl}")
     print(f"   Priority: {info.priority}")
@@ -118,11 +114,10 @@ def worker(q: queue.Queue, zeroconf_instance: Zeroconf) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="mDNS Service Scanner")
-    parser.add_argument(
-        'service_name',
-        nargs='?',
-        default="_meshcop._udp.local.",
-        help="The mDNS service to scan for (default: %(default)s)")
+    parser.add_argument('service_name',
+                        nargs='?',
+                        default="_meshcop._udp.local.",
+                        help="The mDNS service to scan for (default: %(default)s)")
     service_name = parser.parse_args().service_name
 
     q: queue.Queue = queue.Queue()
