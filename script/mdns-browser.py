@@ -113,6 +113,7 @@ def worker(q: queue.Queue, zeroconf_instance: Zeroconf) -> None:
             q.task_done()
         except Exception as e:
             print(f"Error in worker thread: {e}")
+            q.task_done()
 
 
 if __name__ == "__main__":
