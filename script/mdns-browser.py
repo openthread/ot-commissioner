@@ -71,7 +71,11 @@ def print_service_info(zeroconf: Zeroconf, type: str, name: str, event: str) -> 
     if info.properties:
         print("   --- TXT Records ---")
         for key, value in info.properties.items():
-            key_str = key.decode("utf-8")
+            try:
+                key_str = key.decode("utf-8")
+            except UnicodeDecodeError:
+                key_str = f"0x{key.hex()}"
+
             if value is None:
                 val_str = ""
             else:
