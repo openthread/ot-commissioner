@@ -19,21 +19,22 @@
 # Installation:
 # 1. Clone the repository or download the script.
 # 2. Install the required Python package:
-#    pip install zeroconf
+#
+# $ pip install zeroconf
 #
 # Usage:
 # Run the scanner from your terminal. You can optionally provide a service name
 # as an argument. If no service name is provided, it defaults to `_meshcop._udp.local. `:
 #
-# python3 mdns-browser.py [service_name]
+# $ python3 mdns-browser.py [service_name]
 #
 # Examples:
 #
 # Scan for the default `_meshcop._udp.local.` service:
-# python3 mdns-browser.py
+# $ python3 mdns-browser.py
 #
 # Scan for a custom service, e.g., `_http._tcp.local.`:
-# python3 mdns-broser.py _http._tcp.local.
+# $ python3 mdns-broser.py _http._tcp.local.
 #
 # The script will continuously listen for services. Press Ctrl+C to stop the scan.
 
