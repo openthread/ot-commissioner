@@ -34,19 +34,25 @@
 #ifndef OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 #define OT_COMM_LIBRARY_COMMISSIONER_SAFE_HPP_
 
+#include <event2/event.h>
+#include <event2/util.h>
+#include <gtest/gtest_prod.h>
+#include <stdint.h>
+
+#include <functional>
+#include <memory>
 #include <mutex>
+#include <queue>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include <commissioner/commissioner.hpp>
+#include <commissioner/defines.hpp>
+#include <commissioner/error.hpp>
+#include <commissioner/network_data.hpp>
 
-#include "library/coap.hpp"
-#include "library/coap_secure.hpp"
 #include "library/commissioner_impl.hpp"
-#include "library/dtls.hpp"
-#include "library/event.hpp"
-#include "library/timer.hpp"
-#include "library/tlv.hpp"
-#include "library/token_manager.hpp"
 
 namespace ot {
 
@@ -66,7 +72,7 @@ namespace commissioner {
 class CommissionerSafe : public Commissioner
 {
 public:
-    CommissionerSafe(CommissionerHandler &aHandler)
+    explicit CommissionerSafe(CommissionerHandler &aHandler)
         : mHandler(aHandler)
     {
     }
@@ -199,7 +205,8 @@ private:
     void StartEventLoopThread();
     void StopEventLoopThread();
 
-private:
+    Error SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload) override;
+
     class EventBaseHolder
     {
     public:
@@ -234,6 +241,9 @@ private:
 
     // The even loop thread running in background.
     std::thread mEventThread;
+
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage);
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
 };
 
 } // namespace commissioner

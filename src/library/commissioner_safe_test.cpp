@@ -32,9 +32,24 @@
  *
  */
 
-#include "library/commissioner_safe.hpp"
+#include <stdint.h>
+#include <tuple>
+#include <unistd.h>
 
-#include <gtest/gtest.h>
+#include <string>
+#include <utility>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
+#include "common/address.hpp"
+#include "library/commissioner_safe.hpp"
+#include "library/joiner_session.hpp"
+
+using testing::ContainerEq;
 
 namespace ot {
 
@@ -54,6 +69,89 @@ TEST(CommissionerSafeTest, StopImmediatelyAfterStarting)
     EXPECT_EQ(commissioner->Init(config), ErrorCode::kNone);
 }
 
-} // namespace commissioner
+TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage)
+{
+    class MockHandler : public CommissionerHandler
+    {
+    public:
+        MOCK_METHOD(void,
+                    OnJoinerMessage,
+                    (const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload),
+                    (override));
+    };
 
+    MockHandler mockHandler;
+
+    Config config;
+
+    config.mEnableCcm = false;
+    config.mProxyMode = true;
+    config.mPSKc      = ByteArray(8);
+
+    // This creates an CommissionerSafe instance.
+    auto commissioner = Commissioner::Create(mockHandler);
+
+    EXPECT_NE(commissioner, nullptr);
+    EXPECT_EQ(commissioner->Init(config), ErrorCode::kNone);
+
+    ByteArray joinerId{1, 2, 3, 4, 5, 6, 7, 8};
+    ByteArray payload{1, 2, 3};
+
+    EXPECT_CALL(mockHandler, OnJoinerMessage(ContainerEq(joinerId), 5400, ContainerEq(payload))).Times(1);
+
+    JoinerSession session(*static_cast<CommissionerSafe &>(*commissioner).mImpl, joinerId, std::string(), 12345, 0x1200,
+                          Address(), 12344, Address(), 12343);
+    session.RecvJoinerDtlsRecords(payload, 5400);
+    sleep(1);
+}
+
+TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists)
+{
+    CommissionerHandler dummyHandler;
+
+    Config config;
+
+    config.mEnableCcm = false;
+    config.mProxyMode = true;
+    config.mPSKc      = ByteArray(8);
+
+    // This creates an CommissionerSafe instance.
+    auto commissioner = Commissioner::Create(dummyHandler);
+
+    EXPECT_NE(commissioner, nullptr);
+    EXPECT_EQ(commissioner->Init(config), ErrorCode::kNone);
+
+    ByteArray joinerId{1, 2, 3, 4, 5, 6, 7, 8};
+    ByteArray payload{1, 2, 3};
+
+    auto impl = static_cast<CommissionerSafe &>(*commissioner).mImpl;
+    impl->mJoinerSessions.emplace(
+        std::piecewise_construct, std::forward_as_tuple(joinerId),
+        std::forward_as_tuple(*impl, joinerId, std::string(), 12345, 0x1200, Address(), 12344, Address(), 12343));
+
+    EXPECT_EQ(commissioner->SendToJoiner(joinerId, 5400, payload), ErrorCode::kNone);
+}
+
+TEST(CommissionerSafeTestProxyMode, ShouldFailToSendToJoinerForNotFoundIfJoinerSessionDoesNotExist)
+{
+    CommissionerHandler dummyHandler;
+
+    Config config;
+
+    config.mEnableCcm = false;
+    config.mProxyMode = true;
+    config.mPSKc      = ByteArray(8);
+
+    // This creates an CommissionerSafe instance.
+    auto commissioner = Commissioner::Create(dummyHandler);
+
+    EXPECT_NE(commissioner, nullptr);
+    EXPECT_EQ(commissioner->Init(config), ErrorCode::kNone);
+
+    ByteArray joinerId{1, 2, 3, 4, 5, 6, 7, 8};
+    ByteArray payload{1, 2, 3};
+
+    EXPECT_EQ(commissioner->SendToJoiner(joinerId, 5400, payload), ErrorCode::kNotFound);
+}
+} // namespace commissioner
 } // namespace ot

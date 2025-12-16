@@ -32,6 +32,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <gtest/gtest_prod.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -202,6 +203,8 @@ public:
 
     struct event_base *GetEventBase() { return mEventBase; }
 
+    virtual Error SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload) override;
+
 private:
     using AsyncRequest = std::function<void()>;
 
@@ -296,6 +299,8 @@ private:
 
     coap::Resource mResourceDiagAns;
     NetDiagData    mDiagAnsTlvs;
+
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
 };
 
 /*

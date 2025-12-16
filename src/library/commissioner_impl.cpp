@@ -3116,13 +3116,15 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
     joinerId = joinerIid;
     joinerId[0] ^= kLocalExternalAddrMask;
-    LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, length={}",
-              utils::Hex(joinerId), joinerRouterLocator, dtlsRecords.size());
+    LOG_DEBUG(LOG_REGION_JOINER_SESSION,
+              "received RLY_RX.ntf: joinerID={}, joinerRouterLocator={}, joinerPort={} length={}", utils::Hex(joinerId),
+              joinerRouterLocator, joinerUdpPort, dtlsRecords.size());
 
     {
         auto it = mJoinerSessions.find(joinerId);
         if (it != mJoinerSessions.end() && it->second.Disabled())
         {
+            LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received RLY_RX.ntf, but joiner is disabled");
             mJoinerSessions.erase(it);
             it = mJoinerSessions.end();
         }
@@ -3132,7 +3134,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             Address localAddr;
 
             joinerPSKd = mCommissionerHandler.OnJoinerRequest(joinerId);
-            if (joinerPSKd.empty())
+            if (joinerPSKd.empty() && !mConfig.mProxyMode)
             {
                 LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner(ID={}) is disabled", utils::Hex(joinerId));
                 ExitNow(error = ERROR_REJECTED("joiner(ID={}) is disabled", utils::Hex(joinerId)));
@@ -3153,7 +3155,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
             LOG_DEBUG(LOG_REGION_JOINER_SESSION, "received a new joiner(ID={}) DTLS connection from [{}]:{}",
                       utils::Hex(joinerId), peerAddr, session.GetPeerPort());
 
-            session.Connect();
+            session.Start();
 
             LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner session timer started, expiration-time={}",
                      TimePointToString(session.GetExpirationTime()));
@@ -3162,7 +3164,7 @@ void CommissionerImpl::HandleRlyRx(const coap::Request &aRlyRx)
 
         ASSERT(it != mJoinerSessions.end());
         auto &session = it->second;
-        session.RecvJoinerDtlsRecords(dtlsRecords);
+        session.RecvJoinerDtlsRecords(dtlsRecords, joinerUdpPort);
     }
 
 exit:
@@ -3208,6 +3210,21 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
     {
         aTimer.Start(nextShot);
     }
+}
+
+Error CommissionerImpl::SendToJoiner(const ByteArray &aJoinerId, uint16_t aPort, const ByteArray &aPayload)
+{
+    auto it = mJoinerSessions.find(aJoinerId);
+    if (it == mJoinerSessions.end())
+    {
+        LOG_WARN(LOG_REGION_MGMT, "Joiner[{}] not found", utils::Hex(aJoinerId));
+        return ERROR_NOT_FOUND("Joiner not found");
+    }
+
+    auto error = it->second.SendTo(aPort, aPayload.data(), aPayload.size());
+    LOG_INFO(LOG_REGION_MGMT, "Send to joiner[{}] at port={}: {}", utils::Hex(aJoinerId), aPort,
+             error.GetMessage().c_str());
+    return error;
 }
 
 } // namespace commissioner
