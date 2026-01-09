@@ -26,6 +26,15 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+set(Python3_FIND_VIRTUALENV FIRST) # Prioritize virtual environment over system-wide Python interpreter
+find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter)
+
+set(PYTHON_BIN "${Python3_EXECUTABLE}")
+set(COMMISSIONERD_PATH "${CMAKE_INSTALL_PREFIX}/bin/commissionerd.py")
+set(COMMISSIONER_CLI_PATH "${CMAKE_INSTALL_PREFIX}/bin/commissioner-cli")
+
+configure_file(commissioner_thci/commissionerd.service.in commissionerd.service @ONLY)
+
 set(SCRIPTS
     commissioner_thci/commissionerd.py
     commissioner_thci/commissioner_ctl.py
@@ -36,7 +45,7 @@ install(FILES ${SCRIPTS}
         DESTINATION bin
 )
 
-install(FILES commissioner_thci/commissionerd.service
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/commissionerd.service
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
         DESTINATION /etc/systemd/system
 )
