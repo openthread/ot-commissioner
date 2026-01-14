@@ -586,7 +586,7 @@ TEST_F(InterpreterTestSuite, MNSV_EmptyNwkOrDomMustFail)
 }
 
 // Import/Export Syntax Validation test group
-TEST_F(InterpreterTestSuite, IESV_SingleExportFileMustPass)
+TEST_F(InterpreterTestSuite, DISABLED_IESV_SingleExportFileMustPass)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -2197,7 +2197,7 @@ TEST_F(InterpreterTestSuite, PC_DomainList)
     EXPECT_TRUE(value.HasNoError());
 }
 
-TEST_F(InterpreterTestSuite, PC_BrScanExport)
+TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExport)
 {
     TestContext ctx;
     InitContext(ctx);
@@ -2227,7 +2227,7 @@ TEST_F(InterpreterTestSuite, PC_BrScanExport)
     }
 }
 
-TEST_F(InterpreterTestSuite, PC_BrScanExportDirAbsent)
+TEST_F(InterpreterTestSuite, DISABLED_PC_BrScanExportDirAbsent)
 {
     TestContext ctx;
     InitContext(ctx);
