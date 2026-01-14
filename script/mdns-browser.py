@@ -123,8 +123,11 @@ if __name__ == "__main__":
                         nargs='?',
                         default="_meshcop._udp.local.",
                         help="The mDNS service to scan for (default: %(default)s)")
+    parser.add_argument('--timeout', type=int, default=0,
+                        help='Timeout in seconds after which the script will exit (default: %(default)s, 0 means no timeout)')
     args = parser.parse_args()
     service_name = args.service_name
+    timeout = args.timeout
 
     q: queue.Queue = queue.Queue()
     zeroconf = Zeroconf(ip_version=IPVersion.All)
@@ -135,14 +138,20 @@ if __name__ == "__main__":
     resolver_thread.start()
 
     print(f"🔍 Starting mDNS scan for {service_name} services...")
-    print("Press Ctrl+C to exit.")
+    if timeout > 0:
+        print(f"Script will exit in {timeout} seconds.")
+    else:
+        print("Press Ctrl+C to exit.")
 
     try:
-        while True:
-            time.sleep(1)
+        if timeout > 0:
+            time.sleep(timeout)
+        else:
+            while True:
+                time.sleep(1)
     except KeyboardInterrupt:
         print("\nShutting down...")
+    finally:
         q.put((None, None, None))
         resolver_thread.join()
-    finally:
         zeroconf.close()
