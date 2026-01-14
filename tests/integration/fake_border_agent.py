@@ -29,7 +29,8 @@ if __name__ == "__main__":
     info = ServiceInfo(
         SERVICE_TYPE,
         SERVICE_NAME,
-        addresses=[socket.inet_aton(IP_ADDRESS), socket.inet_pton(socket.AF_INET6, IP_ADDRESS_V6)],
+        addresses=[socket.inet_aton(IP_ADDRESS),
+                   socket.inet_pton(socket.AF_INET6, IP_ADDRESS_V6)],
         port=PORT,
         properties=PROPERTIES,
         server=SERVER_NAME,

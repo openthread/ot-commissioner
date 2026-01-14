@@ -123,8 +123,11 @@ if __name__ == "__main__":
                         nargs='?',
                         default="_meshcop._udp.local.",
                         help="The mDNS service to scan for (default: %(default)s)")
-    parser.add_argument('--timeout', type=int, default=0,
-                        help='Timeout in seconds after which the script will exit (default: %(default)s, 0 means no timeout)')
+    parser.add_argument(
+        '--timeout',
+        type=int,
+        default=0,
+        help='Timeout in seconds after which the script will exit (default: %(default)s, 0 means no timeout)')
     args = parser.parse_args()
     service_name = args.service_name
     timeout = args.timeout

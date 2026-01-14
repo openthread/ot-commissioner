@@ -33,7 +33,7 @@ test_mdns_browser()
 {
     set -e
 
-    if ! python3 -c "import zeroconf" &> /dev/null; then
+    if ! python3 -c "import zeroconf" &>/dev/null; then
         echo "SKIPPING mDNS browser test: zeroconf module not found."
         echo "Please install it using 'pip install zeroconf'"
         exit 0
