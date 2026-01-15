@@ -129,7 +129,7 @@ jobs:
           ./tests/interpreter-test
 
   macos:
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v3
       - name: Bootstrap
@@ -158,23 +158,37 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
       - name: Bootstrap
         run: |
           script/bootstrap.sh
       - name: Build
+        env:
+            ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           cd android
-          ANDROID_ABI=armeabi-v7a ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "26.*") ./build-commissioner-libs.sh
-          ANDROID_ABI=arm64-v8a ANDROID_NDK_HOME=$(find $ANDROID_HOME/ndk -name "26.*") ./build-commissioner-libs.sh
+          ANDROID_ABI=armeabi-v7a ./build-commissioner-libs.sh
+          ANDROID_ABI=arm64-v8a ./build-commissioner-libs.sh
 
   java-binding:
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
       - name: Bootstrap
         run: |
           script/bootstrap.sh
       - name: Build
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           mkdir build && cd build
           cmake -GNinja                            \
