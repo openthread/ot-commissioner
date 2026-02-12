@@ -300,7 +300,15 @@ private:
     coap::Resource mResourceDiagAns;
     NetDiagData    mDiagAnsTlvs;
 
+    std::map<uint16_t, NetDiagData> mPendingDiagQueries;
+    uint16_t                        mNextQueryId = 0;
+
     FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Implicit);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Explicit);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_Legacy);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFragments);
 };
 
 /*
