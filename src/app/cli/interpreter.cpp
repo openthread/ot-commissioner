@@ -40,6 +40,7 @@
 #include <exception>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -58,6 +59,7 @@
 #include "app/cli/console.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
+#include "app/cli/traverser.hpp"
 #include "app/commissioner_app.hpp"
 #include "app/file_util.hpp"
 #include "app/json.hpp"
@@ -205,6 +207,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
     {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
     {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
     {"state", &Interpreter::ProcessState},         {"netdiag", &Interpreter::ProcessNetworkDiag},
+    {"traversenetwork", &Interpreter::ProcessTraverseNetwork},
 };
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
@@ -285,6 +288,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                "energy report [<dst-addr>]"},
     {"netdiag", "netdiag query [extaddr | rloc16] <dest mesh local address>\n"
                 "netdiag reset maccounters <dest mesh local address>"},
+    {"traversenetwork", "traversenetwork [ --json <filename> ]"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -309,6 +313,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiNetworkSyntax =
         Interpreter::StringArray{"domain", "list"},
         Interpreter::StringArray{"network", "list"},
         Interpreter::StringArray{"token", "request"},
+        Interpreter::StringArray{"traversenetwork"},
     };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
@@ -324,6 +329,8 @@ const std::vector<Interpreter::StringArray> &Interpreter::mMultiJobExecution =
         Interpreter::StringArray{"opdataset", "set", "securitypolicy"},
         Interpreter::StringArray{"opdataset", "set", "active"},
         Interpreter::StringArray{"opdataset", "set", "pending"},
+        Interpreter::StringArray{"traversenetwork"},
+        Interpreter::StringArray{"netdiag"},
     };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mInactiveCommissionerExecution =
@@ -338,6 +345,7 @@ const std::vector<Interpreter::StringArray> &Interpreter::mExportSyntax = *new s
     Interpreter::StringArray{"opdataset", "get", "active"},
     Interpreter::StringArray{"opdataset", "get", "pending"},
     Interpreter::StringArray{"br", "scan"},
+    Interpreter::StringArray{"traversenetwork"},
 };
 
 const std::vector<Interpreter::StringArray> &Interpreter::mImportSyntax = *new std::vector<Interpreter::StringArray>{
@@ -354,6 +362,8 @@ const std::map<std::string, Interpreter::JobEvaluator> &Interpreter::mJobEvaluat
         {"commdataset", &Interpreter::ProcessCommDatasetJob},
         {"opdataset", &Interpreter::ProcessOpDatasetJob},
         {"bbrdataset", &Interpreter::ProcessBbrDatasetJob},
+        {"traversenetwork", &Interpreter::ProcessTraverseNetworkJob},
+        {"netdiag", &Interpreter::ProcessNetworkDiagJob},
     };
 
 struct DiagTypeInfo
@@ -365,6 +375,12 @@ struct DiagTypeInfo
 static const std::map<std::string, DiagTypeInfo> sDiagFlagMap = {
     {"extaddr", {NetDiagData::kExtMacAddrBit, false}},
     {"rloc16", {NetDiagData::kMacAddrBit, false}},
+    {"mode", {NetDiagData::kModeBit, false}},
+    {"route64", {NetDiagData::kRoute64Bit, false}},
+    {"leaderdata", {NetDiagData::kLeaderDataBit, false}},
+    {"addrs", {NetDiagData::kAddrsBit, false}},
+    {"childtable", {NetDiagData::kChildTableBit, false}},
+    {"eui64", {NetDiagData::kEui64Bit, false}},
     {"maccounters", {NetDiagData::kMacCountersBit, true}},
     {"timeout", {NetDiagData::kTimeoutBit, false}},
     {"connectivity", {NetDiagData::kConnectivityBit, false}},
@@ -491,6 +507,33 @@ void Interpreter::Run()
 
 exit:
     return;
+}
+
+void Interpreter::Execute(const std::string &aCommands)
+{
+    std::string        command;
+    std::istringstream stream(aCommands);
+
+    while (std::getline(stream, command, ';'))
+    {
+        if (command.empty())
+        {
+            continue;
+        }
+
+        Expression expr = ParseExpression(command);
+        if (expr.empty())
+        {
+            continue;
+        }
+
+        PrintOrExport(Eval(expr));
+
+        if (mShouldExit)
+        {
+            break;
+        }
+    }
 }
 
 void Interpreter::CancelCommand()
@@ -1180,6 +1223,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     using namespace ot::commissioner::persistent_storage;
 
     Value value;
+    event_base *base = nullptr;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
     if (CaseInsensitiveEqual(aExpr[1], "list"))
@@ -1474,7 +1518,6 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         int                                       mdnsSocket  = -1;
         FDGuard                                   fdgMdnsSocket;
         std::thread                               selectThread;
-        event_base                               *base;
         timeval                                   tvTimeout;
         std::unique_ptr<event, void (*)(event *)> mdnsEvent(nullptr, event_free);
         std::unique_ptr<event, void (*)(event *)> cancelEvent(nullptr, event_free);
@@ -1635,7 +1678,12 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
     }
 
+
 exit:
+    if (base != nullptr)
+    {
+        event_base_free(base);
+    }
     return value;
 } // namespace commissioner
 
@@ -2579,10 +2627,12 @@ exit:
 
 Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
-    Value       value;
-    uint64_t    flags         = 0;
-    uint8_t     operationType = 0;
-    std::string dstAddr;
+    Value             value;
+    uint64_t          flags         = 0;
+    uint8_t           operationType = 0;
+    std::string       dstAddr;
+    DiagAnsDataMap    diagAnsDataMaps;
+    std::stringstream resultStream;
 
     VerifyOrExit(aExpr.size() >= 3,
                  value = ERROR_INVALID_ARGS("{} \n {}", SYNTAX_FEW_ARGS,
@@ -2631,8 +2681,7 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
             SuccessOrExit(value = aCommissioner->CommandDiagGetQuery(dstAddr, flags));
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            DiagAnsDataMap    diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
-            std::stringstream resultStream;
+            diagAnsDataMaps = aCommissioner->GetNetDiagTlvs();
             for (const auto &diagAnsDataMap : diagAnsDataMaps)
             {
                 resultStream << "Peer Address: " << diagAnsDataMap.first.ToString()
@@ -2643,6 +2692,16 @@ Interpreter::Value Interpreter::ProcessNetworkDiagJob(CommissionerAppPtr &aCommi
     }
 exit:
     return value;
+}
+
+Interpreter::Value Interpreter::ProcessTraverseNetwork(const Expression &aExpr)
+{
+    return Traverser::ProcessTraverseNetwork(this, aExpr);
+}
+
+Interpreter::Value Interpreter::ProcessTraverseNetworkJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
+{
+    return Traverser::ProcessTraverseNetworkJob(this, aCommissioner, aExpr);
 }
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)

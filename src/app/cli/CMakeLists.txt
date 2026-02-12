@@ -37,6 +37,8 @@ add_executable(commissioner-cli
     job_manager.hpp
     security_materials.cpp
     security_materials.hpp
+    traverser.cpp
+    traverser.hpp
     main.cpp
 )
 
@@ -89,9 +91,11 @@ add_executable(job-manager-test
     job_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
     security_materials.cpp
+    traverser.cpp
     job.cpp
     ${PROJECT_SOURCE_DIR}/src/common/time.cpp
     ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+    ${PROJECT_SOURCE_DIR}/src/library/network_diag_data.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
 )
@@ -133,9 +137,11 @@ add_executable(interpreter-test
     ${PROJECT_SOURCE_DIR}/src/common/address.cpp
     job_manager.cpp
     security_materials.cpp
+    traverser.cpp
     job.cpp
     ${PROJECT_SOURCE_DIR}/src/common/time.cpp
     ${PROJECT_SOURCE_DIR}/src/library/network_data.cpp
+    ${PROJECT_SOURCE_DIR}/src/library/network_diag_data.cpp
     ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp

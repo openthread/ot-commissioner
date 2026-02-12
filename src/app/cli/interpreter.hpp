@@ -58,10 +58,12 @@ namespace commissioner {
 typedef std::shared_ptr<CommissionerApp> CommissionerAppPtr;
 
 class JobManager;
+class Traverser;
 
 class Interpreter
 {
     friend class InterpreterTestSuite;
+    friend class Traverser;
 
 public:
     using Expression     = std::vector<std::string>;
@@ -75,6 +77,8 @@ public:
     Error Init(const std::string &aConfigFile, const std::string &aRegistry);
 
     void Run();
+
+    void Execute(const std::string &aCommands);
 
     void CancelCommand();
 
@@ -230,6 +234,7 @@ private:
     Value ProcessPanId(const Expression &aExpr);
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessNetworkDiag(const Expression &aExpr);
+    Value ProcessTraverseNetwork(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
@@ -241,6 +246,7 @@ private:
     Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessNetworkDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessTraverseNetworkJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 

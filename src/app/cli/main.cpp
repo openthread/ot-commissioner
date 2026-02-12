@@ -75,7 +75,8 @@ static void PrintUsage(const std::string &aProgram)
                                      " -v|--version\n"
                                      "common options\n    " +
                                      aProgram +
-                                     " [-r|--registry <registryFileName>] [-c|--config <configFileName>]\n"
+                                     " [-r|--registry <registryFileName>] [-c|--config <configFileName>] "
+                                     "[-e|--execute <commandString>] [-p|--port <port>]\n"
                                      "or\n    " +
                                      aProgram + " [-r|--registry <registryFileName>] [configFileName]";
 
@@ -102,6 +103,8 @@ static option gCommissionerCliOptions[] = {{"help", no_argument, nullptr, 'h'},
                                            {"version", no_argument, nullptr, 'v'},
                                            {"registry", required_argument, nullptr, 'r'},
                                            {"config", required_argument, nullptr, 'c'},
+                                           {"execute", required_argument, nullptr, 'e'},
+                                           {"port", required_argument, nullptr, 'p'},
                                            {nullptr, 0, nullptr, 0}};
 
 int main(int argc, const char *argv[])
@@ -113,13 +116,15 @@ int main(int argc, const char *argv[])
     std::string progName = argv[0];
     std::string registryFileName;
     std::string configFileName;
+    std::string commandString;
+    uint16_t    port = 5684; // Default CoAP port
 
     int  ch;
     bool parseParams = true;
 
     while (parseParams)
     {
-        ch = getopt_long(argc, const_cast<char *const *>(argv), "hvc:r:", gCommissionerCliOptions, nullptr);
+        ch = getopt_long(argc, const_cast<char *const *>(argv), "hvc:r:e:p:", gCommissionerCliOptions, nullptr);
         switch (ch)
         {
         case 'h':
@@ -135,6 +140,16 @@ int main(int argc, const char *argv[])
             break;
         case 'c':
             configFileName = optarg;
+            break;
+        case 'e':
+            commandString = optarg;
+            break;
+        case 'p':
+            if (ParseInteger(port, optarg) != ErrorCode::kNone)
+            {
+                Console::Write("invalid port: " + std::string(optarg), Console::Color::kRed);
+                return -1;
+            }
             break;
         default:
             parseParams = false;
@@ -164,7 +179,14 @@ int main(int argc, const char *argv[])
 
     SuccessOrExit(error = gInterpreter.Init(configFileName, registryFileName));
 
-    gInterpreter.Run();
+    if (!commandString.empty())
+    {
+        gInterpreter.Execute(commandString);
+    }
+    else
+    {
+        gInterpreter.Run();
+    }
 
 exit:
     if (error != ErrorCode::kNone)
