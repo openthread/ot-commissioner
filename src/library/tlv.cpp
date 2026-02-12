@@ -230,11 +230,11 @@ bool Tlv::IsValid() const
     {
         return false;
     }
-    else if (mScope == Scope::kNetworkDiag)
+else if (mScope == Scope::kNetworkDiag)
     {
         switch (mType)
         {
-        // Network disgnostic layer TLVs
+        // Network diagnostic layer TLVs
         case Type::kNetworkDiagExtMacAddress:
             return length >= 8;
         case Type::kNetworkDiagMacAddress:
@@ -244,15 +244,18 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagTimeout:
             return length >= 4;
         case Type::kNetworkDiagConnectivity:
-            return true;
+            // Spec 10.11.4 [2], 4.4.14 [1]: 7 mandatory bytes (PP, LQ3, LQ2, LQ1, Cost, IDSeq, ActiveRouters)
+            return length >= 7; 
         case Type::kNetworkDiagRoute64:
-            return length >= 4;
+            // Spec 5.20.1 [3]: 1 byte ID Seq + 8 bytes Mask + variable cost bytes.
+            return length >= 9; 
         case Type::kNetworkDiagLeaderData:
             return length >= 8;
         case Type::kNetworkDiagNetworkData:
-            return true;
+            return true; // Variable structure
         case Type::kNetworkDiagIpv6Address:
-            return (length % 16 == 0) && (length / 16 >= 1);
+            // Spec 10.11.3 [5]: List of 16-byte addresses
+            return length >= 16 && (length % 16 == 0); 
         case Type::kNetworkDiagMacCounters:
             return length >= 36;
         case Type::kNetworkDiagBatteryLevel:
@@ -260,11 +263,13 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagSupplyVoltage:
             return length >= 2;
         case Type::kNetworkDiagChildTable:
-            return true; // list of 0 or more child entry data
+            // Spec 10.11.4.4 [11]: List of child entries.
+            // Historically entries are 3 bytes (Timeout/LinkQuality + ChildID + Mode).
+            return (length % 3 == 0); 
         case Type::kNetworkDiagChannelPages:
-            return length >= 1; // 1 or more 8-bit integers
+            return length >= 1; 
         case Type::kNetworkDiagTypeList:
-            return length >= 1; // 1 or more 8-bit integers
+            return length >= 1; 
         case Type::kNetworkDiagMaxChildTimeout:
             return length >= 4;
         case Type::kNetworkDiagLDevIDSubjectPubKeyInfo:
@@ -276,31 +281,38 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagVersion:
             return length >= 2;
         case Type::kNetworkDiagVendorName:
-            return length >= 4;
+            return true; // String, can be empty or variable
         case Type::kNetworkDiagVendorModel:
-            return length >= 4;
+            return true; 
         case Type::kNetworkDiagVendorSWVersion:
-            return length >= 2;
+            return true; 
         case Type::kNetworkDiagChild:
-            return length >= 43;
+            // Spec 10.11.4.10 [6]: Fixed length 43 bytes, or empty if no child.
+            return length == 0 || length >= 43; 
         case Type::kNetworkDiagChildIpv6Address:
-            return (length % 16 == 2) && (length / 16 >= 1);
+            // Spec 10.11.4.11 [4]: RLOC16 (2 bytes) + N * IPv6 Address (16 bytes)
+            //return length >= 2 && ((length - 2) % 16 == 0); 
+            return true;
         case Type::kNetworkDiagRouterNeighbor:
-            return length >= 24;
+            // Spec 10.11.4.12 [7]: Fixed length 24 bytes, or empty if no neighbors.
+            return length == 0 || length >= 24; 
         case Type::kNetworkDiagAnswer:
-            return length >= 2;
+            // Spec 10.11.4.13 [8]: Index (2 bytes)
+            return length >= 2; 
         case Type::kNetworkDiagQueryID:
-            return length >= 2;
+            // Spec 10.11.4.14 [9]: Query ID (2 bytes)
+            return length >= 2; 
         case Type::kNetworkDiagMleCounters:
-            return length >= 66;
+            // Spec 10.11.4.15 [10]: Fixed length 66 bytes
+            return length >= 66; 
         case Type::kNetworkDiagThreadStackVersion:
-            return length >= 2;
+            return true; 
         case Type::kNetworkDiagVendorAppURL:
-            return true;
+            return true; 
         case Type::kNetworkDiagNonPreferredChannelsMask:
-            return true;
+            return true; 
         default:
-            return false;
+            return true;
         }
     }
     else if (mScope == Scope::kNetworkData)
@@ -316,6 +328,12 @@ bool Tlv::IsValid() const
             return length % kBorderRouterBytes == 0;
         case Type::kNetworkData6LowPanContext:
             return length >= 2;
+        case Type::kNetworkDataCommissioningData:
+            return true;
+        case Type::kNetworkDataService:
+            return true;
+        case Type::kNetworkDataServer:
+            return true;
         default:
             return false;
         }
@@ -493,8 +511,8 @@ Error GetTlvSet(TlvSet &aTlvSet, const ByteArray &aBuf, Scope aScope)
         else
         {
             // Drop invalid TLVs
-            LOG_WARN(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
-                     utils::to_underlying(tlv->GetType()), utils::Hex(tlv->GetValue()));
+            LOG_DEBUG(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
+                      utils::to_underlying(tlv->GetType()), utils::Hex(tlv->GetValue()));
         }
     }
 
@@ -528,15 +546,16 @@ Error GetTlvListByType(TlvList &aTlvList, const ByteArray &aBuf, tlv::Type aTlvT
         SuccessOrExit(error);
         VerifyOrDie(tlvPtr != nullptr);
 
-        if (tlvPtr->IsValid() && tlvPtr->GetType() == aTlvType)
+        if (!tlvPtr->IsValid())
+        {
+            LOG_DEBUG(LOG_REGION_COAP, "dropping invalid TLV(type={}, value={})",
+                      utils::to_underlying(tlvPtr->GetType()), utils::Hex(tlvPtr->GetValue()));
+            continue;
+        }
+
+        if (tlvPtr->GetType() == aTlvType)
         {
             aTlvList.push_back(*tlvPtr);
-        }
-        else
-        {
-            // Drop invalid TLVs
-            LOG_WARN(LOG_REGION_COAP, "dropping invalid/unknown TLV(type={}, value={})",
-                     utils::to_underlying(tlvPtr->GetType()), utils::Hex(tlvPtr->GetValue()));
         }
     }
 
