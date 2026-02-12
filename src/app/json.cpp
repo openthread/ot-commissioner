@@ -807,6 +807,17 @@ static void to_json(Json &aJson, const Connectivity &aConnectivity)
     }
 }
 
+static void to_json(Json &aJson, const Answer &aAnswer)
+{
+    aJson["Index"]  = aAnswer.mIndex;
+    aJson["IsLast"] = aAnswer.mIsLast;
+}
+
+static void to_json(Json &aJson, const QueryId &aQueryId)
+{
+    aJson["QueryId"] = aQueryId.mQueryId;
+}
+
 static void to_json(Json &aJson, const Child &aChild)
 {
 #define SET(name) aJson[#name] = aChild.m##name;
@@ -871,6 +882,117 @@ static void to_json(Json &aJson, const MleCounters &aMleCounters)
 #undef SET
 }
 
+static void to_json(Json &aJson, const LeaderData &aLeaderData)
+{
+#define SET(name) aJson[#name] = aLeaderData.m##name;
+    SET(PartitionId);
+    SET(Weighting);
+    SET(DataVersion);
+    SET(StableDataVersion);
+    SET(RouterId);
+#undef SET
+}
+
+static void to_json(Json &aJson, const RouteDataEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(RouterId);
+    SET(OutgoingLinkQuality);
+    SET(IncomingLinkQuality);
+    SET(RouteCost);
+#undef SET
+}
+
+static void to_json(Json &aJson, const Route64 &aRoute64)
+{
+    aJson["IdSequence"] = aRoute64.mIdSequence;
+    aJson["Mask"]       = aRoute64.mMask;
+    aJson["RouteData"]  = aRoute64.mRouteData;
+}
+
+static void to_json(Json &aJson, const ModeData &aModeData)
+{
+#define SET(name) aJson[#name] = aModeData.m##name;
+    SET(IsRxOnWhenIdleMode);
+    SET(IsMtd);
+    SET(IsStableNetworkDataRequired);
+#undef SET
+}
+
+static void to_json(Json &aJson, const ChildTableEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(Timeout);
+    SET(IncomingLinkQuality);
+    SET(ChildId);
+    SET(ModeData);
+#undef SET
+}
+
+static void to_json(Json &aJson, const ChildIpv6AddrInfo &aInfo)
+{
+#define SET(name) aJson[#name] = aInfo.m##name;
+    SET(Rloc16);
+    SET(ChildId);
+    SET(Addrs);
+#undef SET
+}
+
+static void to_json(Json &aJson, const HasRouteEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(Rloc16);
+    SET(RouterPreference);
+    SET(IsNat64);
+#undef SET
+}
+
+static void to_json(Json &aJson, const BorderRouterEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(Rloc16);
+    SET(PrefixPreference);
+    SET(IsPreferred);
+    SET(IsSlaac);
+    SET(IsDhcp);
+    SET(IsConfigure);
+    SET(IsDefaultRoute);
+    SET(IsOnMesh);
+    SET(IsNdDns);
+    SET(IsDp);
+#undef SET
+}
+
+static void to_json(Json &aJson, const SixLowPanContext &aContext)
+{
+#define SET(name) aJson[#name] = aContext.m##name;
+    SET(IsCompress);
+    SET(ContextId);
+    SET(ContextLength);
+#undef SET
+}
+
+static void to_json(Json &aJson, const PrefixEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(DomainId);
+    SET(PrefixLength);
+    SET(Prefix);
+    SET(HasRouteList);
+    SET(BorderRouterList);
+    SET(SixLowPanContext);
+#undef SET
+}
+
+static void to_json(Json &aJson, const NetworkData &aNetworkData)
+{
+    auto &prefixList = aJson["PrefixList"];
+    for (const auto &entry : aNetworkData.mPrefixList)
+    {
+        prefixList.push_back(entry);
+    }
+}
+
 static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
 {
 #define SET_IF_PRESENT(name)                                    \
@@ -899,6 +1021,19 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     SET_IF_PRESENT(MleCounters);
     SET_IF_PRESENT(VendorAppURL);
     SET_IF_PRESENT(NonPreferredChannelsMask);
+
+    // Newly added fields
+    SET_IF_PRESENT(Eui64);
+    SET_IF_PRESENT(Addrs);
+    SET_IF_PRESENT(Mode);
+    SET_IF_PRESENT(Route64);
+    SET_IF_PRESENT(LeaderData);
+    SET_IF_PRESENT(ChildTable);
+    SET_IF_PRESENT(ChildIpv6AddrsInfoList);
+    SET_IF_PRESENT(NetworkData);
+    SET_IF_PRESENT(Answer);
+    SET_IF_PRESENT(QueryId);
+
 #undef SET_IF_PRESENT
 }
 

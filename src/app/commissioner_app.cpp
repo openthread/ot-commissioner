@@ -37,6 +37,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -1376,10 +1377,21 @@ void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const
 
     SuccessOrDie(addr.Set(aPeerAddr));
 
-    mDiagAnsDataMap[addr] = aDiagAnsMsg;
+    std::lock_guard<std::mutex> lock(mMutex);
+    mDiagAnsDataMap[addr].Merge(aDiagAnsMsg);
 }
 
-const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const { return mDiagAnsDataMap; }
+const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mDiagAnsDataMap;
+}
+
+void CommissionerApp::ClearNetDiagTlvs()
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    mDiagAnsDataMap.clear();
+}
 
 Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags)
 {

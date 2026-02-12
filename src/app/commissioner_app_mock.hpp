@@ -141,6 +141,7 @@ public:
     MOCK_METHOD(const EnergyReport *, GetEnergyReport, (const Address &), (const));
     MOCK_METHOD(const EnergyReportMap &, GetAllEnergyReports, (), (const));
     MOCK_METHOD(const DiagAnsDataMap &, GetNetDiagTlvs, (), (const));
+    MOCK_METHOD(void, ClearNetDiagTlvs, ());
     MOCK_METHOD(Error, CommandDiagGetQuery, (const std::string &, uint64_t));
     MOCK_METHOD(Error, CommandDiagReset, (const std::string &, uint64_t));
 };
