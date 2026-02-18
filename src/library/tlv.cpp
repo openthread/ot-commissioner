@@ -230,7 +230,7 @@ bool Tlv::IsValid() const
     {
         return false;
     }
-else if (mScope == Scope::kNetworkDiag)
+    else if (mScope == Scope::kNetworkDiag)
     {
         switch (mType)
         {
@@ -245,17 +245,17 @@ else if (mScope == Scope::kNetworkDiag)
             return length >= 4;
         case Type::kNetworkDiagConnectivity:
             // Spec 10.11.4 [2], 4.4.14 [1]: 7 mandatory bytes (PP, LQ3, LQ2, LQ1, Cost, IDSeq, ActiveRouters)
-            return length >= 7; 
+            return length >= 7;
         case Type::kNetworkDiagRoute64:
             // Spec 5.20.1 [3]: 1 byte ID Seq + 8 bytes Mask + variable cost bytes.
-            return length >= 9; 
+            return length >= 9;
         case Type::kNetworkDiagLeaderData:
             return length >= 8;
         case Type::kNetworkDiagNetworkData:
             return true; // Variable structure
         case Type::kNetworkDiagIpv6Address:
             // Spec 10.11.3 [5]: List of 16-byte addresses
-            return length >= 16 && (length % 16 == 0); 
+            return length >= 16 && (length % 16 == 0);
         case Type::kNetworkDiagMacCounters:
             return length >= 36;
         case Type::kNetworkDiagBatteryLevel:
@@ -265,11 +265,11 @@ else if (mScope == Scope::kNetworkDiag)
         case Type::kNetworkDiagChildTable:
             // Spec 10.11.4.4 [11]: List of child entries.
             // Historically entries are 3 bytes (Timeout/LinkQuality + ChildID + Mode).
-            return (length % 3 == 0); 
+            return (length % 3 == 0);
         case Type::kNetworkDiagChannelPages:
-            return length >= 1; 
+            return length >= 1;
         case Type::kNetworkDiagTypeList:
-            return length >= 1; 
+            return length >= 1;
         case Type::kNetworkDiagMaxChildTimeout:
             return length >= 4;
         case Type::kNetworkDiagLDevIDSubjectPubKeyInfo:
@@ -283,34 +283,34 @@ else if (mScope == Scope::kNetworkDiag)
         case Type::kNetworkDiagVendorName:
             return true; // String, can be empty or variable
         case Type::kNetworkDiagVendorModel:
-            return true; 
+            return true;
         case Type::kNetworkDiagVendorSWVersion:
-            return true; 
+            return true;
         case Type::kNetworkDiagChild:
             // Spec 10.11.4.10 [6]: Fixed length 43 bytes, or empty if no child.
-            return length == 0 || length >= 43; 
+            return length == 0 || length >= 43;
         case Type::kNetworkDiagChildIpv6Address:
             // Spec 10.11.4.11 [4]: RLOC16 (2 bytes) + N * IPv6 Address (16 bytes)
-            //return length >= 2 && ((length - 2) % 16 == 0); 
+            // return length >= 2 && ((length - 2) % 16 == 0);
             return true;
         case Type::kNetworkDiagRouterNeighbor:
             // Spec 10.11.4.12 [7]: Fixed length 24 bytes, or empty if no neighbors.
-            return length == 0 || length >= 24; 
+            return length == 0 || length >= 24;
         case Type::kNetworkDiagAnswer:
             // Spec 10.11.4.13 [8]: Index (2 bytes)
-            return length >= 2; 
+            return length >= 2;
         case Type::kNetworkDiagQueryID:
             // Spec 10.11.4.14 [9]: Query ID (2 bytes)
-            return length >= 2; 
+            return length >= 2;
         case Type::kNetworkDiagMleCounters:
             // Spec 10.11.4.15 [10]: Fixed length 66 bytes
-            return length >= 66; 
+            return length >= 66;
         case Type::kNetworkDiagThreadStackVersion:
-            return true; 
+            return true;
         case Type::kNetworkDiagVendorAppURL:
-            return true; 
+            return true;
         case Type::kNetworkDiagNonPreferredChannelsMask:
-            return true; 
+            return true;
         default:
             return true;
         }

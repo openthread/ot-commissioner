@@ -93,7 +93,8 @@ Interpreter::Value Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, 
     CommissionerAppPtr commissioner = nullptr;
     std::string        jsonFile     = "";
 
-    Console::Write("ProcessTraverseNetwork called with " + std::to_string(aExpr.size()) + " args\n", Console::Color::kWhite);
+    Console::Write("ProcessTraverseNetwork called with " + std::to_string(aExpr.size()) + " args\n",
+                   Console::Color::kWhite);
     for (size_t i = 1; i < aExpr.size(); ++i)
     {
         if (aExpr[i] == "--json")
@@ -104,7 +105,7 @@ Interpreter::Value Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, 
         }
         else if (aExpr[i][0] == '-')
         {
-             ExitNow(value = ERROR_INVALID_ARGS("Invalid argument: {}", aExpr[i]));
+            ExitNow(value = ERROR_INVALID_ARGS("Invalid argument: {}", aExpr[i]));
         }
     }
 
@@ -112,7 +113,8 @@ Interpreter::Value Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, 
     {
         if (aInterpreter->mContext.mCommandKeys[i] == "--json")
         {
-            VerifyOrExit(i + 1 < aInterpreter->mContext.mCommandKeys.size(), value = ERROR_INVALID_ARGS("Missing JSON filename"));
+            VerifyOrExit(i + 1 < aInterpreter->mContext.mCommandKeys.size(),
+                         value = ERROR_INVALID_ARGS("Missing JSON filename"));
             jsonFile = aInterpreter->mContext.mCommandKeys[++i];
             Console::Write("JSON output enabled: " + jsonFile + "\n", Console::Color::kWhite);
         }
@@ -124,64 +126,79 @@ exit:
     return value;
 }
 
-Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterpreter, CommissionerAppPtr &aCommissioner, const Interpreter::Expression &, const std::string &aJsonFile)
+Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterpreter,
+                                                        CommissionerAppPtr &aCommissioner,
+                                                        const Interpreter::Expression &,
+                                                        const std::string &aJsonFile)
 {
-    Interpreter::Value value;
-    std::stringstream  resultStream;
-    std::string        mlp;
-    std::string        leaderAloc;
-    Address            leaderAddr;
-    uint16_t           leaderRloc16 = 0xFFFF;
-    Route64            route64;
-    bool               foundRoute64 = false;
-    size_t             routerCount  = 0;
-    size_t             childCount   = 0;
-    size_t             expectedChildCount = 0;
-    std::set<uint16_t> expectedRouters;
+    Interpreter::Value       value;
+    std::stringstream        resultStream;
+    std::string              mlp;
+    std::string              leaderAloc;
+    Address                  leaderAddr;
+    uint16_t                 leaderRloc16 = 0xFFFF;
+    Route64                  route64;
+    bool                     foundRoute64       = false;
+    size_t                   routerCount        = 0;
+    size_t                   childCount         = 0;
+    size_t                   expectedChildCount = 0;
+    std::set<uint16_t>       expectedRouters;
     std::map<uint16_t, bool> expectedChildren; // RLOC16 -> isSleepy
-    std::set<Address> processedNodes;
-    std::set<uint16_t> routersToQuery;
+    std::set<Address>        processedNodes;
+    std::set<uint16_t>       routersToQuery;
     std::map<uint16_t, bool> childrenToQuery;
-
 
     std::map<Address, NetDiagData> collectedData;
 
     // Define chunks to minimize TLV size per message
     const std::vector<uint64_t> kLeaderChunks = {
-        NetDiagData::kRoute64Bit | NetDiagData::kMacAddrBit | NetDiagData::kEui64Bit, // Chunk 0: Topology & ID
+        NetDiagData::kRoute64Bit | NetDiagData::kMacAddrBit | NetDiagData::kEui64Bit,        // Chunk 0: Topology & ID
         NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit | NetDiagData::kConnectivityBit, // Chunk 1: Connectivity
-        NetDiagData::kLeaderDataBit | NetDiagData::kNetworkDataBit | NetDiagData::kNonPreferredChannelsMaskBit, // Chunk 2: Network Data
+        NetDiagData::kLeaderDataBit | NetDiagData::kNetworkDataBit |
+            NetDiagData::kNonPreferredChannelsMaskBit,                  // Chunk 2: Network Data
         NetDiagData::kChildTableBit | NetDiagData::kMaxChildTimeoutBit, // Chunk 3: Child Table
-        NetDiagData::kChildIpv6AddrsInfoListBit, // Chunk 4: Child IPv6 Addresses
-        NetDiagData::kChildBit, // Chunk 5: Child Info (Large)
-        NetDiagData::kAddrsBit | NetDiagData::kRouterNeighborBit, // Chunk 6: Neighbors & Addresses
-        NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 7: Counters
-        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit | NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 8: Device Info
-        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit | NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 9: Vendor Info
+        NetDiagData::kChildIpv6AddrsInfoListBit,                        // Chunk 4: Child IPv6 Addresses
+        NetDiagData::kChildBit,                                         // Chunk 5: Child Info (Large)
+        NetDiagData::kAddrsBit | NetDiagData::kRouterNeighborBit,       // Chunk 6: Neighbors & Addresses
+        NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit,    // Chunk 7: Counters
+        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
+            NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 8: Device Info
+        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit |
+            NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 9: Vendor Info
     };
 
     const std::vector<uint64_t> kRouterChunks = {
         NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kEui64Bit, // Chunk 0: ID
-        NetDiagData::kModeBit | NetDiagData::kConnectivityBit | NetDiagData::kRoute64Bit | NetDiagData::kNonPreferredChannelsMaskBit, // Chunk 1: Connectivity & Topology
-        NetDiagData::kChildTableBit | NetDiagData::kChildIpv6AddrsInfoListBit | NetDiagData::kMaxChildTimeoutBit, // Chunk 2: Child Table
-        NetDiagData::kChildBit, // Chunk 3: Child Info (Large)
-        NetDiagData::kAddrsBit | NetDiagData::kRouterNeighborBit, // Chunk 4: Neighbors & Addresses
+        NetDiagData::kModeBit | NetDiagData::kConnectivityBit | NetDiagData::kRoute64Bit |
+            NetDiagData::kNonPreferredChannelsMaskBit, // Chunk 1: Connectivity & Topology
+        NetDiagData::kChildTableBit | NetDiagData::kChildIpv6AddrsInfoListBit |
+            NetDiagData::kMaxChildTimeoutBit,                        // Chunk 2: Child Table
+        NetDiagData::kChildBit,                                      // Chunk 3: Child Info (Large)
+        NetDiagData::kAddrsBit | NetDiagData::kRouterNeighborBit,    // Chunk 4: Neighbors & Addresses
         NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 5: Counters
-        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit | NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 6: Device Info
-        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit | NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 7: Vendor Info
+        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
+            NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 6: Device Info
+        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit |
+            NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 7: Vendor Info
     };
 
     const std::vector<uint64_t> kChildChunks = {
-        NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit | NetDiagData::kEui64Bit, // Chunk 0: ID & Mode
-        NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit | NetDiagData::kNetworkDataBit | NetDiagData::kNonPreferredChannelsMaskBit, // Chunk 1: Connectivity & Network Data
+        NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit |
+            NetDiagData::kEui64Bit, // Chunk 0: ID & Mode
+        NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit |
+            NetDiagData::kNetworkDataBit |
+            NetDiagData::kNonPreferredChannelsMaskBit,               // Chunk 1: Connectivity & Network Data
         NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 2: Counters
-        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit | NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 3: Device Info
-        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit | NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 4: Vendor Info
+        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
+            NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 3: Device Info
+        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit |
+            NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 4: Vendor Info
     };
 
     auto ReportMissingTlvs = [&](uint64_t aRequested, uint64_t aReceived) {
         uint64_t missing = aRequested & ~aReceived;
-        if (missing == 0) return;
+        if (missing == 0)
+            return;
 
         std::string missingStr = "Missing TLVs: ";
         bool        first      = true;
@@ -189,7 +206,8 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
         {
             if (missing & pair.first)
             {
-                if (!first) missingStr += ", ";
+                if (!first)
+                    missingStr += ", ";
                 missingStr += pair.second;
                 first = false;
             }
@@ -199,7 +217,7 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
 
     auto PollForFlags = [&](uint64_t aRequestedFlags, const Address *aExpectedAddr, int aTimeoutMs) -> const Address * {
         int intervalMs = 10;
-        int steps = aTimeoutMs / intervalMs;
+        int steps      = aTimeoutMs / intervalMs;
         for (int i = 0; i < steps; ++i)
         {
             if (aInterpreter->mCancelCommand)
@@ -225,7 +243,7 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
     auto QueryDevice = [&](const std::string &aTarget, const std::string &aLabel, const std::vector<uint64_t> &aChunks,
                            Address &aDeviceAddr, uint64_t &aRequestedFlags, int aTimeoutMs,
                            std::function<bool(const Address &)> aValidator = nullptr) -> bool {
-        aRequestedFlags = 0;
+        aRequestedFlags  = 0;
         bool deviceFound = false;
 
         for (size_t i = 0; i < aChunks.size(); ++i)
@@ -234,7 +252,8 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
             aRequestedFlags |= chunk;
             bool chunkReceived = false;
 
-            if (aInterpreter->mCancelCommand) return false;
+            if (aInterpreter->mCancelCommand)
+                return false;
 
             aCommissioner->CommandDiagGetQuery(aTarget, chunk).IgnoreError();
 
@@ -265,7 +284,8 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
                 }
             }
 
-            if (i == 0 && !chunkReceived) return false;
+            if (i == 0 && !chunkReceived)
+                return false;
             deviceFound = true;
         }
         return deviceFound;
@@ -279,7 +299,8 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
 
     if (aCommissioner->GetMeshLocalPrefix(mlp) == ErrorCode::kNone)
     {
-        // Resolve the full leader IPv6 address by combining the Mesh Local Prefix with the Leader Anycast Locator (0xFC00).
+        // Resolve the full leader IPv6 address by combining the Mesh Local Prefix with the Leader Anycast Locator
+        // (0xFC00).
         (void)aCommissioner->GetMeshLocalAddr(leaderAloc, mlp, 0xFC00);
     }
     else
@@ -301,7 +322,7 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
         const auto &answers = aCommissioner->GetNetDiagTlvs();
         if (answers.count(leaderAddr))
         {
-            const auto &data = answers.at(leaderAddr);
+            const auto &data    = answers.at(leaderAddr);
             leaderReceivedFlags = data.mPresentFlags;
 
             collectedData[leaderAddr] = data;
@@ -317,14 +338,16 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
             }
             processedNodes.insert(leaderAddr);
             Console::Write("Leader Unicast Address: " + leaderAddr.ToString() + "\n", Console::Color::kGreen);
-            Console::Write(fmt::format("Leader Data Summary: Flags=0x{:08X}, RLOC16=0x{:04X}",
-                                       data.mPresentFlags, leaderRloc16), Console::Color::kCyan);
+            Console::Write(
+                fmt::format("Leader Data Summary: Flags=0x{:08X}, RLOC16=0x{:04X}", data.mPresentFlags, leaderRloc16),
+                Console::Color::kCyan);
             ReportMissingTlvs(leaderRequestedFlags, leaderReceivedFlags);
 
             if (data.mPresentFlags & NetDiagData::kChildTableBit)
             {
                 expectedChildCount += data.mChildTable.size();
-                Console::Write(fmt::format("Leader 0x{:04X} has {} children\n", leaderRloc16, data.mChildTable.size()), Console::Color::kCyan);
+                Console::Write(fmt::format("Leader 0x{:04X} has {} children\n", leaderRloc16, data.mChildTable.size()),
+                               Console::Color::kCyan);
                 for (const auto &childEntry : data.mChildTable)
                 {
                     expectedChildren[leaderRloc16 | childEntry.mChildId] = !childEntry.mModeData.mIsRxOnWhenIdleMode;
@@ -367,16 +390,18 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
         std::vector<uint16_t> currentRouters(routersToQuery.begin(), routersToQuery.end());
         for (uint16_t rloc16 : currentRouters)
         {
-            if (aInterpreter->mCancelCommand) break;
+            if (aInterpreter->mCancelCommand)
+                break;
 
             aCommissioner->ClearNetDiagTlvs(); // Clear previous responses
             std::string routerTarget = fmt::format("0x{:04X}", rloc16);
             Address     routerAddr;
-            bool        routerFound = false;
+            bool        routerFound          = false;
             uint64_t    routerRequestedFlags = 0;
             uint64_t    routerReceivedFlags  = 0;
 
-            if (QueryDevice(routerTarget, "Router " + routerTarget, kRouterChunks, routerAddr, routerRequestedFlags, 800))
+            if (QueryDevice(routerTarget, "Router " + routerTarget, kRouterChunks, routerAddr, routerRequestedFlags,
+                            800))
             {
                 routerFound = true;
             }
@@ -395,13 +420,15 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
                 collectedData[routerAddr] = data;
 
                 Console::Write("Router Address: " + routerAddr.ToString(), Console::Color::kGreen);
-                Console::Write(fmt::format("Router Data Summary: Flags=0x{:08X}", data.mPresentFlags), Console::Color::kCyan);
+                Console::Write(fmt::format("Router Data Summary: Flags=0x{:08X}", data.mPresentFlags),
+                               Console::Color::kCyan);
                 ReportMissingTlvs(routerRequestedFlags, routerReceivedFlags);
 
                 if (data.mPresentFlags & NetDiagData::kChildTableBit)
                 {
                     expectedChildCount += data.mChildTable.size();
-                    Console::Write(fmt::format("Router 0x{:04X} has {} children", rloc16, data.mChildTable.size()), Console::Color::kCyan);
+                    Console::Write(fmt::format("Router 0x{:04X} has {} children", rloc16, data.mChildTable.size()),
+                                   Console::Color::kCyan);
                     for (const auto &childEntry : data.mChildTable)
                     {
                         expectedChildren[rloc16 | childEntry.mChildId] = !childEntry.mModeData.mIsRxOnWhenIdleMode;
@@ -425,27 +452,29 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
         std::vector<std::pair<uint16_t, bool>> currentChildren(childrenToQuery.begin(), childrenToQuery.end());
         for (const auto &entry : currentChildren)
         {
-            if (aInterpreter->mCancelCommand) break;
+            if (aInterpreter->mCancelCommand)
+                break;
 
             aCommissioner->ClearNetDiagTlvs(); // Clear previous responses
             uint16_t    childRloc   = entry.first;
             bool        isSleepy    = entry.second;
             std::string childTarget = fmt::format("0x{:04X}", childRloc);
             Address     childAddr;
-            bool        childFound  = false;
-            int         timeoutMs   = isSleepy ? 10000 : 1500;
+            bool        childFound          = false;
+            int         timeoutMs           = isSleepy ? 10000 : 1500;
             uint64_t    childRequestedFlags = 0;
             uint64_t    childReceivedFlags  = 0;
 
             auto validator = [&](const Address &aAddr) {
                 const auto &answers = aCommissioner->GetNetDiagTlvs();
-                if (answers.count(aAddr) == 0) return false;
+                if (answers.count(aAddr) == 0)
+                    return false;
                 const auto &data = answers.at(aAddr);
                 return (data.mPresentFlags & NetDiagData::kMacAddrBit) && (data.mMacAddr == childRloc);
             };
 
-            if (QueryDevice(childTarget, "Child " + childTarget, kChildChunks, childAddr, childRequestedFlags, timeoutMs,
-                            validator))
+            if (QueryDevice(childTarget, "Child " + childTarget, kChildChunks, childAddr, childRequestedFlags,
+                            timeoutMs, validator))
             {
                 childFound = true;
             }
@@ -458,19 +487,22 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
 
                 const auto &answers = aCommissioner->GetNetDiagTlvs();
                 const auto &data    = answers.at(childAddr);
-                childReceivedFlags = data.mPresentFlags;
+                childReceivedFlags  = data.mPresentFlags;
 
                 // Store collected data
                 collectedData[childAddr] = data;
 
-                Console::Write(fmt::format("{} Child Address: {}", isSleepy ? "[Sleepy]" : "[Non-Sleepy]", childAddr.ToString()), Console::Color::kGreen);
+                Console::Write(
+                    fmt::format("{} Child Address: {}", isSleepy ? "[Sleepy]" : "[Non-Sleepy]", childAddr.ToString()),
+                    Console::Color::kGreen);
                 ReportMissingTlvs(childRequestedFlags, childReceivedFlags);
             }
         }
 
         if (!childrenToQuery.empty())
         {
-             Console::Write(fmt::format("Timed out querying {} children.", childrenToQuery.size()), Console::Color::kRed);
+            Console::Write(fmt::format("Timed out querying {} children.", childrenToQuery.size()),
+                           Console::Color::kRed);
         }
     }
 
@@ -488,10 +520,11 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
 
     if (!aJsonFile.empty())
     {
-        Console::Write("Writing JSON to " + aJsonFile + " with " + std::to_string(processedNodes.size()) + " entries\n", Console::Color::kWhite);
-        
+        Console::Write("Writing JSON to " + aJsonFile + " with " + std::to_string(processedNodes.size()) + " entries\n",
+                       Console::Color::kWhite);
+
         nlohmann::json report;
-        
+
         // Summary Block
         report["summary"]["leader_addr"]        = leaderAddr.ToString();
         report["summary"]["expected_routers"]   = expectedRouters.size();
@@ -505,20 +538,20 @@ Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter *aInterprete
         {
             const auto &addr = pair.first;
             const auto &data = pair.second;
-            
+
             // We use NetDiagDataToJson to serialize each entry, but it returns a string.
             // We need to parse it back to json object to put into the report.
             std::string jsonStr = NetDiagDataToJson(data);
             try
             {
                 devices[addr.ToString()] = nlohmann::json::parse(jsonStr);
-            }
-            catch (const std::exception &e)
+            } catch (const std::exception &e)
             {
-                Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", addr.ToString(), e.what()), Console::Color::kRed);
+                Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", addr.ToString(), e.what()),
+                               Console::Color::kRed);
             }
         }
-        
+
         std::ofstream file(aJsonFile);
         if (file.is_open())
         {

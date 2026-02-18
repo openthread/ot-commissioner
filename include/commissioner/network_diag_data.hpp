@@ -290,12 +290,10 @@ struct NetDiagData
         field = aOther.field;         \
     }
 
-#define MERGE_VECTOR_FIELD(bit, field)             \
-    if (aOther.mPresentFlags & (bit))              \
-    {                                              \
-        field.insert(field.end(),                  \
-                     aOther.field.begin(),         \
-                     aOther.field.end());          \
+#define MERGE_VECTOR_FIELD(bit, field)                                       \
+    if (aOther.mPresentFlags & (bit))                                        \
+    {                                                                        \
+        field.insert(field.end(), aOther.field.begin(), aOther.field.end()); \
     }
 
         MERGE_FIELD(kExtMacAddrBit, mExtMacAddr);

@@ -194,19 +194,32 @@ Interpreter::NetworkSelectionComparator::~NetworkSelectionComparator()
 }
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap = *new std::map<std::string, Evaluator>{
-    {"config", &Interpreter::ProcessConfig},       {"start", &Interpreter::ProcessStart},
-    {"stop", &Interpreter::ProcessStop},           {"active", &Interpreter::ProcessActive},
-    {"token", &Interpreter::ProcessToken},         {"br", &Interpreter::ProcessBr},
-    {"domain", &Interpreter::ProcessDomain},       {"network", &Interpreter::ProcessNetwork},
-    {"sessionid", &Interpreter::ProcessSessionId}, {"borderagent", &Interpreter::ProcessBorderAgent},
-    {"joiner", &Interpreter::ProcessJoiner},       {"commdataset", &Interpreter::ProcessCommDataset},
-    {"opdataset", &Interpreter::ProcessOpDataset}, {"bbrdataset", &Interpreter::ProcessBbrDataset},
-    {"reenroll", &Interpreter::ProcessReenroll},   {"domainreset", &Interpreter::ProcessDomainReset},
-    {"migrate", &Interpreter::ProcessMigrate},     {"mlr", &Interpreter::ProcessMlr},
-    {"announce", &Interpreter::ProcessAnnounce},   {"panid", &Interpreter::ProcessPanId},
-    {"energy", &Interpreter::ProcessEnergy},       {"exit", &Interpreter::ProcessExit},
-    {"quit", &Interpreter::ProcessExit},           {"help", &Interpreter::ProcessHelp},
-    {"state", &Interpreter::ProcessState},         {"netdiag", &Interpreter::ProcessNetworkDiag},
+    {"config", &Interpreter::ProcessConfig},
+    {"start", &Interpreter::ProcessStart},
+    {"stop", &Interpreter::ProcessStop},
+    {"active", &Interpreter::ProcessActive},
+    {"token", &Interpreter::ProcessToken},
+    {"br", &Interpreter::ProcessBr},
+    {"domain", &Interpreter::ProcessDomain},
+    {"network", &Interpreter::ProcessNetwork},
+    {"sessionid", &Interpreter::ProcessSessionId},
+    {"borderagent", &Interpreter::ProcessBorderAgent},
+    {"joiner", &Interpreter::ProcessJoiner},
+    {"commdataset", &Interpreter::ProcessCommDataset},
+    {"opdataset", &Interpreter::ProcessOpDataset},
+    {"bbrdataset", &Interpreter::ProcessBbrDataset},
+    {"reenroll", &Interpreter::ProcessReenroll},
+    {"domainreset", &Interpreter::ProcessDomainReset},
+    {"migrate", &Interpreter::ProcessMigrate},
+    {"mlr", &Interpreter::ProcessMlr},
+    {"announce", &Interpreter::ProcessAnnounce},
+    {"panid", &Interpreter::ProcessPanId},
+    {"energy", &Interpreter::ProcessEnergy},
+    {"exit", &Interpreter::ProcessExit},
+    {"quit", &Interpreter::ProcessExit},
+    {"help", &Interpreter::ProcessHelp},
+    {"state", &Interpreter::ProcessState},
+    {"netdiag", &Interpreter::ProcessNetworkDiag},
     {"traversenetwork", &Interpreter::ProcessTraverseNetwork},
 };
 
@@ -1222,7 +1235,7 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
 {
     using namespace ot::commissioner::persistent_storage;
 
-    Value value;
+    Value       value;
     event_base *base = nullptr;
 
     VerifyOrExit(aExpr.size() >= 2, value = ERROR_INVALID_ARGS(SYNTAX_FEW_ARGS));
@@ -1677,7 +1690,6 @@ Interpreter::Value Interpreter::ProcessBr(const Expression &aExpr)
     {
         ExitNow(value = ERROR_INVALID_COMMAND(SYNTAX_INVALID_SUBCOMMAND, aExpr[1]));
     }
-
 
 exit:
     if (base != nullptr)

@@ -45,10 +45,10 @@ class Traverser
 public:
     static Interpreter::Value ProcessTraverseNetwork(Interpreter *aInterpreter, const Interpreter::Expression &aExpr);
 
-    static Interpreter::Value ProcessTraverseNetworkJob(Interpreter            *aInterpreter,
-                                                        CommissionerAppPtr     &aCommissioner,
+    static Interpreter::Value ProcessTraverseNetworkJob(Interpreter                   *aInterpreter,
+                                                        CommissionerAppPtr            &aCommissioner,
                                                         const Interpreter::Expression &aExpr,
-                                                        const std::string      &aJsonFile = "");
+                                                        const std::string             &aJsonFile = "");
 };
 
 } // namespace commissioner

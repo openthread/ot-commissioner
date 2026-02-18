@@ -671,7 +671,7 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
     // Handle Query ID and Fragmentation
     if (diagData.mPresentFlags & NetDiagData::kQueryIdBit)
     {
-        uint16_t queryId = diagData.mQueryId.mQueryId;
+        uint16_t queryId     = diagData.mQueryId.mQueryId;
         auto    &accumulated = mPendingDiagQueries[queryId];
 
         // Merge the new data into the accumulated data
@@ -689,12 +689,12 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
         }
         else
         {
-             // If Answer TLV is missing, assume it's a single packet response
-             // But valid Query ID means it might be related to a specific query.
-             // We treat it as a complete response.
-             mDiagAnsTlvs = accumulated; // accumulated currently has this single packet data merged
-             mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
-             mPendingDiagQueries.erase(queryId);
+            // If Answer TLV is missing, assume it's a single packet response
+            // But valid Query ID means it might be related to a specific query.
+            // We treat it as a complete response.
+            mDiagAnsTlvs = accumulated; // accumulated currently has this single packet data merged
+            mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+            mPendingDiagQueries.erase(queryId);
         }
     }
     else
@@ -2347,7 +2347,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto answer = tlvSet[tlv::Type::kNetworkDiagAnswer])
     {
-        uint16_t val = answer->GetValueAsUint16();
+        uint16_t val             = answer->GetValueAsUint16();
         diagData.mAnswer.mIsLast = (val & 0x8000) != 0;
         diagData.mAnswer.mIndex  = (val & 0x7FFF);
         diagData.mPresentFlags |= NetDiagData::kAnswerBit;
@@ -2547,8 +2547,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto channelsMask = tlvSet[tlv::Type::kNetworkDiagNonPreferredChannelsMask])
     {
-        error = internal::DecodeNonPreferredChannelsMask(diagData.mNonPreferredChannelsMask,
-                                                         channelsMask->GetValue());
+        error = internal::DecodeNonPreferredChannelsMask(diagData.mNonPreferredChannelsMask, channelsMask->GetValue());
         if (error != ErrorCode::kNone)
         {
             LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Non-Preferred Channels Mask: {}", error.ToString());
@@ -2864,7 +2863,9 @@ Error internal::DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aB
 {
     Error  error;
     size_t length = aBuf.size();
-    VerifyOrExit(length >= kMacCountersBytes, error = ERROR_BAD_FORMAT("incorrect size of MacCounters (expected >= {}, actual {})", kMacCountersBytes, length));
+    VerifyOrExit(length >= kMacCountersBytes,
+                 error = ERROR_BAD_FORMAT("incorrect size of MacCounters (expected >= {}, actual {})",
+                                          kMacCountersBytes, length));
     aMacCounters.mIfInUnknownProtos  = utils::Decode<uint32_t>(aBuf.data(), 4);
     aMacCounters.mIfInErrors         = utils::Decode<uint32_t>(aBuf.data() + 4, 4);
     aMacCounters.mIfOutErrors        = utils::Decode<uint32_t>(aBuf.data() + 8, 4);
@@ -2914,7 +2915,8 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     int8_t         pp;
 
     // A valid Connectivity TLV must have a minimum length of 7 bytes.
-    VerifyOrExit(length >= 7, error = ERROR_BAD_FORMAT("invalid connectivity tlv length (expected >= 7, actual {})", length));
+    VerifyOrExit(length >= 7,
+                 error = ERROR_BAD_FORMAT("invalid connectivity tlv length (expected >= 7, actual {})", length));
 
     // Byte 0: Parent Priority and Reserved bits
     byte0 = *cur++;
@@ -2967,7 +2969,9 @@ Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
         ExitNow();
     }
 
-    VerifyOrExit(aBuf.size() >= kChildBytes, error = ERROR_BAD_FORMAT("invalid child tlv length (expected >= {}, actual {})", kChildBytes, aBuf.size()));
+    VerifyOrExit(
+        aBuf.size() >= kChildBytes,
+        error = ERROR_BAD_FORMAT("invalid child tlv length (expected >= {}, actual {})", kChildBytes, aBuf.size()));
 
     // Flags (1 byte at offset 0)
     flags                         = aBuf[0];
@@ -3013,7 +3017,8 @@ Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbo
     }
 
     VerifyOrExit(aBuf.size() >= kRouterNeighborBytes,
-                 error = ERROR_BAD_FORMAT("invalid router neighbor tlv length (expected >= {}, actual {})", kRouterNeighborBytes, aBuf.size()));
+                 error = ERROR_BAD_FORMAT("invalid router neighbor tlv length (expected >= {}, actual {})",
+                                          kRouterNeighborBytes, aBuf.size()));
 
     flags                            = aBuf[0];
     neighborInfo.mSupportsErrorRates = (flags & 0x80) != 0;
@@ -3043,7 +3048,9 @@ Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
         ExitNow();
     }
 
-    VerifyOrExit(aBuf.size() >= kMleCountersBytes, error = ERROR_BAD_FORMAT("invalid mle counters tlv length (expected >= {}, actual {})", kMleCountersBytes, aBuf.size()));
+    VerifyOrExit(aBuf.size() >= kMleCountersBytes,
+                 error = ERROR_BAD_FORMAT("invalid mle counters tlv length (expected >= {}, actual {})",
+                                          kMleCountersBytes, aBuf.size()));
 
     aCounters.mRadioDisabledCounter                 = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
     aCounters.mDetachedRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 2, 2);

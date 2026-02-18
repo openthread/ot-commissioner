@@ -608,8 +608,6 @@ TEST(CommissionerImplTest, DecodeNonPreferredChannelsMaskTlv)
     }
 }
 
-
-
 TEST(NetDiagDataTest, Merge_AppendsVectors)
 {
     NetDiagData data1;
@@ -661,13 +659,16 @@ TEST(NetDiagDataTest, Decode_AnswerAndQueryId)
     EXPECT_EQ(data.mQueryId.mQueryId, 0x1234);
 }
 
-}
+} // namespace commissioner
 namespace commissioner {
 
 class MockEndpoint : public Endpoint
 {
 public:
-    MockEndpoint() : mPeerAddr(Address::FromString("fd00:7d03:7d03:7d03:d020:79b7:6a02:ab5e")) {}
+    MockEndpoint()
+        : mPeerAddr(Address::FromString("fd00:7d03:7d03:7d03:d020:79b7:6a02:ab5e"))
+    {
+    }
     Error    Send(const ByteArray &aBuf, MessageSubType aSubType) override { return Error(); }
     Address  GetPeerAddr() const override { return mPeerAddr; }
     uint16_t GetPeerPort() const override { return 1234; }
@@ -716,7 +717,7 @@ public:
         {
             mParams.push_back({aPeerAddr, aDiagData});
         }
-    
+
         struct OnDiagGetAnswerMessageParams
         {
             std::string mPeerAddr;
@@ -755,7 +756,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse)
 
     // Verify no callback yet
     EXPECT_TRUE(mHandler.mParams.empty());
-    
+
     // Check pending queries map directly
     EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
     EXPECT_TRUE(mCommissioner.mPendingDiagQueries.count(123));
@@ -907,7 +908,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
         utils::Hex(payload, "2102AAAA200200000810fd000000000000000000000000000001");
         request.Append(payload);
         mCommissioner.HandleDiagGetAnswer(request);
-        
+
         EXPECT_TRUE(mHandler.mParams.empty());
         EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
     }
@@ -946,7 +947,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
         EXPECT_EQ(data.mQueryId.mQueryId, queryId);
         EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
         EXPECT_TRUE(data.mAnswer.mIsLast);
-        
+
         // Verify 3 addresses are present
         EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAddrsBit);
         EXPECT_EQ(data.mAddrs.size(), 3);
