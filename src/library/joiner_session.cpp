@@ -82,7 +82,7 @@ JoinerSession::JoinerSession(CommissionerImpl  &aCommImpl,
     , mCoap(aCommImpl.GetEventBase(), *mDtlsSession)
     , mResourceJoinFin(uri::kJoinFin, [this](const coap::Request &aRequest) { HandleJoinFin(aRequest); })
 {
-    SuccessOrDie(mCoap.AddResource(mResourceJoinFin));
+    SuccessOrDie(mCoap->AddResource(mResourceJoinFin));
 }
 
 void JoinerSession::Connect()
@@ -224,7 +224,7 @@ void JoinerSession::SendJoinFinResponse(const coap::Request &aJoinFinReq, bool a
     SuccessOrExit(error = AppendTlv(joinFin, {tlv::Type::kState, aAccept ? tlv::kStateAccept : tlv::kStateReject}));
 
     joinFin.SetSubType(MessageSubType::kJoinFinResponse);
-    SuccessOrExit(error = mCoap.SendResponse(aJoinFinReq, joinFin));
+    SuccessOrExit(error = mCoap->SendResponse(aJoinFinReq, joinFin));
 
     LOG_INFO(LOG_REGION_JOINER_SESSION, "session(={}) sent JOIN_FIN.rsp: accepted={}", static_cast<void *>(this),
              aAccept);
@@ -292,7 +292,7 @@ int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen)
 {
     int rval;
 
-    VerifyOrExit(!mRecvBuf.empty(), rval = MBEDTLS_ERR_SSL_WANT_READ);
+    VerifyOrExit(!mRecvBufs.empty(), rval = MBEDTLS_ERR_SSL_WANT_READ);
 
     {
         auto &packet = mRecvBufs.front();
@@ -308,8 +308,7 @@ int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen)
         {
             if (mJoinerSession.IsProxyMode())
             {
-                LOG_WARN(LOG_REGION_JOINER_SESSION,
-                         "session(={}) insufficient buffer size {}, {} needed. Dropping packet.",
+                LOG_WARN(LOG_REGION_JOINER_SESSION, "session(={}) insufficient buffer size {}, {} needed. Dropping packet.",
                          static_cast<void *>(&mJoinerSession), aMaxLen, buf.size());
                 mRecvBufs.pop();
                 return MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL;
@@ -335,7 +334,7 @@ exit:
 
 void JoinerSession::RelaySocket::RecvJoinerDtlsRecords(const ByteArray &aRecords)
 {
-    mRecvBuf.insert(mRecvBuf.end(), aRecords.begin(), aRecords.end());
+    mRecvBufs.insert(mRecvBuf.end(), aRecords.begin(), aRecords.end());
 
     // Notifies the DTLS session that there is incoming data.
     event_active(&mEvent, EV_READ, 0);
