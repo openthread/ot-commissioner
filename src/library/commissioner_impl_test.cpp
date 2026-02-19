@@ -749,7 +749,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse)
     // TLV: Answer(32, 2, 0000), QueryID(33, 2, 007B)
     // Hex: 200200002102007B
     ByteArray payload1;
-    utils::Hex(payload1, "200200002102007B");
+    EXPECT_EQ(utils::Hex(payload1, "200200002102007B"), ErrorCode::kNone);
     request.Append(payload1);
 
     mCommissioner.HandleDiagGetAnswer(request);
@@ -776,7 +776,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse)
     TestRequest request2(coap::Type::kConfirmable, coap::Code::kContent);
     request2.SetEndpointPublic(&endpoint);
     ByteArray payload2;
-    utils::Hex(payload2, "200280012102007B1101FF");
+    EXPECT_EQ(utils::Hex(payload2, "200280012102007B1101FF"), ErrorCode::kNone);
     request2.Append(payload2);
 
     mCommissioner.HandleDiagGetAnswer(request2);
@@ -809,7 +809,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQuer
     // ChannelPages(17, 1, FF)
     // Hex: 2102007B1101FF
     ByteArray payload;
-    utils::Hex(payload, "2102007B1101FF");
+    EXPECT_EQ(utils::Hex(payload, "2102007B1101FF"), ErrorCode::kNone);
     request.Append(payload);
 
     // Pre-populate pending query to verify it gets cleaned up
@@ -844,7 +844,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQuer
     // ChannelPages(17, 1, EE)
     // Hex: 210201C8200280001101EE
     ByteArray payload;
-    utils::Hex(payload, "210201C8200280001101EE");
+    EXPECT_EQ(utils::Hex(payload, "210201C8200280001101EE"), ErrorCode::kNone);
     request.Append(payload);
 
     mCommissioner.HandleDiagGetAnswer(request);
@@ -876,7 +876,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_Legacy)
     // ChannelPages(17, 1, DD)
     // Hex: 1101DD
     ByteArray payload;
-    utils::Hex(payload, "1101DD");
+    EXPECT_EQ(utils::Hex(payload, "1101DD"), ErrorCode::kNone);
     request.Append(payload);
 
     mCommissioner.HandleDiagGetAnswer(request);
@@ -905,7 +905,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
         request.SetEndpointPublic(&endpoint);
         ByteArray payload;
         // QueryID(33, 2, AAAA), Answer(32, 2, 0000), IPv6(8, 16, fd00::1)
-        utils::Hex(payload, "2102AAAA200200000810fd000000000000000000000000000001");
+        EXPECT_EQ(utils::Hex(payload, "2102AAAA200200000810fd000000000000000000000000000001"), ErrorCode::kNone);
         request.Append(payload);
         mCommissioner.HandleDiagGetAnswer(request);
 
@@ -920,7 +920,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
         request.SetEndpointPublic(&endpoint);
         ByteArray payload;
         // QueryID(33, 2, AAAA), Answer(32, 2, 0001), IPv6(8, 16, fd00::2)
-        utils::Hex(payload, "2102AAAA200200010810fd000000000000000000000000000002");
+        EXPECT_EQ(utils::Hex(payload, "2102AAAA200200010810fd000000000000000000000000000002"), ErrorCode::kNone);
         request.Append(payload);
         mCommissioner.HandleDiagGetAnswer(request);
 
@@ -935,7 +935,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
         request.SetEndpointPublic(&endpoint);
         ByteArray payload;
         // QueryID(33, 2, AAAA), Answer(32, 2, 8002), IPv6(8, 16, fd00::3)
-        utils::Hex(payload, "2102AAAA200280020810fd000000000000000000000000000003");
+        EXPECT_EQ(utils::Hex(payload, "2102AAAA200280020810fd000000000000000000000000000003"), ErrorCode::kNone);
         request.Append(payload);
         mCommissioner.HandleDiagGetAnswer(request);
 
