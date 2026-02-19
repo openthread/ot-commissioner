@@ -63,7 +63,6 @@ namespace ot {
 
 namespace commissioner {
 
-
 JoinerSession::JoinerSession(CommissionerImpl  &aCommImpl,
                              const ByteArray   &aJoinerId,
                              const std::string &aJoinerPSkd,
@@ -354,4 +353,3 @@ void JoinerSession::RelaySocket::RecvJoinerDtlsRecords(const ByteArray &aRecords
 } // namespace commissioner
 
 } // namespace ot
-
