@@ -999,7 +999,10 @@ static void to_json(Json &aJson, const NetDiagData &aNetDiagData)
     };
 
     SET_IF_PRESENT(ExtMacAddr);
-    SET_IF_PRESENT(MacAddr);
+    if (aNetDiagData.mPresentFlags & NetDiagData::kMacAddrBit)
+    {
+        aJson["Rloc16"] = aNetDiagData.mMacAddr;
+    }
     SET_IF_PRESENT(Timeout);
     SET_IF_PRESENT(BatteryLevel);
     SET_IF_PRESENT(SupplyVoltage);

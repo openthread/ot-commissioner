@@ -29,7 +29,7 @@ def generate_mesh_visualization(filepath):
     
     for device_ip, info in devices.items():
         # Using Rloc16 as the node ID
-        node_id = info.get("MacAddr")
+        node_id = info.get("Rloc16")
         if node_id is None:
             continue
             
