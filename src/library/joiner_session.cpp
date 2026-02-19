@@ -119,6 +119,12 @@ void JoinerSession::HandleConnect(Error aError) { mCommImpl.mCommissionerHandler
 
 void JoinerSession::RecvJoinerDtlsRecords(const ByteArray &aRecords, uint16_t aJoinerUdpPort)
 {
+    if (IsProxyMode())
+    {
+        mCommImpl.mCommissionerHandler.OnJoinerMessage(mJoinerId, aJoinerUdpPort, aRecords);
+        return;
+    }
+
     mRelaySocket->RecvJoinerDtlsRecords(aRecords, aJoinerUdpPort);
 }
 

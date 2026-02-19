@@ -304,6 +304,7 @@ private:
     uint16_t                        mNextQueryId = 0;
 
     FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage);
     FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse);
     FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Implicit);
     FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Explicit);
