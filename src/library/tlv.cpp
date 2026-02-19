@@ -292,7 +292,7 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagChildIpv6Address:
             // Spec 10.11.4.11 [4]: RLOC16 (2 bytes) + N * IPv6 Address (16 bytes)
             // return length >= 2 && ((length - 2) % 16 == 0);
-            return true;
+            return length == 0 || (length >= 2 && ((length - 2) % 16 == 0));
         case Type::kNetworkDiagRouterNeighbor:
             // Spec 10.11.4.12 [7]: Fixed length 24 bytes, or empty if no neighbors.
             return length == 0 || length >= 24;
