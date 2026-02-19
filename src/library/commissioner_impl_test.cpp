@@ -669,7 +669,7 @@ public:
         : mPeerAddr(Address::FromString("fd00:7d03:7d03:7d03:d020:79b7:6a02:ab5e"))
     {
     }
-    Error    Send(const ByteArray &aBuf, MessageSubType aSubType) override { return Error(); }
+    Error    Send(const ByteArray &, MessageSubType) override { return Error(); }
     Address  GetPeerAddr() const override { return mPeerAddr; }
     uint16_t GetPeerPort() const override { return 1234; }
 
