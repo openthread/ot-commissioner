@@ -42,11 +42,24 @@
 #include <commissioner/network_data.hpp>
 #include <commissioner/network_diag_data.hpp>
 #include <commissioner/commissioner.hpp>
+
+namespace ot {
+namespace commissioner {
+    struct TraverseListener {
+        virtual ~TraverseListener() = default;
+        virtual void OnTotalRoutersCount(size_t aRouterCount) = 0;
+        virtual void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Commissioner::TraverseStatus aStatus) = 0;
+        virtual void OnTotalChildrenCount(size_t aChildCount) = 0;
+        virtual void OnFinished(const std::map<std::string, NetDiagData> *Report, Error aError) = 0;
+    };
+}
+}
 %}
 
 %include <std_shared_ptr.i>
 %include <std_string.i>
 %include <std_vector.i>
+%include <std_map.i>
 %include <stl.i>
 %include <typemaps.i>
 
@@ -83,7 +96,7 @@
 %apply const unsigned long long & { const uint64_t & };
 
 // Remove the 'm' prefix of all members.
-%rename("%(regex:/^(m)(.*)/\\2/)s") "";
+%rename("%(regex:/^(m)([A-Z].*)/\\2/)s") "";
 
 // Convert first character of function names to lowercase.
 %rename("%(firstlowercase)s", %$isfunction) "";
@@ -102,8 +115,10 @@
 
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
+%feature("director") ot::commissioner::TraverseListener;
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
+%template(NetDiagDataMap) std::map<std::string, ot::commissioner::NetDiagData>;
 %template(StringVector) std::vector<std::string>;
 %template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::ChildIpv6AddrInfo>;
 %template(ChildTableEntryVector) std::vector<ot::commissioner::ChildTableEntry>;
@@ -188,9 +203,8 @@ namespace commissioner {
                                            const std::string    &aAddr,
                                            uint64_t              aDiagDataFlags);
     %ignore Commissioner::TraverseNetwork(TraverseHandler aHandler);
-    %ignore Commissioner::TraverseHandler(TraverseHandler aHandler);
-    %ignore Commissioner::TraverseStatus;
-    %ignore CommissionerHandler::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg);
+
+    %ignore Commissioner::TraverseHandler;
 
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
@@ -212,4 +226,42 @@ namespace commissioner {
 %include <commissioner/network_data.hpp>
 %include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
-%include <commissioner/commissioner.hpp>
+
+
+
+namespace ot {
+namespace commissioner {
+    struct TraverseListener {
+        virtual ~TraverseListener() = default;
+        virtual void OnTotalRoutersCount(size_t aRouterCount) = 0;
+        virtual void OnDeviceResponded(const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus) = 0;
+        virtual void OnTotalChildrenCount(size_t aChildCount) = 0;
+        virtual void OnFinished(const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError) = 0;
+    };
+}
+}
+
+namespace ot {
+namespace commissioner {
+    %extend Commissioner {
+        Error TraverseNetwork(ot::commissioner::TraverseListener *aListener) {
+            ot::commissioner::Commissioner::TraverseHandler handler;
+            if (aListener != nullptr) {
+                handler.mOnTotalRoutersCount = [aListener](size_t aRouterCount) {
+                    aListener->OnTotalRoutersCount(aRouterCount);
+                };
+                handler.mOnDeviceResponded = [aListener](const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus) {
+                    aListener->OnDeviceResponded(aAddr, aData, aStatus);
+                };
+                handler.mOnTotalChildrenCount = [aListener](size_t aChildCount) {
+                    aListener->OnTotalChildrenCount(aChildCount);
+                };
+                handler.mOnFinished = [aListener](const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError) {
+                    aListener->OnFinished(aReport, aError);
+                };
+            }
+            return $self->TraverseNetwork(handler);
+        }
+    }
+}
+}
