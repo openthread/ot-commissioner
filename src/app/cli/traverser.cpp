@@ -240,7 +240,6 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             collectedData = *aReport;
         }
         isFinished = true;
-
     };
 
     error = aCommissioner->TraverseNetwork(handler);
