@@ -187,11 +187,10 @@ namespace commissioner {
     %ignore Commissioner::CommandDiagReset(ErrorHandler          aHandler,
                                            const std::string    &aAddr,
                                            uint64_t              aDiagDataFlags);
-    %ignore Commissioner::StartNetworkDiscovery(Handler<uint8_t> aHandler, uint32_t aChannelMask);
-    %ignore Commissioner::StopNetworkDiscovery(Handler<uint8_t> aHandler);
-    %ignore Commissioner::StartNetworkTraverse(Handler<uint8_t> aHandler, uint32_t aChannelMask);
-    %ignore Commissioner::StopNetworkTraverse(Handler<uint8_t> aHandler);
-    %ignore Commissioner::GetNetworkData(Handler<NetworkData> aHandler, const std::string &aAddr);
+    %ignore Commissioner::TraverseNetwork(TraverseHandler aHandler);
+    %ignore Commissioner::TraverseHandler(TraverseHandler aHandler);
+    %ignore Commissioner::TraverseStatus;
+    %ignore CommissionerHandler::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg);
 
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
