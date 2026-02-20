@@ -33,7 +33,6 @@
 
 #include "library/joiner_session.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>

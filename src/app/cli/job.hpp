@@ -39,7 +39,6 @@
 #include <thread>
 
 #include "app/cli/interpreter.hpp"
-#include "commissioner/network_data.hpp"
 
 namespace ot {
 

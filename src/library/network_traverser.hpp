@@ -99,12 +99,12 @@ private:
 
     static std::string AddressToString(const Address &aAddr);
 
-    CommissionerImpl &mImpl;
-    Timer             mTimer;
+    CommissionerImpl             &mImpl;
+    Timer                         mTimer;
     Commissioner::TraverseHandler mHandler;
-    State             mState;
-    bool              mIsWaitingForChunkDelay = false;
-    ByteArray         mMeshLocalPrefix;
+    State                         mState;
+    bool                          mIsWaitingForChunkDelay = false;
+    ByteArray                     mMeshLocalPrefix;
 
     std::map<Address, NetDiagData> mCollectedData;
 
