@@ -902,9 +902,11 @@ static void to_json(Json &aJson, const RouteDataEntry &aEntry)
 
 static void to_json(Json &aJson, const Route64 &aRoute64)
 {
-    aJson["IdSequence"] = aRoute64.mIdSequence;
-    aJson["Mask"]       = aRoute64.mMask;
-    aJson["RouteData"]  = aRoute64.mRouteData;
+#define SET(name) aJson[#name] = aRoute64.m##name;
+    SET(IdSequence);
+    SET(Mask);
+    SET(RouteData);
+#undef SET
 }
 
 static void to_json(Json &aJson, const ModeData &aModeData)

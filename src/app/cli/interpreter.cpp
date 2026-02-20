@@ -32,15 +32,12 @@
  */
 
 #include <algorithm>
-#include <asm-generic/socket.h>
-#include <bits/types/struct_timeval.h>
 #include <cctype>
 #include <cerrno>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <exception>
 #include <map>
 #include <memory>
