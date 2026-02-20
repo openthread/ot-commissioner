@@ -160,6 +160,7 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
                              [this](const coap::Request &aRequest) { HandlePanIdConflict(aRequest); })
     , mResourceEnergyReport(uri::kMgmtEdReport, [this](const coap::Request &aRequest) { HandleEnergyReport(aRequest); })
     , mResourceDiagAns(uri::kDiagGetAns, [this](const coap::Request &aRequest) { HandleDiagGetAnswer(aRequest); })
+    , mNetworkTraverser(*this)
 {
     SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
     SuccessOrDie(mBrClient.AddResource(mResourceRlyRx));
@@ -338,6 +339,8 @@ void CommissionerImpl::CancelRequests()
 {
     mProxyClient.CancelRequests();
     mBrClient.CancelRequests();
+    // LOG_INFO(LOG_REGION_MESHCOP, "CommissionerImpl::CancelRequests calling Stop");
+    mNetworkTraverser.Stop();
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
@@ -684,6 +687,10 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
             {
                 mDiagAnsTlvs = accumulated;
                 mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+                if (mNetworkTraverser.IsActive())
+                {
+                    mNetworkTraverser.OnDiagGetAnswer(peerAddr, mDiagAnsTlvs);
+                }
                 mPendingDiagQueries.erase(queryId);
             }
         }
@@ -694,6 +701,10 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
             // We treat it as a complete response.
             mDiagAnsTlvs = accumulated; // accumulated currently has this single packet data merged
             mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+            if (mNetworkTraverser.IsActive())
+            {
+                mNetworkTraverser.OnDiagGetAnswer(peerAddr, mDiagAnsTlvs);
+            }
             mPendingDiagQueries.erase(queryId);
         }
     }
@@ -702,6 +713,10 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
         // Legacy behavior: No Query ID
         mDiagAnsTlvs = diagData;
         mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+        if (mNetworkTraverser.IsActive())
+        {
+            mNetworkTraverser.OnDiagGetAnswer(peerAddr, mDiagAnsTlvs);
+        }
     }
 
 exit:
@@ -755,6 +770,16 @@ exit:
     {
         aHandler(error);
     }
+}
+
+Error CommissionerImpl::TraverseNetwork(TraverseHandler aHandler)
+{
+    if (!IsActiveOrConnected())
+    {
+        return ERROR_INVALID_STATE("Commissioner is not active");
+    }
+
+    return mNetworkTraverser.Start(aHandler);
 }
 
 void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset)

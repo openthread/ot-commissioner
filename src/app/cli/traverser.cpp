@@ -31,8 +31,11 @@
  *   The file implements CLI network traverser.
  */
 
-#include "app/cli/traverser.hpp"
+#include <atomic>
 #include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <map>
 #include <set>
@@ -41,17 +44,19 @@
 #include <thread>
 #include <vector>
 
+#include "app/cli/traverser.hpp"
+
 #include "app/cli/console.hpp"
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job_manager.hpp"
-#include "app/commissioner_app.hpp"
 #include "app/json.hpp"
 #include "commissioner/commissioner.hpp"
+#include "commissioner/error.hpp"
 #include "commissioner/network_diag_data.hpp"
-#include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/utils.hpp"
 #include "fmt/format.h"
+#include "nlohmann/json.hpp"
 
 namespace ot {
 
@@ -87,9 +92,10 @@ static const std::map<uint64_t, std::string> kDiagFlagNames = {
     {NetDiagData::kVendorAppURLBit, "vendorappurl"},
     {NetDiagData::kNonPreferredChannelsMaskBit, "channelsmask"}};
 
-Interpreter::Value Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, const Interpreter::Expression &aExpr)
+std::string Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, const Interpreter::Expression &aExpr)
 {
-    Interpreter::Value value;
+    std::string        value;
+    Error              error        = ERROR_NONE;
     CommissionerAppPtr commissioner = nullptr;
     std::string        jsonFile     = "";
 
@@ -99,13 +105,13 @@ Interpreter::Value Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, 
     {
         if (aExpr[i] == "--json")
         {
-            VerifyOrExit(i + 1 < aExpr.size(), value = ERROR_INVALID_ARGS("Missing JSON filename"));
+            VerifyOrExit(i + 1 < aExpr.size(), error = ERROR_INVALID_ARGS("Missing JSON filename"));
             jsonFile = aExpr[++i];
             Console::Write("JSON output enabled: " + jsonFile + "\n", Console::Color::kWhite);
         }
         else if (aExpr[i][0] == '-')
         {
-            ExitNow(value = ERROR_INVALID_ARGS("Invalid argument: {}", aExpr[i]));
+            ExitNow(error = ERROR_INVALID_ARGS("Invalid argument: {}", aExpr[i]));
         }
     }
 
@@ -114,441 +120,266 @@ Interpreter::Value Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, 
         if (aInterpreter->mContext.mCommandKeys[i] == "--json")
         {
             VerifyOrExit(i + 1 < aInterpreter->mContext.mCommandKeys.size(),
-                         value = ERROR_INVALID_ARGS("Missing JSON filename"));
+                         error = ERROR_INVALID_ARGS("Missing JSON filename"));
             jsonFile = aInterpreter->mContext.mCommandKeys[++i];
             Console::Write("JSON output enabled: " + jsonFile + "\n", Console::Color::kWhite);
         }
     }
 
-    SuccessOrExit(value = aInterpreter->mJobManager->GetSelectedCommissioner(commissioner));
+    SuccessOrExit(error = aInterpreter->mJobManager->GetSelectedCommissioner(commissioner));
     value = ProcessTraverseNetworkJob(aInterpreter, commissioner, aExpr, jsonFile);
+
 exit:
+    if (error != ErrorCode::kNone)
+    {
+        return error.ToString();
+    }
     return value;
 }
 
-Interpreter::Value Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterpreter,
-                                                        CommissionerAppPtr &aCommissioner,
-                                                        const Interpreter::Expression &,
-                                                        const std::string &aJsonFile)
+std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterpreter,
+                                                 CommissionerAppPtr &aCommissioner,
+                                                 const Interpreter::Expression &,
+                                                 const std::string &aJsonFile)
 {
-    Interpreter::Value       value;
-    std::stringstream        resultStream;
-    std::string              mlp;
-    std::string              leaderAloc;
-    Address                  leaderAddr;
-    uint16_t                 leaderRloc16 = 0xFFFF;
-    Route64                  route64;
-    bool                     foundRoute64       = false;
-    size_t                   routerCount        = 0;
-    size_t                   childCount         = 0;
-    size_t                   expectedChildCount = 0;
-    std::set<uint16_t>       expectedRouters;
-    std::map<uint16_t, bool> expectedChildren; // RLOC16 -> isSleepy
-    std::set<Address>        processedNodes;
-    std::set<uint16_t>       routersToQuery;
-    std::map<uint16_t, bool> childrenToQuery;
+    std::string                        value;
+    std::stringstream                  resultStream;
+    std::string                        leaderAloc;
+    size_t                             expectedChildCount  = 0;
+    size_t                             expectedRouterCount = 0;
+    bool                               route64Found        = false;
+    std::set<uint16_t>                 expectedRouters;
+    std::map<std::string, NetDiagData> collectedData;
+    std::map<std::string, NetDiagData> routers;
+    std::map<std::string, NetDiagData> children;
+    Error                              error;
+    std::atomic<bool>                  isFinished{false};
 
-    std::map<Address, NetDiagData> collectedData;
+    // Call the new async-based but blocking API
+    Console::Write("Starting Network Traversal...\n", Console::Color::kCyan);
 
-    // Define chunks to minimize TLV size per message
-    const std::vector<uint64_t> kLeaderChunks = {
-        NetDiagData::kRoute64Bit | NetDiagData::kMacAddrBit | NetDiagData::kEui64Bit,        // Chunk 0: Topology & ID
-        NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit | NetDiagData::kConnectivityBit, // Chunk 1: Connectivity
-        NetDiagData::kLeaderDataBit | NetDiagData::kNetworkDataBit |
-            NetDiagData::kNonPreferredChannelsMaskBit,                  // Chunk 2: Network Data
-        NetDiagData::kChildTableBit | NetDiagData::kMaxChildTimeoutBit, // Chunk 3: Child Table
-        NetDiagData::kChildIpv6AddrsInfoListBit,                        // Chunk 4: Child IPv6 Addresses
-        NetDiagData::kChildBit,                                         // Chunk 5: Child Info (Large)
-        NetDiagData::kAddrsBit | NetDiagData::kRouterNeighborBit,       // Chunk 6: Neighbors & Addresses
-        NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit,    // Chunk 7: Counters
-        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
-            NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 8: Device Info
-        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit |
-            NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 9: Vendor Info
+    // State for live output
+    size_t                       totalRouters    = 0;
+    size_t                       totalChildren   = 0;
+    size_t                       routersFound    = 0;
+    size_t                       childrenFound   = 0;
+    Commissioner::TraverseStatus leaderStatus    = Commissioner::TraverseStatus::kFailed;
+    bool                         leaderResponded = false;
+
+    // Callback handler
+    Commissioner::TraverseHandler handler;
+    handler.mOnTotalRoutersCount = [&](size_t aCount) {
+        totalRouters = aCount;
+        Console::Write(fmt::format("{} Routers found", aCount), Console::Color::kWhite);
+
+        // Flush Leader status if we have it
+        if (leaderResponded)
+        {
+            char           symbol = 'R';
+            Console::Color color  = Console::Color::kRed;
+            if (leaderStatus == Commissioner::TraverseStatus::kSuccess)
+                color = Console::Color::kGreen;
+            else if (leaderStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
+                color = Console::Color::kYellow;
+
+            Console::WriteNoNewline(std::string(1, symbol), color);
+            routersFound++;
+
+            if (routersFound % 5 == 0)
+                Console::WriteNoNewline(" ", Console::Color::kWhite);
+        }
     };
-
-    const std::vector<uint64_t> kRouterChunks = {
-        NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kEui64Bit, // Chunk 0: ID
-        NetDiagData::kModeBit | NetDiagData::kConnectivityBit | NetDiagData::kRoute64Bit |
-            NetDiagData::kNonPreferredChannelsMaskBit, // Chunk 1: Connectivity & Topology
-        NetDiagData::kChildTableBit | NetDiagData::kChildIpv6AddrsInfoListBit |
-            NetDiagData::kMaxChildTimeoutBit,                        // Chunk 2: Child Table
-        NetDiagData::kChildBit,                                      // Chunk 3: Child Info (Large)
-        NetDiagData::kAddrsBit | NetDiagData::kRouterNeighborBit,    // Chunk 4: Neighbors & Addresses
-        NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 5: Counters
-        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
-            NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 6: Device Info
-        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit |
-            NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 7: Vendor Info
+    handler.mOnTotalChildrenCount = [&](size_t aCount) {
+        Console::Write("\n", Console::Color::kWhite); // End Router line
+        totalChildren = aCount;
+        Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
     };
+    handler.mOnDeviceResponded = [&](const std::string &aAddr, const NetDiagData *aData,
+                                     Commissioner::TraverseStatus aStatus) {
+        bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
 
-    const std::vector<uint64_t> kChildChunks = {
-        NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit |
-            NetDiagData::kEui64Bit, // Chunk 0: ID & Mode
-        NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit |
-            NetDiagData::kNetworkDataBit |
-            NetDiagData::kNonPreferredChannelsMaskBit,               // Chunk 1: Connectivity & Network Data
-        NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 2: Counters
-        NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
-            NetDiagData::kChannelPagesBit | NetDiagData::kTypeListBit, // Chunk 3: Device Info
-        NetDiagData::kVendorNameBit | NetDiagData::kVendorModelBit | NetDiagData::kVendorSWVersionBit |
-            NetDiagData::kThreadStackVersionBit | NetDiagData::kVendorAppURLBit // Chunk 4: Vendor Info
-    };
-
-    auto ReportMissingTlvs = [&](uint64_t aRequested, uint64_t aReceived) {
-        uint64_t missing = aRequested & ~aReceived;
-        if (missing == 0)
+        if (totalRouters == 0)
+        {
+            // Leader
+            leaderStatus    = aStatus;
+            leaderResponded = true;
+            if (aData)
+                collectedData[aAddr] = *aData;
             return;
-
-        std::string missingStr = "Missing TLVs: ";
-        bool        first      = true;
-        for (const auto &pair : kDiagFlagNames)
-        {
-            if (missing & pair.first)
-            {
-                if (!first)
-                    missingStr += ", ";
-                missingStr += pair.second;
-                first = false;
-            }
         }
-        Console::Write(missingStr + "\n", Console::Color::kYellow);
+
+        // Print
+        char           symbol = isRouterPhase ? 'R' : 'C';
+        Console::Color color  = Console::Color::kRed;
+        if (aStatus == Commissioner::TraverseStatus::kSuccess)
+            color = Console::Color::kGreen;
+        else if (aStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
+            color = Console::Color::kYellow;
+
+        Console::WriteNoNewline(std::string(1, symbol), color);
+
+        size_t &counter = isRouterPhase ? routersFound : childrenFound;
+        counter++;
+
+        if (counter % 5 == 0)
+            Console::WriteNoNewline(" ", Console::Color::kWhite);
+
+        if (aData && aStatus != Commissioner::TraverseStatus::kFailed)
+        {
+            collectedData[aAddr] = *aData;
+        }
+    };
+    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
+        if (aError != ErrorCode::kNone)
+        {
+            value = aError.ToString();
+            aCommissioner->CancelRequests();
+        }
+        else if (aReport != nullptr)
+        {
+            // collectedData is already being populated live, but aReport matches it?
+            // NetworkTraverser passes mCollectedData ptr.
+            // We can just use what we have, or overwrite.
+            // Overwrite to be safe/consistent.
+            collectedData = *aReport;
+        }
+        isFinished = true;
     };
 
-    auto PollForFlags = [&](uint64_t aRequestedFlags, const Address *aExpectedAddr, int aTimeoutMs) -> const Address * {
-        int intervalMs = 10;
-        int steps      = aTimeoutMs / intervalMs;
-        for (int i = 0; i < steps; ++i)
+    error = aCommissioner->TraverseNetwork(handler);
+    if (error != ErrorCode::kNone)
+    {
+        value = error.ToString();
+        goto exit;
+    }
+
+    while (!isFinished)
+    {
+        if (aInterpreter->IsCancelled())
         {
-            if (aInterpreter->mCancelCommand)
-                return nullptr;
+            aCommissioner->CancelRequests();
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(intervalMs));
-            const auto &answers = aCommissioner->GetNetDiagTlvs();
-            for (const auto &answer : answers)
+    if (value != "")
+    {
+        // An error occurred and was set by the handler
+        goto exit;
+    }
+
+    for (const auto &pair : collectedData)
+    {
+        // Simple heuristic: If it has children or is a router, put in routers list.
+        // Actually, we can check IsDeviceTypeMtd or just if it's in the router list?
+        // Let's assume anything with children or that isn't explicitly an MTD is a router/REED.
+        // Or check if RLOC16 is a router RLOC.
+        uint16_t rloc16 = pair.second.mMacAddr;
+        if ((rloc16 & 0xFC00) == 0xFC00)
+        {
+            // ALOC? or just assume non-router if high bits are set?
+            // Actually, Router RLOCs are top bits.
+            // Let's just use the Child table presence as a hint, or if it has NO child table but is in the list...
+        }
+
+        // Better: Check RLOC16. Router RLOCs are < 0xfc00 usually?
+        // Actually, Router ID is top 6 bits (0-63).
+        // 0-63 << 10 = 0x0000 - 0xFC00.
+        // Wait, Router ID 63 is invalid?
+        // Any RLOC16 where (val & 1) == 0 is likely an RLOC?
+        // Let's use the logic: If it has ChildTable, it's a Router/Leader.
+
+        bool isRouter = false;
+        // Check router ID from RLOC16
+        uint8_t routerId = (rloc16 >> 10);
+        if (routerId < 64 && (rloc16 & 0x03FF) == 0)
+        {
+            isRouter = true;
+        }
+
+        if (isRouter)
+        {
+            routers[pair.first] = pair.second;
+        }
+        else
+        {
+            children[pair.first] = pair.second;
+        }
+    }
+
+    // Calculate expected counts
+    for (const auto &pair : collectedData)
+    {
+        const auto &data = pair.second;
+        if (!route64Found && (data.mPresentFlags & NetDiagData::kRoute64Bit))
+        {
+            // Count set bits in Route64 mask to estimate active routers
+            for (uint8_t byte : data.mRoute64.mMask)
             {
-                if (aExpectedAddr != nullptr && answer.first != *aExpectedAddr)
-                    continue;
-
-                // Check if we received ANY of the requested flags
-                if (answer.second.mPresentFlags & aRequestedFlags)
+                // Brian Kernighan's algorithm to count set bits
+                uint8_t n = byte;
+                while (n > 0)
                 {
-                    return &answer.first;
+                    n &= (n - 1);
+                    expectedRouterCount++;
                 }
             }
+            route64Found = true;
         }
-        return nullptr;
-    };
 
-    auto QueryDevice = [&](const std::string &aTarget, const std::string &aLabel, const std::vector<uint64_t> &aChunks,
-                           Address &aDeviceAddr, uint64_t &aRequestedFlags, int aTimeoutMs,
-                           std::function<bool(const Address &)> aValidator = nullptr) -> bool {
-        aRequestedFlags  = 0;
-        bool deviceFound = false;
-
-        for (size_t i = 0; i < aChunks.size(); ++i)
+        if (data.mPresentFlags & NetDiagData::kChildTableBit)
         {
-            uint64_t chunk = aChunks[i];
-            aRequestedFlags |= chunk;
-            bool chunkReceived = false;
-
-            if (aInterpreter->mCancelCommand)
-                return false;
-
-            aCommissioner->CommandDiagGetQuery(aTarget, chunk).IgnoreError();
-
-            const Address *foundAddr = PollForFlags(chunk, (i == 0 ? nullptr : &aDeviceAddr), aTimeoutMs);
-
-            if (foundAddr != nullptr)
-            {
-                if (i == 0)
-                {
-                    if (aValidator && !aValidator(*foundAddr))
-                    {
-                        // Validation failed
-                    }
-                    else
-                    {
-                        aDeviceAddr   = *foundAddr;
-                        chunkReceived = true;
-                    }
-                }
-                else
-                {
-                    chunkReceived = true;
-                }
-
-                if (chunkReceived)
-                {
-                    Console::Write(fmt::format("{} Chunk {} received", aLabel, i), Console::Color::kDefault);
-                }
-            }
-
-            if (i == 0 && !chunkReceived)
-                return false;
-            deviceFound = true;
-        }
-        return deviceFound;
-    };
-
-    aCommissioner->ClearNetDiagTlvs();
-
-    // 1. Query the leader
-    uint64_t leaderRequestedFlags = 0;
-    uint64_t leaderReceivedFlags  = 0;
-
-    if (aCommissioner->GetMeshLocalPrefix(mlp) == ErrorCode::kNone)
-    {
-        // Resolve the full leader IPv6 address by combining the Mesh Local Prefix with the Leader Anycast Locator
-        // (0xFC00).
-        (void)aCommissioner->GetMeshLocalAddr(leaderAloc, mlp, 0xFC00);
-    }
-    else
-    {
-        leaderAloc = "fc00";
-    }
-
-    Console::Write("Querying Leader: " + leaderAloc, Console::Color::kCyan);
-
-    if (!QueryDevice(leaderAloc, "Leader", kLeaderChunks, leaderAddr, leaderRequestedFlags, 800))
-    {
-        ExitNow(value = std::string("No response from leader at " + leaderAloc));
-    }
-
-    // Scoping block is required here because ExitNow() macro acts as a 'goto exit'.
-    // C++ forbids jumping over the initialization of variables with automatic storage duration
-    // (like 'answers' and 'data') if they are still in scope at the target label.
-    {
-        const auto &answers = aCommissioner->GetNetDiagTlvs();
-        if (answers.count(leaderAddr))
-        {
-            const auto &data    = answers.at(leaderAddr);
-            leaderReceivedFlags = data.mPresentFlags;
-
-            collectedData[leaderAddr] = data;
-
-            if (data.mPresentFlags & NetDiagData::kRoute64Bit)
-            {
-                route64      = data.mRoute64;
-                foundRoute64 = true;
-            }
-            if (data.mPresentFlags & NetDiagData::kMacAddrBit)
-            {
-                leaderRloc16 = data.mMacAddr;
-            }
-            processedNodes.insert(leaderAddr);
-            Console::Write("Leader Unicast Address: " + leaderAddr.ToString() + "\n", Console::Color::kGreen);
-            Console::Write(
-                fmt::format("Leader Data Summary: Flags=0x{:08X}, RLOC16=0x{:04X}", data.mPresentFlags, leaderRloc16),
-                Console::Color::kCyan);
-            ReportMissingTlvs(leaderRequestedFlags, leaderReceivedFlags);
-
-            if (data.mPresentFlags & NetDiagData::kChildTableBit)
-            {
-                expectedChildCount += data.mChildTable.size();
-                Console::Write(fmt::format("Leader 0x{:04X} has {} children\n", leaderRloc16, data.mChildTable.size()),
-                               Console::Color::kCyan);
-                for (const auto &childEntry : data.mChildTable)
-                {
-                    expectedChildren[leaderRloc16 | childEntry.mChildId] = !childEntry.mModeData.mIsRxOnWhenIdleMode;
-                }
-            }
+            expectedChildCount += data.mChildTable.size();
         }
     }
 
-    if (!foundRoute64)
+    if (!route64Found)
     {
-        ExitNow(value = std::string("No Route64 information received from leader"));
+        expectedRouterCount = routers.size();
     }
 
-    // Extract routers from mask
-    for (uint8_t routerId = 0; routerId < 64; ++routerId)
-    {
-        uint8_t byteIdx = routerId / 8;
-        uint8_t bitIdx  = 7 - (routerId % 8);
+    // Console::Write("Routers:\n", Console::Color::kWhite);
+    // for (const auto &pair : routers)
+    // {
+    //    const auto &data = pair.second;
+    //    Console::Write(fmt::format(" - {}: RLOC16={:04X}, Children={}\n", pair.first, data.mMacAddr,
+    //        (data.mPresentFlags & NetDiagData::kChildTableBit) ? std::to_string(data.mChildTable.size()) : "0"),
+    //        Console::Color::kGreen);
+    // }
 
-        if (byteIdx < route64.mMask.size() && (route64.mMask[byteIdx] & (1 << bitIdx)))
-        {
-            uint16_t rloc16 = static_cast<uint16_t>(routerId) << 10;
-            if (rloc16 == leaderRloc16)
-            {
-                routerCount++;
-            }
-            else
-            {
-                routersToQuery.insert(rloc16);
-            }
-            expectedRouters.insert(rloc16);
-        }
-    }
-
-    Console::Write(fmt::format("Expected routers from mask: {}", expectedRouters.size()), Console::Color::kCyan);
-    Console::Write("--- Discovering Network Routers ---", Console::Color::kCyan);
-
-    // 2. Query Routers
-    {
-        std::vector<uint16_t> currentRouters(routersToQuery.begin(), routersToQuery.end());
-        for (uint16_t rloc16 : currentRouters)
-        {
-            if (aInterpreter->mCancelCommand)
-                break;
-
-            aCommissioner->ClearNetDiagTlvs(); // Clear previous responses
-            std::string routerTarget = fmt::format("0x{:04X}", rloc16);
-            Address     routerAddr;
-            bool        routerFound          = false;
-            uint64_t    routerRequestedFlags = 0;
-            uint64_t    routerReceivedFlags  = 0;
-
-            if (QueryDevice(routerTarget, "Router " + routerTarget, kRouterChunks, routerAddr, routerRequestedFlags,
-                            800))
-            {
-                routerFound = true;
-            }
-
-            if (routerFound)
-            {
-                routerCount++;
-                processedNodes.insert(routerAddr);
-                routersToQuery.erase(rloc16);
-
-                const auto &answers = aCommissioner->GetNetDiagTlvs();
-                const auto &data    = answers.at(routerAddr);
-                routerReceivedFlags = data.mPresentFlags;
-
-                // Store collected data
-                collectedData[routerAddr] = data;
-
-                Console::Write("Router Address: " + routerAddr.ToString(), Console::Color::kGreen);
-                Console::Write(fmt::format("Router Data Summary: Flags=0x{:08X}", data.mPresentFlags),
-                               Console::Color::kCyan);
-                ReportMissingTlvs(routerRequestedFlags, routerReceivedFlags);
-
-                if (data.mPresentFlags & NetDiagData::kChildTableBit)
-                {
-                    expectedChildCount += data.mChildTable.size();
-                    Console::Write(fmt::format("Router 0x{:04X} has {} children", rloc16, data.mChildTable.size()),
-                                   Console::Color::kCyan);
-                    for (const auto &childEntry : data.mChildTable)
-                    {
-                        expectedChildren[rloc16 | childEntry.mChildId] = !childEntry.mModeData.mIsRxOnWhenIdleMode;
-                    }
-                }
-            }
-        }
-    }
-
-    if (!routersToQuery.empty())
-    {
-        Console::Write(fmt::format("Timed out querying {} routers.", routersToQuery.size()), Console::Color::kRed);
-    }
-
-    // 3. Query Children
-    if (!expectedChildren.empty())
-    {
-        childrenToQuery = expectedChildren;
-        Console::Write("--- Discovering Network Children ---", Console::Color::kCyan);
-
-        std::vector<std::pair<uint16_t, bool>> currentChildren(childrenToQuery.begin(), childrenToQuery.end());
-        for (const auto &entry : currentChildren)
-        {
-            if (aInterpreter->mCancelCommand)
-                break;
-
-            aCommissioner->ClearNetDiagTlvs(); // Clear previous responses
-            uint16_t    childRloc   = entry.first;
-            bool        isSleepy    = entry.second;
-            std::string childTarget = fmt::format("0x{:04X}", childRloc);
-            Address     childAddr;
-            bool        childFound          = false;
-            int         timeoutMs           = isSleepy ? 10000 : 1500;
-            uint64_t    childRequestedFlags = 0;
-            uint64_t    childReceivedFlags  = 0;
-
-            auto validator = [&](const Address &aAddr) {
-                const auto &answers = aCommissioner->GetNetDiagTlvs();
-                if (answers.count(aAddr) == 0)
-                    return false;
-                const auto &data = answers.at(aAddr);
-                return (data.mPresentFlags & NetDiagData::kMacAddrBit) && (data.mMacAddr == childRloc);
-            };
-
-            if (QueryDevice(childTarget, "Child " + childTarget, kChildChunks, childAddr, childRequestedFlags,
-                            timeoutMs, validator))
-            {
-                childFound = true;
-            }
-
-            if (childFound)
-            {
-                childCount++;
-                processedNodes.insert(childAddr);
-                childrenToQuery.erase(childRloc);
-
-                const auto &answers = aCommissioner->GetNetDiagTlvs();
-                const auto &data    = answers.at(childAddr);
-                childReceivedFlags  = data.mPresentFlags;
-
-                // Store collected data
-                collectedData[childAddr] = data;
-
-                Console::Write(
-                    fmt::format("{} Child Address: {}", isSleepy ? "[Sleepy]" : "[Non-Sleepy]", childAddr.ToString()),
-                    Console::Color::kGreen);
-                ReportMissingTlvs(childRequestedFlags, childReceivedFlags);
-            }
-        }
-
-        if (!childrenToQuery.empty())
-        {
-            Console::Write(fmt::format("Timed out querying {} children.", childrenToQuery.size()),
-                           Console::Color::kRed);
-        }
-    }
-
-    if (aInterpreter->mCancelCommand)
-    {
-        ExitNow(value = ERROR_CANCELLED("Traverse network cancelled by user"));
-    }
+    // Console::Write("\nChildren:\n", Console::Color::kWhite);
+    // for (const auto &pair : children)
+    // {
+    //    const auto &data = pair.second;
+    //    Console::Write(fmt::format(" - {}: RLOC16={:04X}\n", pair.first, data.mMacAddr), Console::Color::kGreen);
+    // }
+    Console::Write("\n", Console::Color::kWhite);
 
     resultStream << "\n--- Traversal Summary ---\n";
-    resultStream << "Expected routers from mask: " << expectedRouters.size() << "\n";
-    resultStream << "Total routers responded:    " << routerCount << "\n";
-    resultStream << "Total children from tables: " << expectedChildCount << "\n";
-    resultStream << "Total children responded:   " << childCount << "\n";
+    resultStream << "Routers:  " << routers.size() << " / " << expectedRouterCount << " (Expected)\n";
+    resultStream << "Children: " << children.size() << " / " << expectedChildCount << " (Expected)\n";
     value = resultStream.str();
 
     if (!aJsonFile.empty())
     {
-        Console::Write("Writing JSON to " + aJsonFile + " with " + std::to_string(processedNodes.size()) + " entries\n",
+        Console::Write("Writing JSON to " + aJsonFile + " with " + std::to_string(collectedData.size()) + " entries\n",
                        Console::Color::kWhite);
 
-        nlohmann::json report;
-
-        // Summary Block
-        report["summary"]["leader_addr"]        = leaderAddr.ToString();
-        report["summary"]["expected_routers"]   = expectedRouters.size();
-        report["summary"]["responded_routers"]  = routerCount;
-        report["summary"]["expected_children"]  = expectedChildCount;
-        report["summary"]["responded_children"] = childCount;
-
-        // Devices Map
+        nlohmann::json  report;
         nlohmann::json &devices = report["devices"];
+
         for (const auto &pair : collectedData)
         {
             const auto &addr = pair.first;
             const auto &data = pair.second;
 
-            // We use NetDiagDataToJson to serialize each entry, but it returns a string.
-            // We need to parse it back to json object to put into the report.
             std::string jsonStr = NetDiagDataToJson(data);
             try
             {
-                devices[addr.ToString()] = nlohmann::json::parse(jsonStr);
+                devices[addr] = nlohmann::json::parse(jsonStr);
             } catch (const std::exception &e)
             {
-                Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", addr.ToString(), e.what()),
-                               Console::Color::kRed);
+                Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", addr, e.what()), Console::Color::kRed);
             }
         }
 

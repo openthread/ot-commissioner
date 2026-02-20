@@ -48,6 +48,7 @@
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/joiner_session.hpp"
+#include "library/network_traverser.hpp"
 #include "library/timer.hpp"
 #include "library/tlv.hpp"
 #include "library/token_manager.hpp"
@@ -199,6 +200,8 @@ public:
     void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagReset(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
 
+    Error TraverseNetwork(TraverseHandler aHandler) override;
+
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
@@ -302,6 +305,8 @@ private:
 
     std::map<uint16_t, NetDiagData> mPendingDiagQueries;
     uint16_t                        mNextQueryId = 0;
+
+    NetworkTraverser mNetworkTraverser;
 
     FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
     FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage);

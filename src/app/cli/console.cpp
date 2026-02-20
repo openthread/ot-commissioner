@@ -98,6 +98,42 @@ void Console::Write(const std::string &aLine, Color aColor)
     std::cout << colorCode << aLine << kResetCode << std::endl;
 }
 
+void Console::WriteNoNewline(const std::string &aLine, Color aColor)
+{
+    static const std::string kResetCode = "\u001b[0m";
+    std::string              colorCode;
+
+    switch (aColor)
+    {
+    case Color::kDefault:
+        colorCode = "\u001b[0m";
+        break;
+    case Color::kWhite:
+        colorCode = "\u001b[37m";
+        break;
+    case Color::kRed:
+        colorCode = "\u001b[31m";
+        break;
+    case Color::kGreen:
+        colorCode = "\u001b[32m";
+        break;
+    case Color::kYellow:
+        colorCode = "\u001b[33m";
+        break;
+    case Color::kBlue:
+        colorCode = "\u001b[34m";
+        break;
+    case Color::kMagenta:
+        colorCode = "\u001b[35m";
+        break;
+    case Color::kCyan:
+        colorCode = "\u001b[36m";
+        break;
+    }
+
+    std::cout << colorCode << aLine << kResetCode << std::flush;
+}
+
 } // namespace commissioner
 
 } // namespace ot

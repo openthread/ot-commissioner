@@ -34,14 +34,12 @@
 #ifndef OT_COMM_NETWORK_DIAG_DATA_HPP_
 #define OT_COMM_NETWORK_DIAG_DATA_HPP_
 
-#include <cstddef>
 #include <cstdint>
 #include <stdbool.h>
 #include <string>
 #include <vector>
 
 #include "defines.hpp"
-#include "error.hpp"
 #include "network_data.hpp"
 
 namespace ot {

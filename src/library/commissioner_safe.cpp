@@ -569,6 +569,22 @@ Error CommissionerSafe::CommandDiagReset(const std::string &aAddr, uint64_t aDia
     return pro.get_future().get();
 }
 
+Error CommissionerSafe::TraverseNetwork(TraverseHandler aHandler)
+{
+    std::promise<Error> pro;
+
+    // We can't return the error from Start() directly if we push it async.
+    // Actually, CommissionerImpl::TraverseNetwork returns Error.
+    // We want to return that error.
+
+    PushAsyncRequest([&pro, aHandler, this]() {
+        Error error = mImpl->TraverseNetwork(aHandler);
+        pro.set_value(error);
+    });
+
+    return pro.get_future().get();
+}
+
 void CommissionerSafe::PushAsyncRequest(AsyncRequest &&aAsyncRequest)
 {
     std::lock_guard<std::mutex> _(mInvokeMutex);

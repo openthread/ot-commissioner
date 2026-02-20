@@ -188,6 +188,8 @@ int main(int argc, const char *argv[])
         gInterpreter.Run();
     }
 
+    Console::Write("Exiting main...", Console::Color::kGreen);
+
 exit:
     if (error != ErrorCode::kNone)
     {

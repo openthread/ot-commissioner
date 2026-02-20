@@ -36,6 +36,7 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -433,6 +434,18 @@ Error CommissionerApp::SetCommissionerDataset(const CommissionerDataset &aDatase
 
     SuccessOrExit(error = mCommissioner->SetCommissionerDataset(aDataset));
     MergeDataset(mCommDataset, aDataset);
+
+exit:
+    return error;
+}
+
+Error CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler aHandler)
+{
+    Error error;
+
+    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
+
+    error = mCommissioner->TraverseNetwork(aHandler);
 
 exit:
     return error;

@@ -40,7 +40,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -81,6 +80,7 @@ public:
     void Execute(const std::string &aCommands);
 
     void CancelCommand();
+    bool IsCancelled() const { return mCancelCommand.load(); }
 
 private:
     friend class Job;
@@ -92,7 +92,7 @@ private:
         uint64_t           mStartWith;
         bool               mSuccess;
 
-        NetworkSelectionComparator(const Interpreter &aInterpreter);
+        explicit NetworkSelectionComparator(const Interpreter &aInterpreter);
         ~NetworkSelectionComparator();
     };
     /**
@@ -106,10 +106,13 @@ private:
         Value() = default;
 
         // Allow implicit conversion from std::string to Value.
-        Value(std::string aData);
+        explicit Value(std::string aData);
 
         // Allow implicit conversion from Error to Value.
-        Value(Error aError);
+        explicit Value(Error aError);
+
+        Value &operator=(const std::string &aData);
+        Value &operator=(const Error &aError);
 
         bool operator==(const ErrorCode &aErrorCode) const;
         bool operator!=(const ErrorCode &aErrorCode) const;

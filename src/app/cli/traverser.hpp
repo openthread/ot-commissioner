@@ -43,12 +43,12 @@ namespace commissioner {
 class Traverser
 {
 public:
-    static Interpreter::Value ProcessTraverseNetwork(Interpreter *aInterpreter, const Interpreter::Expression &aExpr);
+    static std::string ProcessTraverseNetwork(Interpreter *aInterpreter, const Interpreter::Expression &aExpr);
 
-    static Interpreter::Value ProcessTraverseNetworkJob(Interpreter                   *aInterpreter,
-                                                        CommissionerAppPtr            &aCommissioner,
-                                                        const Interpreter::Expression &aExpr,
-                                                        const std::string             &aJsonFile = "");
+    static std::string ProcessTraverseNetworkJob(Interpreter                   *aInterpreter,
+                                                 CommissionerAppPtr            &aCommissioner,
+                                                 const Interpreter::Expression &aExpr,
+                                                 const std::string             &aJsonFile = "");
 };
 
 } // namespace commissioner

@@ -32,18 +32,25 @@
  */
 
 #include <algorithm>
+#include <asm-generic/socket.h>
+#include <bits/types/struct_timeval.h>
 #include <cctype>
 #include <cerrno>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <map>
 #include <memory>
-#include <set>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <sys/socket.h>
+#include <sys/time.h>
 
 #include <fcntl.h>
 #ifdef __linux__
@@ -71,6 +78,7 @@
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
 #include "commissioner/network_data.hpp"
+#include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
 #include "common/time.hpp"
@@ -551,10 +559,11 @@ void Interpreter::Execute(const std::string &aCommands)
 
 void Interpreter::CancelCommand()
 {
+    // For commands being handled in place
+    mCancelCommand.store(true);
+
     int cancelData = 1;
     mJobManager->CancelCommand();
-    // For commands being handled in place
-    mCancelCommand = true;
 
     // reading from non-blocking pipe to empty the one prior to
     // sending cancellation signal by writing to the pipe below
@@ -754,14 +763,14 @@ Interpreter::Value Interpreter::ValidateMultiNetworkSyntax(const Expression &aEx
         // as we came here to evaluate multi-network command, either
         // network or domain list must have entries
         VerifyOrExit(false,
-                     ERROR_INVALID_ARGS(
+                     error = ERROR_INVALID_ARGS(
                          "Either network or domain list must have entries for multi-network command")); // must not hit
                                                                                                         // this, ever
     }
 
     VerifyOrExit(aNids.size() > 0, error = ERROR_INVALID_ARGS(RUNTIME_EMPTY_NIDS));
 exit:
-    return error;
+    return Value(error);
 }
 
 bool Interpreter::IsFeatureSupported(const std::vector<StringArray> &aArr, const Expression &aExpr) const
@@ -796,12 +805,12 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
         ST_IMPORT,
         ST_CMD_KEYS
     };
-    StringArray *arrays[] = {[ST_COMMAND]  = &aRetExpr,
-                             [ST_NETWORK]  = &mContext.mNwkAliases,
-                             [ST_DOMAIN]   = &mContext.mDomAliases,
-                             [ST_EXPORT]   = &mContext.mExportFiles,
-                             [ST_IMPORT]   = &mContext.mImportFiles,
-                             [ST_CMD_KEYS] = &mContext.mCommandKeys};
+    StringArray *arrays[] = {&aRetExpr,
+                             &mContext.mNwkAliases,
+                             &mContext.mDomAliases,
+                             &mContext.mExportFiles,
+                             &mContext.mImportFiles,
+                             &mContext.mCommandKeys};
     Error        error;
 
     uint8_t     state = ST_COMMAND;
@@ -1132,7 +1141,7 @@ exit:
     {
         error = Error{error.GetCode(), "there is an existing active commissioner: " + existingCommissionerId};
     }
-    return error;
+    return Value(error);
 }
 
 Interpreter::Value Interpreter::ProcessStop(const Expression &aExpr)
@@ -1149,7 +1158,7 @@ exit:
 Interpreter::Value Interpreter::ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &)
 {
     aCommissioner->Stop();
-    return ERROR_NONE;
+    return Value(ERROR_NONE);
 }
 
 Interpreter::Value Interpreter::ProcessActive(const Expression &aExpr)
@@ -1165,7 +1174,7 @@ exit:
 
 Interpreter::Value Interpreter::ProcessActiveJob(CommissionerAppPtr &aCommissioner, const Expression &)
 {
-    return std::string{aCommissioner->IsActive() ? "true" : "false"};
+    return Value(std::string{aCommissioner->IsActive() ? "true" : "false"});
 }
 
 Interpreter::Value Interpreter::ProcessToken(const Expression &aExpr)
@@ -2708,12 +2717,12 @@ exit:
 
 Interpreter::Value Interpreter::ProcessTraverseNetwork(const Expression &aExpr)
 {
-    return Traverser::ProcessTraverseNetwork(this, aExpr);
+    return Value(Traverser::ProcessTraverseNetwork(this, aExpr));
 }
 
 Interpreter::Value Interpreter::ProcessTraverseNetworkJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr)
 {
-    return Traverser::ProcessTraverseNetworkJob(this, aCommissioner, aExpr);
+    return Value(Traverser::ProcessTraverseNetworkJob(this, aCommissioner, aExpr));
 }
 
 Interpreter::Value Interpreter::ProcessExit(const Expression &)
@@ -2722,7 +2731,7 @@ Interpreter::Value Interpreter::ProcessExit(const Expression &)
 
     mShouldExit = true;
 
-    return ERROR_NONE;
+    return Value(ERROR_NONE);
 }
 
 Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)
@@ -2965,6 +2974,20 @@ Interpreter::Value::Value(Error aError)
 bool Interpreter::Value::operator==(const ErrorCode &aErrorCode) const { return mError.GetCode() == aErrorCode; }
 
 bool Interpreter::Value::operator!=(const ErrorCode &aErrorCode) const { return !(*this == aErrorCode); }
+
+Interpreter::Value &Interpreter::Value::operator=(const std::string &aData)
+{
+    mData  = aData;
+    mError = Error();
+    return *this;
+}
+
+Interpreter::Value &Interpreter::Value::operator=(const Error &aError)
+{
+    mError = aError;
+    mData  = "";
+    return *this;
+}
 
 } // namespace commissioner
 
