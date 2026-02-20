@@ -77,6 +77,7 @@ public:
 
 private:
     friend class CommissionerImpl;
+    friend class NetworkTraverserTest;
 
     void OnActiveDataset(const ActiveOperationalDataset *aDataset, Error aError);
     void OnDiagGetAnswer(const std::string &aPeerAddr, const NetDiagData &aDiagAnsMsg);
@@ -91,19 +92,20 @@ private:
     };
 
     void HandleTimer(Timer &aTimer);
-    void Proceed();
+    void FinalizeNode();
     void Finalize(Error aError);
 
     void QueryNextTarget();
-    void QueryNextChunk();
+    void QueryChunk();
 
     static std::string AddressToString(const Address &aAddr);
 
+    Address GetMeshLocalAddress(uint16_t aRloc16) const;
+
     CommissionerImpl             &mImpl;
-    Timer                         mTimer;
+    Timer                         mRequestTimeoutTimer;
     Commissioner::TraverseHandler mHandler;
     State                         mState;
-    bool                          mIsWaitingForChunkDelay = false;
     ByteArray                     mMeshLocalPrefix;
 
     std::map<Address, NetDiagData> mCollectedData;
@@ -123,7 +125,6 @@ private:
 
     // Constants
     static const int kDefaultTimeoutMs;
-    static const int kChunkDelayMs;
     static const int kSleepyTimeoutMs;
     static const int kMaxRetries;
 };

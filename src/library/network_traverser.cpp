@@ -30,7 +30,7 @@
 
 #include <chrono>
 #include <cstdint>
-#include <cstdio>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -47,10 +47,14 @@
 namespace ot {
 namespace commissioner {
 
-const int NetworkTraverser::kDefaultTimeoutMs = 1000;
-const int NetworkTraverser::kChunkDelayMs     = 500;
+const int NetworkTraverser::kDefaultTimeoutMs = 500;
 const int NetworkTraverser::kSleepyTimeoutMs  = 10000;
 const int NetworkTraverser::kMaxRetries       = 3;
+
+// We request diagnostic data in chunks because some Thread Border Routers
+// may fail to respond to large TMF Network Diagnostic Get messages.
+// while Thread 1.4 should support larger messages handling, older versions
+// or specific implementations might struggle with fragmentation or buffer limits.
 
 static const std::vector<uint64_t> kLeaderChunks = {
     NetDiagData::kRoute64Bit | NetDiagData::kMacAddrBit | NetDiagData::kEui64Bit,        // Chunk 0: Topology & ID
@@ -97,7 +101,7 @@ static const std::vector<uint64_t> kChildChunks = {
 
 NetworkTraverser::NetworkTraverser(CommissionerImpl &aImpl)
     : mImpl(aImpl)
-    , mTimer(aImpl.GetEventBase(), [this](Timer &aTimer) { HandleTimer(aTimer); })
+    , mRequestTimeoutTimer(aImpl.GetEventBase(), [this](Timer &aTimer) { HandleTimer(aTimer); })
     , mState(State::kIdle)
 {
 }
@@ -107,7 +111,7 @@ Error NetworkTraverser::Start(Commissioner::TraverseHandler aHandler)
     mCollectedData.clear();
     mRoutersToQuery.clear();
     mChildrenToQuery.clear();
-    mHandler = aHandler; // Store handler
+    mHandler = aHandler;
 
     mState = State::kGettingDataset;
     mImpl.GetActiveDataset(
@@ -126,8 +130,6 @@ void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset,
 
     if (aError != ErrorCode::kNone || aDataset == nullptr)
     {
-        // Failed to get dataset, can't construct RLOCs.
-        // We could try fallback if we had one, but for now fail.
         Finalize(aError != ErrorCode::kNone ? aError : ERROR_NOT_FOUND("Active Dataset not found"));
         return;
     }
@@ -141,29 +143,8 @@ void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset,
 
     mState = State::kQueryingLeader;
 
-    // Construct Leader ALOC (0xfc00)
-    // RLOC is Prefix + 0000:00ff:fe00:RLOC16
-    // ALOC 0xfc00 is RLOC16 form? Yes?
-    // Let's assume standard RLOC generation.
-    // Address::Set(ByteArray) expects 16 bytes.
-    std::vector<uint8_t> addrBytes = mMeshLocalPrefix;
-    if (addrBytes.size() != 8)
-    {
-        Finalize(ERROR_BAD_FORMAT("Invalid Mesh Local Prefix length"));
-        return;
-    }
-    // Append 0000:00ff:fe00:fc00
-    addrBytes.push_back(0x00);
-    addrBytes.push_back(0x00);
-    addrBytes.push_back(0x00);
-    addrBytes.push_back(0xff);
-    addrBytes.push_back(0xfe);
-    addrBytes.push_back(0x00);
-    addrBytes.push_back(0xfc);
-    addrBytes.push_back(0x00);
-
-    Address addr;
-    if (addr.Set(addrBytes) != ErrorCode::kNone)
+    const Address addr = GetMeshLocalAddress(0xfc00);
+    if (!addr.IsValid())
     {
         Finalize(ERROR_BAD_FORMAT("Failed to construct Leader ALOC"));
         return;
@@ -176,12 +157,12 @@ void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset,
     mRetryCount         = 0;
     mDeviceRetried      = false;
 
-    QueryNextChunk();
+    QueryChunk();
 }
 
 void NetworkTraverser::Stop()
 {
-    mTimer.Stop();
+    mRequestTimeoutTimer.Stop();
     mState = State::kIdle;
 
     if (mHandler.mOnFinished)
@@ -192,64 +173,46 @@ void NetworkTraverser::Stop()
     mHandler = {};
 }
 
-void NetworkTraverser::QueryNextChunk()
+void NetworkTraverser::QueryChunk()
 {
     if (mCurrentChunkIndex >= mPendingChunks.size())
     {
-        Proceed();
+        FinalizeNode();
         return;
     }
 
     uint64_t chunk = mPendingChunks[mCurrentChunkIndex];
     mImpl.CommandDiagGetQuery([](Error) {}, mCurrentQueryTarget, chunk);
 
-    // Dynamic timeout based on target type/chunk? default for now.
     int timeoutMs = kDefaultTimeoutMs;
-    // For children, checking if sleepy happens in Proceed(), but here we might need to know.
-    // We can check if in kQueryingChildren and look up child sleepiness.
+
     if (mState == State::kQueryingChildren)
     {
-        // We need to parse target to get RLOC16?
-        // Or we can just look up in mChildrenToQuery if we know which one we are querying.
-        // But mCurrentQueryTarget is a string.
-        // It's cleaner to set timeout based on mState or sleepiness flag stored.
-        // Let's assume default unless specific case.
-        // kSleepyTimeoutMs is 10000.
-        // We can parse "0xXXXX" from mCurrentQueryTarget.
-        unsigned int rloc16;
-        if (sscanf(mCurrentQueryTarget.c_str(), "0x%x", &rloc16) == 1)
+        // is it sleepy?
+        if (mChildrenToQuery.count(mCurrentQueryRloc16) && mChildrenToQuery.at(mCurrentQueryRloc16))
         {
-            if (mChildrenToQuery.count(rloc16) && mChildrenToQuery.at(rloc16))
-            {
-                timeoutMs = kSleepyTimeoutMs;
-            }
+            timeoutMs = kSleepyTimeoutMs;
         }
     }
 
-    mTimer.Start(std::chrono::milliseconds(timeoutMs));
+    mRequestTimeoutTimer.Start(std::chrono::milliseconds(timeoutMs));
 }
 
 void NetworkTraverser::HandleTimer(Timer &aTimer)
 {
     (void)aTimer;
-    // Timeout
     if (mRetryCount < kMaxRetries)
     {
         mRetryCount++;
         mDeviceRetried = true;
         // Retry current chunk
-        QueryNextChunk();
+        QueryChunk();
     }
     else
     {
-        // Give up on this device or this chunk?
-        // If we fail on the first chunk (ID), we probably can't do much.
-        // If we fail on later chunks, we might have partial data.
-        // The CLI implementation skipped to next device on failure.
-        // But for chunks, if one chunk fails, it tried next chunks? No, CLI implementation:
-        // "if (i == 0 && !chunkReceived) return false;" -> fail device.
-        // "else chunkReceived = true" (handled in loop).
-        // It seems CLI continues if first chunk succeeds.
+        // Give up on this device or this chunk
+        // If we fail on the first chunk (ID), we can't do much
+        // If we fail on later chunks, we might have partial data
 
         if (mCurrentChunkIndex == 0)
         {
@@ -258,14 +221,14 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
             {
                 mHandler.mOnDeviceResponded(mCurrentQueryTarget, nullptr, Commissioner::TraverseStatus::kFailed);
             }
-            Proceed();
+            FinalizeNode();
         }
         else
         {
             // Partial failure, continue to next chunk.
             mCurrentChunkIndex++;
             mRetryCount = 0;
-            QueryNextChunk();
+            QueryChunk();
         }
     }
 }
@@ -278,8 +241,8 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
     }
 
     // Check if this answer matches what we are looking for.
-    // In CLI, we filtered by requested flags.
     // Here we can check if it contains ANY of requested flags in current chunk.
+
     if (mCurrentChunkIndex >= mPendingChunks.size())
     {
         return;
@@ -291,8 +254,7 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
         return;
     }
 
-    // Match!
-    // Store data.
+    // Match. Store data
     Address addr;
     // aPeerAddr is string IP. Convert to Address.
     if (addr.Set(aPeerAddr) != ErrorCode::kNone)
@@ -303,50 +265,27 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
     // For children, we might want to validate MacAddr matches target RLOC16.
     if (mState == State::kQueryingChildren)
     {
-        if ((aDiagAnsMsg.mPresentFlags & NetDiagData::kMacAddrBit) && (aDiagAnsMsg.mMacAddr == mCurrentQueryRloc16))
+        if ((aDiagAnsMsg.mPresentFlags & NetDiagData::kMacAddrBit) && (aDiagAnsMsg.mMacAddr != mCurrentQueryRloc16))
         {
-            // Validated
+            return;
         }
     }
 
-    // We need to MERGE chunks!
-    // NetDiagData is a struct. We should merge fields if we receive multiple chunks for same device.
-    // But map key is Address.
-    // If we have previous entry, we should merge.
-
+    // If we already have data for this device, merge it with previous data.
     if (mCollectedData.count(addr))
     {
-        // Simple merge: copy present flags and fields.
-        // Since NetDiagData has mPresentFlags, we can just copy fields that are present.
-        // But making a proper merge function is better.
-        // For simplicity, let's assume `mCollectedData[addr] = aDiagAnsMsg` replaces it, which is BAD for chunks.
-        // We MUST merge.
         auto &existing = mCollectedData[addr];
         existing.mPresentFlags |= aDiagAnsMsg.mPresentFlags;
-        // Copy all fields... this is tedious without a Merge function in NetDiagData.
-        // CLI implementation stored full `data` from `answers` which accumulate in `CommissionerApp`?
-        // No, `CommissionerApp` stores `mDiagAnsDataMap`.
-        // `CommissionerImpl::HandleDiagGetAnswer` updates `mDiagAnsTlvs`?
-        // `CommissionerImpl` has `NetDiagData mDiagAnsTlvs` (singular) and `mResourceDiagAns`.
-        // `CommissionerImpl::HandleDiagGetAnswer` parses into `mDiagAnsTlvs`.
-        // If `CommissionerImpl` only keeps one, then `OnDiagGetAnswer` just gives us that one.
-        // We need to accumulate it ourselves.
-        // Since `NetDiagData` has many fields, I won't implement full merge here unless necessary.
-        // But `NetworkTraverser` is inside Library, so I can access `NetDiagData` members.
-
-        // Ideally `NetDiagData` should have a `Merge` method.
-        // For now, let's copy the entire struct if it's the first chunk (which usually has ID).
-        // If it's later chunks, we need to merge fields.
-        // Or we can rely on specific fields being present
-        existing.Merge(aDiagAnsMsg); // Assuming a Merge method exists or will be added to NetDiagData
+        existing.Merge(aDiagAnsMsg);
     }
+    // If we don't have data for this device, add it.
     else
     {
         mCollectedData[addr] = aDiagAnsMsg;
     }
 
     // Stop timer and next chunk
-    mTimer.Stop();
+    mRequestTimeoutTimer.Stop();
     mRetryCount = 0;
     mCurrentChunkIndex++;
 
@@ -358,18 +297,15 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
             auto status = mDeviceRetried ? Commissioner::TraverseStatus::kSuccessWithRetry
                                          : Commissioner::TraverseStatus::kSuccess;
             mHandler.mOnDeviceResponded(addr.ToString(), &mCollectedData[addr], status);
-            // mHandler.mOnDeviceResponded(addr.ToString(), mCollectedData[addr]);
         }
     }
 
-    QueryNextChunk();
+    QueryChunk();
 }
 
-void NetworkTraverser::Proceed()
+void NetworkTraverser::FinalizeNode()
 {
-    // Finished current device/chunks.
-    // Check state to decide next move.
-
+    // First check the query state
     if (mState == State::kQueryingLeader)
     {
         // Analyze leader data to find routers.
@@ -380,9 +316,6 @@ void NetworkTraverser::Proceed()
 
         for (const auto &pair : mCollectedData)
         {
-            // We assume the first one we collected is Leader (since we only queried leader).
-            // But we might have multiple if we got responses from elsewhere (unlikely).
-            // Let's look for one with Route64.
             if (pair.second.mPresentFlags & NetDiagData::kRoute64Bit)
             {
                 leaderAddr  = pair.first;
@@ -436,7 +369,7 @@ void NetworkTraverser::Proceed()
         }
 
         mState = State::kQueryingRouters;
-        Proceed(); // Recurse to start router querying (or finding next router)
+        FinalizeNode(); // Recurse to start router querying (or finding next router)
     }
     else if (mState == State::kQueryingRouters)
     {
@@ -453,6 +386,7 @@ void NetworkTraverser::Proceed()
                 {
                     for (const auto &childEntry : pair.second.mChildTable)
                     {
+                        // RLOC16 -> isSleepy
                         mChildrenToQuery[rloc16 | childEntry.mChildId] = !childEntry.mModeData.mIsRxOnWhenIdleMode;
                     }
                 }
@@ -467,7 +401,7 @@ void NetworkTraverser::Proceed()
             {
                 mHandler.mOnTotalChildrenCount(mChildrenToQuery.size());
             }
-            Proceed();
+            FinalizeNode();
             return;
         }
 
@@ -475,22 +409,10 @@ void NetworkTraverser::Proceed()
         uint16_t routerRloc = *mRoutersToQuery.begin();
         mRoutersToQuery.erase(mRoutersToQuery.begin());
 
-        // Construct Router RLOC
-        // Prefix + 0000:00ff:fe00:RLOC16
-        std::vector<uint8_t> addrBytes = mMeshLocalPrefix;
-        addrBytes.push_back(0x00);
-        addrBytes.push_back(0x00);
-        addrBytes.push_back(0x00);
-        addrBytes.push_back(0xff);
-        addrBytes.push_back(0xfe);
-        addrBytes.push_back(0x00);
-        addrBytes.push_back((routerRloc >> 8) & 0xFF);
-        addrBytes.push_back(routerRloc & 0xFF);
-
-        Address addr;
-        if (addr.Set(addrBytes) != ErrorCode::kNone)
+        const Address addr = GetMeshLocalAddress(routerRloc);
+        if (!addr.IsValid())
         {
-            Proceed();
+            FinalizeNode();
             return;
         }
 
@@ -500,7 +422,7 @@ void NetworkTraverser::Proceed()
         mCurrentChunkIndex  = 0;
         mRetryCount         = 0;
         mDeviceRetried      = false;
-        QueryNextChunk();
+        QueryChunk();
     }
     else if (mState == State::kQueryingChildren)
     {
@@ -515,32 +437,20 @@ void NetworkTraverser::Proceed()
         // bool isSleepy = it->second;
         mChildrenToQuery.erase(it);
 
-        // Similar RLOC construction
-        uint16_t             childRloc = childRloc16;
-        std::vector<uint8_t> addrBytes = mMeshLocalPrefix;
-        addrBytes.push_back(0x00);
-        addrBytes.push_back(0x00);
-        addrBytes.push_back(0x00);
-        addrBytes.push_back(0xff);
-        addrBytes.push_back(0xfe);
-        addrBytes.push_back(0x00);
-        addrBytes.push_back((childRloc >> 8) & 0xFF);
-        addrBytes.push_back(childRloc & 0xFF);
-
-        Address addr;
-        if (addr.Set(addrBytes) != ErrorCode::kNone)
+        const Address addr = GetMeshLocalAddress(childRloc16);
+        if (!addr.IsValid())
         {
-            Proceed();
+            FinalizeNode();
             return;
         }
 
         mCurrentQueryTarget = addr.ToString();
-        mCurrentQueryRloc16 = childRloc;
+        mCurrentQueryRloc16 = childRloc16;
         mPendingChunks      = kChildChunks;
         mCurrentChunkIndex  = 0;
         mRetryCount         = 0;
         mDeviceRetried      = false;
-        QueryNextChunk();
+        QueryChunk();
     }
 }
 
@@ -556,6 +466,29 @@ void NetworkTraverser::Finalize(Error aError)
         }
         mHandler.mOnFinished(&report, aError);
     }
+}
+
+Address NetworkTraverser::GetMeshLocalAddress(uint16_t aRloc16) const
+{
+    Address addr;
+    // RLOC is Prefix + 0000:00ff:fe00:RLOC16
+    std::vector<uint8_t> addrBytes = mMeshLocalPrefix;
+    if (addrBytes.size() != 8)
+    {
+        return addr; // Invalid
+    }
+
+    addrBytes.push_back(0x00);
+    addrBytes.push_back(0x00);
+    addrBytes.push_back(0x00);
+    addrBytes.push_back(0xff);
+    addrBytes.push_back(0xfe);
+    addrBytes.push_back(0x00);
+    addrBytes.push_back((aRloc16 >> 8) & 0xFF);
+    addrBytes.push_back(aRloc16 & 0xFF);
+
+    static_cast<void>(addr.Set(addrBytes));
+    return addr;
 }
 
 } // namespace commissioner

@@ -165,6 +165,7 @@ if (OT_COMM_TEST)
         socket_test.cpp
         token_manager.hpp
         token_manager_test.cpp
+        network_traverser_test.cpp
         $<TARGET_OBJECTS:commissioner-common-test>
     )
 

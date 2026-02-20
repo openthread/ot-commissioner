@@ -70,6 +70,9 @@ public:
 
 protected:
     static std::string mPrompt;
+
+private:
+    static std::string Format(const std::string &aLine, Color aColor);
 };
 
 /**

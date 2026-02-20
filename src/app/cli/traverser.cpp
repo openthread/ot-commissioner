@@ -107,7 +107,7 @@ std::string Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, const I
         {
             VerifyOrExit(i + 1 < aExpr.size(), error = ERROR_INVALID_ARGS("Missing JSON filename"));
             jsonFile = aExpr[++i];
-            Console::Write("JSON output enabled: " + jsonFile + "\n", Console::Color::kWhite);
+            Console::Write("JSON output enabled: " + jsonFile, Console::Color::kWhite);
         }
         else if (aExpr[i][0] == '-')
         {
@@ -122,7 +122,7 @@ std::string Traverser::ProcessTraverseNetwork(Interpreter *aInterpreter, const I
             VerifyOrExit(i + 1 < aInterpreter->mContext.mCommandKeys.size(),
                          error = ERROR_INVALID_ARGS("Missing JSON filename"));
             jsonFile = aInterpreter->mContext.mCommandKeys[++i];
-            Console::Write("JSON output enabled: " + jsonFile + "\n", Console::Color::kWhite);
+            Console::Write("JSON output enabled: " + jsonFile, Console::Color::kWhite);
         }
     }
 
@@ -156,7 +156,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
     std::atomic<bool>                  isFinished{false};
 
     // Call the new async-based but blocking API
-    Console::Write("Starting Network Traversal...\n", Console::Color::kCyan);
+    Console::Write("Starting Network Traversal...", Console::Color::kCyan);
 
     // State for live output
     size_t                       totalRouters    = 0;
@@ -208,7 +208,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             return;
         }
 
-        // Print
+        // Print symbols for fetched devices
         char           symbol = isRouterPhase ? 'R' : 'C';
         Console::Color color  = Console::Color::kRed;
         if (aStatus == Commissioner::TraverseStatus::kSuccess)
@@ -221,6 +221,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         size_t &counter = isRouterPhase ? routersFound : childrenFound;
         counter++;
 
+        // Create chunks of 5 printed symbols for easy visualization
         if (counter % 5 == 0)
             Console::WriteNoNewline(" ", Console::Color::kWhite);
 
@@ -233,17 +234,13 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         if (aError != ErrorCode::kNone)
         {
             value = aError.ToString();
-            aCommissioner->CancelRequests();
         }
         else if (aReport != nullptr)
         {
-            // collectedData is already being populated live, but aReport matches it?
-            // NetworkTraverser passes mCollectedData ptr.
-            // We can just use what we have, or overwrite.
-            // Overwrite to be safe/consistent.
             collectedData = *aReport;
         }
         isFinished = true;
+
     };
 
     error = aCommissioner->TraverseNetwork(handler);
@@ -270,24 +267,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
 
     for (const auto &pair : collectedData)
     {
-        // Simple heuristic: If it has children or is a router, put in routers list.
-        // Actually, we can check IsDeviceTypeMtd or just if it's in the router list?
-        // Let's assume anything with children or that isn't explicitly an MTD is a router/REED.
-        // Or check if RLOC16 is a router RLOC.
         uint16_t rloc16 = pair.second.mMacAddr;
-        if ((rloc16 & 0xFC00) == 0xFC00)
-        {
-            // ALOC? or just assume non-router if high bits are set?
-            // Actually, Router RLOCs are top bits.
-            // Let's just use the Child table presence as a hint, or if it has NO child table but is in the list...
-        }
-
-        // Better: Check RLOC16. Router RLOCs are < 0xfc00 usually?
-        // Actually, Router ID is top 6 bits (0-63).
-        // 0-63 << 10 = 0x0000 - 0xFC00.
-        // Wait, Router ID 63 is invalid?
-        // Any RLOC16 where (val & 1) == 0 is likely an RLOC?
-        // Let's use the logic: If it has ChildTable, it's a Router/Leader.
 
         bool isRouter = false;
         // Check router ID from RLOC16
@@ -338,22 +318,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         expectedRouterCount = routers.size();
     }
 
-    // Console::Write("Routers:\n", Console::Color::kWhite);
-    // for (const auto &pair : routers)
-    // {
-    //    const auto &data = pair.second;
-    //    Console::Write(fmt::format(" - {}: RLOC16={:04X}, Children={}\n", pair.first, data.mMacAddr,
-    //        (data.mPresentFlags & NetDiagData::kChildTableBit) ? std::to_string(data.mChildTable.size()) : "0"),
-    //        Console::Color::kGreen);
-    // }
-
-    // Console::Write("\nChildren:\n", Console::Color::kWhite);
-    // for (const auto &pair : children)
-    // {
-    //    const auto &data = pair.second;
-    //    Console::Write(fmt::format(" - {}: RLOC16={:04X}\n", pair.first, data.mMacAddr), Console::Color::kGreen);
-    // }
-    Console::Write("\n", Console::Color::kWhite);
+    Console::Write("", Console::Color::kWhite);
 
     resultStream << "\n--- Traversal Summary ---\n";
     resultStream << "Routers:  " << routers.size() << " / " << expectedRouterCount << " (Expected)\n";

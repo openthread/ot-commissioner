@@ -33,10 +33,12 @@
 
 #include "app/cli/console.hpp"
 
+#include <cstring>
 #include <iostream>
 
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <string>
 
 namespace ot {
 
@@ -62,44 +64,15 @@ std::string Console::Read()
     return line;
 }
 
-void Console::Write(const std::string &aLine, Color aColor)
-{
-    static const std::string kResetCode = "\u001b[0m";
-    std::string              colorCode;
-
-    switch (aColor)
-    {
-    case Color::kDefault:
-        colorCode = "\u001b[0m";
-        break;
-    case Color::kWhite:
-        colorCode = "\u001b[37m";
-        break;
-    case Color::kRed:
-        colorCode = "\u001b[31m";
-        break;
-    case Color::kGreen:
-        colorCode = "\u001b[32m";
-        break;
-    case Color::kYellow:
-        colorCode = "\u001b[33m";
-        break;
-    case Color::kBlue:
-        colorCode = "\u001b[34m";
-        break;
-    case Color::kMagenta:
-        colorCode = "\u001b[35m";
-        break;
-    case Color::kCyan:
-        colorCode = "\u001b[36m";
-        break;
-    }
-
-    std::cout << colorCode << aLine << kResetCode << std::endl;
-}
+void Console::Write(const std::string &aLine, Color aColor) { std::cout << Format(aLine, aColor) << std::endl; }
 
 void Console::WriteNoNewline(const std::string &aLine, Color aColor)
 {
+    std::cout << Format(aLine, aColor) << std::flush;
+}
+
+std::string Console::Format(const std::string &aLine, Color aColor)
+{
     static const std::string kResetCode = "\u001b[0m";
     std::string              colorCode;
 
@@ -131,7 +104,7 @@ void Console::WriteNoNewline(const std::string &aLine, Color aColor)
         break;
     }
 
-    std::cout << colorCode << aLine << kResetCode << std::flush;
+    return colorCode + aLine + kResetCode;
 }
 
 } // namespace commissioner

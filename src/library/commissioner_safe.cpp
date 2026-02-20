@@ -573,10 +573,6 @@ Error CommissionerSafe::TraverseNetwork(TraverseHandler aHandler)
 {
     std::promise<Error> pro;
 
-    // We can't return the error from Start() directly if we push it async.
-    // Actually, CommissionerImpl::TraverseNetwork returns Error.
-    // We want to return that error.
-
     PushAsyncRequest([&pro, aHandler, this]() {
         Error error = mImpl->TraverseNetwork(aHandler);
         pro.set_value(error);

@@ -136,6 +136,7 @@ exit:
 void CommissionerApp::Stop()
 {
     IgnoreError(mCommissioner->Resign());
+    mCommissioner->Disconnect();
 
     mJoiners.clear();
     mPanIdConflicts.clear();

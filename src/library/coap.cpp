@@ -33,8 +33,13 @@
 
 #include "library/coap.hpp"
 
+#include <algorithm>
 #include <cctype>
+#include <chrono>
+#include <cstdint>
 #include <cstring>
+#include <list>
+#include <memory>
 #include <string>
 
 #include "commissioner/defines.hpp"
@@ -44,6 +49,8 @@
 #include "common/time.hpp"
 #include "common/utils.hpp"
 #include "event2/event.h"
+#include "fmt/base.h"
+#include "fmt/format.h"
 #include "library/endpoint.hpp"
 #include "library/message.hpp"
 #include "library/openthread/random.hpp"
