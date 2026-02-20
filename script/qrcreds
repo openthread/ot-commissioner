@@ -1,0 +1,216 @@
+#!/usr/bin/python3
+"""
+Thread Network QR Code Converter
+
+This script converts between Thread Operational Datasets (as TLV hex strings) 
+and a custom QR code text string format used for provisioning Thread devices.
+It can also generate PNG image files of the QR codes.
+
+The custom "THREAD:" format used here is modeled after the standard Wi-Fi 
+QR code provisioning format. The Wi-Fi format itself is based on the MeCard 
+format, a data file similar to vCard but developed by NTT DoCoMo in Japan 
+for sharing contact information via QR codes on cellular phones. This 
+structure was later adopted by Android, iOS, and other platforms for sharing 
+Wi-Fi network credentials ("WIFI:").
+
+Format Structure:
+  THREAD:S:<Network Name>;P:<Network Key>;I:<PAN ID>;E:<Ext PAN ID>;C:<Channel>;;
+
+Fields overview:
+  S: Network Name (String, UTF-8)
+  P: Network Master Key (Hex string, 16 bytes)
+  I: PAN ID (Hex string, 2 bytes)
+  E: Extended PAN ID (Hex string, 8 bytes)
+  C: Channel (Integer, typically 11-26)
+
+Example:
+  THREAD:S:MyThreadNet;P:00112233445566778899AABBCCDDEEFF;I:1234;E:1122334455667788;C:15;;
+  
+Fields are separated by semicolons (;) and the entire string must end with two semicolons (;;).
+"""
+
+import argparse
+import binascii
+import struct
+import sys
+
+# Try importing qrcode library for image generation
+try:
+    import qrcode
+except ImportError:
+    qrcode = None
+
+
+def tlv_to_qr(tlv_hex):
+    """
+    Parses a Thread Operational Dataset in TLV form (Hex string) into the custom 
+    'THREAD:' string format.
+    
+    Ensures that hex fields (Key, PAN, XPAN) are exported in Upper Case.
+    """
+    try:
+        data = binascii.unhexlify(tlv_hex)
+    except binascii.Error:
+        print("Error: Invalid Hex String", file=sys.stderr)
+        sys.exit(1)
+
+    idx = 0
+    fields = {}
+
+    while idx < len(data):
+        if idx + 1 >= len(data):
+            break
+        type_code = data[idx]
+        length = data[idx + 1]
+
+        if idx + 2 + length > len(data):
+            break
+        value = data[idx + 2:idx + 2 + length]
+
+        if type_code == 0x01:  # Channel
+            # Standard: Page (1 byte) + Channel (2 bytes)
+            if length == 3:
+                fields['C'] = str(struct.unpack('>H', value[1:])[0])
+            # Compact: Just Channel (1 byte)
+            elif length == 1:
+                fields['C'] = str(value[0])
+
+        elif type_code == 0x02:  # PAN ID (Hex)
+            fields['I'] = binascii.hexlify(value).decode('utf-8').upper()
+
+        elif type_code == 0x03:  # Extended PAN ID (Hex)
+            fields['E'] = binascii.hexlify(value).decode('utf-8').upper()
+
+        elif type_code == 0x04:  # Network Name (String - Case Sensitive)
+            fields['S'] = value.decode('utf-8', errors='replace')
+
+        elif type_code == 0x05:  # Network Key (Hex)
+            fields['P'] = binascii.hexlify(value).decode('utf-8').upper()
+
+        idx += 2 + length
+
+    qr_parts = ["THREAD:"]
+    # Order matters for consistency
+    if 'S' in fields:
+        qr_parts.append(f"S:{fields['S']};")
+    if 'P' in fields:
+        qr_parts.append(f"P:{fields['P']};")
+    if 'I' in fields:
+        qr_parts.append(f"I:{fields['I']};")
+    if 'E' in fields:
+        qr_parts.append(f"E:{fields['E']};")
+    if 'C' in fields:
+        qr_parts.append(f"C:{fields['C']};")
+    qr_parts.append(";")
+
+    return "".join(qr_parts)
+
+
+def qr_to_tlv(qr_string):
+    """
+    Converts the custom QR string back into a Thread TLV hex string.
+    Returns the final HEX string in Upper Case.
+    """
+    if not qr_string.startswith("THREAD:"):
+        print("Error: Invalid QR payload. Must start with 'THREAD:'", file=sys.stderr)
+        sys.exit(1)
+
+    content = qr_string[7:].rstrip(";")
+    tokens = content.split(';')
+    tlv_buffer = bytearray()
+
+    for token in tokens:
+        if not token:
+            continue
+        try:
+            tag, val = token.split(':', 1)
+        except ValueError:
+            continue
+
+        if tag == 'C':  # Channel -> TLV 0x01
+            channel = int(val)
+            tlv_buffer += bytes([0x01, 0x03, 0x00]) + struct.pack('>H', channel)
+
+        elif tag == 'I':  # PAN ID -> TLV 0x02
+            pan_bytes = binascii.unhexlify(val)
+            tlv_buffer += bytes([0x02, len(pan_bytes)]) + pan_bytes
+
+        elif tag == 'E':  # Ext PAN ID -> TLV 0x03
+            xpan_bytes = binascii.unhexlify(val)
+            tlv_buffer += bytes([0x03, len(xpan_bytes)]) + xpan_bytes
+
+        elif tag == 'S':  # Name -> TLV 0x04
+            name_bytes = val.encode('utf-8')
+            tlv_buffer += bytes([0x04, len(name_bytes)]) + name_bytes
+
+        elif tag == 'P':  # Key -> TLV 0x05
+            key_bytes = binascii.unhexlify(val)
+            tlv_buffer += bytes([0x05, len(key_bytes)]) + key_bytes
+
+    # Convert final buffer to hex and force UPPERCASE
+    return binascii.hexlify(tlv_buffer).decode('utf-8').upper()
+
+
+def generate_png(payload, filename):
+    """Generates a QR code PNG file."""
+    if qrcode is None:
+        print("Error: 'qrcode' library not found. Run 'pip install qrcode[pil]'", file=sys.stderr)
+        sys.exit(1)
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(payload)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(filename)
+    print(f"QR code image saved to: {filename}", file=sys.stderr)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Thread Network QR Code Converter",
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog='''\
+examples:
+  qrcreds.py --hex 04084d795468726561640510deadbeefdeadbeefdeadbeefdeadbeef0202123403081122334455667788010300000f
+
+  qrcreds.py --qrpayload "THREAD:S:DemoNet;P:00112233445566778899aabbccddeeff;;" --qrcode demo.png
+''')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--hex", help="Thread Operational Dataset (TLV Hex String)")
+    group.add_argument("--qrpayload", help="Thread QR Payload String (THREAD:S:...)")
+
+    parser.add_argument("--qrcode", metavar="FILENAME", help="Generate a PNG QR code file")
+
+    # If no arguments are passed, print help and exit
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    args = parser.parse_args()
+
+    final_payload_for_image = ""
+
+    if args.hex:
+        # Input: Hex -> Output: QR Payload (with uppercase fields)
+        result = tlv_to_qr(args.hex)
+        print(result)
+        final_payload_for_image = result
+
+    elif args.qrpayload:
+        # Input: QR Payload -> Output: Hex (forced uppercase)
+        result = qr_to_tlv(args.qrpayload)
+        print(result)
+        final_payload_for_image = args.qrpayload
+
+    if args.qrcode:
+        generate_png(final_payload_for_image, args.qrcode)
+
+
+if __name__ == "__main__":
+    main()

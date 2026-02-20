@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+import json
+import argparse
+import networkx as nx
+import matplotlib.pyplot as plt
+import os
+
+def generate_mesh_visualization(filepath):
+    """
+    Reads a Thread mesh network JSON file, visualizes it using a 
+    force-directed graph algorithm, and saves it as a PNG.
+    """
+    # 1. Load the input data from the provided filepath
+    try:
+        with open(filepath, 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file '{filepath}' could not be found.")
+        return
+    except json.JSONDecodeError:
+        print(f"Error: The file '{filepath}' does not contain valid JSON.")
+        return
+
+    # Initialize an undirected graph
+    G = nx.Graph()
+
+    # 2. Parse the JSON and build the graph
+    devices = data.get("devices", {})
+    
+    for device_ip, info in devices.items():
+        # Using Rloc16 as the node ID
+        node_id = info.get("Rloc16")
+        if node_id is None:
+            continue
+            
+        G.add_node(node_id, label=str(node_id))
+        
+        # Extract Router-to-Router connections
+        for neighbor in info.get("RouterNeighbor", []):
+            neighbor_id = neighbor.get("Rloc16")
+            quality = neighbor.get("LinkMargin", 1)
+            
+            if neighbor_id is not None:
+                G.add_edge(node_id, neighbor_id, weight=quality)
+                
+        # Extract Router-to-Child connections
+        for child in info.get("Child", []):
+            child_id = child.get("Rloc16")
+            quality = child.get("LinkMargin", 1)
+            
+            if child_id is not None:
+                G.add_edge(node_id, child_id, weight=quality)
+
+    if G.number_of_nodes() == 0:
+        print("No valid nodes found in the JSON to graph.")
+        return
+
+    # 3. Apply Force-Directed Algorithm
+    # k regulates the distance between nodes. Iterations regulates how perfectly it settles.
+    pos = nx.spring_layout(G, k=3.5, iterations=150, weight='weight')
+
+    # 4. Set up the Matplotlib plot
+    plt.figure(figsize=(14, 10))
+    plt.title("Thread Mesh Network Visualization", fontsize=16, fontweight='bold')
+
+    # Extract edge weights for styling
+    edges = G.edges()
+    weights = [G[u][v]['weight'] for u, v in edges]
+    
+    # Normalize weights to determine edge thickness
+    if weights:
+        max_weight = max(weights)
+        scaled_weights = [(w / max_weight) * 4 for w in weights]
+        vmin, vmax = min(weights), max(weights)
+    else:
+        scaled_weights = [1] * len(edges)
+        vmin, vmax = 0, 1
+
+    # 5. Draw the graph components
+    nx.draw_networkx_nodes(G, pos,
+                           node_size=800,
+                           node_color='#4A90E2',
+                           edgecolors='#2C3E50',
+                           linewidths=2)
+
+    nx.draw_networkx_edges(G, pos,
+                           edgelist=edges,
+                           width=scaled_weights,
+                           edge_color=weights,
+                           edge_cmap=plt.cm.viridis, 
+                           edge_vmin=vmin,
+                           edge_vmax=vmax,
+                           alpha=0.7)
+
+    nx.draw_networkx_labels(G, pos, font_size=10, font_color='white', font_weight='bold')
+
+    # Add a colorbar to explain the edge colors
+    sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=plt.gca(), fraction=0.046, pad=0.04)
+    cbar.set_label('Connection Quality (Link Margin)', rotation=270, labelpad=15)
+
+    # Clean up axes
+    plt.axis('off')
+    plt.tight_layout()
+
+    # 6. Generate output filename and save
+    base_name, _ = os.path.splitext(filepath)
+    output_png = f"{base_name}.png"
+    
+    plt.savefig(output_png, format="png", dpi=300, bbox_inches='tight')
+    print(f"Success! Mesh visualization saved to: {output_png}")
+    
+    # Close the plot to free up memory
+    plt.close()
+
+if __name__ == "__main__":
+    # Set up command-line argument parsing
+    parser = argparse.ArgumentParser(description="Visualize a Thread mesh network from a JSON file and save as PNG.")
+    parser.add_argument("filepath", help="Path to the JSON file containing the mesh data")
+    
+    args = parser.parse_args()
+    
+    # Pass the filepath argument into the function
+    generate_mesh_visualization(args.filepath)
