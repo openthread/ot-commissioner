@@ -312,8 +312,7 @@ bool Tlv::IsValid() const
         case Type::kNetworkDiagNonPreferredChannelsMask:
             return true;
         default:
-            // Explicitly allow unknown/future TLV types to support forward compatibility.
-            return true;
+            return false;
         }
     }
     else if (mScope == Scope::kNetworkData)

@@ -76,8 +76,8 @@ namespace commissioner {
 static constexpr uint16_t kLeaderAloc16     = 0xFC00;
 static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 
-static constexpr uint32_t kMinKeepAliveInterval = 30;
-static constexpr uint32_t kMaxKeepAliveInterval = 45;
+static constexpr uint32_t kMinKeepAliveInterval    = 30;
+static constexpr uint32_t kMaxKeepAliveInterval    = 45;
 static constexpr uint32_t kDiagQueryTimeoutSeconds = 10;
 
 Error Commissioner::GeneratePSKc(ByteArray         &aPSKc,
@@ -343,7 +343,6 @@ void CommissionerImpl::CancelRequests()
 {
     mProxyClient.CancelRequests();
     mBrClient.CancelRequests();
-    // LOG_INFO(LOG_REGION_MESHCOP, "CommissionerImpl::CancelRequests calling Stop");
     mNetworkTraverser.Stop();
 
 #if OT_COMM_CONFIG_CCM_ENABLE
@@ -662,16 +661,6 @@ exit:
         aHandler(error);
     }
 }
-
-// Assuming kDiagQueryTimeout is defined elsewhere, e.g., in a header or as a static const member.
-// For the purpose of this edit, we'll assume it's available.
-// If not, it would typically be defined like:
-// static constexpr uint16_t kDiagQueryTimeout = 60; // seconds
-
-// Assuming mDiagQueryCleanupTimer is a member variable of CommissionerImpl,
-// initialized in the constructor like:
-// CommissionerImpl::CommissionerImpl(...) : mDiagQueryCleanupTimer(*this,
-// &CommissionerImpl::HandleDiagQueryCleanupTimer) { ... }
 
 void CommissionerImpl::HandleDiagQueryCleanupTimer(Timer &aTimer)
 {

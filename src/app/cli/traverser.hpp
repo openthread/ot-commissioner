@@ -34,6 +34,8 @@
 #ifndef OT_COMM_APP_CLI_TRAVERSER_HPP_
 #define OT_COMM_APP_CLI_TRAVERSER_HPP_
 
+#include <chrono>
+#include <string>
 #include "app/cli/interpreter.hpp"
 
 namespace ot {
@@ -48,7 +50,8 @@ public:
     static std::string ProcessTraverseNetworkJob(Interpreter                   *aInterpreter,
                                                  CommissionerAppPtr            &aCommissioner,
                                                  const Interpreter::Expression &aExpr,
-                                                 const std::string             &aJsonFile = "");
+                                                 const std::string             &aJsonFile = "",
+                                                 std::chrono::milliseconds      aTimeout  = std::chrono::seconds(120));
 };
 
 } // namespace commissioner

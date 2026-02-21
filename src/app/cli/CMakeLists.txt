@@ -145,6 +145,7 @@ add_executable(interpreter-test
     ${PROJECT_SOURCE_DIR}/src/app/file_logger.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_dummy.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commissioner_app_mock.cpp
+    traverser_test.cpp
 )
 
 target_include_directories(interpreter-test

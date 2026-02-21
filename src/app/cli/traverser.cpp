@@ -140,7 +140,8 @@ exit:
 std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterpreter,
                                                  CommissionerAppPtr &aCommissioner,
                                                  const Interpreter::Expression &,
-                                                 const std::string &aJsonFile)
+                                                 const std::string        &aJsonFile,
+                                                 std::chrono::milliseconds aTimeout)
 {
     std::string                        value;
     std::stringstream                  resultStream;
@@ -243,8 +244,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
     };
 
     // Use a long enough timeout to allow large network traversal but prevent infinite hangs
-    const auto kGlobalTimeout = std::chrono::minutes(10);
-    auto       startTime      = std::chrono::steady_clock::now();
+    auto startTime = std::chrono::steady_clock::now();
 
     error = aCommissioner->TraverseNetwork(handler);
     if (error != ErrorCode::kNone)
@@ -260,10 +260,11 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             aCommissioner->CancelRequests();
         }
 
-        if (std::chrono::steady_clock::now() - startTime > kGlobalTimeout)
+        if (std::chrono::steady_clock::now() - startTime > aTimeout)
         {
             Console::Write("\nGlobal traversal timeout reached! Cancelling...\n", Console::Color::kRed);
             aCommissioner->CancelRequests();
+
             // Give a small grace period for cancellation to process callbacks
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             if (!isFinished)
@@ -272,7 +273,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
                 isFinished = true;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     if (value != "")
