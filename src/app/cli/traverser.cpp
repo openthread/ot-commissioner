@@ -242,6 +242,10 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         isFinished = true;
     };
 
+    // Use a long enough timeout to allow large network traversal but prevent infinite hangs
+    const auto kGlobalTimeout = std::chrono::minutes(10);
+    auto       startTime      = std::chrono::steady_clock::now();
+
     error = aCommissioner->TraverseNetwork(handler);
     if (error != ErrorCode::kNone)
     {
@@ -254,6 +258,19 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         if (aInterpreter->IsCancelled())
         {
             aCommissioner->CancelRequests();
+        }
+
+        if (std::chrono::steady_clock::now() - startTime > kGlobalTimeout)
+        {
+            Console::Write("\nGlobal traversal timeout reached! Cancelling...\n", Console::Color::kRed);
+            aCommissioner->CancelRequests();
+            // Give a small grace period for cancellation to process callbacks
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if (!isFinished)
+            {
+                value      = "Traversal timed out";
+                isFinished = true;
+            }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
