@@ -334,7 +334,11 @@ void NetworkTraverser::FinalizeNode()
         // Parse Route64
         Route64  route64      = leaderData.mRoute64;
         uint16_t leaderRloc16 = 0xFFFF;
-        if (leaderData.mPresentFlags & NetDiagData::kMacAddrBit)
+        if (leaderData.mPresentFlags & NetDiagData::kLeaderDataBit)
+        {
+            leaderRloc16 = static_cast<uint16_t>(leaderData.mLeaderData.mRouterId) << 10;
+        }
+        else if (leaderData.mPresentFlags & NetDiagData::kMacAddrBit)
         {
             leaderRloc16 = leaderData.mMacAddr;
         }
@@ -360,7 +364,7 @@ void NetworkTraverser::FinalizeNode()
         }
 
         // Add leader's children
-        if (leaderData.mPresentFlags & NetDiagData::kChildTableBit)
+        if (leaderRloc16 != 0xFFFF && (leaderData.mPresentFlags & NetDiagData::kChildTableBit))
         {
             for (const auto &childEntry : leaderData.mChildTable)
             {
