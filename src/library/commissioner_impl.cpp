@@ -2622,14 +2622,25 @@ Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aB
     Error        error;
     tlv::TlvList tlvList;
 
-    SuccessOrExit(error =
-                      tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData));
+    error = tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData);
+    if (error != ErrorCode::kNone)
+    {
+        LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to get Prefix TLV list: {}", error.ToString());
+        goto exit;
+    }
+
     if (tlvList.size() > 0)
     {
         for (const auto &tlv : tlvList)
         {
             PrefixEntry prefixEntry;
-            SuccessOrExit(error = DecodePrefixEntry(prefixEntry, tlv.GetValue()));
+            error = DecodePrefixEntry(prefixEntry, tlv.GetValue());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to decode Prefix Entry: {}",
+                          error.ToString());
+                goto exit;
+            }
             aNetworkData.mPrefixList.emplace_back(prefixEntry);
         }
     }
@@ -2659,27 +2670,63 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
         subTlv = {aBuf.begin() + offset, aBuf.end()};
 
         // Get the 6LowPan context
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+        error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to get TLV set for Context: {}",
+                      error.ToString());
+            goto exit;
+        }
+
         if (auto context = tlvSet[tlv::Type::kNetworkData6LowPanContext])
         {
             const ByteArray &value = context->GetValue();
-            SuccessOrExit(error = DecodeContext(aPrefixEntry.mSixLowPanContext, value));
+            error                  = DecodeContext(aPrefixEntry.mSixLowPanContext, value);
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode Context: {}", error.ToString());
+                goto exit;
+            }
         }
 
         // Get the HasRoute
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+        error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to get TLV set for HasRoute: {}",
+                      error.ToString());
+            goto exit;
+        }
+
         if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
         {
             const ByteArray &value = hasRoute->GetValue();
-            SuccessOrExit(error = DecodeHasRoute(aPrefixEntry.mHasRouteList, value));
+            error                  = DecodeHasRoute(aPrefixEntry.mHasRouteList, value);
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode HasRoute: {}", error.ToString());
+                goto exit;
+            }
         }
 
         // Get the BorderRouter
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+        error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to get TLV set for BorderRouter: {}",
+                      error.ToString());
+            goto exit;
+        }
         if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
         {
             const ByteArray &value = borderRouter->GetValue();
-            SuccessOrExit(error = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, value));
+            error                  = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, value);
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode BorderRouter: {}",
+                          error.ToString());
+                goto exit;
+            }
         }
     }
 
@@ -2841,7 +2888,12 @@ Error internal::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, cons
         entry.mTimeout             = 1 << (((aBuf[offset] & 0xF8) >> 3) - 4);
         entry.mIncomingLinkQuality = (aBuf[offset] & 0x06) >> 1;
         entry.mChildId             = ((aBuf[offset] & 0x01) << 8) | aBuf[offset + 1];
-        SuccessOrExit(error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3}));
+        error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3});
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeChildTable: failed to decode mode data: {}", error.ToString());
+            goto exit;
+        }
         aChildTable.emplace_back(entry);
         offset += kChildTableEntryBytes;
     }
