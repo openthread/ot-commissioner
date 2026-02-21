@@ -959,5 +959,37 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
     }
 }
 
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_Timeout)
+{
+    MockEndpoint endpoint;
+    TestRequest  request(coap::Type::kConfirmable, coap::Code::kContent);
+    request.SetEndpointPublic(&endpoint);
+
+    // Prepare Fragment 1 (Index=0, IsLast=false)
+    // QueryID=123 (0x7B)
+    // TLV: Answer(32, 2, 0000), QueryID(33, 2, 007B)
+    // Hex: 200200002102007B
+    ByteArray payload1;
+    Error     error = utils::Hex(payload1, "200200002102007B");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    request.Append(payload1);
+
+    mCommissioner.HandleDiagGetAnswer(request);
+
+    // Verify entry exists in pending queries map
+    EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.count(123));
+
+    // Force expire the query by backdating its timestamp
+    auto &entry  = mCommissioner.mPendingDiagQueries[123];
+    entry.second = Clock::now() - std::chrono::seconds(100); // Backdate 100 seconds to ensure timeout
+
+    // Trigger cleanup
+    mCommissioner.HandleDiagQueryCleanupTimer(mCommissioner.mDiagQueryCleanupTimer);
+
+    // Verify it's gone
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.empty());
+}
+
 } // namespace commissioner
 } // namespace ot

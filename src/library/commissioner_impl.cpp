@@ -33,6 +33,8 @@
 
 #include "library/commissioner_impl.hpp"
 
+#include <chrono>
+#include <iterator>
 #include <sys/types.h>
 
 #include <algorithm>
@@ -76,6 +78,7 @@ static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 
 static constexpr uint32_t kMinKeepAliveInterval = 30;
 static constexpr uint32_t kMaxKeepAliveInterval = 45;
+static constexpr uint32_t kDiagQueryTimeoutSeconds = 10;
 
 Error Commissioner::GeneratePSKc(ByteArray         &aPSKc,
                                  const std::string &aPassphrase,
@@ -160,6 +163,7 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
                              [this](const coap::Request &aRequest) { HandlePanIdConflict(aRequest); })
     , mResourceEnergyReport(uri::kMgmtEdReport, [this](const coap::Request &aRequest) { HandleEnergyReport(aRequest); })
     , mResourceDiagAns(uri::kDiagGetAns, [this](const coap::Request &aRequest) { HandleDiagGetAnswer(aRequest); })
+    , mDiagQueryCleanupTimer(mEventBase, [this](Timer &aTimer) { HandleDiagQueryCleanupTimer(aTimer); })
     , mNetworkTraverser(*this)
 {
     SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
@@ -659,6 +663,37 @@ exit:
     }
 }
 
+// Assuming kDiagQueryTimeout is defined elsewhere, e.g., in a header or as a static const member.
+// For the purpose of this edit, we'll assume it's available.
+// If not, it would typically be defined like:
+// static constexpr uint16_t kDiagQueryTimeout = 60; // seconds
+
+// Assuming mDiagQueryCleanupTimer is a member variable of CommissionerImpl,
+// initialized in the constructor like:
+// CommissionerImpl::CommissionerImpl(...) : mDiagQueryCleanupTimer(*this,
+// &CommissionerImpl::HandleDiagQueryCleanupTimer) { ... }
+
+void CommissionerImpl::HandleDiagQueryCleanupTimer(Timer &aTimer)
+{
+    auto now = Clock::now();
+    for (auto it = mPendingDiagQueries.begin(); it != mPendingDiagQueries.end();)
+    {
+        if (now - it->second.second > std::chrono::seconds(kDiagQueryTimeoutSeconds))
+        {
+            it = mPendingDiagQueries.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    if (!mPendingDiagQueries.empty())
+    {
+        aTimer.Start(std::chrono::seconds(kDiagQueryTimeoutSeconds));
+    }
+}
+
 void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
 {
     Error       error;
@@ -678,14 +713,20 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
         auto    &accumulated = mPendingDiagQueries[queryId];
 
         // Merge the new data into the accumulated data
-        accumulated.Merge(diagData);
+        accumulated.first.Merge(diagData);
+        accumulated.second = Clock::now();
+
+        if (!mDiagQueryCleanupTimer.IsRunning())
+        {
+            mDiagQueryCleanupTimer.Start(std::chrono::seconds(kDiagQueryTimeoutSeconds));
+        }
 
         // Check if Answer TLV is present
         if (diagData.mPresentFlags & NetDiagData::kAnswerBit)
         {
             if (diagData.mAnswer.mIsLast)
             {
-                mDiagAnsTlvs = accumulated;
+                mDiagAnsTlvs = accumulated.first;
                 mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
                 if (mNetworkTraverser.IsActive())
                 {
@@ -699,7 +740,7 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
             // If Answer TLV is missing, assume it's a single packet response
             // But valid Query ID means it might be related to a specific query.
             // We treat it as a complete response.
-            mDiagAnsTlvs = accumulated; // accumulated currently has this single packet data merged
+            mDiagAnsTlvs = accumulated.first; // accumulated currently has this single packet data merged
             mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
             if (mNetworkTraverser.IsActive())
             {

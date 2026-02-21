@@ -261,6 +261,7 @@ private:
     void HandleRlyRx(const coap::Request &aRlyRx);
 
     void HandleJoinerSessionTimer(Timer &aTimer);
+    void HandleDiagQueryCleanupTimer(Timer &aTimer);
 
     void HandleDiagGetAnswer(const coap::Request &aRequest);
 
@@ -303,8 +304,9 @@ private:
     coap::Resource mResourceDiagAns;
     NetDiagData    mDiagAnsTlvs;
 
-    std::map<uint16_t, NetDiagData> mPendingDiagQueries;
-    uint16_t                        mNextQueryId = 0;
+    std::map<uint16_t, std::pair<NetDiagData, TimePoint>> mPendingDiagQueries;
+    Timer                                                 mDiagQueryCleanupTimer;
+    uint16_t                                              mNextQueryId = 0;
 
     NetworkTraverser mNetworkTraverser;
 
@@ -315,6 +317,7 @@ private:
     FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Explicit);
     FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_Legacy);
     FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFragments);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_Timeout);
 };
 
 /*
