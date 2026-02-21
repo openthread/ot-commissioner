@@ -194,6 +194,10 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
     {
         NetDiagData chunk;
         chunk.mPresentFlags = lastQueryFlags;
+        if (chunk.mPresentFlags & NetDiagData::kLeaderDataBit)
+        {
+            chunk.mLeaderData.mRouterId = 63; // Leader ID
+        }
         SimulateDiagAnswer(lastQueryAddr, chunk);
         if (i < 9)
         {
@@ -301,6 +305,12 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
             chunk = leaderData;
         }
         chunk.mPresentFlags |= lastQueryFlags; // Ensure it passes filter
+
+        if (chunk.mPresentFlags & NetDiagData::kLeaderDataBit)
+        {
+            chunk.mLeaderData.mRouterId = 63; // Leader ID
+        }
+
         SimulateDiagAnswer(lastQueryAddr, chunk);
     }
 
@@ -417,6 +427,10 @@ TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
     {
         NetDiagData empty;
         empty.mPresentFlags = lastQueryFlags;
+        if (empty.mPresentFlags & NetDiagData::kLeaderDataBit)
+        {
+            empty.mLeaderData.mRouterId = 63; // Leader ID
+        }
         SimulateDiagAnswer(lastQueryAddr, empty);
     }
 
