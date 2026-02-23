@@ -14,17 +14,36 @@ structure was later adopted by Android, iOS, and other platforms for sharing
 Wi-Fi network credentials ("WIFI:").
 
 Format Structure:
-  THREAD:S:<Network Name>;P:<Network Key>;I:<PAN ID>;E:<Ext PAN ID>;C:<Channel>;;
+  THREAD:S:<Network Name>;P:<Network Key>;I:<PAN ID>;E:<Ext PAN ID>;C:<Channel>;B:<Border Agent ID>;K:<PSKc>;R:<e-PSKc>;X:<e-PSKc Expiry>;;
 
-Fields overview:
+Mandatory Elements:
+  - "THREAD:" prefix
+  - ";;" suffix
+  - At least one of P, K, or R must be present:
+      P: Network Master Key (Password)
+      K: PSKc
+      R: e-PSKc
+  - At least one of I or E must be present:
+      I: PAN ID
+      E: Extended PAN ID
+
+Optional Fields (semicolon-separated):
   S: Network Name (String, UTF-8)
-  P: Network Master Key (Hex string, 16 bytes)
+  P: Network Key (Hex string, 16 bytes)
   I: PAN ID (Hex string, 2 bytes)
   E: Extended PAN ID (Hex string, 8 bytes)
   C: Channel (Integer, typically 11-26)
+  B: Border Agent ID (Hex string, 16 bytes)
+  K: PSKc (Hex string, up to 16 bytes)
+  R: e-PSKc (String, 6-32 characters)
+  X: e-PSKc Expiry (Integer, POSIX time in seconds)
+
+Note: R, X, and B fields do not have a corresponding TLV representation yet.
 
 Example:
   THREAD:S:MyThreadNet;P:00112233445566778899AABBCCDDEEFF;I:1234;E:1122334455667788;C:15;;
+  THREAD:E:1122334455667788;R:ABCDEF0123456789;X:1735689600;;
+  THREAD:S:MyThreadNet;E:1122334455667788;K:00112233445566778899AABBCCDDEEFF;;
   
 Fields are separated by semicolons (;) and the entire string must end with two semicolons (;;).
 """
@@ -67,7 +86,7 @@ def tlv_to_qr(tlv_hex):
             break
         value = data[idx + 2:idx + 2 + length]
 
-        if type_code == 0x01:  # Channel
+        if type_code == 0x00:  # Channel
             # Standard: Page (1 byte) + Channel (2 bytes)
             if length == 3:
                 fields['C'] = str(struct.unpack('>H', value[1:])[0])
@@ -75,14 +94,17 @@ def tlv_to_qr(tlv_hex):
             elif length == 1:
                 fields['C'] = str(value[0])
 
-        elif type_code == 0x02:  # PAN ID (Hex)
+        elif type_code == 0x01:  # PAN ID (Hex)
             fields['I'] = binascii.hexlify(value).decode('utf-8').upper()
 
-        elif type_code == 0x03:  # Extended PAN ID (Hex)
+        elif type_code == 0x02:  # Extended PAN ID (Hex)
             fields['E'] = binascii.hexlify(value).decode('utf-8').upper()
 
-        elif type_code == 0x04:  # Network Name (String - Case Sensitive)
+        elif type_code == 0x03:  # Network Name (String - Case Sensitive)
             fields['S'] = value.decode('utf-8', errors='replace')
+
+        elif type_code == 0x04:  # PSKc (Hex)
+            fields['K'] = binascii.hexlify(value).decode('utf-8').upper()
 
         elif type_code == 0x05:  # Network Key (Hex)
             fields['P'] = binascii.hexlify(value).decode('utf-8').upper()
@@ -101,6 +123,14 @@ def tlv_to_qr(tlv_hex):
         qr_parts.append(f"E:{fields['E']};")
     if 'C' in fields:
         qr_parts.append(f"C:{fields['C']};")
+    if 'B' in fields:
+        qr_parts.append(f"B:{fields['B']};")
+    if 'K' in fields:
+        qr_parts.append(f"K:{fields['K']};")
+    if 'R' in fields:
+        qr_parts.append(f"R:{fields['R']};")
+    if 'X' in fields:
+        qr_parts.append(f"X:{fields['X']};")
     qr_parts.append(";")
 
     return "".join(qr_parts)
@@ -127,21 +157,30 @@ def qr_to_tlv(qr_string):
         except ValueError:
             continue
 
-        if tag == 'C':  # Channel -> TLV 0x01
+        if tag == 'C':  # Channel -> TLV 0x00
             channel = int(val)
-            tlv_buffer += bytes([0x01, 0x03, 0x00]) + struct.pack('>H', channel)
+            if channel <= 255:
+                # Compact: Just Channel (1 byte)
+                tlv_buffer += bytes([0x00, 0x01, channel])
+            else:
+                # Standard: Page (1 byte) + Channel (2 bytes)
+                tlv_buffer += bytes([0x00, 0x03, 0x00]) + struct.pack('>H', channel)
 
-        elif tag == 'I':  # PAN ID -> TLV 0x02
+        elif tag == 'I':  # PAN ID -> TLV 0x01
             pan_bytes = binascii.unhexlify(val)
-            tlv_buffer += bytes([0x02, len(pan_bytes)]) + pan_bytes
+            tlv_buffer += bytes([0x01, len(pan_bytes)]) + pan_bytes
 
-        elif tag == 'E':  # Ext PAN ID -> TLV 0x03
+        elif tag == 'E':  # Ext PAN ID -> TLV 0x02
             xpan_bytes = binascii.unhexlify(val)
-            tlv_buffer += bytes([0x03, len(xpan_bytes)]) + xpan_bytes
+            tlv_buffer += bytes([0x02, len(xpan_bytes)]) + xpan_bytes
 
-        elif tag == 'S':  # Name -> TLV 0x04
+        elif tag == 'S':  # Name -> TLV 0x03
             name_bytes = val.encode('utf-8')
-            tlv_buffer += bytes([0x04, len(name_bytes)]) + name_bytes
+            tlv_buffer += bytes([0x03, len(name_bytes)]) + name_bytes
+
+        elif tag == 'K':  # PSKc -> TLV 0x04
+            pskc_bytes = binascii.unhexlify(val)
+            tlv_buffer += bytes([0x04, len(pskc_bytes)]) + pskc_bytes
 
         elif tag == 'P':  # Key -> TLV 0x05
             key_bytes = binascii.unhexlify(val)
