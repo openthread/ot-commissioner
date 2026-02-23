@@ -52,7 +52,7 @@ def generate_mesh_visualization(filepath):
                 G.add_edge(node_id, child_id, weight=quality)
 
     if G.number_of_nodes() == 0:
-        print("No valid nodes found in the JSON to graph.")
+        print("No valid nodes found in the JSON to graph.", file=sys.stderr)
         return
 
     # 3. Apply Force-Directed Algorithm
