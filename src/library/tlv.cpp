@@ -150,14 +150,16 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
     size_t   offset = aOffset;
     uint8_t  type;
     uint16_t length;
-    TlvPtr   tlv = nullptr;
+    TlvPtr   tlv      = nullptr;
+    bool     isStable = false;
 
     VerifyOrExit(offset + 2 <= aBuf.size(), error = ERROR_BAD_FORMAT("premature end of TLV"));
-    // Based on spec 5.18, Network Data TLVs use first 7-bit type and the 8th bit to indicate
-    // the data to be valid for at least MIN_STABLE_LIFETIME.
+
     if (aScope == Scope::kNetworkData)
     {
-        type = aBuf[offset++] >> 1;
+        uint8_t header = aBuf[offset++];
+        type           = header >> 1;
+        isStable       = (header & 1);
     }
     else
     {
@@ -176,7 +178,8 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
     VerifyOrExit(offset + length <= aBuf.size(),
                  error = ERROR_BAD_FORMAT("premature end of TLV(type={}, length={})", type, length));
 
-    tlv = std::make_shared<Tlv>(utils::from_underlying<Type>(type), aScope);
+    tlv            = std::make_shared<Tlv>(utils::from_underlying<Type>(type), aScope);
+    tlv->mIsStable = isStable;
     tlv->SetValue(&aBuf[offset], length);
 
     offset += length;
@@ -489,6 +492,8 @@ uint16_t Tlv::GetValueAsUint16() const
 }
 
 std::string Tlv::GetValueAsString() const { return std::string{mValue.begin(), mValue.end()}; }
+
+bool Tlv::IsStable() const { return mIsStable; }
 
 const ByteArray &Tlv::GetValue() const { return mValue; }
 ByteArray       &Tlv::GetValue() { return mValue; }

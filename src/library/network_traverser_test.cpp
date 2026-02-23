@@ -189,8 +189,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
     EXPECT_EQ(queryCount, 2); // Next chunk
 
     // Simulate remaining chunks
-    // kLeaderChunks has 10 chunks. We did 1. 9 more.
-    for (int i = 1; i < 10; ++i)
+    for (size_t i = 1; i < NetworkTraverser::GetLeaderChunkCount(); ++i)
     {
         NetDiagData chunk;
         chunk.mPresentFlags = lastQueryFlags;
@@ -199,7 +198,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
             chunk.mLeaderData.mRouterId = 63; // Leader ID
         }
         SimulateDiagAnswer(lastQueryAddr, chunk);
-        if (i < 9)
+        if (i < NetworkTraverser::GetLeaderChunkCount() - 1)
         {
             EXPECT_EQ(queryCount, 2 + i);
         }
@@ -295,7 +294,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
     EXPECT_NE(lastQueryAddr.find("fc00"), std::string::npos);
 
     // Feed Leader Chunks
-    for (int i = 0; i < 10; ++i)
+    for (size_t i = 0; i < NetworkTraverser::GetLeaderChunkCount(); ++i)
     {
         NetDiagData chunk;
         if (i == 0)
@@ -328,8 +327,8 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
     routerData.mMacAddr      = 0x0400;
     // Router has no children for simplicity.
 
-    // Feed Router Chunks (8 chunks)
-    for (int i = 0; i < 8; ++i)
+    // Feed Router Chunks
+    for (size_t i = 0; i < NetworkTraverser::GetRouterChunkCount(); ++i)
     {
         NetDiagData chunk;
         if (i == 0)
@@ -340,9 +339,6 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 
     // 4. Child Query
     // After Router, it should query Children.
-    // Known children: Child ID 2 from Leader.
-    // RLOC16: Leader RLOC (0xFC00) | Child ID (2) = 0xFC02.
-    // Addr: ...fc02
 
     EXPECT_NE(lastQueryAddr.find("fc02"), std::string::npos);
 
@@ -351,8 +347,8 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
     childData.mPresentFlags = NetDiagData::kMacAddrBit;
     childData.mMacAddr      = 0xFC02;
 
-    // Feed Child Chunks (5 chunks)
-    for (int i = 0; i < 5; ++i)
+    // Feed Child Chunks
+    for (size_t i = 0; i < NetworkTraverser::GetChildChunkCount(); ++i)
     {
         NetDiagData chunk;
         if (i == 0)

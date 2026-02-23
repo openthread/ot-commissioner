@@ -41,6 +41,7 @@
 #include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "library/commissioner_impl.hpp"
 #include "library/timer.hpp"
 
@@ -90,7 +91,7 @@ static const std::vector<uint64_t> kRouterChunks = {
 static const std::vector<uint64_t> kChildChunks = {
     NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit |
         NetDiagData::kEui64Bit, // Chunk 0: ID & Mode
-    NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit | NetDiagData::kNetworkDataBit |
+    NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit |
         NetDiagData::kNonPreferredChannelsMaskBit,               // Chunk 1: Connectivity & Network Data
     NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 2: Counters
     NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
@@ -245,10 +246,25 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
 
     if (mCurrentChunkIndex >= mPendingChunks.size())
     {
+        LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Received answer but no pending chunks");
         return;
     }
 
     uint64_t requested = mPendingChunks[mCurrentChunkIndex];
+
+    if (requested & NetDiagData::kNetworkDataBit)
+    {
+        LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Expecting Network Data. Recv Flags: 0x{:X}",
+                 aDiagAnsMsg.mPresentFlags);
+        if (aDiagAnsMsg.mPresentFlags & NetDiagData::kNetworkDataBit)
+        {
+            LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Network Data RECEIVED!");
+        }
+        else
+        {
+            LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Network Data MISSING in response.");
+        }
+    }
     if ((aDiagAnsMsg.mPresentFlags & requested) == 0)
     {
         return;
@@ -494,6 +510,12 @@ Address NetworkTraverser::GetMeshLocalAddress(uint16_t aRloc16) const
     static_cast<void>(addr.Set(addrBytes));
     return addr;
 }
+
+size_t NetworkTraverser::GetLeaderChunkCount() { return kLeaderChunks.size(); }
+
+size_t NetworkTraverser::GetRouterChunkCount() { return kRouterChunks.size(); }
+
+size_t NetworkTraverser::GetChildChunkCount() { return kChildChunks.size(); }
 
 } // namespace commissioner
 } // namespace ot

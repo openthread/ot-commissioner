@@ -33,7 +33,7 @@ main()
 {
     mkdir -p build
     cd build
-    cmake -GNinja .. "$@"
+    cmake -GNinja -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .. "$@"
     ninja
 }
 

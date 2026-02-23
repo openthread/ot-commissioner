@@ -2619,29 +2619,44 @@ exit:
 
 Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf)
 {
-    Error        error;
-    tlv::TlvList tlvList;
+    Error  error;
+    size_t offset = 0;
 
-    error = tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData);
-    if (error != ErrorCode::kNone)
-    {
-        LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to get Prefix TLV list: {}", error.ToString());
-        goto exit;
-    }
+    aNetworkData.mRawValue = aBuf;
 
-    if (tlvList.size() > 0)
+    while (offset < aBuf.size())
     {
-        for (const auto &tlv : tlvList)
+        tlv::TlvPtr tlv = tlv::Tlv::Deserialize(error, offset, aBuf, tlv::Scope::kNetworkData);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to parse TLV: {}", error.ToString());
+            goto exit;
+        }
+
+        if (tlv->GetType() == tlv::Type::kNetworkDataPrefix)
         {
             PrefixEntry prefixEntry;
-            error = DecodePrefixEntry(prefixEntry, tlv.GetValue());
+            error = DecodePrefixEntry(prefixEntry, tlv->GetValue());
             if (error != ErrorCode::kNone)
             {
                 LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to decode Prefix Entry: {}",
                           error.ToString());
-                goto exit;
+                continue;
             }
+            prefixEntry.mIsStable = tlv->IsStable();
             aNetworkData.mPrefixList.emplace_back(prefixEntry);
+        }
+        else if (tlv->GetType() == tlv::Type::kNetworkDataService)
+        {
+            ServiceEntry serviceEntry;
+            error = DecodeService(serviceEntry, tlv->GetValue(), tlv->IsStable());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to decode Service Entry: {}",
+                          error.ToString());
+                continue;
+            }
+            aNetworkData.mServiceList.emplace_back(serviceEntry);
         }
     }
 
@@ -2651,11 +2666,10 @@ exit:
 
 Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aBuf)
 {
-    Error       error;
-    size_t      length = aBuf.size();
-    uint8_t     offset = 0;
-    ByteArray   subTlv;
-    tlv::TlvSet tlvSet;
+    Error     error;
+    size_t    length = aBuf.size();
+    size_t    offset = 0;
+    ByteArray subTlv;
 
     VerifyOrExit(length >= kPrefixBytes, error = ERROR_BAD_FORMAT("premature end of Prefix"));
     offset += kPrefixBytes;
@@ -2669,63 +2683,46 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
     {
         subTlv = {aBuf.begin() + offset, aBuf.end()};
 
-        // Get the 6LowPan context
-        error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData);
-        if (error != ErrorCode::kNone)
-        {
-            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to get TLV set for Context: {}",
-                      error.ToString());
-            goto exit;
-        }
+        // Parse sub-TLVs
+        size_t subOffset = 0;
 
-        if (auto context = tlvSet[tlv::Type::kNetworkData6LowPanContext])
+        while (subOffset < subTlv.size())
         {
-            const ByteArray &value = context->GetValue();
-            error                  = DecodeContext(aPrefixEntry.mSixLowPanContext, value);
+            tlv::TlvPtr tlv = tlv::Tlv::Deserialize(error, subOffset, subTlv, tlv::Scope::kNetworkData);
             if (error != ErrorCode::kNone)
             {
-                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode Context: {}", error.ToString());
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to parse sub-TLV: {}", error.ToString());
                 goto exit;
             }
-        }
 
-        // Get the HasRoute
-        error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData);
-        if (error != ErrorCode::kNone)
-        {
-            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to get TLV set for HasRoute: {}",
-                      error.ToString());
-            goto exit;
-        }
-
-        if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
-        {
-            const ByteArray &value = hasRoute->GetValue();
-            error                  = DecodeHasRoute(aPrefixEntry.mHasRouteList, value);
-            if (error != ErrorCode::kNone)
+            if (tlv->GetType() == tlv::Type::kNetworkData6LowPanContext)
             {
-                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode HasRoute: {}", error.ToString());
-                goto exit;
+                error = DecodeContext(aPrefixEntry.mSixLowPanContext, tlv->GetValue());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode Context: {}", error.ToString());
+                    goto exit;
+                }
             }
-        }
-
-        // Get the BorderRouter
-        error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData);
-        if (error != ErrorCode::kNone)
-        {
-            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to get TLV set for BorderRouter: {}",
-                      error.ToString());
-            goto exit;
-        }
-        if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
-        {
-            const ByteArray &value = borderRouter->GetValue();
-            error                  = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, value);
-            if (error != ErrorCode::kNone)
+            else if (tlv->GetType() == tlv::Type::kNetworkDataHasRoute)
             {
-                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode BorderRouter: {}",
-                          error.ToString());
-                goto exit;
+                error = DecodeHasRoute(aPrefixEntry.mHasRouteList, tlv->GetValue(), tlv->IsStable());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode HasRoute: {}",
+                              error.ToString());
+                    goto exit;
+                }
+            }
+            else if (tlv->GetType() == tlv::Type::kNetworkDataBorderRouter)
+            {
+                error = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, tlv->GetValue(), tlv->IsStable());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode BorderRouter: {}",
+                              error.ToString());
+                    goto exit;
+                }
             }
         }
     }
@@ -2734,7 +2731,7 @@ exit:
     return error;
 }
 
-Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf)
+Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf, bool aIsStable)
 {
     Error         error;
     size_t        length = aBuf.size();
@@ -2746,7 +2743,9 @@ Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const 
     {
         hasRouteEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
         offset += kRloc16Bytes;
-        hasRouteEntry.mIsNat64          = (aBuf[offset] >> 5) & 0x01;
+        hasRouteEntry.mIsNat64 = (aBuf[offset] >> 5) & 0x01;
+        // mIsStable is set from TLV header in caller
+        hasRouteEntry.mIsStable         = aIsStable;
         hasRouteEntry.mRouterPreference = (aBuf[offset] >> 6) & 0x03;
         offset += 1;
         aHasRouteList.emplace_back(hasRouteEntry);
@@ -2756,7 +2755,9 @@ exit:
     return error;
 }
 
-Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf)
+Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList,
+                                   const ByteArray                &aBuf,
+                                   bool                            aIsStable)
 {
     Error             error;
     size_t            length = aBuf.size();
@@ -2779,6 +2780,8 @@ Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouter
         offset += 1;
         borderRouterEntry.mIsNdDns = (aBuf[offset] >> 7) & 0x01;
         borderRouterEntry.mIsDp    = (aBuf[offset] >> 6) & 0x01;
+        // mIsStable is set from TLV header in caller
+        borderRouterEntry.mIsStable = aIsStable;
         offset += 1;
         aBorderRouterList.emplace_back(borderRouterEntry);
     }
@@ -2796,6 +2799,87 @@ Error internal::DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArr
     aSixLowPanContext.mIsCompress    = (aBuf[0] >> 4) & 0x01;
     aSixLowPanContext.mContextId     = aBuf[0] & 0x0F;
     aSixLowPanContext.mContextLength = aBuf[1];
+
+exit:
+    return error;
+}
+
+Error internal::DecodeService(ServiceEntry &aServiceEntry, const ByteArray &aBuf, bool aIsStable)
+{
+    Error     error;
+    size_t    length = aBuf.size();
+    size_t    offset = 0;
+    uint8_t   serviceDataLength;
+    ByteArray subTlv;
+
+    VerifyOrExit(length >= 2, error = ERROR_BAD_FORMAT("premature end of Service"));
+
+    // T (bit 7), S (bit 6), ID (bits 5-0)
+    aServiceEntry.mIsThread = (aBuf[offset] >> 7) & 0x01;
+    // mIsStable is set from TLV header in caller
+    aServiceEntry.mIsStable = aIsStable;
+    aServiceEntry.mId       = aBuf[offset] & 0x3F;
+    offset += 1;
+
+    // Enterprise Number (4 bytes)
+    VerifyOrExit(offset + 4 <= length, error = ERROR_BAD_FORMAT("premature end of Service Body"));
+    aServiceEntry.mEnterpriseNumber = utils::Decode<uint32_t>(aBuf.data() + offset, 4);
+    offset += 4;
+
+    // Service Data Length (1 byte)
+    VerifyOrExit(offset + 1 <= length, error = ERROR_BAD_FORMAT("premature end of Service Body"));
+    serviceDataLength = aBuf[offset];
+    offset += 1;
+
+    // Service Data
+    VerifyOrExit(offset + serviceDataLength <= length, error = ERROR_BAD_FORMAT("premature end of Service Data"));
+    aServiceEntry.mServiceData.assign(aBuf.begin() + offset, aBuf.begin() + offset + serviceDataLength);
+    offset += serviceDataLength;
+
+    // Sub-TLVs (Server)
+    if (length > offset)
+    {
+        subTlv           = {aBuf.begin() + offset, aBuf.end()};
+        size_t subOffset = 0;
+
+        while (subOffset < subTlv.size())
+        {
+            tlv::TlvPtr tlv = tlv::Tlv::Deserialize(error, subOffset, subTlv, tlv::Scope::kNetworkData);
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeService: failed to parse sub-TLV: {}", error.ToString());
+                goto exit;
+            }
+
+            if (tlv->GetType() == tlv::Type::kNetworkDataServer)
+            {
+                ServerEntry serverEntry;
+                error = DecodeServer(serverEntry, tlv->GetValue());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeService: failed to decode Server Entry: {}",
+                              error.ToString());
+                    goto exit;
+                }
+                // ServerEntry does not have mIsStable member
+                aServiceEntry.mServerList.emplace_back(serverEntry);
+            }
+        }
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeServer(ServerEntry &aServerEntry, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+
+    VerifyOrExit(length >= kRloc16Bytes, error = ERROR_BAD_FORMAT("premature end of Server TLV"));
+
+    aServerEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
+    aServerEntry.mServerData.assign(aBuf.begin() + kRloc16Bytes, aBuf.end());
 
 exit:
     return error;

@@ -75,6 +75,10 @@ public:
 
     bool IsActive() const { return mState != State::kIdle; }
 
+    static size_t GetLeaderChunkCount();
+    static size_t GetRouterChunkCount();
+    static size_t GetChildChunkCount();
+
 private:
     friend class CommissionerImpl;
     friend class NetworkTraverserTest;
