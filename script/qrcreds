@@ -155,6 +155,7 @@ def qr_to_tlv(qr_string):
         try:
             tag, val = token.split(':', 1)
         except ValueError:
+            print(f"Warning: skipping malformed token: '{token}'", file=sys.stderr)
             continue
 
         if tag == 'C':  # Channel -> TLV 0x00
