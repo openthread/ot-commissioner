@@ -70,8 +70,7 @@ def tlv_to_qr(tlv_hex):
     try:
         data = binascii.unhexlify(tlv_hex)
     except binascii.Error:
-        print("Error: Invalid Hex String", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("Invalid Hex String")
 
     idx = 0
     fields = {}
@@ -142,8 +141,7 @@ def qr_to_tlv(qr_string):
     Returns the final HEX string in Upper Case.
     """
     if not qr_string.startswith("THREAD:"):
-        print("Error: Invalid QR payload. Must start with 'THREAD:'", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError("Invalid QR payload. Must start with 'THREAD:'")
 
     content = qr_string[7:].rstrip(";")
     tokens = content.split(';')
@@ -155,7 +153,7 @@ def qr_to_tlv(qr_string):
         try:
             tag, val = token.split(':', 1)
         except ValueError:
-            print(f"Warning: skipping malformed token: '{token}'", file=sys.stderr)
+            print(f"Warning: Malformed token '{token}' ignored.", file=sys.stderr)
             continue
 
         if tag == 'C':  # Channel -> TLV 0x00
@@ -194,8 +192,7 @@ def qr_to_tlv(qr_string):
 def generate_png(payload, filename):
     """Generates a QR code PNG file."""
     if qrcode is None:
-        print("Error: 'qrcode' library not found. Run 'pip install qrcode[pil]'", file=sys.stderr)
-        sys.exit(1)
+        raise RuntimeError("Error: 'qrcode' library not found. Run 'pip install qrcode[pil]'")
 
     qr = qrcode.QRCode(
         version=1,
@@ -236,20 +233,28 @@ examples:
 
     final_payload_for_image = ""
 
-    if args.hex:
-        # Input: Hex -> Output: QR Payload (with uppercase fields)
-        result = tlv_to_qr(args.hex)
-        print(result)
-        final_payload_for_image = result
+    try:
+        if args.hex:
+            # Input: Hex -> Output: QR Payload (with uppercase fields)
+            result = tlv_to_qr(args.hex)
+            print(result)
+            final_payload_for_image = result
 
-    elif args.qrpayload:
-        # Input: QR Payload -> Output: Hex (forced uppercase)
-        result = qr_to_tlv(args.qrpayload)
-        print(result)
-        final_payload_for_image = args.qrpayload
+        elif args.qrpayload:
+            # Input: QR Payload -> Output: Hex (forced uppercase)
+            result = qr_to_tlv(args.qrpayload)
+            print(result)
+            final_payload_for_image = args.qrpayload
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
     if args.qrcode:
-        generate_png(final_payload_for_image, args.qrcode)
+        try:
+            generate_png(final_payload_for_image, args.qrcode)
+        except RuntimeError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

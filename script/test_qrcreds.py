@@ -70,13 +70,25 @@ class TestQrCreds(unittest.TestCase):
 
         self.assertEqual(res_hex, tlv_hex)
 
-    def test_channel_compact_tlv(self):
-        # Test C: 15 with compact TLV format (1 byte length)
+    def test_channel_compact(self):
         # 00010f -> Channel 15 (Tag 0x00)
         tlv_hex = "00010f"
         expected_qr = "THREAD:C:15;;"
 
         self.assertEqual(qrcreds.tlv_to_qr(tlv_hex), expected_qr)
+
+    def test_channel_consistency(self):
+        # Verify that both standard (3-byte) and compact (1-byte) channel TLVs
+        # result in the canonical compact TLV after round-trip.
+
+        # Standard: 000300000F (Page 0, Channel 15)
+        long_tlv = "000300000F"
+        qr = qrcreds.tlv_to_qr(long_tlv)
+        self.assertEqual(qr, "THREAD:C:15;;")
+
+        # Round trip should produce the compact canonical form: 00010F
+        final_tlv = qrcreds.qr_to_tlv(qr)
+        self.assertEqual(final_tlv, "00010F")
 
     def test_pskc_round_trip(self):
         # PSKc (Tag 0x04)
@@ -92,18 +104,32 @@ class TestQrCreds(unittest.TestCase):
         # Test QR -> TLV
         self.assertEqual(qrcreds.qr_to_tlv(expected_qr), tlv_hex)
 
+    def test_malformed_token_warning(self):
+        # QR string with a malformed token 'Oops' (no colon)
+        qr_string = "THREAD:S:MyThreadNet;Oops;P:00112233445566778899AABBCCDDEEFF;;"
+
+        # Capture stderr to check for warning
+        with contextlib.redirect_stderr(StringIO()) as stderr:
+            # Should still process valid tokens despite the malformed one
+            tlv_hex = qrcreds.qr_to_tlv(qr_string)
+
+        # Check output is still valid for S and P fields
+        # S: MyThreadNet -> 030B4D795468726561644E6574
+        # P: Key -> 051000112233445566778899AABBCCDDEEFF
+        expected_tlv = "030B4D795468726561644E6574" + \
+                       "051000112233445566778899AABBCCDDEEFF"
+        self.assertEqual(tlv_hex, expected_tlv)
+
+        # Check for warning in stderr
+        self.assertIn("Warning: Malformed token 'Oops' ignored.", stderr.getvalue())
+
     def test_invalid_qr_start(self):
-        # Suppress stderr to keep test output clean
-        with contextlib.redirect_stderr(StringIO()):
-            with self.assertRaises(SystemExit):
-                qrcreds.qr_to_tlv("INVALID:Start")
+        with self.assertRaises(ValueError):
+            qrcreds.qr_to_tlv("INVALID:Start")
 
     def test_invalid_hex(self):
-        # Suppress stderr to keep test output clean
-        with contextlib.redirect_stderr(StringIO()):
-            with self.assertRaises(SystemExit) as cm:
-                qrcreds.tlv_to_qr("ZZZZ")
-            self.assertEqual(cm.exception.code, 1)
+        with self.assertRaises(ValueError):
+            qrcreds.tlv_to_qr("ZZZZ")
 
 
 if __name__ == '__main__':
