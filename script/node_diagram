@@ -15,10 +15,10 @@ def generate_mesh_visualization(filepath):
         with open(filepath, 'r') as file:
             data = json.load(file)
     except FileNotFoundError:
-        print(f"Error: The file '{filepath}' could not be found.")
+        print(f"Error: The file '{filepath}' could not be found.", file=sys.stderr)
         return
     except json.JSONDecodeError:
-        print(f"Error: The file '{filepath}' does not contain valid JSON.")
+        print(f"Error: The file '{filepath}' does not contain valid JSON.", file=sys.stderr)
         return
 
     # Initialize an undirected graph
