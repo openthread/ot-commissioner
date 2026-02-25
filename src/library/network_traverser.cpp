@@ -113,6 +113,7 @@ Error NetworkTraverser::Start(Commissioner::TraverseHandler aHandler)
     mRoutersToQuery.clear();
     mChildrenToQuery.clear();
     mHandler = aHandler;
+    mHasSharedNetworkData = false;
 
     mState = State::kGettingDataset;
     mImpl.GetActiveDataset(
@@ -300,6 +301,12 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
         mCollectedData[addr] = aDiagAnsMsg;
     }
 
+    if (aDiagAnsMsg.mPresentFlags & NetDiagData::kNetworkDataBit)
+    {
+        mSharedNetworkData    = aDiagAnsMsg.mNetworkData;
+        mHasSharedNetworkData = true;
+    }
+
     // Stop timer and next chunk
     mRequestTimeoutTimer.Stop();
     mRetryCount = 0;
@@ -308,6 +315,12 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
     if (mCurrentChunkIndex >= mPendingChunks.size())
     {
         // Device fully queried
+        if (mHasSharedNetworkData && !(mCollectedData[addr].mPresentFlags & NetDiagData::kNetworkDataBit))
+        {
+            mCollectedData[addr].mNetworkData = mSharedNetworkData;
+            mCollectedData[addr].mPresentFlags |= NetDiagData::kNetworkDataBit;
+        }
+
         if (mHandler.mOnDeviceResponded)
         {
             auto status = mDeviceRetried ? Commissioner::TraverseStatus::kSuccessWithRetry

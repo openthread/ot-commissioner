@@ -112,6 +112,9 @@ private:
     State                         mState;
     ByteArray                     mMeshLocalPrefix;
 
+    NetworkData mSharedNetworkData;
+    bool        mHasSharedNetworkData = false;
+
     std::map<Address, NetDiagData> mCollectedData;
 
     // Discovery Progress

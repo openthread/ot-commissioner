@@ -395,11 +395,6 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             try
             {
                 auto deviceObj = nlohmann::json::parse(jsonStr);
-                // Remove NetworkData from device entry as it's now at top level
-                if (deviceObj.contains("NetworkData"))
-                {
-                    deviceObj.erase("NetworkData");
-                }
                 devices[key] = deviceObj;
             } catch (const std::exception &e)
             {
