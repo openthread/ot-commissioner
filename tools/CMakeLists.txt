@@ -30,7 +30,7 @@ set(Python3_FIND_VIRTUALENV FIRST) # Prioritize virtual environment over system-
 find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter)
 
 set(PYTHON_BIN "${Python3_EXECUTABLE}")
-set(COMMISSIONERD_PATH "${CMAKE_INSTALL_PREFIX}/bin/commissionerd.py")
+set(COMMISSIONERD_PY_PATH "${CMAKE_INSTALL_PREFIX}/bin/commissionerd.py")
 set(COMMISSIONER_CLI_PATH "${CMAKE_INSTALL_PREFIX}/bin/commissioner-cli")
 
 configure_file(commissioner_thci/commissionerd.service.in commissionerd.service @ONLY)
