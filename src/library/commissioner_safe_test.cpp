@@ -47,6 +47,7 @@
 #include "commissioner/error.hpp"
 #include "common/address.hpp"
 #include "library/commissioner_safe.hpp"
+#include "library/commissioner_test_peer.hpp"
 #include "library/joiner_session.hpp"
 
 using testing::ContainerEq;
@@ -99,7 +100,8 @@ TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage)
 
     EXPECT_CALL(mockHandler, OnJoinerMessage(ContainerEq(joinerId), 5400, ContainerEq(payload))).Times(1);
 
-    JoinerSession session(*static_cast<CommissionerSafe &>(*commissioner).mImpl, joinerId, std::string(), 12345, 0x1200,
+    auto         &commissionerSafe = static_cast<CommissionerSafe &>(*commissioner);
+    JoinerSession session(*CommissionerTestPeer::GetImpl(commissionerSafe), joinerId, std::string(), 12345, 0x1200,
                           Address(), 12344, Address(), 12343);
     session.RecvJoinerDtlsRecords(payload, 5400);
     sleep(1);
@@ -124,8 +126,9 @@ TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExi
     ByteArray joinerId{1, 2, 3, 4, 5, 6, 7, 8};
     ByteArray payload{1, 2, 3};
 
-    auto impl = static_cast<CommissionerSafe &>(*commissioner).mImpl;
-    impl->mJoinerSessions.emplace(
+    auto &commissionerSafe = static_cast<CommissionerSafe &>(*commissioner);
+    auto  impl             = CommissionerTestPeer::GetImpl(commissionerSafe);
+    CommissionerTestPeer::GetJoinerSessions(*impl).emplace(
         std::piecewise_construct, std::forward_as_tuple(joinerId),
         std::forward_as_tuple(*impl, joinerId, std::string(), 12345, 0x1200, Address(), 12344, Address(), 12343));
 

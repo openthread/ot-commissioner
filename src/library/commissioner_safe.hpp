@@ -36,7 +36,6 @@
 
 #include <event2/event.h>
 #include <event2/util.h>
-#include <gtest/gtest_prod.h>
 #include <stdint.h>
 
 #include <functional>
@@ -58,6 +57,8 @@ namespace ot {
 
 namespace commissioner {
 
+class CommissionerTestPeer;
+
 /**
  * This class implements the Commissioner interface.
  *
@@ -71,6 +72,8 @@ namespace commissioner {
  */
 class CommissionerSafe : public Commissioner
 {
+    friend class CommissionerTestPeer;
+
 public:
     explicit CommissionerSafe(CommissionerHandler &aHandler)
         : mHandler(aHandler)
@@ -241,9 +244,6 @@ private:
 
     // The even loop thread running in background.
     std::thread mEventThread;
-
-    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage);
-    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
 };
 
 } // namespace commissioner

@@ -32,7 +32,6 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
-#include <gtest/gtest_prod.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -57,6 +56,8 @@ namespace ot {
 
 namespace commissioner {
 
+class CommissionerTestPeer;
+
 // This is the implementation of the Commissioner interface with
 // event-driven model. The commissioner is not running unless the
 // the event loop has been started. Starting the event loop will
@@ -75,6 +76,7 @@ namespace commissioner {
 class CommissionerImpl : public Commissioner
 {
     friend class JoinerSession;
+    friend class CommissionerTestPeer;
 
 public:
     explicit CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase);
@@ -299,8 +301,6 @@ private:
 
     coap::Resource mResourceDiagAns;
     NetDiagData    mDiagAnsTlvs;
-
-    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
 };
 
 /*
