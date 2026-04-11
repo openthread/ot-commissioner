@@ -47,7 +47,16 @@
 #define MBEDTLS_ECP_NIST_OPTIM
 #define MBEDTLS_ENTROPY_C
 #define MBEDTLS_ERROR_C
+
+// Define __has_feature for non-Clang compilers
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+// Disable asm for Clang MemorySanitizer builds, since MemorySanitizer does not support assembly implementations.
+#if !__has_feature(memory_sanitizer)
 #define MBEDTLS_HAVE_ASM
+#endif
+
 #define MBEDTLS_HMAC_DRBG_C
 #define MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED
 #define MBEDTLS_MD_C
