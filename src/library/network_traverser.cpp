@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 
 #include <map>
 #include <string>
@@ -115,6 +116,12 @@ Error NetworkTraverser::Start(Commissioner::TraverseHandler aHandler)
     mHandler = aHandler;
     mHasSharedNetworkData = false;
 
+    const char *env = std::getenv("OT_COMM_IGNORE_PREFIX_FOR_TEST");
+    if (env && std::string(env) == "1")
+    {
+        mIgnoreMeshLocalPrefixForTest = true;
+    }
+
     mState = State::kGettingDataset;
     mImpl.GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) { OnActiveDataset(aDataset, aError); },
@@ -137,12 +144,38 @@ void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset,
     }
 
     mMeshLocalPrefix = aDataset->mMeshLocalPrefix;
+    
+    if (mIgnoreMeshLocalPrefixForTest)
+    {
+        mMeshLocalPrefix.clear();
+        LOG_INFO(LOG_REGION_MESHDIAG, "Ignoring Mesh Local Prefix for test purposes");
+    }
+
     if (mMeshLocalPrefix.empty())
     {
-        Finalize(ERROR_NOT_FOUND("Mesh Local Prefix not found"));
+        StartFallbackPrefixDiscovery();
         return;
     }
 
+    ProceedToQueryLeader();
+}
+
+void NetworkTraverser::StartFallbackPrefixDiscovery()
+{
+    LOG_INFO(LOG_REGION_MESHDIAG, "Mesh Local Prefix not found in dataset. Starting fallback discovery...");
+    mState = State::kFallbackPrefixDiscovery;
+    
+    mCurrentQueryTarget = "ff03::2"; // Realm-local all routers
+    mPendingChunks = {NetDiagData::kAddrsBit};
+    mCurrentChunkIndex = 0;
+    mRetryCount = 0;
+    mDeviceRetried = false;
+    
+    QueryChunk();
+}
+
+void NetworkTraverser::ProceedToQueryLeader()
+{
     mState = State::kQueryingLeader;
 
     const Address addr = GetMeshLocalAddress(0xfc00);
@@ -212,6 +245,12 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
     }
     else
     {
+        if (mState == State::kFallbackPrefixDiscovery)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "Fallback: failed to discover Mesh Local Prefix after retries");
+            Finalize(ERROR_NOT_FOUND("Failed to discover Mesh Local Prefix via fallback"));
+            return;
+        }
         // Give up on this device or this chunk
         // If we fail on the first chunk (ID), we can't do much
         // If we fail on later chunks, we might have partial data
@@ -239,6 +278,74 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
 {
     if (mState == State::kIdle)
     {
+        return;
+    }
+
+    if (mState == State::kFallbackPrefixDiscovery)
+    {
+        LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: received diag answer from {}", aPeerAddr);
+        LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: answer contains {} addresses", aDiagAnsMsg.mAddrs.size());
+        for (const auto &addrStr : aDiagAnsMsg.mAddrs)
+        {
+            Address addr;
+            IgnoreError(addr.Set(addrStr));
+            auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
+            LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: reported address {}{}", addrStr, annotation.empty() ? "" : " [" + annotation + "]");
+        }
+
+        // Try to find an RLOC address in the reported list of addresses.
+        // We look for an address with the RLOC/ALOC Interface Identifier pattern (0000:00ff:fe00:XXXX)
+        // to reliably identify the Mesh-Local prefix. We cannot simply look for any ULA prefix
+        // (starting with fd or fc) because the node might also have on-mesh ULA prefixes assigned
+        // for external communication, which would lead to extracting the wrong prefix.
+        for (const auto &addrStr : aDiagAnsMsg.mAddrs)
+        {
+            Address addr;
+            Error   err = addr.Set(addrStr);
+            if (err == ErrorCode::kNone && addr.IsIpv6())
+            {
+                auto raw = addr.GetRaw();
+                if (raw.size() >= 16)
+                {
+                    // Check for RLOC IID pattern: 0000:00ff:fe00:XXXX
+                    if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 &&
+                        raw[11] == 0xff && raw[12] == 0xfe && raw[13] == 0x00)
+                    {
+                        mMeshLocalPrefix = ByteArray(raw.begin(), raw.begin() + 8);
+                        auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
+                        LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from RLOC address {}{}: {}", addrStr, annotation.empty() ? "" : " [" + annotation + "]", utils::Hex(mMeshLocalPrefix));
+                        
+                        mRequestTimeoutTimer.Stop();
+                        ProceedToQueryLeader();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // If no RLOC address found in the reported list, check if the source address of the response
+        // is an RLOC and use its prefix if so.
+        Address addr;
+        if (addr.Set(aPeerAddr) == ErrorCode::kNone && addr.IsIpv6())
+        {
+            auto raw = addr.GetRaw();
+            if (raw.size() >= 16)
+            {
+                if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 &&
+                    raw[11] == 0xff && raw[12] == 0xfe && raw[13] == 0x00)
+                {
+                    mMeshLocalPrefix = ByteArray(raw.begin(), raw.begin() + 8);
+                    auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
+                    LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from source RLOC {}{}: {}", aPeerAddr, annotation.empty() ? "" : " [" + annotation + "]", utils::Hex(mMeshLocalPrefix));
+                    
+                    mRequestTimeoutTimer.Stop();
+                    ProceedToQueryLeader();
+                    return;
+                }
+            }
+        }
+
+        LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: no RLOC address found in this response");
         return;
     }
 

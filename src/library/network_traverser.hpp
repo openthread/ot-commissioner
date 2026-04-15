@@ -90,12 +90,26 @@ private:
     {
         kIdle,
         kGettingDataset,
+        kFallbackPrefixDiscovery,
         kQueryingLeader,
         kQueryingRouters,
         kQueryingChildren,
     };
 
     void HandleTimer(Timer &aTimer);
+
+    /**
+     * @brief Starts the fallback mode to discover Mesh Local Prefix.
+     *
+     * This sends a multicast DIAG_GET.qry to all routers to learn the prefix
+     * from the source address of the response.
+     */
+    void StartFallbackPrefixDiscovery();
+
+    /**
+     * @brief Proceeds to query the leader after obtaining the prefix.
+     */
+    void ProceedToQueryLeader();
     void FinalizeNode();
     void Finalize(Error aError);
 
@@ -111,6 +125,7 @@ private:
     Commissioner::TraverseHandler mHandler;
     State                         mState;
     ByteArray                     mMeshLocalPrefix;
+    bool                          mIgnoreMeshLocalPrefixForTest = false;
 
     NetworkData mSharedNetworkData;
     bool        mHasSharedNetworkData = false;

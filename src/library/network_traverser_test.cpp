@@ -119,6 +119,11 @@ public:
     }
 
     void TriggerTimeout() { mTraverser.HandleTimer(mTraverser.mRequestTimeoutTimer); }
+
+    void SetIgnoreMeshLocalPrefixForTest(bool aIgnore)
+    {
+        mTraverser.mIgnoreMeshLocalPrefixForTest = aIgnore;
+    }
 };
 
 TEST_F(NetworkTraverserTest, Start_InitiatesDatasetQuery)
@@ -229,6 +234,73 @@ TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
 
     EXPECT_TRUE(finished);
     EXPECT_EQ(finishError, ErrorCode::kNotFound);
+}
+
+TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
+{
+    Commissioner::TraverseHandler      handler;
+    bool                               finished = false;
+    Error                              finishError;
+    std::map<std::string, NetDiagData> resultReport;
+
+    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
+        finished    = true;
+        finishError = aError;
+        if (aReport)
+        {
+            resultReport = *aReport;
+        }
+    };
+
+    SetIgnoreMeshLocalPrefixForTest(true);
+
+    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+
+    // 1. Return Active Dataset with prefix (should be ignored)
+    ActiveOperationalDataset dataset;
+    dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
+
+    std::string lastQueryAddr;
+    uint64_t    lastQueryFlags;
+    int         queryCount = 0;
+
+    mCommissioner.mCommandDiagGetQueryCallback = [&](Commissioner::ErrorHandler, const std::string &aAddr,
+                                                     uint64_t aFlags) {
+        lastQueryAddr  = aAddr;
+        lastQueryFlags = aFlags;
+        queryCount++;
+    };
+
+    mCommissioner.mGetActiveDatasetHandler(&dataset, ERROR_NONE);
+
+    // Should now be discovering prefix via multicast
+    EXPECT_EQ(queryCount, 1);
+    EXPECT_EQ(lastQueryAddr, "ff03::2");
+    EXPECT_EQ(lastQueryFlags, NetDiagData::kMacAddrBit);
+
+    // 2. Simulate response from a router
+    // The response address must contain the prefix we want to discover.
+    std::string responderAddr = "fd00:0000:0000:0002:0000:00ff:fe00:0400";
+    NetDiagData chunk0;
+    chunk0.mPresentFlags = NetDiagData::kMacAddrBit;
+    chunk0.mMacAddr = 0x0400;
+
+    SimulateDiagAnswer(responderAddr, chunk0);
+
+    // After discovering prefix, it should proceed to query Leader.
+    EXPECT_EQ(queryCount, 2);
+    EXPECT_NE(lastQueryAddr.find("fc00"), std::string::npos);
+
+    Address leaderAddr;
+    EXPECT_EQ(leaderAddr.Set(lastQueryAddr), ErrorCode::kNone);
+    auto raw = leaderAddr.GetRaw();
+    ASSERT_EQ(raw.size(), 16);
+    EXPECT_EQ(raw[0], 0xfd);
+    EXPECT_EQ(raw[7], 0x02);
+
+    // Force finish to avoid running full flow
+    mTraverser.Stop();
+    EXPECT_TRUE(finished);
 }
 
 TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
