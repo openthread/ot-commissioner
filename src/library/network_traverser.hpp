@@ -91,6 +91,7 @@ private:
         kIdle,
         kGettingDataset,
         kFallbackPrefixDiscovery,
+        kFallbackRoute64Discovery,
         kQueryingLeader,
         kQueryingRouters,
         kQueryingChildren,
@@ -126,6 +127,7 @@ private:
     State                         mState;
     ByteArray                     mMeshLocalPrefix;
     bool                          mIgnoreMeshLocalPrefixForTest = false;
+    bool                          mIgnoreRoute64ForTest = false;
 
     NetworkData mSharedNetworkData;
     bool        mHasSharedNetworkData = false;

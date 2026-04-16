@@ -122,6 +122,12 @@ Error NetworkTraverser::Start(Commissioner::TraverseHandler aHandler)
         mIgnoreMeshLocalPrefixForTest = true;
     }
 
+    env = std::getenv("OT_COMM_IGNORE_ROUTE64_FOR_TEST");
+    if (env && std::string(env) == "1")
+    {
+        mIgnoreRoute64ForTest = true;
+    }
+
     mState = State::kGettingDataset;
     mImpl.GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) { OnActiveDataset(aDataset, aError); },
@@ -461,9 +467,18 @@ void NetworkTraverser::FinalizeNode()
             }
         }
 
-        if (!foundLeader)
+        if (!foundLeader || !(leaderData.mPresentFlags & NetDiagData::kRoute64Bit) || mIgnoreRoute64ForTest)
         {
-            Finalize(ERROR_NOT_FOUND("Leader not found"));
+            LOG_WARN(LOG_REGION_MESHDIAG, "Leader failed to provide Route64. Trying multicast fallback to all routers...");
+            
+            mState = State::kFallbackRoute64Discovery;
+            mCurrentQueryTarget = "ff03::2"; // Realm-local all routers
+            mPendingChunks      = {NetDiagData::kRoute64Bit};
+            mCurrentChunkIndex  = 0;
+            mRetryCount         = 0;
+            mDeviceRetried      = false;
+            
+            QueryChunk();
             return;
         }
 
@@ -510,6 +525,50 @@ void NetworkTraverser::FinalizeNode()
 
         mState = State::kQueryingRouters;
         FinalizeNode(); // Recurse to start router querying (or finding next router)
+    }
+    else if (mState == State::kFallbackRoute64Discovery)
+    {
+        bool        foundRoute64 = false;
+        NetDiagData routeData;
+
+        for (const auto &pair : mCollectedData)
+        {
+            if (pair.second.mPresentFlags & NetDiagData::kRoute64Bit)
+            {
+                routeData    = pair.second;
+                foundRoute64 = true;
+                break;
+            }
+        }
+
+        if (!foundRoute64)
+        {
+            Finalize(ERROR_NOT_FOUND("Failed to discover Route64 from any router"));
+            return;
+        }
+
+        // Parse Route64 and proceed to query routers
+        Route64 route64 = routeData.mRoute64;
+        
+        for (uint8_t routerId = 0; routerId < 64; ++routerId)
+        {
+            uint8_t byteIdx = routerId / 8;
+            uint8_t bitIdx  = 7 - (routerId % 8);
+
+            if (byteIdx < route64.mMask.size() && (route64.mMask[byteIdx] & (1 << bitIdx)))
+            {
+                uint16_t rloc16 = static_cast<uint16_t>(routerId) << 10;
+                mRoutersToQuery.insert(rloc16);
+            }
+        }
+
+        if (mHandler.mOnTotalRoutersCount)
+        {
+            mHandler.mOnTotalRoutersCount(mRoutersToQuery.size());
+        }
+
+        mState = State::kQueryingRouters;
+        FinalizeNode();
     }
     else if (mState == State::kQueryingRouters)
     {

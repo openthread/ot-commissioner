@@ -303,6 +303,87 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
     EXPECT_TRUE(finished);
 }
 
+TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
+{
+    Commissioner::TraverseHandler      handler;
+    bool                               finished = false;
+    Error                              finishError;
+    std::map<std::string, NetDiagData> resultReport;
+
+    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
+        finished    = true;
+        finishError = aError;
+        if (aReport)
+        {
+            resultReport = *aReport;
+        }
+    };
+
+    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+
+    // 1. Return Active Dataset
+    ActiveOperationalDataset dataset;
+    dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
+
+    std::string lastQueryAddr;
+    uint64_t    lastQueryFlags;
+    int         queryCount = 0;
+
+    mCommissioner.mCommandDiagGetQueryCallback = [&](Commissioner::ErrorHandler, const std::string &aAddr,
+                                                     uint64_t aFlags) {
+        lastQueryAddr  = aAddr;
+        lastQueryFlags = aFlags;
+        queryCount++;
+    };
+
+    mCommissioner.mGetActiveDatasetHandler(&dataset, ERROR_NONE);
+
+    // Should now be querying Leader (ALOC)
+    EXPECT_EQ(queryCount, 1);
+    EXPECT_NE(lastQueryAddr.find("fc00"), std::string::npos);
+
+    // We need to simulate answers for ALL leader chunks to trigger FinalizeNode()
+    int leaderChunkCount = NetworkTraverser::GetLeaderChunkCount();
+    
+    for (int i = 0; i < leaderChunkCount; ++i)
+    {
+        NetDiagData chunk;
+        if (i == 0)
+        {
+            chunk.mPresentFlags = NetDiagData::kMacAddrBit; // Missing Route64
+            chunk.mMacAddr      = 0xFC00;
+        }
+        else
+        {
+            chunk.mPresentFlags = lastQueryFlags; // Echo flags to pass filter
+        }
+        SimulateDiagAnswer(lastQueryAddr, chunk);
+    }
+
+    // Should now be in Fallback Route64 Discovery querying ff03::2
+    EXPECT_EQ(queryCount, 1 + leaderChunkCount);
+    EXPECT_EQ(lastQueryAddr, "ff03::2");
+    EXPECT_EQ(lastQueryFlags, NetDiagData::kRoute64Bit);
+
+    // 3. Simulate response from a router with Route64
+    std::string responderAddr = "fd00:0000:0000:0001:0000:00ff:fe00:0400";
+    NetDiagData routeData;
+    routeData.mPresentFlags = NetDiagData::kRoute64Bit;
+    routeData.mRoute64.mMask.assign(9, 0);
+    routeData.mRoute64.mMask[0] |= (1 << 6); // Router ID 1 (RLOC 0x0400)
+
+    SimulateDiagAnswer(responderAddr, routeData);
+
+    // After discovering Route64, it should proceed to query routers.
+    // Router ID 1 RLOC16 = 0x0400.
+    EXPECT_EQ(queryCount, 2 + leaderChunkCount);
+    EXPECT_TRUE(lastQueryAddr.find(":400") != std::string::npos || lastQueryAddr.find(":0400") != std::string::npos);
+
+    // Force finish to avoid running full flow
+    mTraverser.Stop();
+    EXPECT_TRUE(finished);
+}
+
 TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 {
     Commissioner::TraverseHandler      handler;
