@@ -46,12 +46,10 @@
 #include <thread>
 #include <vector>
 
-#include <sys/socket.h>
-#include <sys/time.h>
-
 #include <fcntl.h>
 #ifdef __linux__
 #include <sys/socket.h>
+#include <sys/time.h>
 #else // __NetBSD__ || __FreeBSD__ || __APPLE__
 #include <netinet/in.h>
 #endif
