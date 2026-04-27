@@ -651,9 +651,8 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
     {
         uint16_t queryId = mNextQueryId++;
         SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagQueryID, queryId}));
+        LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry with Query ID {}", queryId);
     }
-
-    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry with Query ID {}", mNextQueryId - 1);
 
 exit:
     if (error != ErrorCode::kNone)
