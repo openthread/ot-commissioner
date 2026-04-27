@@ -1256,11 +1256,7 @@ void Message::SetToken(const ByteArray &aToken)
 {
     auto len             = std::min(sizeof(mHeader.mToken), aToken.size());
     mHeader.mTokenLength = len;
-    if (len > 0)
-    {
-        // Accessing &aToken[0] when size is 0 is undefined behavior.
-        memcpy(mHeader.mToken, &aToken[0], len);
-    }
+    memcpy(mHeader.mToken, aToken.data(), len);
 }
 
 void Message::SetToken(uint8_t aTokenLength)
