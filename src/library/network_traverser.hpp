@@ -70,7 +70,7 @@ public:
 
     explicit NetworkTraverser(CommissionerImpl &aImpl);
 
-    Error Start(Commissioner::TraverseHandler &aHandler);
+    void Start(Commissioner::TraverseHandler &aHandler);
     void  Stop();
 
     bool IsActive() const { return mState != State::kIdle; }

@@ -802,14 +802,15 @@ exit:
     }
 }
 
-Error CommissionerImpl::TraverseNetwork(TraverseHandler &aHandler)
+void CommissionerImpl::TraverseNetwork(TraverseHandler &aHandler)
 {
     if (!IsActiveOrConnected())
     {
-        return ERROR_INVALID_STATE("Commissioner is not active");
+        aHandler.OnFinished(nullptr, ERROR_INVALID_STATE("Commissioner is not active"));
+        return;
     }
 
-    return mNetworkTraverser.Start(aHandler);
+    mNetworkTraverser.Start(aHandler);
 }
 
 void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset)

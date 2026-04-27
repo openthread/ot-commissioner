@@ -153,7 +153,7 @@ public:
     void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags) override;
 
-    Error TraverseNetwork(TraverseHandler &aHandler) override;
+    void TraverseNetwork(TraverseHandler &aHandler) override;
 
     void  CommandMigrate(ErrorHandler       aHandler,
                          const std::string &aDstAddr,

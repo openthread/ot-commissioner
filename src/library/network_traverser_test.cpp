@@ -142,7 +142,7 @@ public:
 TEST_F(NetworkTraverserTest, Start_InitiatesDatasetQuery)
 {
     TestTraverseHandler handler;
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
     EXPECT_TRUE(mCommissioner.mGetActiveDatasetHandler != nullptr);
     EXPECT_TRUE(mTraverser.IsActive());
 }
@@ -163,7 +163,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // 1. Return Active Dataset (Mesh Local Prefix)
     ActiveOperationalDataset dataset;
@@ -241,7 +241,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
         finishError = aError;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // Fail dataset
     mCommissioner.mGetActiveDatasetHandler(nullptr, ERROR_NOT_FOUND("Simulated failure"));
@@ -268,7 +268,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
 
     SetIgnoreMeshLocalPrefixForTest(true);
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // 1. Return Active Dataset with prefix (should be ignored)
     ActiveOperationalDataset dataset;
@@ -333,7 +333,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // 1. Return Active Dataset
     ActiveOperationalDataset dataset;
@@ -414,7 +414,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // 1. Active Dataset
     ActiveOperationalDataset dataset;
@@ -546,7 +546,7 @@ TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     ActiveOperationalDataset dataset;
     dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
@@ -631,7 +631,7 @@ TEST_F(NetworkTraverserTest, Traverse_Stop)
         finishError = aError;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
     EXPECT_TRUE(mTraverser.IsActive());
 
     mTraverser.Stop();
@@ -652,7 +652,7 @@ TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
         finishError = aError;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // Provide Active Dataset to start querying Leader
     ActiveOperationalDataset dataset;
@@ -711,7 +711,7 @@ TEST_F(NetworkTraverserTest, Traverse_Timeout_Skip_Chunk)
             resultReport = *aReport;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     ActiveOperationalDataset dataset;
     dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};

@@ -569,16 +569,16 @@ Error CommissionerSafe::CommandDiagReset(const std::string &aAddr, uint64_t aDia
     return pro.get_future().get();
 }
 
-Error CommissionerSafe::TraverseNetwork(TraverseHandler &aHandler)
+void CommissionerSafe::TraverseNetwork(TraverseHandler &aHandler)
 {
-    std::promise<Error> pro;
-
+    std::promise<void> pro;
+ 
     PushAsyncRequest([&pro, &aHandler, this]() {
-        Error error = mImpl->TraverseNetwork(aHandler);
-        pro.set_value(error);
+        mImpl->TraverseNetwork(aHandler);
+        pro.set_value();
     });
-
-    return pro.get_future().get();
+ 
+    pro.get_future().wait();
 }
 
 void CommissionerSafe::PushAsyncRequest(AsyncRequest &&aAsyncRequest)

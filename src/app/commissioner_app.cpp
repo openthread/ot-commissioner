@@ -440,16 +440,9 @@ exit:
     return error;
 }
 
-Error CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler)
+void CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler)
 {
-    Error error;
-
-    VerifyOrExit(IsActive(), error = ERROR_INVALID_STATE("the commissioner is not active"));
-
-    error = mCommissioner->TraverseNetwork(aHandler);
-
-exit:
-    return error;
+    mCommissioner->TraverseNetwork(aHandler);
 }
 
 Error CommissionerApp::GetActiveTimestamp(Timestamp &aTimestamp) const

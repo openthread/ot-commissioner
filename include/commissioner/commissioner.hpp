@@ -618,14 +618,11 @@ public:
      * @brief Traverse the Thread network to collect diagnostic data.
      *
      * This method discovers the leader, routers, and children in the network.
+     * All errors (including start errors) are reported through the handler.
      *
      * @param[in] aHandler  The handler for traversal events.
-     *
-     * @retval kNone           Successfully started the traversal.
-     * @retval kInvalidState   Commissioner is not active.
-     * @retval kAlready        Traversal is already in progress.
      */
-    virtual Error TraverseNetwork(TraverseHandler &aHandler) = 0;
+    virtual void TraverseNetwork(TraverseHandler &aHandler) = 0;
 
     /**
      * @brief Synchronously get the Commissioner Dataset.

@@ -256,12 +256,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
     // Use a long enough timeout to allow large network traversal but prevent infinite hangs
     auto startTime = std::chrono::steady_clock::now();
 
-    error = aCommissioner->TraverseNetwork(handler);
-    if (error != ErrorCode::kNone)
-    {
-        value = error.ToString();
-        goto exit;
-    }
+    aCommissioner->TraverseNetwork(handler);
 
     while (!handler.isFinished)
     {

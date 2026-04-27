@@ -108,13 +108,19 @@ NetworkTraverser::NetworkTraverser(CommissionerImpl &aImpl)
 {
 }
 
-Error NetworkTraverser::Start(Commissioner::TraverseHandler &aHandler)
+void NetworkTraverser::Start(Commissioner::TraverseHandler &aHandler)
 {
     mCollectedData.clear();
     mRoutersToQuery.clear();
     mChildrenToQuery.clear();
     mHandler = &aHandler;
     mHasSharedNetworkData = false;
+
+    if (mState != State::kIdle)
+    {
+        aHandler.OnFinished(nullptr, Error{ErrorCode::kBusy, "Traversal is already in progress"});
+        return;
+    }
 
     const char *env = std::getenv("OT_COMM_IGNORE_PREFIX_FOR_TEST");
     if (env && std::string(env) == "1")
@@ -132,8 +138,6 @@ Error NetworkTraverser::Start(Commissioner::TraverseHandler &aHandler)
     mImpl.GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) { OnActiveDataset(aDataset, aError); },
         ActiveOperationalDataset::kMeshLocalPrefixBit);
-
-    return ERROR_NONE;
 }
 
 void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset, Error aError)

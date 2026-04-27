@@ -61,7 +61,7 @@ TEST(TraverserTest, TestGlobalTimeout)
     interpreter.mCancelCommand = false;
 
     // Mock TraverseNetwork to return success but do nothing (simulate hang/long operation)
-    EXPECT_CALL(*mockCommissioner, TraverseNetwork(_)).WillOnce(Return(Error()));
+    EXPECT_CALL(*mockCommissioner, TraverseNetwork(_));
 
     // Expect CancelRequests to be called when timeout occurs
     EXPECT_CALL(*mockCommissioner, CancelRequests()).Times(1);

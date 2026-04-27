@@ -244,7 +244,7 @@ namespace commissioner {
 namespace ot {
 namespace commissioner {
     %extend Commissioner {
-        Error TraverseNetwork(ot::commissioner::TraverseListener *aListener) {
+        void TraverseNetwork(ot::commissioner::TraverseListener *aListener) {
             class JavaTraverseHandler : public ot::commissioner::Commissioner::TraverseHandler {
             public:
                 JavaTraverseHandler(ot::commissioner::TraverseListener *aListener) : mListener(aListener) {}
@@ -268,11 +268,12 @@ namespace commissioner {
 
             if (aListener == nullptr) {
                 ot::commissioner::Commissioner::TraverseHandler defaultHandler;
-                return $self->TraverseNetwork(defaultHandler);
+                $self->TraverseNetwork(defaultHandler);
+                return;
             }
 
             JavaTraverseHandler handler(aListener);
-            return $self->TraverseNetwork(handler);
+            $self->TraverseNetwork(handler);
         }
     }
 }
