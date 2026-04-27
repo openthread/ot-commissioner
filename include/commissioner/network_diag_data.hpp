@@ -203,14 +203,6 @@ struct Answer
 };
 
 /**
- * @brief Query ID TLV Data
- */
-struct QueryId
-{
-    uint16_t mQueryId = 0;
-};
-
-/**
  * @brief MLE Counters TLV Data
  *
  */
@@ -271,7 +263,7 @@ struct NetDiagData
     MleCounters                    mMleCounters;
     ChannelMask                    mNonPreferredChannelsMask;
     Answer                         mAnswer;
-    QueryId                        mQueryId;
+    uint16_t                       mQueryId = 0;
 
     /**
      * Indicates which fields are included in the object.

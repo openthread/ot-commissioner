@@ -813,8 +813,6 @@ static void to_json(Json &aJson, const Answer &aAnswer)
     aJson["IsLast"] = aAnswer.mIsLast;
 }
 
-static void to_json(Json &aJson, const QueryId &aQueryId) { aJson["QueryId"] = aQueryId.mQueryId; }
-
 static void to_json(Json &aJson, const Child &aChild)
 {
 #define SET(name) aJson[#name] = aChild.m##name;

@@ -698,7 +698,7 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
     // Handle Query ID and Fragmentation
     if (diagData.mPresentFlags & NetDiagData::kQueryIdBit)
     {
-        uint16_t queryId     = diagData.mQueryId.mQueryId;
+        uint16_t queryId     = diagData.mQueryId;
         auto    &accumulated = mPendingDiagQueries[queryId];
 
         // Merge the new data into the accumulated data
@@ -2411,7 +2411,7 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto queryId = tlvSet[tlv::Type::kNetworkDiagQueryID])
     {
-        diagData.mQueryId.mQueryId = queryId->GetValueAsUint16();
+        diagData.mQueryId = queryId->GetValueAsUint16();
         diagData.mPresentFlags |= NetDiagData::kQueryIdBit;
     }
 
