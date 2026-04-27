@@ -2631,7 +2631,7 @@ Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aB
         if (error != ErrorCode::kNone)
         {
             LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to parse TLV: {}", error.ToString());
-            goto exit;
+            ExitNow();
         }
 
         if (tlv->GetType() == tlv::Type::kNetworkDataPrefix)
@@ -2693,7 +2693,7 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
             if (error != ErrorCode::kNone)
             {
                 LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to parse sub-TLV: {}", error.ToString());
-                goto exit;
+                ExitNow();
             }
 
             if (tlv->GetType() == tlv::Type::kNetworkData6LowPanContext)
@@ -2702,7 +2702,7 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
                 if (error != ErrorCode::kNone)
                 {
                     LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode Context: {}", error.ToString());
-                    goto exit;
+                    ExitNow();
                 }
             }
             else if (tlv->GetType() == tlv::Type::kNetworkDataHasRoute)
@@ -2712,7 +2712,7 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
                 {
                     LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode HasRoute: {}",
                               error.ToString());
-                    goto exit;
+                    ExitNow();
                 }
             }
             else if (tlv->GetType() == tlv::Type::kNetworkDataBorderRouter)
@@ -2722,7 +2722,7 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
                 {
                     LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode BorderRouter: {}",
                               error.ToString());
-                    goto exit;
+                    ExitNow();
                 }
             }
         }
@@ -2849,7 +2849,7 @@ Error internal::DecodeService(ServiceEntry &aServiceEntry, const ByteArray &aBuf
             if (error != ErrorCode::kNone)
             {
                 LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeService: failed to parse sub-TLV: {}", error.ToString());
-                goto exit;
+                ExitNow();
             }
 
             if (tlv->GetType() == tlv::Type::kNetworkDataServer)
@@ -2860,7 +2860,7 @@ Error internal::DecodeService(ServiceEntry &aServiceEntry, const ByteArray &aBuf
                 {
                     LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeService: failed to decode Server Entry: {}",
                               error.ToString());
-                    goto exit;
+                    ExitNow();
                 }
                 // ServerEntry does not have mIsStable member
                 aServiceEntry.mServerList.emplace_back(serverEntry);
@@ -2977,7 +2977,7 @@ Error internal::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, cons
         if (error != ErrorCode::kNone)
         {
             LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeChildTable: failed to decode mode data: {}", error.ToString());
-            goto exit;
+            ExitNow();
         }
         aChildTable.emplace_back(entry);
         offset += kChildTableEntryBytes;
