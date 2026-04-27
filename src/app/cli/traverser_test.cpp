@@ -49,7 +49,6 @@
 
 using namespace ot::commissioner;
 using testing::_;
-using testing::Return;
 
 TEST(TraverserTest, TestGlobalTimeout)
 {

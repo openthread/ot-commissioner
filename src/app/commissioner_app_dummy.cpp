@@ -529,10 +529,7 @@ Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiag
     return Error{};
 }
 
-void CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler)
-{
-    UNUSED(aHandler);
-}
+void CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler) { UNUSED(aHandler); }
 
 } // namespace commissioner
 

@@ -60,14 +60,14 @@ test_traverser_leader_fallback()
 
     if [ -n "${TBR_ADDR}" ] && [ -n "${TBR_PORT}" ]; then
         echo "Testing against external TBR: ${TBR_ADDR}:${TBR_PORT} using config ${config_file}"
-        
+
         my_start_commissioner "${config_file}"
-        
+
         # Connect to external TBR
         local start_res
         start_res=$(send_command_to_commissioner "start ${TBR_ADDR} ${TBR_PORT}")
         echo "${start_res}" | grep -q "\[done\]" || die "Failed to connect to external TBR"
-        
+
     else
         echo "No external TBR specified. Using local simulator."
         start_daemon
@@ -80,10 +80,10 @@ test_traverser_leader_fallback()
     local traverse_result
     traverse_result=$(send_command_to_commissioner "traversenetwork")
     echo "${traverse_result}"
-    
+
     # Verify it finished successfully and printed summary
     echo "${traverse_result}" | grep -q -- "--- Traversal Summary ---" || die "Traversal failed or summary not found"
-    
+
     stop_commissioner
 
     if [ -z "${TBR_ADDR}" ]; then

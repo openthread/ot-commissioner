@@ -113,7 +113,7 @@ void NetworkTraverser::Start(Commissioner::TraverseHandler &aHandler)
     mCollectedData.clear();
     mRoutersToQuery.clear();
     mChildrenToQuery.clear();
-    mHandler = &aHandler;
+    mHandler              = &aHandler;
     mHasSharedNetworkData = false;
 
     if (mState != State::kIdle)
@@ -154,7 +154,7 @@ void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset,
     }
 
     mMeshLocalPrefix = aDataset->mMeshLocalPrefix;
-    
+
     if (mIgnoreMeshLocalPrefixForTest)
     {
         mMeshLocalPrefix.clear();
@@ -174,13 +174,13 @@ void NetworkTraverser::StartFallbackPrefixDiscovery()
 {
     LOG_INFO(LOG_REGION_MESHDIAG, "Mesh Local Prefix not found in dataset. Starting fallback discovery...");
     mState = State::kFallbackPrefixDiscovery;
-    
+
     mCurrentQueryTarget = "ff03::2"; // Realm-local all routers
-    mPendingChunks = {NetDiagData::kAddrsBit};
-    mCurrentChunkIndex = 0;
-    mRetryCount = 0;
-    mDeviceRetried = false;
-    
+    mPendingChunks      = {NetDiagData::kAddrsBit};
+    mCurrentChunkIndex  = 0;
+    mRetryCount         = 0;
+    mDeviceRetried      = false;
+
     QueryChunk();
 }
 
@@ -300,7 +300,8 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
             Address addr;
             IgnoreError(addr.Set(addrStr));
             auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
-            LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: reported address {}{}", addrStr, annotation.empty() ? "" : " [" + annotation + "]");
+            LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: reported address {}{}", addrStr,
+                     annotation.empty() ? "" : " [" + annotation + "]");
         }
 
         // Try to find an RLOC address in the reported list of addresses.
@@ -318,13 +319,15 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
                 if (raw.size() >= 16)
                 {
                     // Check for RLOC IID pattern: 0000:00ff:fe00:XXXX
-                    if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 &&
-                        raw[11] == 0xff && raw[12] == 0xfe && raw[13] == 0x00)
+                    if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 && raw[11] == 0xff && raw[12] == 0xfe &&
+                        raw[13] == 0x00)
                     {
                         mMeshLocalPrefix = ByteArray(raw.begin(), raw.begin() + 8);
-                        auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
-                        LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from RLOC address {}{}: {}", addrStr, annotation.empty() ? "" : " [" + annotation + "]", utils::Hex(mMeshLocalPrefix));
-                        
+                        auto annotation  = addr.GetTypeAnnotation(mMeshLocalPrefix);
+                        LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from RLOC address {}{}: {}",
+                                 addrStr, annotation.empty() ? "" : " [" + annotation + "]",
+                                 utils::Hex(mMeshLocalPrefix));
+
                         mRequestTimeoutTimer.Stop();
                         ProceedToQueryLeader();
                         return;
@@ -341,13 +344,14 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
             auto raw = addr.GetRaw();
             if (raw.size() >= 16)
             {
-                if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 &&
-                    raw[11] == 0xff && raw[12] == 0xfe && raw[13] == 0x00)
+                if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 && raw[11] == 0xff && raw[12] == 0xfe &&
+                    raw[13] == 0x00)
                 {
                     mMeshLocalPrefix = ByteArray(raw.begin(), raw.begin() + 8);
-                    auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
-                    LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from source RLOC {}{}: {}", aPeerAddr, annotation.empty() ? "" : " [" + annotation + "]", utils::Hex(mMeshLocalPrefix));
-                    
+                    auto annotation  = addr.GetTypeAnnotation(mMeshLocalPrefix);
+                    LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from source RLOC {}{}: {}", aPeerAddr,
+                             annotation.empty() ? "" : " [" + annotation + "]", utils::Hex(mMeshLocalPrefix));
+
                     mRequestTimeoutTimer.Stop();
                     ProceedToQueryLeader();
                     return;
@@ -473,15 +477,16 @@ void NetworkTraverser::FinalizeNode()
 
         if (!foundLeader || !(leaderData.mPresentFlags & NetDiagData::kRoute64Bit) || mIgnoreRoute64ForTest)
         {
-            LOG_WARN(LOG_REGION_MESHDIAG, "Leader failed to provide Route64. Trying multicast fallback to all routers...");
-            
-            mState = State::kFallbackRoute64Discovery;
+            LOG_WARN(LOG_REGION_MESHDIAG,
+                     "Leader failed to provide Route64. Trying multicast fallback to all routers...");
+
+            mState              = State::kFallbackRoute64Discovery;
             mCurrentQueryTarget = "ff03::2"; // Realm-local all routers
             mPendingChunks      = {NetDiagData::kRoute64Bit};
             mCurrentChunkIndex  = 0;
             mRetryCount         = 0;
             mDeviceRetried      = false;
-            
+
             QueryChunk();
             return;
         }
@@ -553,7 +558,7 @@ void NetworkTraverser::FinalizeNode()
 
         // Parse Route64 and proceed to query routers
         Route64 route64 = routeData.mRoute64;
-        
+
         for (uint8_t routerId = 0; routerId < 64; ++routerId)
         {
             uint8_t byteIdx = routerId / 8;

@@ -133,10 +133,7 @@ public:
 
     void TriggerTimeout() { mTraverser.HandleTimer(mTraverser.mRequestTimeoutTimer); }
 
-    void SetIgnoreMeshLocalPrefixForTest(bool aIgnore)
-    {
-        mTraverser.mIgnoreMeshLocalPrefixForTest = aIgnore;
-    }
+    void SetIgnoreMeshLocalPrefixForTest(bool aIgnore) { mTraverser.mIgnoreMeshLocalPrefixForTest = aIgnore; }
 };
 
 TEST_F(NetworkTraverserTest, Start_InitiatesDatasetQuery)
@@ -149,7 +146,7 @@ TEST_F(NetworkTraverserTest, Start_InitiatesDatasetQuery)
 
 TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
 {
-    TestTraverseHandler handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -233,8 +230,8 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
 TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
 {
     TestTraverseHandler handler;
-    bool                          finished = false;
-    Error                         finishError;
+    bool                finished = false;
+    Error               finishError;
 
     handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *, Error aError) {
         finished    = true;
@@ -252,7 +249,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
 
 TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
 {
-    TestTraverseHandler handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -297,7 +294,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
     std::string responderAddr = "fd00:0000:0000:0002:0000:00ff:fe00:0400";
     NetDiagData chunk0;
     chunk0.mPresentFlags = NetDiagData::kMacAddrBit;
-    chunk0.mMacAddr = 0x0400;
+    chunk0.mMacAddr      = 0x0400;
 
     SimulateDiagAnswer(responderAddr, chunk0);
 
@@ -319,7 +316,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
 
 TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
 {
-    TestTraverseHandler handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -358,7 +355,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
 
     // We need to simulate answers for ALL leader chunks to trigger FinalizeNode()
     int leaderChunkCount = NetworkTraverser::GetLeaderChunkCount();
-    
+
     for (int i = 0; i < leaderChunkCount; ++i)
     {
         NetDiagData chunk;
@@ -400,7 +397,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
 
 TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 {
-    TestTraverseHandler handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -532,7 +529,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 
 TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
 {
-    TestTraverseHandler handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -623,8 +620,8 @@ TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
 TEST_F(NetworkTraverserTest, Traverse_Stop)
 {
     TestTraverseHandler handler;
-    bool                          finished    = false;
-    Error                         finishError = ERROR_NONE;
+    bool                finished    = false;
+    Error               finishError = ERROR_NONE;
 
     handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *, Error aError) {
         finished    = true;
@@ -644,8 +641,8 @@ TEST_F(NetworkTraverserTest, Traverse_Stop)
 TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
 {
     TestTraverseHandler handler;
-    bool                          finished    = false;
-    Error                         finishError = ERROR_NONE;
+    bool                finished    = false;
+    Error               finishError = ERROR_NONE;
 
     handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *, Error aError) {
         finished    = true;
@@ -699,7 +696,7 @@ TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
 
 TEST_F(NetworkTraverserTest, Traverse_Timeout_Skip_Chunk)
 {
-    TestTraverseHandler handler;
+    TestTraverseHandler                handler;
     bool                               finished    = false;
     Error                              finishError = ERROR_NONE;
     std::map<std::string, NetDiagData> resultReport;

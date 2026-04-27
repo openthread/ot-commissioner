@@ -236,7 +236,7 @@ public:
     // Network Diagnostic
     MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags);
     MOCKABLE Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags);
-    MOCKABLE void TraverseNetwork(Commissioner::TraverseHandler &aHandler);
+    MOCKABLE void  TraverseNetwork(Commissioner::TraverseHandler &aHandler);
 
     /*
      * BBR Dataset APIs

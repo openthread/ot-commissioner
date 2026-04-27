@@ -190,7 +190,9 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
         }
 
-        void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Commissioner::TraverseStatus aStatus) override
+        void OnDeviceResponded(const std::string           &aAddr,
+                               const NetDiagData           *aData,
+                               Commissioner::TraverseStatus aStatus) override
         {
             bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
 
@@ -274,7 +276,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             if (!handler.isFinished)
             {
-                value      = "Traversal timed out";
+                value              = "Traversal timed out";
                 handler.isFinished = true;
             }
         }
@@ -402,7 +404,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             try
             {
                 auto deviceObj = nlohmann::json::parse(jsonStr);
-                devices[key] = deviceObj;
+                devices[key]   = deviceObj;
             } catch (const std::exception &e)
             {
                 Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", key, e.what()), Console::Color::kRed);

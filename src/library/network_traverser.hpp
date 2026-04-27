@@ -71,7 +71,7 @@ public:
     explicit NetworkTraverser(CommissionerImpl &aImpl);
 
     void Start(Commissioner::TraverseHandler &aHandler);
-    void  Stop();
+    void Stop();
 
     bool IsActive() const { return mState != State::kIdle; }
 
@@ -121,13 +121,13 @@ private:
 
     Address GetMeshLocalAddress(uint16_t aRloc16) const;
 
-    CommissionerImpl             &mImpl;
-    Timer                         mRequestTimeoutTimer;
+    CommissionerImpl              &mImpl;
+    Timer                          mRequestTimeoutTimer;
     Commissioner::TraverseHandler *mHandler = nullptr;
-    State                         mState;
-    ByteArray                     mMeshLocalPrefix;
-    bool                          mIgnoreMeshLocalPrefixForTest = false;
-    bool                          mIgnoreRoute64ForTest = false;
+    State                          mState;
+    ByteArray                      mMeshLocalPrefix;
+    bool                           mIgnoreMeshLocalPrefixForTest = false;
+    bool                           mIgnoreRoute64ForTest         = false;
 
     NetworkData mSharedNetworkData;
     bool        mHasSharedNetworkData = false;
