@@ -70,7 +70,7 @@ public:
 
     explicit NetworkTraverser(CommissionerImpl &aImpl);
 
-    Error Start(Commissioner::TraverseHandler aHandler);
+    Error Start(Commissioner::TraverseHandler &aHandler);
     void  Stop();
 
     bool IsActive() const { return mState != State::kIdle; }
@@ -123,7 +123,7 @@ private:
 
     CommissionerImpl             &mImpl;
     Timer                         mRequestTimeoutTimer;
-    Commissioner::TraverseHandler mHandler;
+    Commissioner::TraverseHandler *mHandler = nullptr;
     State                         mState;
     ByteArray                     mMeshLocalPrefix;
     bool                          mIgnoreMeshLocalPrefixForTest = false;

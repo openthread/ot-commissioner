@@ -144,7 +144,7 @@ public:
     MOCK_METHOD(void, ClearNetDiagTlvs, ());
     MOCK_METHOD(Error, CommandDiagGetQuery, (const std::string &, uint64_t));
     MOCK_METHOD(Error, CommandDiagReset, (const std::string &, uint64_t));
-    MOCK_METHOD(Error, TraverseNetwork, (Commissioner::TraverseHandler));
+    MOCK_METHOD(Error, TraverseNetwork, (Commissioner::TraverseHandler &));
 };
 
 class CommissionerAppStaticExpecter

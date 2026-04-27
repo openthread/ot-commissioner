@@ -108,12 +108,12 @@ NetworkTraverser::NetworkTraverser(CommissionerImpl &aImpl)
 {
 }
 
-Error NetworkTraverser::Start(Commissioner::TraverseHandler aHandler)
+Error NetworkTraverser::Start(Commissioner::TraverseHandler &aHandler)
 {
     mCollectedData.clear();
     mRoutersToQuery.clear();
     mChildrenToQuery.clear();
-    mHandler = aHandler;
+    mHandler = &aHandler;
     mHasSharedNetworkData = false;
 
     const char *env = std::getenv("OT_COMM_IGNORE_PREFIX_FOR_TEST");
@@ -206,12 +206,12 @@ void NetworkTraverser::Stop()
     mRequestTimeoutTimer.Stop();
     mState = State::kIdle;
 
-    if (mHandler.mOnFinished)
+    if (mHandler)
     {
-        mHandler.mOnFinished(nullptr, ERROR_CANCELLED("Network traversal cancelled"));
+        mHandler->OnFinished(nullptr, ERROR_CANCELLED("Network traversal cancelled"));
     }
 
-    mHandler = {};
+    mHandler = nullptr;
 }
 
 void NetworkTraverser::QueryChunk()
@@ -264,9 +264,9 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
         if (mCurrentChunkIndex == 0)
         {
             // First chunk failed, skip device.
-            if (mHandler.mOnDeviceResponded)
+            if (mHandler)
             {
-                mHandler.mOnDeviceResponded(mCurrentQueryTarget, nullptr, Commissioner::TraverseStatus::kFailed);
+                mHandler->OnDeviceResponded(mCurrentQueryTarget, nullptr, Commissioner::TraverseStatus::kFailed);
             }
             FinalizeNode();
         }
@@ -434,11 +434,11 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
             mCollectedData[addr].mPresentFlags |= NetDiagData::kNetworkDataBit;
         }
 
-        if (mHandler.mOnDeviceResponded)
+        if (mHandler)
         {
             auto status = mDeviceRetried ? Commissioner::TraverseStatus::kSuccessWithRetry
                                          : Commissioner::TraverseStatus::kSuccess;
-            mHandler.mOnDeviceResponded(addr.ToString(), &mCollectedData[addr], status);
+            mHandler->OnDeviceResponded(addr.ToString(), &mCollectedData[addr], status);
         }
     }
 
@@ -509,9 +509,9 @@ void NetworkTraverser::FinalizeNode()
             }
         }
 
-        if (mHandler.mOnTotalRoutersCount)
+        if (mHandler)
         {
-            mHandler.mOnTotalRoutersCount(mRoutersToQuery.size() + 1); // +1 for Leader
+            mHandler->OnTotalRoutersCount(mRoutersToQuery.size() + 1); // +1 for Leader
         }
 
         // Add leader's children
@@ -562,9 +562,9 @@ void NetworkTraverser::FinalizeNode()
             }
         }
 
-        if (mHandler.mOnTotalRoutersCount)
+        if (mHandler)
         {
-            mHandler.mOnTotalRoutersCount(mRoutersToQuery.size());
+            mHandler->OnTotalRoutersCount(mRoutersToQuery.size());
         }
 
         mState = State::kQueryingRouters;
@@ -596,9 +596,9 @@ void NetworkTraverser::FinalizeNode()
         if (mRoutersToQuery.empty())
         {
             mState = State::kQueryingChildren;
-            if (mHandler.mOnTotalChildrenCount)
+            if (mHandler)
             {
-                mHandler.mOnTotalChildrenCount(mChildrenToQuery.size());
+                mHandler->OnTotalChildrenCount(mChildrenToQuery.size());
             }
             FinalizeNode();
             return;
@@ -656,14 +656,14 @@ void NetworkTraverser::FinalizeNode()
 void NetworkTraverser::Finalize(Error aError)
 {
     mState = State::kIdle;
-    if (mHandler.mOnFinished)
+    if (mHandler)
     {
         std::map<std::string, NetDiagData> report;
         for (const auto &pair : mCollectedData)
         {
             report[pair.first.ToString()] = pair.second;
         }
-        mHandler.mOnFinished(&report, aError);
+        mHandler->OnFinished(&report, aError);
     }
 }
 

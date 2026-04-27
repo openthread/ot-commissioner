@@ -154,94 +154,104 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
     std::map<std::string, NetDiagData> routers;
     std::map<std::string, NetDiagData> children;
     Error                              error;
-    std::atomic<bool>                  isFinished{false};
-
     // Call the new async-based but blocking API
     Console::Write("Starting Network Traversal...", Console::Color::kCyan);
 
-    // State for live output
-    size_t                       totalRouters    = 0;
-    size_t                       totalChildren   = 0;
-    size_t                       routersFound    = 0;
-    size_t                       childrenFound   = 0;
-    Commissioner::TraverseStatus leaderStatus    = Commissioner::TraverseStatus::kFailed;
-    bool                         leaderResponded = false;
-
     // Callback handler
-    Commissioner::TraverseHandler handler;
-    handler.mOnTotalRoutersCount = [&](size_t aCount) {
-        totalRouters = aCount;
-        Console::Write(fmt::format("{} Routers found", aCount), Console::Color::kWhite);
-
-        // Flush Leader status if we have it
-        if (leaderResponded)
+    class CliTraverseHandler : public Commissioner::TraverseHandler
+    {
+    public:
+        void OnTotalRoutersCount(size_t aCount) override
         {
-            char           symbol = 'R';
+            totalRouters = aCount;
+            Console::Write(fmt::format("{} Routers found", aCount), Console::Color::kWhite);
+
+            if (leaderResponded)
+            {
+                char           symbol = 'R';
+                Console::Color color  = Console::Color::kRed;
+                if (leaderStatus == Commissioner::TraverseStatus::kSuccess)
+                    color = Console::Color::kGreen;
+                else if (leaderStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
+                    color = Console::Color::kYellow;
+
+                Console::WriteNoNewline(std::string(1, symbol), color);
+                routersFound++;
+
+                if (routersFound % 5 == 0)
+                    Console::WriteNoNewline(" ", Console::Color::kWhite);
+            }
+        }
+
+        void OnTotalChildrenCount(size_t aCount) override
+        {
+            Console::Write("\n", Console::Color::kWhite); // End Router line
+            totalChildren = aCount;
+            Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
+        }
+
+        void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Commissioner::TraverseStatus aStatus) override
+        {
+            bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
+
+            if (totalRouters == 0)
+            {
+                // Leader
+                leaderStatus    = aStatus;
+                leaderResponded = true;
+                if (aData)
+                    collectedData[aAddr] = *aData;
+                return;
+            }
+
+            // Print symbols for fetched devices
+            char           symbol = isRouterPhase ? 'R' : 'C';
             Console::Color color  = Console::Color::kRed;
-            if (leaderStatus == Commissioner::TraverseStatus::kSuccess)
+            if (aStatus == Commissioner::TraverseStatus::kSuccess)
                 color = Console::Color::kGreen;
-            else if (leaderStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
+            else if (aStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
                 color = Console::Color::kYellow;
 
             Console::WriteNoNewline(std::string(1, symbol), color);
-            routersFound++;
 
-            if (routersFound % 5 == 0)
+            size_t &counter = isRouterPhase ? routersFound : childrenFound;
+            counter++;
+
+            // Create chunks of 5 printed symbols for easy visualization
+            if (counter % 5 == 0)
                 Console::WriteNoNewline(" ", Console::Color::kWhite);
-        }
-    };
-    handler.mOnTotalChildrenCount = [&](size_t aCount) {
-        Console::Write("\n", Console::Color::kWhite); // End Router line
-        totalChildren = aCount;
-        Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
-    };
-    handler.mOnDeviceResponded = [&](const std::string &aAddr, const NetDiagData *aData,
-                                     Commissioner::TraverseStatus aStatus) {
-        bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
 
-        if (totalRouters == 0)
-        {
-            // Leader
-            leaderStatus    = aStatus;
-            leaderResponded = true;
-            if (aData)
+            if (aData && aStatus != Commissioner::TraverseStatus::kFailed)
+            {
                 collectedData[aAddr] = *aData;
-            return;
+            }
         }
 
-        // Print symbols for fetched devices
-        char           symbol = isRouterPhase ? 'R' : 'C';
-        Console::Color color  = Console::Color::kRed;
-        if (aStatus == Commissioner::TraverseStatus::kSuccess)
-            color = Console::Color::kGreen;
-        else if (aStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
-            color = Console::Color::kYellow;
-
-        Console::WriteNoNewline(std::string(1, symbol), color);
-
-        size_t &counter = isRouterPhase ? routersFound : childrenFound;
-        counter++;
-
-        // Create chunks of 5 printed symbols for easy visualization
-        if (counter % 5 == 0)
-            Console::WriteNoNewline(" ", Console::Color::kWhite);
-
-        if (aData && aStatus != Commissioner::TraverseStatus::kFailed)
+        void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError) override
         {
-            collectedData[aAddr] = *aData;
+            if (aError != ErrorCode::kNone)
+            {
+                value = aError.ToString();
+            }
+            else if (aReport != nullptr)
+            {
+                collectedData = *aReport;
+            }
+            isFinished = true;
         }
+
+        size_t                             totalRouters    = 0;
+        size_t                             totalChildren   = 0;
+        size_t                             routersFound    = 0;
+        size_t                             childrenFound   = 0;
+        Commissioner::TraverseStatus       leaderStatus    = Commissioner::TraverseStatus::kFailed;
+        bool                               leaderResponded = false;
+        std::map<std::string, NetDiagData> collectedData;
+        std::atomic<bool>                  isFinished{false};
+        std::string                        value;
     };
-    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
-        if (aError != ErrorCode::kNone)
-        {
-            value = aError.ToString();
-        }
-        else if (aReport != nullptr)
-        {
-            collectedData = *aReport;
-        }
-        isFinished = true;
-    };
+
+    CliTraverseHandler handler;
 
     // Use a long enough timeout to allow large network traversal but prevent infinite hangs
     auto startTime = std::chrono::steady_clock::now();
@@ -253,7 +263,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         goto exit;
     }
 
-    while (!isFinished)
+    while (!handler.isFinished)
     {
         if (aInterpreter->IsCancelled())
         {
@@ -267,20 +277,22 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
 
             // Give a small grace period for cancellation to process callbacks
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            if (!isFinished)
+            if (!handler.isFinished)
             {
                 value      = "Traversal timed out";
-                isFinished = true;
+                handler.isFinished = true;
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    if (value != "")
+    if (handler.value != "")
     {
-        // An error occurred and was set by the handler
+        value = handler.value;
         goto exit;
     }
+
+    collectedData = handler.collectedData;
 
     for (const auto &pair : collectedData)
     {

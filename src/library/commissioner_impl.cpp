@@ -802,7 +802,7 @@ exit:
     }
 }
 
-Error CommissionerImpl::TraverseNetwork(TraverseHandler aHandler)
+Error CommissionerImpl::TraverseNetwork(TraverseHandler &aHandler)
 {
     if (!IsActiveOrConnected())
     {

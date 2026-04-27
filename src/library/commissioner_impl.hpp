@@ -200,7 +200,7 @@ public:
     void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagReset(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
 
-    Error TraverseNetwork(TraverseHandler aHandler) override;
+    Error TraverseNetwork(TraverseHandler &aHandler) override;
 
     Error SetToken(const ByteArray &aSignedToken) override;
 

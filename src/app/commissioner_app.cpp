@@ -440,7 +440,7 @@ exit:
     return error;
 }
 
-Error CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler aHandler)
+Error CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler)
 {
     Error error;
 

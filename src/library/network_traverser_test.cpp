@@ -109,6 +109,19 @@ public:
         void OnDiagGetAnswerMessage(const std::string &, const NetDiagData &) override {}
     } mHandler;
 
+    struct TestTraverseHandler : public Commissioner::TraverseHandler
+    {
+        std::function<void(const std::map<std::string, NetDiagData> *, Error)> mOnFinished;
+
+        void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError) override
+        {
+            if (mOnFinished)
+            {
+                mOnFinished(aReport, aError);
+            }
+        }
+    };
+
     MockCommissionerImpl mCommissioner;
     NetworkTraverser     mTraverser;
 
@@ -128,14 +141,15 @@ public:
 
 TEST_F(NetworkTraverserTest, Start_InitiatesDatasetQuery)
 {
-    EXPECT_EQ(mTraverser.Start({}), ErrorCode::kNone);
+    TestTraverseHandler handler;
+    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
     EXPECT_TRUE(mCommissioner.mGetActiveDatasetHandler != nullptr);
     EXPECT_TRUE(mTraverser.IsActive());
 }
 
 TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -218,7 +232,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
 
 TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
 {
-    Commissioner::TraverseHandler handler;
+    TestTraverseHandler handler;
     bool                          finished = false;
     Error                         finishError;
 
@@ -238,7 +252,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
 
 TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -276,7 +290,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
     // Should now be discovering prefix via multicast
     EXPECT_EQ(queryCount, 1);
     EXPECT_EQ(lastQueryAddr, "ff03::2");
-    EXPECT_EQ(lastQueryFlags, NetDiagData::kMacAddrBit);
+    EXPECT_EQ(lastQueryFlags, NetDiagData::kAddrsBit);
 
     // 2. Simulate response from a router
     // The response address must contain the prefix we want to discover.
@@ -305,7 +319,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
 
 TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -386,7 +400,7 @@ TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
 
 TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -518,7 +532,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 
 TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -608,7 +622,7 @@ TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
 
 TEST_F(NetworkTraverserTest, Traverse_Stop)
 {
-    Commissioner::TraverseHandler handler;
+    TestTraverseHandler handler;
     bool                          finished    = false;
     Error                         finishError = ERROR_NONE;
 
@@ -629,7 +643,7 @@ TEST_F(NetworkTraverserTest, Traverse_Stop)
 
 TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
 {
-    Commissioner::TraverseHandler handler;
+    TestTraverseHandler handler;
     bool                          finished    = false;
     Error                         finishError = ERROR_NONE;
 
@@ -669,15 +683,23 @@ TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
     // Retry 4 -> Max Retries Exceeded on Chunk 0 (ID)
     // Should give up on this node.
     // Since it is Leader, and we haven't found it, traverse should fail.
-    TriggerTimeout();
+    TriggerTimeout(); // This triggers fallback to Route64 discovery
+    EXPECT_EQ(queryCount, 5);
 
+    // Fallback also needs to timeout
+    TriggerTimeout(); // Fallback Retry 1
+    TriggerTimeout(); // Fallback Retry 2
+    TriggerTimeout(); // Fallback Retry 3
+    TriggerTimeout(); // Fallback gives up
+
+    EXPECT_EQ(queryCount, 8);
     EXPECT_TRUE(finished);
-    EXPECT_EQ(finishError.GetCode(), ErrorCode::kNotFound); // "Leader not found"
+    EXPECT_EQ(finishError.GetCode(), ErrorCode::kNotFound);
 }
 
 TEST_F(NetworkTraverserTest, Traverse_Timeout_Skip_Chunk)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler handler;
     bool                               finished    = false;
     Error                              finishError = ERROR_NONE;
     std::map<std::string, NetDiagData> resultReport;
