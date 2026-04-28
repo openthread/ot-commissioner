@@ -197,6 +197,7 @@ Interpreter::NetworkSelectionComparator::~NetworkSelectionComparator()
 }
 
 const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap =
+
     *new std::map<std::string, Evaluator>{{"config", &Interpreter::ProcessConfig},
                                           {"start", &Interpreter::ProcessStart},
                                           {"stop", &Interpreter::ProcessStop},
@@ -223,7 +224,7 @@ const std::map<std::string, Interpreter::Evaluator> &Interpreter::mEvaluatorMap 
                                           {"help", &Interpreter::ProcessHelp},
                                           {"state", &Interpreter::ProcessState},
                                           {"netdiag", &Interpreter::ProcessNetworkDiag},
-                                          {"traversenetwork", &Interpreter::ProcessTraverseNetwork}};
+                                          {"traverse", &Interpreter::ProcessTraverseNetwork}};
 
 const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map<std::string, std::string>{
     {"config", "config get admincode\n"
@@ -303,7 +304,7 @@ const std::map<std::string, std::string> &Interpreter::mUsageMap = *new std::map
                "energy report [<dst-addr>]"},
     {"netdiag", "netdiag query [extaddr | rloc16] <dest mesh local address>\n"
                 "netdiag reset maccounters <dest mesh local address>"},
-    {"traversenetwork", "traversenetwork [ --json <filename> ]"},
+    {"traverse", "traverse [ --json <filename> ]"},
     {"exit", "exit"},
     {"quit", "quit\n"
              "(an alias to 'exit' command)"},
@@ -1152,7 +1153,7 @@ exit:
 Interpreter::Value Interpreter::ProcessStopJob(CommissionerAppPtr &aCommissioner, const Expression &)
 {
     aCommissioner->Stop();
-    return Value(ERROR_NONE);
+    return ERROR_NONE;
 }
 
 Interpreter::Value Interpreter::ProcessActive(const Expression &aExpr)
@@ -2725,7 +2726,7 @@ Interpreter::Value Interpreter::ProcessExit(const Expression &)
 
     mShouldExit = true;
 
-    return Value(ERROR_NONE);
+    return ERROR_NONE;
 }
 
 Interpreter::Value Interpreter::ProcessHelp(const Expression &aExpr)

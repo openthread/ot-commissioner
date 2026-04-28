@@ -106,10 +106,10 @@ private:
         Value() = default;
 
         // Allow implicit conversion from std::string to Value.
-        explicit Value(std::string aData);
+        Value(std::string aData);
 
         // Allow implicit conversion from Error to Value.
-        explicit Value(Error aError);
+        Value(Error aError);
 
         Value &operator=(const std::string &aData);
         Value &operator=(const Error &aError);

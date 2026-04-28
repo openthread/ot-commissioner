@@ -43,17 +43,7 @@
 #include <commissioner/network_diag_data.hpp>
 #include <commissioner/commissioner.hpp>
 
-namespace ot {
-namespace commissioner {
-    struct TraverseListener {
-        virtual ~TraverseListener() = default;
-        virtual void OnTotalRoutersCount(size_t aRouterCount) = 0;
-        virtual void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Commissioner::TraverseStatus aStatus) = 0;
-        virtual void OnTotalChildrenCount(size_t aChildCount) = 0;
-        virtual void OnFinished(const std::map<std::string, NetDiagData> *Report, Error aError) = 0;
-    };
-}
-}
+
 %}
 
 %include <std_shared_ptr.i>
@@ -115,7 +105,7 @@ namespace commissioner {
 
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
-%feature("director") ot::commissioner::TraverseListener;
+%feature("director") ot::commissioner::Commissioner::TraverseHandler;
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
 %template(NetDiagDataMap) std::map<std::string, ot::commissioner::NetDiagData>;
@@ -202,9 +192,7 @@ namespace commissioner {
     %ignore Commissioner::CommandDiagReset(ErrorHandler          aHandler,
                                            const std::string    &aAddr,
                                            uint64_t              aDiagDataFlags);
-    %ignore Commissioner::TraverseNetwork(TraverseHandler &aHandler);
 
-    %ignore Commissioner::TraverseHandler;
 
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
@@ -229,52 +217,4 @@ namespace commissioner {
 
 
 
-namespace ot {
-namespace commissioner {
-    struct TraverseListener {
-        virtual ~TraverseListener() = default;
-        virtual void OnTotalRoutersCount(size_t aRouterCount) = 0;
-        virtual void OnDeviceResponded(const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus) = 0;
-        virtual void OnTotalChildrenCount(size_t aChildCount) = 0;
-        virtual void OnFinished(const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError) = 0;
-    };
-}
-}
 
-namespace ot {
-namespace commissioner {
-    %extend Commissioner {
-        void TraverseNetwork(ot::commissioner::TraverseListener *aListener) {
-            class JavaTraverseHandler : public ot::commissioner::Commissioner::TraverseHandler {
-            public:
-                JavaTraverseHandler(ot::commissioner::TraverseListener *aListener) : mListener(aListener) {}
-
-                void OnTotalRoutersCount(size_t aRouterCount) override {
-                    if (mListener) mListener->OnTotalRoutersCount(aRouterCount);
-                }
-                void OnDeviceResponded(const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus) override {
-                    if (mListener) mListener->OnDeviceResponded(aAddr, aData, aStatus);
-                }
-                void OnTotalChildrenCount(size_t aChildCount) override {
-                    if (mListener) mListener->OnTotalChildrenCount(aChildCount);
-                }
-                void OnFinished(const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError) override {
-                    if (mListener) mListener->OnFinished(aReport, aError);
-                }
-
-            private:
-                ot::commissioner::TraverseListener *mListener;
-            };
-
-            if (aListener == nullptr) {
-                ot::commissioner::Commissioner::TraverseHandler defaultHandler;
-                $self->TraverseNetwork(defaultHandler);
-                return;
-            }
-
-            JavaTraverseHandler handler(aListener);
-            $self->TraverseNetwork(handler);
-        }
-    }
-}
-}
