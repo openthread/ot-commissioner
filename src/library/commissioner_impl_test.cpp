@@ -656,7 +656,7 @@ TEST(NetDiagDataTest, Decode_AnswerAndQueryId)
     EXPECT_EQ(data.mAnswer.mIndex, 1);
 
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
-    EXPECT_EQ(data.mQueryId.mQueryId, 0x1234);
+    EXPECT_EQ(data.mQueryId, 0x1234);
 }
 
 } // namespace commissioner
@@ -790,7 +790,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse)
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
-    EXPECT_EQ(data.mQueryId.mQueryId, 123);
+    EXPECT_EQ(data.mQueryId, 123);
     EXPECT_EQ(data.mChannelPages.size(), 1);
     EXPECT_EQ(data.mChannelPages[0], 0xFF);
 
@@ -824,7 +824,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQuer
     // Verify data
     const NetDiagData &data = mHandler.mParams[0].mDiagData;
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
-    EXPECT_EQ(data.mQueryId.mQueryId, 123);
+    EXPECT_EQ(data.mQueryId, 123);
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
     EXPECT_EQ(data.mChannelPages[0], 0xFF);
 
@@ -856,7 +856,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQuer
     // Verify data
     const NetDiagData &data = mHandler.mParams[0].mDiagData;
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
-    EXPECT_EQ(data.mQueryId.mQueryId, 456);
+    EXPECT_EQ(data.mQueryId, 456);
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
     EXPECT_TRUE(data.mAnswer.mIsLast);
     EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
@@ -944,7 +944,7 @@ TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFra
         EXPECT_EQ(mHandler.mParams[0].mPeerAddr, endpoint.GetPeerAddr().ToString());
 
         const NetDiagData &data = mHandler.mParams[0].mDiagData;
-        EXPECT_EQ(data.mQueryId.mQueryId, queryId);
+        EXPECT_EQ(data.mQueryId, queryId);
         EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
         EXPECT_TRUE(data.mAnswer.mIsLast);
 

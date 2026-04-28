@@ -214,6 +214,7 @@ public:
     uint16_t GetTotalLength() const;
 
     // It is the caller that make sure the tlv is valid.
+    bool             IsStable() const;
     int8_t           GetValueAsInt8() const;
     uint16_t         GetValueAsUint8() const;
     uint16_t         GetValueAsUint16() const;
@@ -224,6 +225,7 @@ public:
 private:
     Scope     mScope = Scope::kMeshCoP;
     Type      mType;
+    bool      mIsStable = false;
     ByteArray mValue;
 };
 

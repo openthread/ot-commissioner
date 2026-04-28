@@ -52,6 +52,8 @@ public:
                                                  const Interpreter::Expression &aExpr,
                                                  const std::string             &aJsonFile = "",
                                                  std::chrono::milliseconds      aTimeout  = std::chrono::seconds(120));
+
+    static void PrintNetworkData(const std::map<std::string, NetDiagData> &aCapturedData);
 };
 
 } // namespace commissioner

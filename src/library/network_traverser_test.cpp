@@ -109,6 +109,19 @@ public:
         void OnDiagGetAnswerMessage(const std::string &, const NetDiagData &) override {}
     } mHandler;
 
+    struct TestTraverseHandler : public Commissioner::TraverseHandler
+    {
+        std::function<void(const std::map<std::string, NetDiagData> *, Error)> mOnFinished;
+
+        void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError) override
+        {
+            if (mOnFinished)
+            {
+                mOnFinished(aReport, aError);
+            }
+        }
+    };
+
     MockCommissionerImpl mCommissioner;
     NetworkTraverser     mTraverser;
 
@@ -119,18 +132,21 @@ public:
     }
 
     void TriggerTimeout() { mTraverser.HandleTimer(mTraverser.mRequestTimeoutTimer); }
+
+    void SetIgnoreMeshLocalPrefixForTest(bool aIgnore) { mTraverser.mIgnoreMeshLocalPrefixForTest = aIgnore; }
 };
 
 TEST_F(NetworkTraverserTest, Start_InitiatesDatasetQuery)
 {
-    EXPECT_EQ(mTraverser.Start({}), ErrorCode::kNone);
+    TestTraverseHandler handler;
+    mTraverser.Start(handler);
     EXPECT_TRUE(mCommissioner.mGetActiveDatasetHandler != nullptr);
     EXPECT_TRUE(mTraverser.IsActive());
 }
 
 TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -144,7 +160,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // 1. Return Active Dataset (Mesh Local Prefix)
     ActiveOperationalDataset dataset;
@@ -189,8 +205,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
     EXPECT_EQ(queryCount, 2); // Next chunk
 
     // Simulate remaining chunks
-    // kLeaderChunks has 10 chunks. We did 1. 9 more.
-    for (int i = 1; i < 10; ++i)
+    for (size_t i = 1; i < NetworkTraverser::GetLeaderChunkCount(); ++i)
     {
         NetDiagData chunk;
         chunk.mPresentFlags = lastQueryFlags;
@@ -199,7 +214,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
             chunk.mLeaderData.mRouterId = 63; // Leader ID
         }
         SimulateDiagAnswer(lastQueryAddr, chunk);
-        if (i < 9)
+        if (i < NetworkTraverser::GetLeaderChunkCount() - 1)
         {
             EXPECT_EQ(queryCount, 2 + i);
         }
@@ -214,16 +229,16 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_LeaderOnly)
 
 TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
 {
-    Commissioner::TraverseHandler handler;
-    bool                          finished = false;
-    Error                         finishError;
+    TestTraverseHandler handler;
+    bool                finished = false;
+    Error               finishError;
 
     handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *, Error aError) {
         finished    = true;
         finishError = aError;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // Fail dataset
     mCommissioner.mGetActiveDatasetHandler(nullptr, ERROR_NOT_FOUND("Simulated failure"));
@@ -232,9 +247,9 @@ TEST_F(NetworkTraverserTest, Traverse_Fail_ActiveDataset)
     EXPECT_EQ(finishError, ErrorCode::kNotFound);
 }
 
-TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
+TEST_F(NetworkTraverserTest, Traverse_Fallback_Prefix_Discovery)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -248,7 +263,155 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    SetIgnoreMeshLocalPrefixForTest(true);
+
+    mTraverser.Start(handler);
+
+    // 1. Return Active Dataset with prefix (should be ignored)
+    ActiveOperationalDataset dataset;
+    dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
+
+    std::string lastQueryAddr;
+    uint64_t    lastQueryFlags;
+    int         queryCount = 0;
+
+    mCommissioner.mCommandDiagGetQueryCallback = [&](Commissioner::ErrorHandler, const std::string &aAddr,
+                                                     uint64_t aFlags) {
+        lastQueryAddr  = aAddr;
+        lastQueryFlags = aFlags;
+        queryCount++;
+    };
+
+    mCommissioner.mGetActiveDatasetHandler(&dataset, ERROR_NONE);
+
+    // Should now be discovering prefix via multicast
+    EXPECT_EQ(queryCount, 1);
+    EXPECT_EQ(lastQueryAddr, "ff03::2");
+    EXPECT_EQ(lastQueryFlags, NetDiagData::kAddrsBit);
+
+    // 2. Simulate response from a router
+    // The response address must contain the prefix we want to discover.
+    std::string responderAddr = "fd00:0000:0000:0002:0000:00ff:fe00:0400";
+    NetDiagData chunk0;
+    chunk0.mPresentFlags = NetDiagData::kMacAddrBit;
+    chunk0.mMacAddr      = 0x0400;
+
+    SimulateDiagAnswer(responderAddr, chunk0);
+
+    // After discovering prefix, it should proceed to query Leader.
+    EXPECT_EQ(queryCount, 2);
+    EXPECT_NE(lastQueryAddr.find("fc00"), std::string::npos);
+
+    Address leaderAddr;
+    EXPECT_EQ(leaderAddr.Set(lastQueryAddr), ErrorCode::kNone);
+    auto raw = leaderAddr.GetRaw();
+    ASSERT_EQ(raw.size(), 16);
+    EXPECT_EQ(raw[0], 0xfd);
+    EXPECT_EQ(raw[7], 0x02);
+
+    // Force finish to avoid running full flow
+    mTraverser.Stop();
+    EXPECT_TRUE(finished);
+}
+
+TEST_F(NetworkTraverserTest, Traverse_Fallback_Route64_Discovery)
+{
+    TestTraverseHandler                handler;
+    bool                               finished = false;
+    Error                              finishError;
+    std::map<std::string, NetDiagData> resultReport;
+
+    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
+        finished    = true;
+        finishError = aError;
+        if (aReport)
+        {
+            resultReport = *aReport;
+        }
+    };
+
+    mTraverser.Start(handler);
+
+    // 1. Return Active Dataset
+    ActiveOperationalDataset dataset;
+    dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
+
+    std::string lastQueryAddr;
+    uint64_t    lastQueryFlags;
+    int         queryCount = 0;
+
+    mCommissioner.mCommandDiagGetQueryCallback = [&](Commissioner::ErrorHandler, const std::string &aAddr,
+                                                     uint64_t aFlags) {
+        lastQueryAddr  = aAddr;
+        lastQueryFlags = aFlags;
+        queryCount++;
+    };
+
+    mCommissioner.mGetActiveDatasetHandler(&dataset, ERROR_NONE);
+
+    // Should now be querying Leader (ALOC)
+    EXPECT_EQ(queryCount, 1);
+    EXPECT_NE(lastQueryAddr.find("fc00"), std::string::npos);
+
+    // We need to simulate answers for ALL leader chunks to trigger FinalizeNode()
+    int leaderChunkCount = NetworkTraverser::GetLeaderChunkCount();
+
+    for (int i = 0; i < leaderChunkCount; ++i)
+    {
+        NetDiagData chunk;
+        if (i == 0)
+        {
+            chunk.mPresentFlags = NetDiagData::kMacAddrBit; // Missing Route64
+            chunk.mMacAddr      = 0xFC00;
+        }
+        else
+        {
+            chunk.mPresentFlags = lastQueryFlags; // Echo flags to pass filter
+        }
+        SimulateDiagAnswer(lastQueryAddr, chunk);
+    }
+
+    // Should now be in Fallback Route64 Discovery querying ff03::2
+    EXPECT_EQ(queryCount, 1 + leaderChunkCount);
+    EXPECT_EQ(lastQueryAddr, "ff03::2");
+    EXPECT_EQ(lastQueryFlags, NetDiagData::kRoute64Bit);
+
+    // 3. Simulate response from a router with Route64
+    std::string responderAddr = "fd00:0000:0000:0001:0000:00ff:fe00:0400";
+    NetDiagData routeData;
+    routeData.mPresentFlags = NetDiagData::kRoute64Bit;
+    routeData.mRoute64.mMask.assign(9, 0);
+    routeData.mRoute64.mMask[0] |= (1 << 6); // Router ID 1 (RLOC 0x0400)
+
+    SimulateDiagAnswer(responderAddr, routeData);
+
+    // After discovering Route64, it should proceed to query routers.
+    // Router ID 1 RLOC16 = 0x0400.
+    EXPECT_EQ(queryCount, 2 + leaderChunkCount);
+    EXPECT_TRUE(lastQueryAddr.find(":400") != std::string::npos || lastQueryAddr.find(":0400") != std::string::npos);
+
+    // Force finish to avoid running full flow
+    mTraverser.Stop();
+    EXPECT_TRUE(finished);
+}
+
+TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
+{
+    TestTraverseHandler                handler;
+    bool                               finished = false;
+    Error                              finishError;
+    std::map<std::string, NetDiagData> resultReport;
+
+    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
+        finished    = true;
+        finishError = aError;
+        if (aReport)
+        {
+            resultReport = *aReport;
+        }
+    };
+
+    mTraverser.Start(handler);
 
     // 1. Active Dataset
     ActiveOperationalDataset dataset;
@@ -295,7 +458,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
     EXPECT_NE(lastQueryAddr.find("fc00"), std::string::npos);
 
     // Feed Leader Chunks
-    for (int i = 0; i < 10; ++i)
+    for (size_t i = 0; i < NetworkTraverser::GetLeaderChunkCount(); ++i)
     {
         NetDiagData chunk;
         if (i == 0)
@@ -328,8 +491,8 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
     routerData.mMacAddr      = 0x0400;
     // Router has no children for simplicity.
 
-    // Feed Router Chunks (8 chunks)
-    for (int i = 0; i < 8; ++i)
+    // Feed Router Chunks
+    for (size_t i = 0; i < NetworkTraverser::GetRouterChunkCount(); ++i)
     {
         NetDiagData chunk;
         if (i == 0)
@@ -340,9 +503,6 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 
     // 4. Child Query
     // After Router, it should query Children.
-    // Known children: Child ID 2 from Leader.
-    // RLOC16: Leader RLOC (0xFC00) | Child ID (2) = 0xFC02.
-    // Addr: ...fc02
 
     EXPECT_NE(lastQueryAddr.find("fc02"), std::string::npos);
 
@@ -351,8 +511,8 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
     childData.mPresentFlags = NetDiagData::kMacAddrBit;
     childData.mMacAddr      = 0xFC02;
 
-    // Feed Child Chunks (5 chunks)
-    for (int i = 0; i < 5; ++i)
+    // Feed Child Chunks
+    for (size_t i = 0; i < NetworkTraverser::GetChildChunkCount(); ++i)
     {
         NetDiagData chunk;
         if (i == 0)
@@ -369,7 +529,7 @@ TEST_F(NetworkTraverserTest, Traverse_Flow_RoutersAndChildren)
 
 TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler                handler;
     bool                               finished = false;
     Error                              finishError;
     std::map<std::string, NetDiagData> resultReport;
@@ -383,7 +543,7 @@ TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
         }
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     ActiveOperationalDataset dataset;
     dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
@@ -459,16 +619,16 @@ TEST_F(NetworkTraverserTest, Diff_Chunks_Merged)
 
 TEST_F(NetworkTraverserTest, Traverse_Stop)
 {
-    Commissioner::TraverseHandler handler;
-    bool                          finished    = false;
-    Error                         finishError = ERROR_NONE;
+    TestTraverseHandler handler;
+    bool                finished    = false;
+    Error               finishError = ERROR_NONE;
 
     handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *, Error aError) {
         finished    = true;
         finishError = aError;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
     EXPECT_TRUE(mTraverser.IsActive());
 
     mTraverser.Stop();
@@ -480,16 +640,16 @@ TEST_F(NetworkTraverserTest, Traverse_Stop)
 
 TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
 {
-    Commissioner::TraverseHandler handler;
-    bool                          finished    = false;
-    Error                         finishError = ERROR_NONE;
+    TestTraverseHandler handler;
+    bool                finished    = false;
+    Error               finishError = ERROR_NONE;
 
     handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *, Error aError) {
         finished    = true;
         finishError = aError;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     // Provide Active Dataset to start querying Leader
     ActiveOperationalDataset dataset;
@@ -520,15 +680,23 @@ TEST_F(NetworkTraverserTest, Traverse_Timeout_Retry_Limit)
     // Retry 4 -> Max Retries Exceeded on Chunk 0 (ID)
     // Should give up on this node.
     // Since it is Leader, and we haven't found it, traverse should fail.
-    TriggerTimeout();
+    TriggerTimeout(); // This triggers fallback to Route64 discovery
+    EXPECT_EQ(queryCount, 5);
 
+    // Fallback also needs to timeout
+    TriggerTimeout(); // Fallback Retry 1
+    TriggerTimeout(); // Fallback Retry 2
+    TriggerTimeout(); // Fallback Retry 3
+    TriggerTimeout(); // Fallback gives up
+
+    EXPECT_EQ(queryCount, 8);
     EXPECT_TRUE(finished);
-    EXPECT_EQ(finishError.GetCode(), ErrorCode::kNotFound); // "Leader not found"
+    EXPECT_EQ(finishError.GetCode(), ErrorCode::kNotFound);
 }
 
 TEST_F(NetworkTraverserTest, Traverse_Timeout_Skip_Chunk)
 {
-    Commissioner::TraverseHandler      handler;
+    TestTraverseHandler                handler;
     bool                               finished    = false;
     Error                              finishError = ERROR_NONE;
     std::map<std::string, NetDiagData> resultReport;
@@ -540,7 +708,7 @@ TEST_F(NetworkTraverserTest, Traverse_Timeout_Skip_Chunk)
             resultReport = *aReport;
     };
 
-    EXPECT_EQ(mTraverser.Start(handler), ErrorCode::kNone);
+    mTraverser.Start(handler);
 
     ActiveOperationalDataset dataset;
     dataset.mMeshLocalPrefix = {0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};

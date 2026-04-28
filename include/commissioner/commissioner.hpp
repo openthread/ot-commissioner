@@ -568,30 +568,38 @@ public:
     /**
      * @brief Handler for network traversal events.
      */
-    struct TraverseHandler
+    class TraverseHandler
     {
+    public:
+        virtual ~TraverseHandler() = default;
+
         /**
          * @brief Called when the total number of routers is known (after collecting Leader data).
          *
          * @param[in] aRouterCount  The expected number of routers.
          */
-        std::function<void(size_t aRouterCount)> mOnTotalRoutersCount;
+        virtual void OnTotalRoutersCount(size_t aRouterCount) { (void)aRouterCount; }
 
         /**
          * @brief Called when a device (Router or Child) has responded with diagnostic data.
          *
          * @param[in] aAddr  The address of the device.
          * @param[in] aData  The collected diagnostic data.
+         * @param[in] aStatus The status of the response.
          */
-        std::function<void(const std::string &aAddr, const NetDiagData *aData, TraverseStatus aStatus)>
-            mOnDeviceResponded;
+        virtual void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, TraverseStatus aStatus)
+        {
+            (void)aAddr;
+            (void)aData;
+            (void)aStatus;
+        }
 
         /**
          * @brief Called when the total number of children is known (after querying all routers).
          *
          * @param[in] aChildCount   The expected number of children.
          */
-        std::function<void(size_t aChildCount)> mOnTotalChildrenCount;
+        virtual void OnTotalChildrenCount(size_t aChildCount) { (void)aChildCount; }
 
         /**
          * @brief Called when the traversal is finished.
@@ -599,21 +607,22 @@ public:
          * @param[in] aReport  The full traversal report.
          * @param[in] aError   The error code (if any).
          */
-        std::function<void(const std::map<std::string, NetDiagData> *aReport, Error aError)> mOnFinished;
+        virtual void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError)
+        {
+            (void)aReport;
+            (void)aError;
+        }
     };
 
     /**
      * @brief Traverse the Thread network to collect diagnostic data.
      *
      * This method discovers the leader, routers, and children in the network.
+     * All errors (including start errors) are reported through the handler.
      *
      * @param[in] aHandler  The handler for traversal events.
-     *
-     * @retval kNone           Successfully started the traversal.
-     * @retval kInvalidState   Commissioner is not active.
-     * @retval kAlready        Traversal is already in progress.
      */
-    virtual Error TraverseNetwork(TraverseHandler aHandler) = 0;
+    virtual void TraverseNetwork(TraverseHandler &aHandler) = 0;
 
     /**
      * @brief Synchronously get the Commissioner Dataset.

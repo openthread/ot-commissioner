@@ -813,8 +813,6 @@ static void to_json(Json &aJson, const Answer &aAnswer)
     aJson["IsLast"] = aAnswer.mIsLast;
 }
 
-static void to_json(Json &aJson, const QueryId &aQueryId) { aJson["QueryId"] = aQueryId.mQueryId; }
-
 static void to_json(Json &aJson, const Child &aChild)
 {
 #define SET(name) aJson[#name] = aChild.m##name;
@@ -943,6 +941,7 @@ static void to_json(Json &aJson, const HasRouteEntry &aEntry)
     SET(Rloc16);
     SET(RouterPreference);
     SET(IsNat64);
+    SET(IsStable);
 #undef SET
 }
 
@@ -959,6 +958,7 @@ static void to_json(Json &aJson, const BorderRouterEntry &aEntry)
     SET(IsOnMesh);
     SET(IsNdDns);
     SET(IsDp);
+    SET(IsStable);
 #undef SET
 }
 
@@ -980,7 +980,33 @@ static void to_json(Json &aJson, const PrefixEntry &aEntry)
     SET(HasRouteList);
     SET(BorderRouterList);
     SET(SixLowPanContext);
+    SET(IsStable);
 #undef SET
+}
+
+static void to_json(Json &aJson, const ServerEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(Rloc16);
+    aJson["ServerData"] = utils::Hex(aEntry.mServerData);
+#undef SET
+}
+
+static void to_json(Json &aJson, const ServiceEntry &aEntry)
+{
+#define SET(name) aJson[#name] = aEntry.m##name;
+    SET(Id);
+    SET(EnterpriseNumber);
+    aJson["ServiceData"] = utils::Hex(aEntry.mServiceData);
+    SET(IsStable);
+    SET(IsThread);
+#undef SET
+
+    auto &serverList = aJson["ServerList"];
+    for (const auto &entry : aEntry.mServerList)
+    {
+        serverList.push_back(entry);
+    }
 }
 
 static void to_json(Json &aJson, const NetworkData &aNetworkData)
@@ -989,6 +1015,17 @@ static void to_json(Json &aJson, const NetworkData &aNetworkData)
     for (const auto &entry : aNetworkData.mPrefixList)
     {
         prefixList.push_back(entry);
+    }
+
+    auto &serviceList = aJson["ServiceList"];
+    for (const auto &entry : aNetworkData.mServiceList)
+    {
+        serviceList.push_back(entry);
+    }
+
+    if (!aNetworkData.mRawValue.empty())
+    {
+        aJson["RawValue"] = utils::Hex(aNetworkData.mRawValue);
     }
 }
 

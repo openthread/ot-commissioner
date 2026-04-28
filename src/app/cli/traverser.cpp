@@ -154,106 +154,113 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
     std::map<std::string, NetDiagData> routers;
     std::map<std::string, NetDiagData> children;
     Error                              error;
-    std::atomic<bool>                  isFinished{false};
-
     // Call the new async-based but blocking API
     Console::Write("Starting Network Traversal...", Console::Color::kCyan);
 
-    // State for live output
-    size_t                       totalRouters    = 0;
-    size_t                       totalChildren   = 0;
-    size_t                       routersFound    = 0;
-    size_t                       childrenFound   = 0;
-    Commissioner::TraverseStatus leaderStatus    = Commissioner::TraverseStatus::kFailed;
-    bool                         leaderResponded = false;
-
     // Callback handler
-    Commissioner::TraverseHandler handler;
-    handler.mOnTotalRoutersCount = [&](size_t aCount) {
-        totalRouters = aCount;
-        Console::Write(fmt::format("{} Routers found", aCount), Console::Color::kWhite);
-
-        // Flush Leader status if we have it
-        if (leaderResponded)
+    class CliTraverseHandler : public Commissioner::TraverseHandler
+    {
+    public:
+        void OnTotalRoutersCount(size_t aCount) override
         {
-            char           symbol = 'R';
+            totalRouters = aCount;
+            Console::Write(fmt::format("{} Routers found", aCount), Console::Color::kWhite);
+
+            if (leaderResponded)
+            {
+                char           symbol = 'R';
+                Console::Color color  = Console::Color::kRed;
+                if (leaderStatus == Commissioner::TraverseStatus::kSuccess)
+                    color = Console::Color::kGreen;
+                else if (leaderStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
+                    color = Console::Color::kYellow;
+
+                Console::WriteNoNewline(std::string(1, symbol), color);
+                routersFound++;
+
+                if (routersFound % 5 == 0)
+                    Console::WriteNoNewline(" ", Console::Color::kWhite);
+            }
+        }
+
+        void OnTotalChildrenCount(size_t aCount) override
+        {
+            Console::Write("\n", Console::Color::kWhite); // End Router line
+            totalChildren = aCount;
+            Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
+        }
+
+        void OnDeviceResponded(const std::string           &aAddr,
+                               const NetDiagData           *aData,
+                               Commissioner::TraverseStatus aStatus) override
+        {
+            bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
+
+            if (totalRouters == 0)
+            {
+                // Leader
+                leaderStatus    = aStatus;
+                leaderResponded = true;
+                if (aData)
+                    collectedData[aAddr] = *aData;
+                return;
+            }
+
+            // Print symbols for fetched devices
+            char           symbol = isRouterPhase ? 'R' : 'C';
             Console::Color color  = Console::Color::kRed;
-            if (leaderStatus == Commissioner::TraverseStatus::kSuccess)
+            if (aStatus == Commissioner::TraverseStatus::kSuccess)
                 color = Console::Color::kGreen;
-            else if (leaderStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
+            else if (aStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
                 color = Console::Color::kYellow;
 
             Console::WriteNoNewline(std::string(1, symbol), color);
-            routersFound++;
 
-            if (routersFound % 5 == 0)
+            size_t &counter = isRouterPhase ? routersFound : childrenFound;
+            counter++;
+
+            // Create chunks of 5 printed symbols for easy visualization
+            if (counter % 5 == 0)
                 Console::WriteNoNewline(" ", Console::Color::kWhite);
-        }
-    };
-    handler.mOnTotalChildrenCount = [&](size_t aCount) {
-        Console::Write("\n", Console::Color::kWhite); // End Router line
-        totalChildren = aCount;
-        Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
-    };
-    handler.mOnDeviceResponded = [&](const std::string &aAddr, const NetDiagData *aData,
-                                     Commissioner::TraverseStatus aStatus) {
-        bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
 
-        if (totalRouters == 0)
-        {
-            // Leader
-            leaderStatus    = aStatus;
-            leaderResponded = true;
-            if (aData)
+            if (aData && aStatus != Commissioner::TraverseStatus::kFailed)
+            {
                 collectedData[aAddr] = *aData;
-            return;
+            }
         }
 
-        // Print symbols for fetched devices
-        char           symbol = isRouterPhase ? 'R' : 'C';
-        Console::Color color  = Console::Color::kRed;
-        if (aStatus == Commissioner::TraverseStatus::kSuccess)
-            color = Console::Color::kGreen;
-        else if (aStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
-            color = Console::Color::kYellow;
-
-        Console::WriteNoNewline(std::string(1, symbol), color);
-
-        size_t &counter = isRouterPhase ? routersFound : childrenFound;
-        counter++;
-
-        // Create chunks of 5 printed symbols for easy visualization
-        if (counter % 5 == 0)
-            Console::WriteNoNewline(" ", Console::Color::kWhite);
-
-        if (aData && aStatus != Commissioner::TraverseStatus::kFailed)
+        void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError) override
         {
-            collectedData[aAddr] = *aData;
+            if (aError != ErrorCode::kNone)
+            {
+                value = aError.ToString();
+            }
+            else if (aReport != nullptr)
+            {
+                collectedData = *aReport;
+            }
+            isFinished = true;
         }
+
+        size_t                             totalRouters    = 0;
+        size_t                             totalChildren   = 0;
+        size_t                             routersFound    = 0;
+        size_t                             childrenFound   = 0;
+        Commissioner::TraverseStatus       leaderStatus    = Commissioner::TraverseStatus::kFailed;
+        bool                               leaderResponded = false;
+        std::map<std::string, NetDiagData> collectedData;
+        std::atomic<bool>                  isFinished{false};
+        std::string                        value;
     };
-    handler.mOnFinished = [&](const std::map<std::string, NetDiagData> *aReport, Error aError) {
-        if (aError != ErrorCode::kNone)
-        {
-            value = aError.ToString();
-        }
-        else if (aReport != nullptr)
-        {
-            collectedData = *aReport;
-        }
-        isFinished = true;
-    };
+
+    CliTraverseHandler handler;
 
     // Use a long enough timeout to allow large network traversal but prevent infinite hangs
     auto startTime = std::chrono::steady_clock::now();
 
-    error = aCommissioner->TraverseNetwork(handler);
-    if (error != ErrorCode::kNone)
-    {
-        value = error.ToString();
-        goto exit;
-    }
+    aCommissioner->TraverseNetwork(handler);
 
-    while (!isFinished)
+    while (!handler.isFinished)
     {
         if (aInterpreter->IsCancelled())
         {
@@ -267,20 +274,22 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
 
             // Give a small grace period for cancellation to process callbacks
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            if (!isFinished)
+            if (!handler.isFinished)
             {
-                value      = "Traversal timed out";
-                isFinished = true;
+                value              = "Traversal timed out";
+                handler.isFinished = true;
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    if (value != "")
+    if (handler.value != "")
     {
-        // An error occurred and was set by the handler
+        value = handler.value;
         goto exit;
     }
+
+    collectedData = handler.collectedData;
 
     for (const auto &pair : collectedData)
     {
@@ -337,31 +346,68 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
 
     Console::Write("", Console::Color::kWhite);
 
-    resultStream << "\n--- Traversal Summary ---\n";
-    resultStream << "Routers:  " << routers.size() << " / " << expectedRouterCount << " (Expected)\n";
-    resultStream << "Children: " << children.size() << " / " << expectedChildCount << " (Expected)\n";
-    value = resultStream.str();
+    Console::Write("\n--- Traversal Summary ---", Console::Color::kGreen);
+    Console::Write(fmt::format("Routers:  {} / {} (Expected)", routers.size(), expectedRouterCount),
+                   Console::Color::kWhite);
+    Console::Write(fmt::format("Children: {} / {} (Expected)", children.size(), expectedChildCount),
+                   Console::Color::kWhite);
+
+    PrintNetworkData(collectedData);
+    value = "";
 
     if (!aJsonFile.empty())
     {
         Console::Write("Writing JSON to " + aJsonFile + " with " + std::to_string(collectedData.size()) + " entries\n",
                        Console::Color::kWhite);
 
-        nlohmann::json  report;
+        nlohmann::json report;
+
+        // Try to find Network Data first to put it at top level (before devices)
+        for (const auto &pair : collectedData)
+        {
+            if (pair.second.mPresentFlags & NetDiagData::kNetworkDataBit)
+            {
+                std::string jsonStr = NetDiagDataToJson(pair.second);
+                try
+                {
+                    auto jsonObj = nlohmann::json::parse(jsonStr);
+                    if (jsonObj.contains("NetworkData"))
+                    {
+                        report["NetworkData"] = jsonObj["NetworkData"];
+                        break; // Only need one
+                    }
+                } catch (const std::exception &)
+                {
+                    // Ignore parsing error here, will be caught in loop below
+                }
+            }
+        }
+
         nlohmann::json &devices = report["devices"];
 
         for (const auto &pair : collectedData)
         {
             const auto &addr = pair.first;
             const auto &data = pair.second;
+            std::string key  = addr;
+
+            if (data.mPresentFlags & NetDiagData::kEui64Bit)
+            {
+                key = utils::Hex(data.mEui64);
+            }
+            else if (data.mPresentFlags & NetDiagData::kExtMacAddrBit)
+            {
+                key = utils::Hex(data.mExtMacAddr);
+            }
 
             std::string jsonStr = NetDiagDataToJson(data);
             try
             {
-                devices[addr] = nlohmann::json::parse(jsonStr);
+                auto deviceObj = nlohmann::json::parse(jsonStr);
+                devices[key]   = deviceObj;
             } catch (const std::exception &e)
             {
-                Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", addr, e.what()), Console::Color::kRed);
+                Console::Write(fmt::format("Failed to parse JSON for {}: {}\n", key, e.what()), Console::Color::kRed);
             }
         }
 
@@ -379,6 +425,163 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
 
 exit:
     return value;
+}
+
+void Traverser::PrintNetworkData(const std::map<std::string, NetDiagData> &aCapturedData)
+{
+    Console::Write("--- Net Data ---", Console::Color::kGreen);
+
+    const NetDiagData *sourceData = nullptr;
+
+    // Find the best source for Network Data (prefer Leader/Router with Route64)
+    for (const auto &pair : aCapturedData)
+    {
+        const NetDiagData &d = pair.second;
+        if (d.mPresentFlags & NetDiagData::kNetworkDataBit)
+        {
+            if (!sourceData || (d.mPresentFlags & NetDiagData::kRoute64Bit))
+            {
+                sourceData = &d;
+                if (d.mPresentFlags & NetDiagData::kRoute64Bit)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!sourceData)
+    {
+        Console::Write("No Network Data found.\n", Console::Color::kWhite);
+        return;
+    }
+
+    const NetworkData &netData = sourceData->mNetworkData;
+
+    for (const auto &prefixEntry : netData.mPrefixList)
+    {
+        std::string prefixStr = Ipv6PrefixToString(prefixEntry.mPrefix);
+        Console::WriteNoNewline(fmt::format("Prefix {}", prefixStr), Console::Color::kWhite);
+        if (prefixEntry.mIsStable)
+        {
+            Console::Write(" [Stable]", Console::Color::kGreen);
+        }
+        else
+        {
+            Console::Write("\n", Console::Color::kWhite);
+        }
+
+        // Has Route TLV
+        for (const auto &hasRoute : prefixEntry.mHasRouteList)
+        {
+            std::string prfStr;
+            switch (hasRoute.mRouterPreference)
+            {
+            case 1:
+                prfStr = "High";
+                break;
+            case 0:
+                prfStr = "Mid";
+                break;
+            case 3:
+                prfStr = "Low";
+                break;
+            default:
+                prfStr = "Rsrv";
+                break;
+            }
+
+            Console::WriteNoNewline(fmt::format("  Has Route: RLOC 0x{:04X}, PRF {}", hasRoute.mRloc16, prfStr),
+                                    Console::Color::kWhite);
+
+            if (hasRoute.mIsNat64)
+            {
+                Console::WriteNoNewline(" [NAT64]", Console::Color::kGreen);
+            }
+            if (hasRoute.mIsStable)
+            {
+                Console::WriteNoNewline(" [Stable]", Console::Color::kGreen);
+            }
+            Console::Write("", Console::Color::kWhite); // Newline
+        }
+
+        // Border Router TLV
+        for (const auto &br : prefixEntry.mBorderRouterList)
+        {
+            std::string prfStr;
+            switch (br.mPrefixPreference)
+            {
+            case 1:
+                prfStr = "High";
+                break;
+            case 0:
+                prfStr = "Mid";
+                break;
+            case 3:
+                prfStr = "Low";
+                break;
+            default:
+                prfStr = "Rsrv";
+                break;
+            }
+
+            Console::WriteNoNewline(fmt::format("  Border Router: RLOC 0x{:04X}, PRF {}", br.mRloc16, prfStr),
+                                    Console::Color::kWhite);
+
+            auto printFlag = [](bool val, const char *name) {
+                if (val)
+                {
+                    Console::WriteNoNewline(fmt::format(" [{}]", name), Console::Color::kGreen);
+                }
+            };
+
+            printFlag(br.mIsOnMesh, "On-mesh");
+            printFlag(br.mIsDefaultRoute, "Default");
+            printFlag(br.mIsSlaac, "SLAAC");
+            printFlag(br.mIsDhcp, "DHCP");
+            printFlag(br.mIsConfigure, "Configure");
+            printFlag(br.mIsPreferred, "Preferred");
+            printFlag(br.mIsNdDns, "ND DNS");
+            printFlag(br.mIsDp, "DP");
+            printFlag(br.mIsStable, "Stable");
+
+            Console::Write("", Console::Color::kWhite); // Newline
+        }
+
+        // 6LoWPAN TLV
+        const auto &ctx = prefixEntry.mSixLowPanContext;
+        if (ctx.mIsCompress)
+        {
+            Console::Write(fmt::format("  6LoWPAN: Compress, CID {}, Len {}", ctx.mContextId, ctx.mContextLength),
+                           Console::Color::kWhite);
+        }
+    }
+
+    // Service TLVs
+    for (const auto &service : netData.mServiceList)
+    {
+        Console::WriteNoNewline(fmt::format("  Service: ID 0x{:02X}, Ent 0x{:X}, Data {}", service.mId,
+                                            service.mEnterpriseNumber, utils::Hex(service.mServiceData)),
+                                Console::Color::kWhite);
+
+        if (service.mIsThread)
+        {
+            Console::WriteNoNewline(" [Thread]", Console::Color::kGreen);
+        }
+        if (service.mIsStable)
+        {
+            Console::WriteNoNewline(" [Stable]", Console::Color::kGreen);
+        }
+        Console::Write("", Console::Color::kWhite);
+
+        for (const auto &server : service.mServerList)
+        {
+            Console::Write(
+                fmt::format("    Server: RLOC 0x{:04X}, Data {}", server.mRloc16, utils::Hex(server.mServerData)),
+                Console::Color::kWhite);
+        }
+    }
+    Console::Write("\n", Console::Color::kWhite);
 }
 
 } // namespace commissioner

@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 
 #include <map>
 #include <string>
@@ -41,6 +42,7 @@
 #include "commissioner/network_diag_data.hpp"
 #include "common/address.hpp"
 #include "common/error_macros.hpp"
+#include "common/logging.hpp"
 #include "library/commissioner_impl.hpp"
 #include "library/timer.hpp"
 
@@ -90,7 +92,7 @@ static const std::vector<uint64_t> kRouterChunks = {
 static const std::vector<uint64_t> kChildChunks = {
     NetDiagData::kMacAddrBit | NetDiagData::kExtMacAddrBit | NetDiagData::kModeBit |
         NetDiagData::kEui64Bit, // Chunk 0: ID & Mode
-    NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit | NetDiagData::kNetworkDataBit |
+    NetDiagData::kConnectivityBit | NetDiagData::kTimeoutBit | NetDiagData::kAddrsBit |
         NetDiagData::kNonPreferredChannelsMaskBit,               // Chunk 1: Connectivity & Network Data
     NetDiagData::kMleCountersBit | NetDiagData::kMacCountersBit, // Chunk 2: Counters
     NetDiagData::kBatteryLevelBit | NetDiagData::kSupplyVoltageBit | NetDiagData::kVersionBit |
@@ -106,19 +108,36 @@ NetworkTraverser::NetworkTraverser(CommissionerImpl &aImpl)
 {
 }
 
-Error NetworkTraverser::Start(Commissioner::TraverseHandler aHandler)
+void NetworkTraverser::Start(Commissioner::TraverseHandler &aHandler)
 {
     mCollectedData.clear();
     mRoutersToQuery.clear();
     mChildrenToQuery.clear();
-    mHandler = aHandler;
+    mHandler              = &aHandler;
+    mHasSharedNetworkData = false;
+
+    if (mState != State::kIdle)
+    {
+        aHandler.OnFinished(nullptr, Error{ErrorCode::kBusy, "Traversal is already in progress"});
+        return;
+    }
+
+    const char *env = std::getenv("OT_COMM_IGNORE_PREFIX_FOR_TEST");
+    if (env && std::string(env) == "1")
+    {
+        mIgnoreMeshLocalPrefixForTest = true;
+    }
+
+    env = std::getenv("OT_COMM_IGNORE_ROUTE64_FOR_TEST");
+    if (env && std::string(env) == "1")
+    {
+        mIgnoreRoute64ForTest = true;
+    }
 
     mState = State::kGettingDataset;
     mImpl.GetActiveDataset(
         [this](const ActiveOperationalDataset *aDataset, Error aError) { OnActiveDataset(aDataset, aError); },
         ActiveOperationalDataset::kMeshLocalPrefixBit);
-
-    return ERROR_NONE;
 }
 
 void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset, Error aError)
@@ -135,12 +154,38 @@ void NetworkTraverser::OnActiveDataset(const ActiveOperationalDataset *aDataset,
     }
 
     mMeshLocalPrefix = aDataset->mMeshLocalPrefix;
+
+    if (mIgnoreMeshLocalPrefixForTest)
+    {
+        mMeshLocalPrefix.clear();
+        LOG_INFO(LOG_REGION_MESHDIAG, "Ignoring Mesh Local Prefix for test purposes");
+    }
+
     if (mMeshLocalPrefix.empty())
     {
-        Finalize(ERROR_NOT_FOUND("Mesh Local Prefix not found"));
+        StartFallbackPrefixDiscovery();
         return;
     }
 
+    ProceedToQueryLeader();
+}
+
+void NetworkTraverser::StartFallbackPrefixDiscovery()
+{
+    LOG_INFO(LOG_REGION_MESHDIAG, "Mesh Local Prefix not found in dataset. Starting fallback discovery...");
+    mState = State::kFallbackPrefixDiscovery;
+
+    mCurrentQueryTarget = "ff03::2"; // Realm-local all routers
+    mPendingChunks      = {NetDiagData::kAddrsBit};
+    mCurrentChunkIndex  = 0;
+    mRetryCount         = 0;
+    mDeviceRetried      = false;
+
+    QueryChunk();
+}
+
+void NetworkTraverser::ProceedToQueryLeader()
+{
     mState = State::kQueryingLeader;
 
     const Address addr = GetMeshLocalAddress(0xfc00);
@@ -165,12 +210,12 @@ void NetworkTraverser::Stop()
     mRequestTimeoutTimer.Stop();
     mState = State::kIdle;
 
-    if (mHandler.mOnFinished)
+    if (mHandler)
     {
-        mHandler.mOnFinished(nullptr, ERROR_CANCELLED("Network traversal cancelled"));
+        mHandler->OnFinished(nullptr, ERROR_CANCELLED("Network traversal cancelled"));
     }
 
-    mHandler = {};
+    mHandler = nullptr;
 }
 
 void NetworkTraverser::QueryChunk()
@@ -210,6 +255,12 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
     }
     else
     {
+        if (mState == State::kFallbackPrefixDiscovery)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "Fallback: failed to discover Mesh Local Prefix after retries");
+            Finalize(ERROR_NOT_FOUND("Failed to discover Mesh Local Prefix via fallback"));
+            return;
+        }
         // Give up on this device or this chunk
         // If we fail on the first chunk (ID), we can't do much
         // If we fail on later chunks, we might have partial data
@@ -217,9 +268,9 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
         if (mCurrentChunkIndex == 0)
         {
             // First chunk failed, skip device.
-            if (mHandler.mOnDeviceResponded)
+            if (mHandler)
             {
-                mHandler.mOnDeviceResponded(mCurrentQueryTarget, nullptr, Commissioner::TraverseStatus::kFailed);
+                mHandler->OnDeviceResponded(mCurrentQueryTarget, nullptr, Commissioner::TraverseStatus::kFailed);
             }
             FinalizeNode();
         }
@@ -240,15 +291,102 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
         return;
     }
 
+    if (mState == State::kFallbackPrefixDiscovery)
+    {
+        LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: received diag answer from {}", aPeerAddr);
+        LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: answer contains {} addresses", aDiagAnsMsg.mAddrs.size());
+        for (const auto &addrStr : aDiagAnsMsg.mAddrs)
+        {
+            Address addr;
+            IgnoreError(addr.Set(addrStr));
+            auto annotation = addr.GetTypeAnnotation(mMeshLocalPrefix);
+            LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: reported address {}{}", addrStr,
+                     annotation.empty() ? "" : " [" + annotation + "]");
+        }
+
+        // Try to find an RLOC address in the reported list of addresses.
+        // We look for an address with the RLOC/ALOC Interface Identifier pattern (0000:00ff:fe00:XXXX)
+        // to reliably identify the Mesh-Local prefix. We cannot simply look for any ULA prefix
+        // (starting with fd or fc) because the node might also have on-mesh ULA prefixes assigned
+        // for external communication, which would lead to extracting the wrong prefix.
+        for (const auto &addrStr : aDiagAnsMsg.mAddrs)
+        {
+            Address addr;
+            Error   err = addr.Set(addrStr);
+            if (err == ErrorCode::kNone && addr.IsIpv6())
+            {
+                auto raw = addr.GetRaw();
+                if (raw.size() >= 16)
+                {
+                    // Check for RLOC IID pattern: 0000:00ff:fe00:XXXX
+                    if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 && raw[11] == 0xff && raw[12] == 0xfe &&
+                        raw[13] == 0x00)
+                    {
+                        mMeshLocalPrefix = ByteArray(raw.begin(), raw.begin() + 8);
+                        auto annotation  = addr.GetTypeAnnotation(mMeshLocalPrefix);
+                        LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from RLOC address {}{}: {}",
+                                 addrStr, annotation.empty() ? "" : " [" + annotation + "]",
+                                 utils::Hex(mMeshLocalPrefix));
+
+                        mRequestTimeoutTimer.Stop();
+                        ProceedToQueryLeader();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // If no RLOC address found in the reported list, check if the source address of the response
+        // is an RLOC and use its prefix if so.
+        Address addr;
+        if (addr.Set(aPeerAddr) == ErrorCode::kNone && addr.IsIpv6())
+        {
+            auto raw = addr.GetRaw();
+            if (raw.size() >= 16)
+            {
+                if (raw[8] == 0x00 && raw[9] == 0x00 && raw[10] == 0x00 && raw[11] == 0xff && raw[12] == 0xfe &&
+                    raw[13] == 0x00)
+                {
+                    mMeshLocalPrefix = ByteArray(raw.begin(), raw.begin() + 8);
+                    auto annotation  = addr.GetTypeAnnotation(mMeshLocalPrefix);
+                    LOG_INFO(LOG_REGION_MESHDIAG, "Discovered Mesh Local Prefix from source RLOC {}{}: {}", aPeerAddr,
+                             annotation.empty() ? "" : " [" + annotation + "]", utils::Hex(mMeshLocalPrefix));
+
+                    mRequestTimeoutTimer.Stop();
+                    ProceedToQueryLeader();
+                    return;
+                }
+            }
+        }
+
+        LOG_INFO(LOG_REGION_MESHDIAG, "Fallback: no RLOC address found in this response");
+        return;
+    }
+
     // Check if this answer matches what we are looking for.
     // Here we can check if it contains ANY of requested flags in current chunk.
 
     if (mCurrentChunkIndex >= mPendingChunks.size())
     {
+        LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Received answer but no pending chunks");
         return;
     }
 
     uint64_t requested = mPendingChunks[mCurrentChunkIndex];
+
+    if (requested & NetDiagData::kNetworkDataBit)
+    {
+        LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Expecting Network Data. Recv Flags: 0x{:X}",
+                 aDiagAnsMsg.mPresentFlags);
+        if (aDiagAnsMsg.mPresentFlags & NetDiagData::kNetworkDataBit)
+        {
+            LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Network Data RECEIVED!");
+        }
+        else
+        {
+            LOG_INFO(LOG_REGION_MESHDIAG, "OnDiagGetAnswer: Network Data MISSING in response.");
+        }
+    }
     if ((aDiagAnsMsg.mPresentFlags & requested) == 0)
     {
         return;
@@ -284,6 +422,12 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
         mCollectedData[addr] = aDiagAnsMsg;
     }
 
+    if (aDiagAnsMsg.mPresentFlags & NetDiagData::kNetworkDataBit)
+    {
+        mSharedNetworkData    = aDiagAnsMsg.mNetworkData;
+        mHasSharedNetworkData = true;
+    }
+
     // Stop timer and next chunk
     mRequestTimeoutTimer.Stop();
     mRetryCount = 0;
@@ -292,11 +436,17 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
     if (mCurrentChunkIndex >= mPendingChunks.size())
     {
         // Device fully queried
-        if (mHandler.mOnDeviceResponded)
+        if (mHasSharedNetworkData && !(mCollectedData[addr].mPresentFlags & NetDiagData::kNetworkDataBit))
+        {
+            mCollectedData[addr].mNetworkData = mSharedNetworkData;
+            mCollectedData[addr].mPresentFlags |= NetDiagData::kNetworkDataBit;
+        }
+
+        if (mHandler)
         {
             auto status = mDeviceRetried ? Commissioner::TraverseStatus::kSuccessWithRetry
                                          : Commissioner::TraverseStatus::kSuccess;
-            mHandler.mOnDeviceResponded(addr.ToString(), &mCollectedData[addr], status);
+            mHandler->OnDeviceResponded(addr.ToString(), &mCollectedData[addr], status);
         }
     }
 
@@ -325,9 +475,19 @@ void NetworkTraverser::FinalizeNode()
             }
         }
 
-        if (!foundLeader)
+        if (!foundLeader || !(leaderData.mPresentFlags & NetDiagData::kRoute64Bit) || mIgnoreRoute64ForTest)
         {
-            Finalize(ERROR_NOT_FOUND("Leader not found"));
+            LOG_WARN(LOG_REGION_MESHDIAG,
+                     "Leader failed to provide Route64. Trying multicast fallback to all routers...");
+
+            mState              = State::kFallbackRoute64Discovery;
+            mCurrentQueryTarget = "ff03::2"; // Realm-local all routers
+            mPendingChunks      = {NetDiagData::kRoute64Bit};
+            mCurrentChunkIndex  = 0;
+            mRetryCount         = 0;
+            mDeviceRetried      = false;
+
+            QueryChunk();
             return;
         }
 
@@ -358,9 +518,9 @@ void NetworkTraverser::FinalizeNode()
             }
         }
 
-        if (mHandler.mOnTotalRoutersCount)
+        if (mHandler)
         {
-            mHandler.mOnTotalRoutersCount(mRoutersToQuery.size() + 1); // +1 for Leader
+            mHandler->OnTotalRoutersCount(mRoutersToQuery.size() + 1); // +1 for Leader
         }
 
         // Add leader's children
@@ -374,6 +534,50 @@ void NetworkTraverser::FinalizeNode()
 
         mState = State::kQueryingRouters;
         FinalizeNode(); // Recurse to start router querying (or finding next router)
+    }
+    else if (mState == State::kFallbackRoute64Discovery)
+    {
+        bool        foundRoute64 = false;
+        NetDiagData routeData;
+
+        for (const auto &pair : mCollectedData)
+        {
+            if (pair.second.mPresentFlags & NetDiagData::kRoute64Bit)
+            {
+                routeData    = pair.second;
+                foundRoute64 = true;
+                break;
+            }
+        }
+
+        if (!foundRoute64)
+        {
+            Finalize(ERROR_NOT_FOUND("Failed to discover Route64 from any router"));
+            return;
+        }
+
+        // Parse Route64 and proceed to query routers
+        Route64 route64 = routeData.mRoute64;
+
+        for (uint8_t routerId = 0; routerId < 64; ++routerId)
+        {
+            uint8_t byteIdx = routerId / 8;
+            uint8_t bitIdx  = 7 - (routerId % 8);
+
+            if (byteIdx < route64.mMask.size() && (route64.mMask[byteIdx] & (1 << bitIdx)))
+            {
+                uint16_t rloc16 = static_cast<uint16_t>(routerId) << 10;
+                mRoutersToQuery.insert(rloc16);
+            }
+        }
+
+        if (mHandler)
+        {
+            mHandler->OnTotalRoutersCount(mRoutersToQuery.size());
+        }
+
+        mState = State::kQueryingRouters;
+        FinalizeNode();
     }
     else if (mState == State::kQueryingRouters)
     {
@@ -401,9 +605,9 @@ void NetworkTraverser::FinalizeNode()
         if (mRoutersToQuery.empty())
         {
             mState = State::kQueryingChildren;
-            if (mHandler.mOnTotalChildrenCount)
+            if (mHandler)
             {
-                mHandler.mOnTotalChildrenCount(mChildrenToQuery.size());
+                mHandler->OnTotalChildrenCount(mChildrenToQuery.size());
             }
             FinalizeNode();
             return;
@@ -461,14 +665,14 @@ void NetworkTraverser::FinalizeNode()
 void NetworkTraverser::Finalize(Error aError)
 {
     mState = State::kIdle;
-    if (mHandler.mOnFinished)
+    if (mHandler)
     {
         std::map<std::string, NetDiagData> report;
         for (const auto &pair : mCollectedData)
         {
             report[pair.first.ToString()] = pair.second;
         }
-        mHandler.mOnFinished(&report, aError);
+        mHandler->OnFinished(&report, aError);
     }
 }
 
@@ -494,6 +698,12 @@ Address NetworkTraverser::GetMeshLocalAddress(uint16_t aRloc16) const
     static_cast<void>(addr.Set(addrBytes));
     return addr;
 }
+
+size_t NetworkTraverser::GetLeaderChunkCount() { return kLeaderChunks.size(); }
+
+size_t NetworkTraverser::GetRouterChunkCount() { return kRouterChunks.size(); }
+
+size_t NetworkTraverser::GetChildChunkCount() { return kChildChunks.size(); }
 
 } // namespace commissioner
 } // namespace ot

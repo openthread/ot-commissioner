@@ -70,10 +70,14 @@ public:
 
     explicit NetworkTraverser(CommissionerImpl &aImpl);
 
-    Error Start(Commissioner::TraverseHandler aHandler);
-    void  Stop();
+    void Start(Commissioner::TraverseHandler &aHandler);
+    void Stop();
 
     bool IsActive() const { return mState != State::kIdle; }
+
+    static size_t GetLeaderChunkCount();
+    static size_t GetRouterChunkCount();
+    static size_t GetChildChunkCount();
 
 private:
     friend class CommissionerImpl;
@@ -86,12 +90,27 @@ private:
     {
         kIdle,
         kGettingDataset,
+        kFallbackPrefixDiscovery,
+        kFallbackRoute64Discovery,
         kQueryingLeader,
         kQueryingRouters,
         kQueryingChildren,
     };
 
     void HandleTimer(Timer &aTimer);
+
+    /**
+     * @brief Starts the fallback mode to discover Mesh Local Prefix.
+     *
+     * This sends a multicast DIAG_GET.qry to all routers to learn the prefix
+     * from the source address of the response.
+     */
+    void StartFallbackPrefixDiscovery();
+
+    /**
+     * @brief Proceeds to query the leader after obtaining the prefix.
+     */
+    void ProceedToQueryLeader();
     void FinalizeNode();
     void Finalize(Error aError);
 
@@ -102,11 +121,16 @@ private:
 
     Address GetMeshLocalAddress(uint16_t aRloc16) const;
 
-    CommissionerImpl             &mImpl;
-    Timer                         mRequestTimeoutTimer;
-    Commissioner::TraverseHandler mHandler;
-    State                         mState;
-    ByteArray                     mMeshLocalPrefix;
+    CommissionerImpl              &mImpl;
+    Timer                          mRequestTimeoutTimer;
+    Commissioner::TraverseHandler *mHandler = nullptr;
+    State                          mState;
+    ByteArray                      mMeshLocalPrefix;
+    bool                           mIgnoreMeshLocalPrefixForTest = false;
+    bool                           mIgnoreRoute64ForTest         = false;
+
+    NetworkData mSharedNetworkData;
+    bool        mHasSharedNetworkData = false;
 
     std::map<Address, NetDiagData> mCollectedData;
 

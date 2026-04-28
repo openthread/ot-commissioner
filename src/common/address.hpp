@@ -81,6 +81,14 @@ public:
      */
     std::string ToString() const;
 
+    /**
+     * Returns a short string annotation of the address type (e.g. "(ULA)", "(LL)", "(ML)").
+     *
+     * @param aMeshLocalPrefix The mesh-local prefix to identify Mesh-Local addresses.
+     * @return The annotation string, or empty string if unknown or not applicable.
+     */
+    std::string GetTypeAnnotation(const ByteArray &aMeshLocalPrefix = {}) const;
+
     // Invalid address string is not acceptable.
     // For only unittests.
     static Address FromString(const std::string &aAddr);

@@ -202,7 +202,7 @@ namespace commissioner {
     %ignore Commissioner::CommandDiagReset(ErrorHandler          aHandler,
                                            const std::string    &aAddr,
                                            uint64_t              aDiagDataFlags);
-    %ignore Commissioner::TraverseNetwork(TraverseHandler aHandler);
+    %ignore Commissioner::TraverseNetwork(TraverseHandler &aHandler);
 
     %ignore Commissioner::TraverseHandler;
 
@@ -244,23 +244,36 @@ namespace commissioner {
 namespace ot {
 namespace commissioner {
     %extend Commissioner {
-        Error TraverseNetwork(ot::commissioner::TraverseListener *aListener) {
-            ot::commissioner::Commissioner::TraverseHandler handler;
-            if (aListener != nullptr) {
-                handler.mOnTotalRoutersCount = [aListener](size_t aRouterCount) {
-                    aListener->OnTotalRoutersCount(aRouterCount);
-                };
-                handler.mOnDeviceResponded = [aListener](const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus) {
-                    aListener->OnDeviceResponded(aAddr, aData, aStatus);
-                };
-                handler.mOnTotalChildrenCount = [aListener](size_t aChildCount) {
-                    aListener->OnTotalChildrenCount(aChildCount);
-                };
-                handler.mOnFinished = [aListener](const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError) {
-                    aListener->OnFinished(aReport, aError);
-                };
+        void TraverseNetwork(ot::commissioner::TraverseListener *aListener) {
+            class JavaTraverseHandler : public ot::commissioner::Commissioner::TraverseHandler {
+            public:
+                JavaTraverseHandler(ot::commissioner::TraverseListener *aListener) : mListener(aListener) {}
+
+                void OnTotalRoutersCount(size_t aRouterCount) override {
+                    if (mListener) mListener->OnTotalRoutersCount(aRouterCount);
+                }
+                void OnDeviceResponded(const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus) override {
+                    if (mListener) mListener->OnDeviceResponded(aAddr, aData, aStatus);
+                }
+                void OnTotalChildrenCount(size_t aChildCount) override {
+                    if (mListener) mListener->OnTotalChildrenCount(aChildCount);
+                }
+                void OnFinished(const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError) override {
+                    if (mListener) mListener->OnFinished(aReport, aError);
+                }
+
+            private:
+                ot::commissioner::TraverseListener *mListener;
+            };
+
+            if (aListener == nullptr) {
+                ot::commissioner::Commissioner::TraverseHandler defaultHandler;
+                $self->TraverseNetwork(defaultHandler);
+                return;
             }
-            return $self->TraverseNetwork(handler);
+
+            JavaTraverseHandler handler(aListener);
+            $self->TraverseNetwork(handler);
         }
     }
 }
