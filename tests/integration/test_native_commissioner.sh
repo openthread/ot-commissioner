@@ -86,6 +86,7 @@ test_native_commissioner()
     ot_ctl channel 11
     ot_ctl panid 0xface
     ot_ctl ifconfig up
+    ot_ctl unsecureport add "${ba_port}"
 
     start_commissioner "${NON_CCM_CONFIG}"
 
