@@ -209,11 +209,29 @@ namespace commissioner {
 }
 }
 
+%ignore ot::commissioner::Commissioner::TraverseHandler;
+
 %include <commissioner/defines.hpp>
 %include <commissioner/error.hpp>
 %include <commissioner/network_data.hpp>
 %include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
+
+namespace ot {
+namespace commissioner {
+    class Commissioner {
+    public:
+        class TraverseHandler {
+        public:
+            virtual ~TraverseHandler() = default;
+            virtual void OnTotalRoutersCount(size_t aRouterCount);
+            virtual void OnDeviceResponded(const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus);
+            virtual void OnTotalChildrenCount(size_t aChildCount);
+            virtual void OnFinished(const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError);
+        };
+    };
+}
+}
 
 
 

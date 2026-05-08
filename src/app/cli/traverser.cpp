@@ -272,21 +272,22 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             Console::Write("\nGlobal traversal timeout reached! Cancelling...\n", Console::Color::kRed);
             aCommissioner->CancelRequests();
 
-            // Give a small grace period for cancellation to process callbacks
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             if (!handler.isFinished)
             {
-                value              = "Traversal timed out";
-                handler.isFinished = true;
+                ExitNow(value = "Traversal timed out"; handler.isFinished = true);
             }
+
+            // Give a small grace period for cancellation to process callbacks
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
+
+
     if (handler.value != "")
     {
-        value = handler.value;
-        goto exit;
+        ExitNow(value = handler.value);
     }
 
     collectedData = handler.collectedData;
