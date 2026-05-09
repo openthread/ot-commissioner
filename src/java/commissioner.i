@@ -105,8 +105,6 @@
 
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
-%feature("flatnested") ot::commissioner::Commissioner::TraverseHandler;
-%feature("flatnested") ot::commissioner::Commissioner::TraverseStatus;
 %feature("director") ot::commissioner::Commissioner::TraverseHandler;
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
