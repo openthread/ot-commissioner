@@ -283,8 +283,6 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-
-
     if (handler.value != "")
     {
         ExitNow(value = handler.value);
