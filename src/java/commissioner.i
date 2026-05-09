@@ -105,6 +105,8 @@
 
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
+%feature("flatnested") ot::commissioner::Commissioner::TraverseHandler;
+%feature("flatnested") ot::commissioner::Commissioner::TraverseStatus;
 %feature("director") ot::commissioner::Commissioner::TraverseHandler;
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
@@ -117,7 +119,7 @@
 %template(RouteDataEntryVector) std::vector<ot::commissioner::RouteDataEntry>;
 %template(HasRouteEntryVector) std::vector<ot::commissioner::HasRouteEntry>;
 %template(BorderRouterEntryVector) std::vector<ot::commissioner::BorderRouterEntry>;
-%template(PrefixEntryVector) std::vector<ot::commissioner::PrefixEntry>;
+
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
@@ -209,29 +211,15 @@ namespace commissioner {
 }
 }
 
-%ignore ot::commissioner::Commissioner::TraverseHandler;
-
 %include <commissioner/defines.hpp>
 %include <commissioner/error.hpp>
 %include <commissioner/network_data.hpp>
 %include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
 
-namespace ot {
-namespace commissioner {
-    class Commissioner {
-    public:
-        class TraverseHandler {
-        public:
-            virtual ~TraverseHandler() = default;
-            virtual void OnTotalRoutersCount(size_t aRouterCount);
-            virtual void OnDeviceResponded(const std::string &aAddr, const ot::commissioner::NetDiagData *aData, ot::commissioner::Commissioner::TraverseStatus aStatus);
-            virtual void OnTotalChildrenCount(size_t aChildCount);
-            virtual void OnFinished(const std::map<std::string, ot::commissioner::NetDiagData> *aReport, ot::commissioner::Error aError);
-        };
-    };
-}
-}
+%template(ServerEntryVector) std::vector<ot::commissioner::ServerEntry>;
+%template(ServiceEntryVector) std::vector<ot::commissioner::ServiceEntry>;
+%template(PrefixEntryVector) std::vector<ot::commissioner::PrefixEntry>;
 
 
 
