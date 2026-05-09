@@ -1385,7 +1385,7 @@ void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const
     SuccessOrDie(addr.Set(aPeerAddr));
 
     std::lock_guard<std::mutex> lock(mMutex);
-    mDiagAnsDataMap[addr].Merge(aDiagAnsMsg);
+    MergeNetDiagData(mDiagAnsDataMap[addr], aDiagAnsMsg);
 }
 
 const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const

@@ -250,6 +250,10 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
     {
         mRetryCount++;
         mDeviceRetried = true;
+        if (mHandler)
+        {
+            mHandler->OnDeviceResponded(mCurrentQueryTarget, nullptr, ERROR_TIMEOUT("request timeout, retrying"));
+        }
         // Retry current chunk
         QueryChunk();
     }
@@ -270,7 +274,7 @@ void NetworkTraverser::HandleTimer(Timer &aTimer)
             // First chunk failed, skip device.
             if (mHandler)
             {
-                mHandler->OnDeviceResponded(mCurrentQueryTarget, nullptr, Commissioner::TraverseStatus::kFailed);
+                mHandler->OnDeviceResponded(mCurrentQueryTarget, nullptr, ERROR_TIMEOUT("request timeout"));
             }
             FinalizeNode();
         }
@@ -413,8 +417,7 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
     if (mCollectedData.count(addr))
     {
         auto &existing = mCollectedData[addr];
-        existing.mPresentFlags |= aDiagAnsMsg.mPresentFlags;
-        existing.Merge(aDiagAnsMsg);
+        MergeNetDiagData(existing, aDiagAnsMsg);
     }
     // If we don't have data for this device, add it.
     else
@@ -444,9 +447,7 @@ void NetworkTraverser::OnDiagGetAnswer(const std::string &aPeerAddr, const NetDi
 
         if (mHandler)
         {
-            auto status = mDeviceRetried ? Commissioner::TraverseStatus::kSuccessWithRetry
-                                         : Commissioner::TraverseStatus::kSuccess;
-            mHandler->OnDeviceResponded(addr.ToString(), &mCollectedData[addr], status);
+            mHandler->OnDeviceResponded(addr.ToString(), &mCollectedData[addr], ERROR_NONE);
         }
     }
 

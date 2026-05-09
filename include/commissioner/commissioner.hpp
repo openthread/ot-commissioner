@@ -553,19 +553,6 @@ public:
     virtual void GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) = 0;
 
     /**
-     * @brief The callback to report network traversal result.
-     *
-     * @param[in] aReport  A pointer to the collected network diagnostics data.
-     * @param[in] aError   The error code.
-     */
-    enum class TraverseStatus
-    {
-        kSuccess,
-        kSuccessWithRetry,
-        kFailed
-    };
-
-    /**
      * @brief Handler for network traversal events.
      */
     class TraverseHandler
@@ -583,15 +570,15 @@ public:
         /**
          * @brief Called when a device (Router or Child) has responded with diagnostic data.
          *
-         * @param[in] aAddr  The address of the device.
-         * @param[in] aData  The collected diagnostic data.
-         * @param[in] aStatus The status of the response.
+         * @param[in] aAddr   The address of the device.
+         * @param[in] aData   The collected diagnostic data.
+         * @param[in] aError  The error of the response (None on success).
          */
-        virtual void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, TraverseStatus aStatus)
+        virtual void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Error aError)
         {
             (void)aAddr;
             (void)aData;
-            (void)aStatus;
+            (void)aError;
         }
 
         /**
@@ -604,7 +591,8 @@ public:
         /**
          * @brief Called when the traversal is finished.
          *
-         * @param[in] aReport  The full traversal report.
+         * @param[in] aReport  The full traversal report. The key of the map is the string representation of the
+         * device's IPv6 address.
          * @param[in] aError   The error code (if any).
          */
         virtual void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError)

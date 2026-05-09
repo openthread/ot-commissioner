@@ -626,7 +626,7 @@ TEST(NetDiagDataTest, Merge_AppendsVectors)
     data2.mPresentFlags |= NetDiagData::kChildTableBit;
 
     // Merge data2 into data1
-    data1.Merge(data2);
+    MergeNetDiagData(data1, data2);
 
     // Verify
     EXPECT_EQ(data1.mChildTable.size(), 2);

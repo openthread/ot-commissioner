@@ -65,6 +65,62 @@ constexpr uint64_t NetDiagData::kRouterNeighborBit;
 constexpr uint64_t NetDiagData::kMleCountersBit;
 constexpr uint64_t NetDiagData::kVendorAppURLBit;
 constexpr uint64_t NetDiagData::kNonPreferredChannelsMaskBit;
+constexpr uint64_t NetDiagData::kAnswerBit;
+constexpr uint64_t NetDiagData::kQueryIdBit;
+
+void MergeNetDiagData(NetDiagData &aDst, const NetDiagData &aSrc)
+{
+    aDst.mPresentFlags |= aSrc.mPresentFlags;
+
+#define MERGE_FIELD(bit, field)     \
+    if (aSrc.mPresentFlags & (bit)) \
+    {                               \
+        aDst.field = aSrc.field;    \
+    }
+
+#define MERGE_VECTOR_FIELD(bit, field)                                             \
+    if (aSrc.mPresentFlags & (bit))                                                \
+    {                                                                              \
+        aDst.field.insert(aDst.field.end(), aSrc.field.begin(), aSrc.field.end()); \
+    }
+
+    MERGE_FIELD(NetDiagData::kExtMacAddrBit, mExtMacAddr);
+    MERGE_FIELD(NetDiagData::kMacAddrBit, mMacAddr);
+    MERGE_FIELD(NetDiagData::kModeBit, mMode);
+    MERGE_FIELD(NetDiagData::kRoute64Bit, mRoute64);
+    MERGE_FIELD(NetDiagData::kLeaderDataBit, mLeaderData);
+    MERGE_VECTOR_FIELD(NetDiagData::kAddrsBit, mAddrs);
+    MERGE_VECTOR_FIELD(NetDiagData::kChildTableBit, mChildTable);
+    MERGE_FIELD(NetDiagData::kEui64Bit, mEui64);
+    MERGE_FIELD(NetDiagData::kMacCountersBit, mMacCounters);
+    MERGE_VECTOR_FIELD(NetDiagData::kChildIpv6AddrsInfoListBit, mChildIpv6AddrsInfoList);
+    MERGE_FIELD(NetDiagData::kNetworkDataBit, mNetworkData);
+    MERGE_FIELD(NetDiagData::kTimeoutBit, mTimeout);
+    MERGE_FIELD(NetDiagData::kConnectivityBit, mConnectivity);
+    MERGE_FIELD(NetDiagData::kBatteryLevelBit, mBatteryLevel);
+    MERGE_FIELD(NetDiagData::kSupplyVoltageBit, mSupplyVoltage);
+    MERGE_FIELD(NetDiagData::kChannelPagesBit, mChannelPages);
+    MERGE_FIELD(NetDiagData::kTypeListBit, mTypeList);
+    MERGE_FIELD(NetDiagData::kMaxChildTimeoutBit, mMaxChildTimeout);
+    MERGE_FIELD(NetDiagData::kVersionBit, mVersion);
+    MERGE_FIELD(NetDiagData::kVendorNameBit, mVendorName);
+    MERGE_FIELD(NetDiagData::kVendorModelBit, mVendorModel);
+    MERGE_FIELD(NetDiagData::kVendorSWVersionBit, mVendorSWVersion);
+    MERGE_FIELD(NetDiagData::kThreadStackVersionBit, mThreadStackVersion);
+    MERGE_VECTOR_FIELD(NetDiagData::kChildBit, mChild);
+    MERGE_VECTOR_FIELD(NetDiagData::kRouterNeighborBit, mRouterNeighbor);
+    MERGE_FIELD(NetDiagData::kMleCountersBit, mMleCounters);
+    MERGE_FIELD(NetDiagData::kVendorAppURLBit, mVendorAppURL);
+    MERGE_FIELD(NetDiagData::kNonPreferredChannelsMaskBit, mNonPreferredChannelsMask);
+
+    // Answer TLV is used for reassembly and shouldn't be part of the final merged data strictly speaking
+    // But for completeness we can overwrite them.
+    MERGE_FIELD(NetDiagData::kAnswerBit, mAnswer);
+    MERGE_FIELD(NetDiagData::kQueryIdBit, mQueryId);
+
+#undef MERGE_FIELD
+#undef MERGE_VECTOR_FIELD
+}
 
 } // namespace commissioner
 

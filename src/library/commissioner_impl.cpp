@@ -701,7 +701,7 @@ void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
         auto    &accumulated = mPendingDiagQueries[queryId];
 
         // Merge the new data into the accumulated data
-        accumulated.first.Merge(diagData);
+        MergeNetDiagData(accumulated.first, diagData);
         accumulated.second = Clock::now();
 
         if (!mDiagQueryCleanupTimer.IsRunning())

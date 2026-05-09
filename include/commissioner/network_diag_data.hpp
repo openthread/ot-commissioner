@@ -270,60 +270,6 @@ struct NetDiagData
      */
     uint64_t mPresentFlags = 0;
 
-    void Merge(const NetDiagData &aOther)
-    {
-        mPresentFlags |= aOther.mPresentFlags;
-
-#define MERGE_FIELD(bit, field)       \
-    if (aOther.mPresentFlags & (bit)) \
-    {                                 \
-        field = aOther.field;         \
-    }
-
-#define MERGE_VECTOR_FIELD(bit, field)                                       \
-    if (aOther.mPresentFlags & (bit))                                        \
-    {                                                                        \
-        field.insert(field.end(), aOther.field.begin(), aOther.field.end()); \
-    }
-
-        MERGE_FIELD(kExtMacAddrBit, mExtMacAddr);
-        MERGE_FIELD(kMacAddrBit, mMacAddr);
-        MERGE_FIELD(kModeBit, mMode);
-        MERGE_FIELD(kRoute64Bit, mRoute64);
-        MERGE_FIELD(kLeaderDataBit, mLeaderData);
-        MERGE_VECTOR_FIELD(kAddrsBit, mAddrs);
-        MERGE_VECTOR_FIELD(kChildTableBit, mChildTable);
-        MERGE_FIELD(kEui64Bit, mEui64);
-        MERGE_FIELD(kMacCountersBit, mMacCounters);
-        MERGE_VECTOR_FIELD(kChildIpv6AddrsInfoListBit, mChildIpv6AddrsInfoList);
-        MERGE_FIELD(kNetworkDataBit, mNetworkData);
-        MERGE_FIELD(kTimeoutBit, mTimeout);
-        MERGE_FIELD(kConnectivityBit, mConnectivity);
-        MERGE_FIELD(kBatteryLevelBit, mBatteryLevel);
-        MERGE_FIELD(kSupplyVoltageBit, mSupplyVoltage);
-        MERGE_FIELD(kChannelPagesBit, mChannelPages);
-        MERGE_FIELD(kTypeListBit, mTypeList);
-        MERGE_FIELD(kMaxChildTimeoutBit, mMaxChildTimeout);
-        MERGE_FIELD(kVersionBit, mVersion);
-        MERGE_FIELD(kVendorNameBit, mVendorName);
-        MERGE_FIELD(kVendorModelBit, mVendorModel);
-        MERGE_FIELD(kVendorSWVersionBit, mVendorSWVersion);
-        MERGE_FIELD(kThreadStackVersionBit, mThreadStackVersion);
-        MERGE_VECTOR_FIELD(kChildBit, mChild);
-        MERGE_VECTOR_FIELD(kRouterNeighborBit, mRouterNeighbor);
-        MERGE_FIELD(kMleCountersBit, mMleCounters);
-        MERGE_FIELD(kVendorAppURLBit, mVendorAppURL);
-        MERGE_FIELD(kNonPreferredChannelsMaskBit, mNonPreferredChannelsMask);
-
-        // Answer TLV is used for reassembly and shouldn't be part of the final merged data strictly speaking
-        // But for completeness we can overwrite them.
-        MERGE_FIELD(kAnswerBit, mAnswer);
-        MERGE_FIELD(kQueryIdBit, mQueryId);
-
-#undef MERGE_FIELD
-#undef MERGE_VECTOR_FIELD
-    }
-
     static constexpr uint64_t kExtMacAddrBit               = (1ull << 0);
     static constexpr uint64_t kMacAddrBit                  = (1ull << 1);
     static constexpr uint64_t kModeBit                     = (1ull << 2);
@@ -355,6 +301,14 @@ struct NetDiagData
     static constexpr uint64_t kAnswerBit                   = (1ull << 28);
     static constexpr uint64_t kQueryIdBit                  = (1ull << 29);
 };
+
+/**
+ * @brief Merge network diagnostic data from source to destination.
+ *
+ * @param[in,out] aDst  The destination diagnostic data to merge into.
+ * @param[in]     aSrc  The source diagnostic data.
+ */
+void MergeNetDiagData(NetDiagData &aDst, const NetDiagData &aSrc);
 
 } // namespace commissioner
 

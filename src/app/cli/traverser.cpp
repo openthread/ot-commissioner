@@ -170,10 +170,10 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             {
                 char           symbol = 'R';
                 Console::Color color  = Console::Color::kRed;
-                if (leaderStatus == Commissioner::TraverseStatus::kSuccess)
-                    color = Console::Color::kGreen;
-                else if (leaderStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
-                    color = Console::Color::kYellow;
+                if (leaderError == ErrorCode::kNone)
+                {
+                    color = retriedDevices.count(leaderAddr) ? Console::Color::kYellow : Console::Color::kGreen;
+                }
 
                 Console::WriteNoNewline(std::string(1, symbol), color);
                 routersFound++;
@@ -190,17 +190,23 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             Console::Write(fmt::format("{} Children found", aCount), Console::Color::kWhite);
         }
 
-        void OnDeviceResponded(const std::string           &aAddr,
-                               const NetDiagData           *aData,
-                               Commissioner::TraverseStatus aStatus) override
+        void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Error aError) override
         {
             bool isRouterPhase = (totalRouters == 0) || (routersFound < totalRouters);
+
+            if (aError != ErrorCode::kNone && aData == nullptr)
+            {
+                retriedDevices.insert(aAddr);
+                Console::WriteNoNewline(".", Console::Color::kYellow);
+                return;
+            }
 
             if (totalRouters == 0)
             {
                 // Leader
-                leaderStatus    = aStatus;
+                leaderError     = aError;
                 leaderResponded = true;
+                leaderAddr      = aAddr;
                 if (aData)
                     collectedData[aAddr] = *aData;
                 return;
@@ -209,10 +215,10 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             // Print symbols for fetched devices
             char           symbol = isRouterPhase ? 'R' : 'C';
             Console::Color color  = Console::Color::kRed;
-            if (aStatus == Commissioner::TraverseStatus::kSuccess)
-                color = Console::Color::kGreen;
-            else if (aStatus == Commissioner::TraverseStatus::kSuccessWithRetry)
-                color = Console::Color::kYellow;
+            if (aError == ErrorCode::kNone)
+            {
+                color = retriedDevices.count(aAddr) ? Console::Color::kYellow : Console::Color::kGreen;
+            }
 
             Console::WriteNoNewline(std::string(1, symbol), color);
 
@@ -223,7 +229,7 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             if (counter % 5 == 0)
                 Console::WriteNoNewline(" ", Console::Color::kWhite);
 
-            if (aData && aStatus != Commissioner::TraverseStatus::kFailed)
+            if (aData && aError == ErrorCode::kNone)
             {
                 collectedData[aAddr] = *aData;
             }
@@ -242,12 +248,14 @@ std::string Traverser::ProcessTraverseNetworkJob(Interpreter        *aInterprete
             isFinished = true;
         }
 
-        size_t                             totalRouters    = 0;
-        size_t                             totalChildren   = 0;
-        size_t                             routersFound    = 0;
-        size_t                             childrenFound   = 0;
-        Commissioner::TraverseStatus       leaderStatus    = Commissioner::TraverseStatus::kFailed;
+        size_t                             totalRouters  = 0;
+        size_t                             totalChildren = 0;
+        size_t                             routersFound  = 0;
+        size_t                             childrenFound = 0;
+        Error                              leaderError;
         bool                               leaderResponded = false;
+        std::string                        leaderAddr;
+        std::set<std::string>              retriedDevices;
         std::map<std::string, NetDiagData> collectedData;
         std::atomic<bool>                  isFinished{false};
         std::string                        value;
