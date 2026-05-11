@@ -100,5 +100,3 @@ test_mdns_browser()
 
     echo "PASS: mDNS browser test"
 }
-
-test_mdns_browser
