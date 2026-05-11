@@ -36,6 +36,8 @@
 #include <string>
 #include <vector>
 
+#include <gtest/gtest_prod.h>
+
 #include "commissioner/commissioner.hpp"
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
@@ -303,8 +305,8 @@ private:
     coap::Resource mResourcePanIdConflict;
     coap::Resource mResourceEnergyReport;
 
-    coap::Resource mResourceDiagAns;
-    NetDiagData    mDiagAnsTlvs;
+    coap::Resource                                        mResourceDiagAns;
+    NetDiagData                                           mDiagAnsTlvs;
     std::map<uint16_t, std::pair<NetDiagData, TimePoint>> mPendingDiagQueries;
     Timer                                                 mDiagQueryCleanupTimer;
     uint16_t                                              mNextQueryId = 0;
