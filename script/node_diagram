@@ -125,3 +125,4 @@ if __name__ == "__main__":
     # Pass the filepath argument into the function
     generate_mesh_visualization(args.filepath)
 
+
