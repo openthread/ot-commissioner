@@ -4,6 +4,7 @@ import argparse
 import networkx as nx
 import matplotlib.pyplot as plt
 import os
+import sys
 
 def generate_mesh_visualization(filepath):
     """
@@ -123,3 +124,4 @@ if __name__ == "__main__":
     
     # Pass the filepath argument into the function
     generate_mesh_visualization(args.filepath)
+
