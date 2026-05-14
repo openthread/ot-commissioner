@@ -153,6 +153,7 @@ def qr_to_tlv(qr_string):
         try:
             tag, val = token.split(':', 1)
         except ValueError:
+            print(f"Warning: skipping malformed token: '{token}'", file=sys.stderr)
             print(f"Warning: Malformed token '{token}' ignored.", file=sys.stderr)
             continue
 
