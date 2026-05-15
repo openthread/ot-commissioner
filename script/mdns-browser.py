@@ -51,6 +51,14 @@ EVENT_UPDATED = "updated"
 SERVICE_RESOLVE_TIMEOUT_MS = 5000
 
 
+def _decode_txt_property(prop: Optional[bytes]) -> str:
+    if prop is None:
+        return ""
+    try:
+        return prop.decode("utf-8")
+    except UnicodeDecodeError:
+        return f"0x{prop.hex()}"
+
 def print_service_info(zeroconf: Zeroconf, service_type: str, name: str, event: str) -> None:
     icon = "✅" if event == EVENT_DISCOVERED else "🔄"
     action = "Discovered" if event == EVENT_DISCOVERED else "Updated"
@@ -72,18 +80,8 @@ def print_service_info(zeroconf: Zeroconf, service_type: str, name: str, event: 
     if info.properties:
         print("   --- TXT Records ---")
         for key, value in info.properties.items():
-            try:
-                key_str = key.decode("utf-8")
-            except UnicodeDecodeError:
-                key_str = f"0x{key.hex()}"
-
-            if value is None:
-                val_str = ""
-            else:
-                try:
-                    val_str = value.decode("utf-8")
-                except UnicodeDecodeError:
-                    val_str = f"0x{value.hex()}"
+            key_str = _decode_txt_property(key)
+            val_str = _decode_txt_property(value)
             print(f"   {key_str} = {val_str}")
     else:
         print("   No TXT records found.")
@@ -107,14 +105,13 @@ class ServiceListener:
 def worker(q: queue.Queue, zeroconf_instance: Zeroconf) -> None:
     while True:
         try:
-            event, service_type, name = q.get()
-            if event is None:
+            item = q.get()
+            if item is None:
                 break
+            event, service_type, name = item
             print_service_info(zeroconf_instance, service_type, name, event)
-            q.task_done()
         except Exception as e:
             print(f"Error in worker thread: {e}")
-            q.task_done()
 
 
 if __name__ == "__main__":
@@ -155,6 +152,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
-        q.put((None, None, None))
+        q.put(None)
         resolver_thread.join()
         zeroconf.close()
