@@ -59,6 +59,7 @@ def _decode_txt_property(prop: Optional[bytes]) -> str:
     except UnicodeDecodeError:
         return f"0x{prop.hex()}"
 
+
 def print_service_info(zeroconf: Zeroconf, service_type: str, name: str, event: str) -> None:
     icon = "✅" if event == EVENT_DISCOVERED else "🔄"
     action = "Discovered" if event == EVENT_DISCOVERED else "Updated"
