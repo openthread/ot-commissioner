@@ -194,7 +194,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     std::string threadStackVersion = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 268435071);
+    EXPECT_EQ(diagData.mPresentFlags, 268435455);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
@@ -608,6 +608,388 @@ TEST(CommissionerImplTest, DecodeNonPreferredChannelsMaskTlv)
     }
 }
 
-} // namespace commissioner
+TEST(NetDiagDataTest, Merge_AppendsVectors)
+{
+    NetDiagData data1;
+    NetDiagData data2;
 
+    // Setup data1
+    ChildTableEntry child1;
+    child1.mChildId = 0x1000;
+    data1.mChildTable.push_back(child1);
+    data1.mPresentFlags |= NetDiagData::kChildTableBit;
+
+    // Setup data2
+    ChildTableEntry child2;
+    child2.mChildId = 0x2000;
+    data2.mChildTable.push_back(child2);
+    data2.mPresentFlags |= NetDiagData::kChildTableBit;
+
+    // Merge data2 into data1
+    MergeNetDiagData(data1, data2);
+
+    // Verify
+    EXPECT_EQ(data1.mChildTable.size(), 2);
+    EXPECT_EQ(data1.mChildTable[0].mChildId, 0x1000);
+    EXPECT_EQ(data1.mChildTable[1].mChildId, 0x2000);
+}
+
+TEST(NetDiagDataTest, Decode_AnswerAndQueryId)
+{
+    NetDiagData data;
+    ByteArray   buf;
+    Error       error;
+
+    // Answer TLV: Type=32 (0x20), Len=2, Val=0x8001 (IsLast=true, Index=1)
+    // QueryID TLV: Type=33 (0x21), Len=2, Val=0x1234
+    // Hex: 2002800121021234
+    std::string hex = "2002800121021234";
+
+    error = utils::Hex(buf, hex);
+    EXPECT_EQ(error, ErrorCode::kNone);
+
+    error = ot::commissioner::internal::DecodeNetDiagData(data, buf);
+    EXPECT_EQ(error, ErrorCode::kNone);
+
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
+    EXPECT_EQ(data.mAnswer.mIsLast, true);
+    EXPECT_EQ(data.mAnswer.mIndex, 1);
+
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
+    EXPECT_EQ(data.mQueryId, 0x1234);
+}
+
+} // namespace commissioner
+namespace commissioner {
+
+class MockEndpoint : public Endpoint
+{
+public:
+    MockEndpoint()
+        : mPeerAddr(Address::FromString("fd00:7d03:7d03:7d03:d020:79b7:6a02:ab5e"))
+    {
+    }
+    Error    Send(const ByteArray &, MessageSubType) override { return Error(); }
+    Address  GetPeerAddr() const override { return mPeerAddr; }
+    uint16_t GetPeerPort() const override { return 1234; }
+
+    Address mPeerAddr;
+};
+
+// Create a test fixture to access private members
+class CommissionerImplFragmentTest : public ::testing::Test
+{
+public:
+    CommissionerImplFragmentTest()
+        : mEventBase(event_base_new())
+        , mCommissioner(mHandler, mEventBase)
+    {
+    }
+
+    ~CommissionerImplFragmentTest() override
+    {
+        if (mEventBase)
+        {
+            event_base_free(mEventBase);
+        }
+    }
+
+    struct event_base *mEventBase;
+
+    struct MockHandler : public CommissionerHandler
+    {
+        std::string OnJoinerRequest(const ByteArray &) override { return ""; }
+        void        OnJoinerConnected(const ByteArray &, Error) override {}
+        bool        OnJoinerFinalize(const ByteArray &,
+                                     const std::string &,
+                                     const std::string &,
+                                     const std::string &,
+                                     const ByteArray &,
+                                     const std::string &,
+                                     const ByteArray &) override
+        {
+            return true;
+        }
+        void OnPanIdConflict(const std::string &, const ChannelMask &, uint16_t) override {}
+        void OnEnergyReport(const std::string &, const ChannelMask &, const ByteArray &) override {}
+        void OnDatasetChanged() override {}
+        void OnDiagGetAnswerMessage(const std::string &aPeerAddr, const NetDiagData &aDiagData) override
+        {
+            mParams.push_back({aPeerAddr, aDiagData});
+        }
+
+        struct OnDiagGetAnswerMessageParams
+        {
+            std::string mPeerAddr;
+            NetDiagData mDiagData;
+        };
+        std::vector<OnDiagGetAnswerMessageParams> mParams;
+    };
+
+    MockHandler      mHandler;
+    CommissionerImpl mCommissioner;
+};
+
+class TestRequest : public coap::Request
+{
+public:
+    using coap::Request::Request;
+    void SetEndpointPublic(Endpoint *aEndpoint) { SetEndpoint(aEndpoint); }
+};
+
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse)
+{
+    MockEndpoint endpoint;
+    TestRequest  request(coap::Type::kConfirmable, coap::Code::kContent);
+    request.SetEndpointPublic(&endpoint);
+
+    // Prepare Fragment 1 (Index=0, IsLast=false)
+    // QueryID=123 (0x7B)
+    // Answer Index=0, IsLast=false -> Val=0
+    // TLV: Answer(32, 2, 0000), QueryID(33, 2, 007B)
+    // Hex: 200200002102007B
+    ByteArray payload1;
+    EXPECT_EQ(utils::Hex(payload1, "200200002102007B"), ErrorCode::kNone);
+    request.Append(payload1);
+
+    mCommissioner.HandleDiagGetAnswer(request);
+
+    // Verify no callback yet
+    EXPECT_TRUE(mHandler.mParams.empty());
+
+    // Check pending queries map directly
+    EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.count(123));
+
+    // Prepare Fragment 2 (Index=1, IsLast=true)
+    // QueryID=123 (0x7B)
+    // Answer Index=1, IsLast=true -> Val=0x8001
+    // ChildTable Entry (just to check merging)
+    // TLV: Answer(32, 2, 8001), QueryID(33, 2, 007B)
+    // ChildTable(4,7, 000400078000FF - using valid entry from previous test context or dummy)
+    // Use dummy Child: Child ID=1 -> 00/04/00/01 ...
+    // ChildTableEntry struct size is not trivial to serialize manually without exact packing details.
+    // Let's use simple TLV: ChannelPages (Type 3)
+    // TLV: Answer(32, 2, 8001), QueryID(33, 2, 007B), ChannelPages(17, 1, FF)
+    // Hex: 200280012102007B1101FF
+
+    TestRequest request2(coap::Type::kConfirmable, coap::Code::kContent);
+    request2.SetEndpointPublic(&endpoint);
+    ByteArray payload2;
+    EXPECT_EQ(utils::Hex(payload2, "200280012102007B1101FF"), ErrorCode::kNone);
+    request2.Append(payload2);
+
+    mCommissioner.HandleDiagGetAnswer(request2);
+
+    // Verify callback
+    ASSERT_EQ(mHandler.mParams.size(), 1);
+    EXPECT_EQ(mHandler.mParams[0].mPeerAddr, endpoint.GetPeerAddr().ToString());
+
+    // Verify merged data
+    const NetDiagData &data = mHandler.mParams[0].mDiagData;
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
+    EXPECT_EQ(data.mQueryId, 123);
+    EXPECT_EQ(data.mChannelPages.size(), 1);
+    EXPECT_EQ(data.mChannelPages[0], 0xFF);
+
+    // Verify pending map is cleared
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.empty());
+}
+
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Implicit)
+{
+    MockEndpoint endpoint;
+    TestRequest  request(coap::Type::kConfirmable, coap::Code::kContent);
+    request.SetEndpointPublic(&endpoint);
+
+    // Single packet response with QueryID but NO Answer TLV
+    // QueryID=123 (0x7B)
+    // ChannelPages(17, 1, FF)
+    // Hex: 2102007B1101FF
+    ByteArray payload;
+    EXPECT_EQ(utils::Hex(payload, "2102007B1101FF"), ErrorCode::kNone);
+    request.Append(payload);
+
+    // Pre-populate pending query to verify it gets cleaned up
+    mCommissioner.mPendingDiagQueries[123];
+
+    mCommissioner.HandleDiagGetAnswer(request);
+
+    // Verify callback
+    ASSERT_EQ(mHandler.mParams.size(), 1);
+    EXPECT_EQ(mHandler.mParams[0].mPeerAddr, endpoint.GetPeerAddr().ToString());
+
+    // Verify data
+    const NetDiagData &data = mHandler.mParams[0].mDiagData;
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
+    EXPECT_EQ(data.mQueryId, 123);
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
+    EXPECT_EQ(data.mChannelPages[0], 0xFF);
+
+    // Verify pending map is cleared
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.empty());
+}
+
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Explicit)
+{
+    MockEndpoint endpoint;
+    TestRequest  request(coap::Type::kConfirmable, coap::Code::kContent);
+    request.SetEndpointPublic(&endpoint);
+
+    // Single packet response with QueryID AND Answer TLV (IsLast=true)
+    // QueryID=456 (0x1C8)
+    // Answer(Index=0, IsLast=true) -> 0x8000
+    // ChannelPages(17, 1, EE)
+    // Hex: 210201C8200280001101EE
+    ByteArray payload;
+    EXPECT_EQ(utils::Hex(payload, "210201C8200280001101EE"), ErrorCode::kNone);
+    request.Append(payload);
+
+    mCommissioner.HandleDiagGetAnswer(request);
+
+    // Verify callback
+    ASSERT_EQ(mHandler.mParams.size(), 1);
+    EXPECT_EQ(mHandler.mParams[0].mPeerAddr, endpoint.GetPeerAddr().ToString());
+
+    // Verify data
+    const NetDiagData &data = mHandler.mParams[0].mDiagData;
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kQueryIdBit);
+    EXPECT_EQ(data.mQueryId, 456);
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
+    EXPECT_TRUE(data.mAnswer.mIsLast);
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
+    EXPECT_EQ(data.mChannelPages[0], 0xEE);
+
+    // Verify pending map is cleared
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.empty());
+}
+
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_Legacy)
+{
+    MockEndpoint endpoint;
+    TestRequest  request(coap::Type::kConfirmable, coap::Code::kContent);
+    request.SetEndpointPublic(&endpoint);
+
+    // Legacy response: No QueryID, No Answer TLV
+    // ChannelPages(17, 1, DD)
+    // Hex: 1101DD
+    ByteArray payload;
+    EXPECT_EQ(utils::Hex(payload, "1101DD"), ErrorCode::kNone);
+    request.Append(payload);
+
+    mCommissioner.HandleDiagGetAnswer(request);
+
+    // Verify callback
+    ASSERT_EQ(mHandler.mParams.size(), 1);
+    EXPECT_EQ(mHandler.mParams[0].mPeerAddr, endpoint.GetPeerAddr().ToString());
+
+    // Verify data
+    const NetDiagData &data = mHandler.mParams[0].mDiagData;
+    EXPECT_FALSE(data.mPresentFlags & NetDiagData::kQueryIdBit);
+    EXPECT_FALSE(data.mPresentFlags & NetDiagData::kAnswerBit);
+    EXPECT_TRUE(data.mPresentFlags & NetDiagData::kChannelPagesBit);
+    EXPECT_EQ(data.mChannelPages[0], 0xDD);
+}
+
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFragments)
+{
+    MockEndpoint endpoint;
+    uint16_t     queryId = 0xAAAA;
+
+    // Fragment 1: Index=0, IsLast=false
+    // IPv6 Address: fd00::1
+    {
+        TestRequest request(coap::Type::kConfirmable, coap::Code::kContent);
+        request.SetEndpointPublic(&endpoint);
+        ByteArray payload;
+        // QueryID(33, 2, AAAA), Answer(32, 2, 0000), IPv6(8, 16, fd00::1)
+        EXPECT_EQ(utils::Hex(payload, "2102AAAA200200000810fd000000000000000000000000000001"), ErrorCode::kNone);
+        request.Append(payload);
+        mCommissioner.HandleDiagGetAnswer(request);
+
+        EXPECT_TRUE(mHandler.mParams.empty());
+        EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
+    }
+
+    // Fragment 2: Index=1, IsLast=false
+    // IPv6 Address: fd00::2
+    {
+        TestRequest request(coap::Type::kConfirmable, coap::Code::kContent);
+        request.SetEndpointPublic(&endpoint);
+        ByteArray payload;
+        // QueryID(33, 2, AAAA), Answer(32, 2, 0001), IPv6(8, 16, fd00::2)
+        EXPECT_EQ(utils::Hex(payload, "2102AAAA200200010810fd000000000000000000000000000002"), ErrorCode::kNone);
+        request.Append(payload);
+        mCommissioner.HandleDiagGetAnswer(request);
+
+        EXPECT_TRUE(mHandler.mParams.empty());
+        EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
+    }
+
+    // Fragment 3: Index=2, IsLast=true
+    // IPv6 Address: fd00::3
+    {
+        TestRequest request(coap::Type::kConfirmable, coap::Code::kContent);
+        request.SetEndpointPublic(&endpoint);
+        ByteArray payload;
+        // QueryID(33, 2, AAAA), Answer(32, 2, 8002), IPv6(8, 16, fd00::3)
+        EXPECT_EQ(utils::Hex(payload, "2102AAAA200280020810fd000000000000000000000000000003"), ErrorCode::kNone);
+        request.Append(payload);
+        mCommissioner.HandleDiagGetAnswer(request);
+
+        // Verification
+        ASSERT_EQ(mHandler.mParams.size(), 1);
+        EXPECT_EQ(mHandler.mParams[0].mPeerAddr, endpoint.GetPeerAddr().ToString());
+
+        const NetDiagData &data = mHandler.mParams[0].mDiagData;
+        EXPECT_EQ(data.mQueryId, queryId);
+        EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAnswerBit);
+        EXPECT_TRUE(data.mAnswer.mIsLast);
+
+        // Verify 3 addresses are present
+        EXPECT_TRUE(data.mPresentFlags & NetDiagData::kAddrsBit);
+        EXPECT_EQ(data.mAddrs.size(), 3);
+        EXPECT_EQ(data.mAddrs[0], "fd00::1");
+        EXPECT_EQ(data.mAddrs[1], "fd00::2");
+        EXPECT_EQ(data.mAddrs[2], "fd00::3");
+
+        EXPECT_TRUE(mCommissioner.mPendingDiagQueries.empty());
+    }
+}
+
+TEST_F(CommissionerImplFragmentTest, FragmentedDiagResponse_Timeout)
+{
+    MockEndpoint endpoint;
+    TestRequest  request(coap::Type::kConfirmable, coap::Code::kContent);
+    request.SetEndpointPublic(&endpoint);
+
+    // Prepare Fragment 1 (Index=0, IsLast=false)
+    // QueryID=123 (0x7B)
+    // TLV: Answer(32, 2, 0000), QueryID(33, 2, 007B)
+    // Hex: 200200002102007B
+    ByteArray payload1;
+    Error     error = utils::Hex(payload1, "200200002102007B");
+    EXPECT_EQ(error, ErrorCode::kNone);
+    request.Append(payload1);
+
+    mCommissioner.HandleDiagGetAnswer(request);
+
+    // Verify entry exists in pending queries map
+    EXPECT_EQ(mCommissioner.mPendingDiagQueries.size(), 1);
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.count(123));
+
+    // Force expire the query by backdating its timestamp
+    auto &entry  = mCommissioner.mPendingDiagQueries[123];
+    entry.second = Clock::now() - std::chrono::seconds(100); // Backdate 100 seconds to ensure timeout
+
+    // Trigger cleanup
+    mCommissioner.HandleDiagQueryCleanupTimer(mCommissioner.mDiagQueryCleanupTimer);
+
+    // Verify it's gone
+    EXPECT_TRUE(mCommissioner.mPendingDiagQueries.empty());
+}
+
+} // namespace commissioner
 } // namespace ot

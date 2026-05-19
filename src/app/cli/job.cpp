@@ -32,11 +32,15 @@
  */
 
 #include "app/cli/job.hpp"
-#include "app/ps/registry.hpp"
+#include "app/cli/interpreter.hpp"
 #include "common/logging.hpp"
 #include "common/utils.hpp"
 
+#include <algorithm>
+#include <cstdint>
 #include <sstream>
+#include <string>
+#include <thread>
 
 namespace ot {
 

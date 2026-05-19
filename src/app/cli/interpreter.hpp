@@ -40,7 +40,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -58,10 +57,12 @@ namespace commissioner {
 typedef std::shared_ptr<CommissionerApp> CommissionerAppPtr;
 
 class JobManager;
+class Traverser;
 
 class Interpreter
 {
     friend class InterpreterTestSuite;
+    friend class Traverser;
 
 public:
     using Expression     = std::vector<std::string>;
@@ -76,7 +77,10 @@ public:
 
     void Run();
 
+    void Execute(const std::string &aCommands);
+
     void CancelCommand();
+    bool IsCancelled() const { return mCancelCommand.load(); }
 
 private:
     friend class Job;
@@ -88,7 +92,7 @@ private:
         uint64_t           mStartWith;
         bool               mSuccess;
 
-        NetworkSelectionComparator(const Interpreter &aInterpreter);
+        explicit NetworkSelectionComparator(const Interpreter &aInterpreter);
         ~NetworkSelectionComparator();
     };
     /**
@@ -106,6 +110,9 @@ private:
 
         // Allow implicit conversion from Error to Value.
         Value(Error aError);
+
+        Value &operator=(const std::string &aData);
+        Value &operator=(const Error &aError);
 
         bool operator==(const ErrorCode &aErrorCode) const;
         bool operator!=(const ErrorCode &aErrorCode) const;
@@ -230,6 +237,7 @@ private:
     Value ProcessPanId(const Expression &aExpr);
     Value ProcessEnergy(const Expression &aExpr);
     Value ProcessNetworkDiag(const Expression &aExpr);
+    Value ProcessTraverseNetwork(const Expression &aExpr);
     Value ProcessExit(const Expression &aExpr);
     Value ProcessHelp(const Expression &aExpr);
 
@@ -241,6 +249,7 @@ private:
     Value ProcessOpDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessBbrDatasetJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
     Value ProcessNetworkDiagJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
+    Value ProcessTraverseNetworkJob(CommissionerAppPtr &aCommissioner, const Expression &aExpr);
 
     static void BorderAgentHandler(const BorderAgent *aBorderAgent, const Error &aError);
 

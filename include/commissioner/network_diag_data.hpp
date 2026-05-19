@@ -34,14 +34,12 @@
 #ifndef OT_COMM_NETWORK_DIAG_DATA_HPP_
 #define OT_COMM_NETWORK_DIAG_DATA_HPP_
 
-#include <cstddef>
 #include <cstdint>
 #include <stdbool.h>
 #include <string>
 #include <vector>
 
 #include "defines.hpp"
-#include "error.hpp"
 #include "network_data.hpp"
 
 namespace ot {
@@ -196,6 +194,15 @@ struct RouterNeighbor
 };
 
 /**
+ * @brief Answer TLV Data
+ */
+struct Answer
+{
+    uint16_t mIndex  = 0;
+    bool     mIsLast = false;
+};
+
+/**
  * @brief MLE Counters TLV Data
  *
  */
@@ -255,6 +262,8 @@ struct NetDiagData
     Connectivity                   mConnectivity;
     MleCounters                    mMleCounters;
     ChannelMask                    mNonPreferredChannelsMask;
+    Answer                         mAnswer;
+    uint16_t                       mQueryId = 0;
 
     /**
      * Indicates which fields are included in the object.
@@ -289,7 +298,17 @@ struct NetDiagData
     static constexpr uint64_t kMleCountersBit              = (1ull << 25);
     static constexpr uint64_t kVendorAppURLBit             = (1ull << 26);
     static constexpr uint64_t kNonPreferredChannelsMaskBit = (1ull << 27);
+    static constexpr uint64_t kAnswerBit                   = (1ull << 28);
+    static constexpr uint64_t kQueryIdBit                  = (1ull << 29);
 };
+
+/**
+ * @brief Merge network diagnostic data from source to destination.
+ *
+ * @param[in,out] aDst  The destination diagnostic data to merge into.
+ * @param[in]     aSrc  The source diagnostic data.
+ */
+void MergeNetDiagData(NetDiagData &aDst, const NetDiagData &aSrc);
 
 } // namespace commissioner
 

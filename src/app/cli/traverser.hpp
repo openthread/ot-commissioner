@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2020, The OpenThread Commissioner Authors.
+ *    Copyright (c) 2026, The OpenThread Commissioner Authors.
  *    All rights reserved.
  *
  *    Redistribution and use in source and binary forms, with or without
@@ -28,53 +28,36 @@
 
 /**
  * @file
- *   The file defines command job.
+ *   The file defines CLI network traverser.
  */
 
-#ifndef OT_COMM_APP_CLI_JOB_HPP_
-#define OT_COMM_APP_CLI_JOB_HPP_
+#ifndef OT_COMM_APP_CLI_TRAVERSER_HPP_
+#define OT_COMM_APP_CLI_TRAVERSER_HPP_
 
-#include <cstdint>
+#include <chrono>
 #include <string>
-#include <thread>
-
 #include "app/cli/interpreter.hpp"
 
 namespace ot {
 
 namespace commissioner {
 
-class Job
+class Traverser
 {
 public:
-    Job(Interpreter              &aInterpreter,
-        CommissionerAppPtr       &aCommApp,
-        Interpreter::Expression   aExpr,
-        Interpreter::JobEvaluator aEval,
-        uint64_t                  aXpanId);
-    ~Job() = default;
+    static std::string ProcessTraverseNetwork(Interpreter *aInterpreter, const Interpreter::Expression &aExpr);
 
-    void Run();
-    void Wait();
-    void Cancel();
-    bool IsStopped();
+    static std::string ProcessTraverseNetworkJob(Interpreter                   *aInterpreter,
+                                                 CommissionerAppPtr            &aCommissioner,
+                                                 const Interpreter::Expression &aExpr,
+                                                 const std::string             &aJsonFile = "",
+                                                 std::chrono::milliseconds      aTimeout  = std::chrono::seconds(120));
 
-    uint64_t           GetXpanId() const;
-    Interpreter::Value GetValue() const;
-    std::string        GetCommandString();
-
-private:
-    Interpreter              &mInterpreter;
-    CommissionerAppPtr       &mCommissioner;
-    Interpreter::Expression   mExpr;
-    Interpreter::JobEvaluator mEval;
-    Interpreter::Value        mValue;
-    std::thread               mJobThread;
-    uint64_t                  mXpanId;
+    static void PrintNetworkData(const std::map<std::string, NetDiagData> &aCapturedData);
 };
 
 } // namespace commissioner
 
 } // namespace ot
 
-#endif // OT_COMM_APP_CLI_JOB_HPP_
+#endif // OT_COMM_APP_CLI_TRAVERSER_HPP_

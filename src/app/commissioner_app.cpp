@@ -36,7 +36,9 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <future>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -134,6 +136,7 @@ exit:
 void CommissionerApp::Stop()
 {
     IgnoreError(mCommissioner->Resign());
+    mCommissioner->Disconnect();
 
     mJoiners.clear();
     mPanIdConflicts.clear();
@@ -435,6 +438,11 @@ Error CommissionerApp::SetCommissionerDataset(const CommissionerDataset &aDatase
 
 exit:
     return error;
+}
+
+void CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler)
+{
+    mCommissioner->TraverseNetwork(aHandler);
 }
 
 Error CommissionerApp::GetActiveTimestamp(Timestamp &aTimestamp) const
@@ -1376,10 +1384,21 @@ void CommissionerApp::OnDiagGetAnswerMessage(const std::string &aPeerAddr, const
 
     SuccessOrDie(addr.Set(aPeerAddr));
 
-    mDiagAnsDataMap[addr] = aDiagAnsMsg;
+    std::lock_guard<std::mutex> lock(mMutex);
+    MergeNetDiagData(mDiagAnsDataMap[addr], aDiagAnsMsg);
 }
 
-const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const { return mDiagAnsDataMap; }
+const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    return mDiagAnsDataMap;
+}
+
+void CommissionerApp::ClearNetDiagTlvs()
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    mDiagAnsDataMap.clear();
+}
 
 Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags)
 {

@@ -33,6 +33,8 @@
 
 #include "library/commissioner_impl.hpp"
 
+#include <chrono>
+#include <iterator>
 #include <sys/types.h>
 
 #include <algorithm>
@@ -74,8 +76,9 @@ namespace commissioner {
 static constexpr uint16_t kLeaderAloc16     = 0xFC00;
 static constexpr uint16_t kPrimaryBbrAloc16 = 0xFC38;
 
-static constexpr uint32_t kMinKeepAliveInterval = 30;
-static constexpr uint32_t kMaxKeepAliveInterval = 45;
+static constexpr uint32_t kMinKeepAliveInterval    = 30;
+static constexpr uint32_t kMaxKeepAliveInterval    = 45;
+static constexpr uint32_t kDiagQueryTimeoutSeconds = 10;
 
 Error Commissioner::GeneratePSKc(ByteArray         &aPSKc,
                                  const std::string &aPassphrase,
@@ -160,6 +163,8 @@ CommissionerImpl::CommissionerImpl(CommissionerHandler &aHandler, struct event_b
                              [this](const coap::Request &aRequest) { HandlePanIdConflict(aRequest); })
     , mResourceEnergyReport(uri::kMgmtEdReport, [this](const coap::Request &aRequest) { HandleEnergyReport(aRequest); })
     , mResourceDiagAns(uri::kDiagGetAns, [this](const coap::Request &aRequest) { HandleDiagGetAnswer(aRequest); })
+    , mDiagQueryCleanupTimer(mEventBase, [this](Timer &aTimer) { HandleDiagQueryCleanupTimer(aTimer); })
+    , mNetworkTraverser(*this)
 {
     SuccessOrDie(mBrClient.AddResource(mResourceUdpRx));
     SuccessOrDie(mBrClient.AddResource(mResourceRlyRx));
@@ -338,6 +343,7 @@ void CommissionerImpl::CancelRequests()
 {
     mProxyClient.CancelRequests();
     mBrClient.CancelRequests();
+    mNetworkTraverser.Stop();
 
 #if OT_COMM_CONFIG_CCM_ENABLE
     if (IsCcmMode())
@@ -640,7 +646,13 @@ void CommissionerImpl::CommandDiagGetQuery(ErrorHandler aHandler, const std::str
         SuccessOrExit(error = dstAddr.Set(aAddr));
         mProxyClient.SendRequest(request, onResponse, dstAddr, kDefaultMmPort);
     }
-    LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry");
+
+    // Add Query ID TLV
+    {
+        uint16_t queryId = mNextQueryId++;
+        SuccessOrExit(error = AppendTlv(request, {tlv::Type::kNetworkDiagQueryID, queryId}));
+        LOG_DEBUG(LOG_REGION_MESHDIAG, "sent DIAG_GET.qry with Query ID {}", queryId);
+    }
 
 exit:
     if (error != ErrorCode::kNone)
@@ -649,18 +661,92 @@ exit:
     }
 }
 
+void CommissionerImpl::HandleDiagQueryCleanupTimer(Timer &aTimer)
+{
+    auto now = Clock::now();
+    for (auto it = mPendingDiagQueries.begin(); it != mPendingDiagQueries.end();)
+    {
+        if (now - it->second.second > std::chrono::seconds(kDiagQueryTimeoutSeconds))
+        {
+            it = mPendingDiagQueries.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    if (!mPendingDiagQueries.empty())
+    {
+        aTimer.Start(std::chrono::seconds(kDiagQueryTimeoutSeconds));
+    }
+}
+
 void CommissionerImpl::HandleDiagGetAnswer(const coap::Request &aRequest)
 {
     Error       error;
+    NetDiagData diagData;
     std::string peerAddr = aRequest.GetEndpoint()->GetPeerAddr().ToString();
 
     LOG_INFO(LOG_REGION_MESHDIAG, "received DIAG_GET.ans from {}", peerAddr);
+
     mProxyClient.SendEmptyChanged(aRequest);
 
-    SuccessOrExit(error = internal::DecodeNetDiagData(mDiagAnsTlvs, aRequest.GetPayload()));
-    LOG_INFO(LOG_REGION_MESHDIAG, "accepted DIAG_GET.ans data {}", utils::Hex(aRequest.GetPayload()));
+    SuccessOrExit(error = internal::DecodeNetDiagData(diagData, aRequest.GetPayload()));
 
-    mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+    // Handle Query ID and Fragmentation
+    if (diagData.mPresentFlags & NetDiagData::kQueryIdBit)
+    {
+        uint16_t queryId     = diagData.mQueryId;
+        auto    &accumulated = mPendingDiagQueries[queryId];
+
+        // Merge the new data into the accumulated data
+        MergeNetDiagData(accumulated.first, diagData);
+        accumulated.second = Clock::now();
+
+        if (!mDiagQueryCleanupTimer.IsRunning())
+        {
+            mDiagQueryCleanupTimer.Start(std::chrono::seconds(kDiagQueryTimeoutSeconds));
+        }
+
+        // Check if Answer TLV is present
+        if (diagData.mPresentFlags & NetDiagData::kAnswerBit)
+        {
+            if (diagData.mAnswer.mIsLast)
+            {
+                mDiagAnsTlvs = accumulated.first;
+                mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+                if (mNetworkTraverser.IsActive())
+                {
+                    mNetworkTraverser.OnDiagGetAnswer(peerAddr, mDiagAnsTlvs);
+                }
+                mPendingDiagQueries.erase(queryId);
+            }
+        }
+        else
+        {
+            // If Answer TLV is missing, assume it's a single packet response
+            // But valid Query ID means it might be related to a specific query.
+            // We treat it as a complete response.
+            mDiagAnsTlvs = accumulated.first; // accumulated currently has this single packet data merged
+            mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+            if (mNetworkTraverser.IsActive())
+            {
+                mNetworkTraverser.OnDiagGetAnswer(peerAddr, mDiagAnsTlvs);
+            }
+            mPendingDiagQueries.erase(queryId);
+        }
+    }
+    else
+    {
+        // Legacy behavior: No Query ID
+        mDiagAnsTlvs = diagData;
+        mCommissionerHandler.OnDiagGetAnswerMessage(peerAddr, mDiagAnsTlvs);
+        if (mNetworkTraverser.IsActive())
+        {
+            mNetworkTraverser.OnDiagGetAnswer(peerAddr, mDiagAnsTlvs);
+        }
+    }
 
 exit:
     if (error != ErrorCode::kNone)
@@ -713,6 +799,17 @@ exit:
     {
         aHandler(error);
     }
+}
+
+void CommissionerImpl::TraverseNetwork(TraverseHandler &aHandler)
+{
+    if (!IsActiveOrConnected())
+    {
+        aHandler.OnFinished(nullptr, ERROR_INVALID_STATE("Commissioner is not active"));
+        return;
+    }
+
+    mNetworkTraverser.Start(aHandler);
 }
 
 void CommissionerImpl::SetPendingDataset(ErrorHandler aHandler, const PendingOperationalDataset &aPendingDataset)
@@ -2234,43 +2331,87 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto mode = tlvSet[tlv::Type::kNetworkDiagMode])
     {
-        SuccessOrExit(error = internal::DecodeModeData(diagData.mMode, mode->GetValue()));
+        error = internal::DecodeModeData(diagData.mMode, mode->GetValue());
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Mode data: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kModeBit;
     }
 
     if (auto route64 = tlvSet[tlv::Type::kNetworkDiagRoute64])
     {
         const ByteArray &value = route64->GetValue();
-        SuccessOrExit(error = DecodeRoute64(diagData.mRoute64, value));
+        error                  = DecodeRoute64(diagData.mRoute64, value);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Route64 data: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kRoute64Bit;
     }
 
     if (auto leaderData = tlvSet[tlv::Type::kNetworkDiagLeaderData])
     {
         const ByteArray &value = leaderData->GetValue();
-        SuccessOrExit(error = DecodeLeaderData(diagData.mLeaderData, value));
+        error                  = DecodeLeaderData(diagData.mLeaderData, value);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Leader Data: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kLeaderDataBit;
     }
 
     if (auto ipv6Addrs = tlvSet[tlv::Type::kNetworkDiagIpv6Address])
     {
         const ByteArray &value = ipv6Addrs->GetValue();
-        SuccessOrExit(error = DecodeIpv6AddressList(diagData.mAddrs, value));
+        error                  = DecodeIpv6AddressList(diagData.mAddrs, value);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode IPv6 Address List: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kAddrsBit;
     }
 
     if (auto macCounters = tlvSet[tlv::Type::kNetworkDiagMacCounters])
     {
         const ByteArray &value = macCounters->GetValue();
-        SuccessOrExit(error = DecodeMacCounters(diagData.mMacCounters, value));
+        error                  = DecodeMacCounters(diagData.mMacCounters, value);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode MAC Counters: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kMacCountersBit;
     }
 
     if (auto childTable = tlvSet[tlv::Type::kNetworkDiagChildTable])
     {
         const ByteArray &value = childTable->GetValue();
-        SuccessOrExit(error = DecodeChildTable(diagData.mChildTable, value));
+        error                  = DecodeChildTable(diagData.mChildTable, value);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Child Table: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kChildTableBit;
+    }
+
+    if (auto answer = tlvSet[tlv::Type::kNetworkDiagAnswer])
+    {
+        uint16_t val             = answer->GetValueAsUint16();
+        diagData.mAnswer.mIsLast = (val & 0x8000) != 0;
+        diagData.mAnswer.mIndex  = (val & 0x7FFF);
+        diagData.mPresentFlags |= NetDiagData::kAnswerBit;
+    }
+
+    if (auto queryId = tlvSet[tlv::Type::kNetworkDiagQueryID])
+    {
+        diagData.mQueryId = queryId->GetValueAsUint16();
+        diagData.mPresentFlags |= NetDiagData::kQueryIdBit;
     }
 
     if (auto eui64 = tlvSet[tlv::Type::kNetworkDiagEui64])
@@ -2280,6 +2421,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
         diagData.mPresentFlags |= NetDiagData::kEui64Bit;
     }
 
+    if (auto channelPages = tlvSet[tlv::Type::kNetworkDiagChannelPages])
+    {
+        diagData.mChannelPages = channelPages->GetValue();
+        diagData.mPresentFlags |= NetDiagData::kChannelPagesBit;
+    }
+
     SuccessOrExit(error = tlv::GetTlvListByType(tlvList, aPayload, tlv::Type::kNetworkDiagChildIpv6Address,
                                                 tlv::Scope::kNetworkDiag));
 
@@ -2287,7 +2434,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     {
         for (const auto &tlv : tlvList)
         {
-            SuccessOrExit(error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, tlv.GetValue()));
+            error = DecodeChildIpv6AddressList(diagData.mChildIpv6AddrsInfoList, tlv.GetValue());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Child IPv6 Address List: {}", error.ToString());
+                ExitNow();
+            }
         }
         diagData.mPresentFlags |= NetDiagData::kChildIpv6AddrsInfoListBit;
     }
@@ -2295,7 +2447,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     if (auto networkData = tlvSet[tlv::Type::kNetworkDiagNetworkData])
     {
         const ByteArray &value = networkData->GetValue();
-        SuccessOrExit(error = DecodeNetworkData(diagData.mNetworkData, value));
+        error                  = DecodeNetworkData(diagData.mNetworkData, value);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Network Data: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kNetworkDataBit;
     }
 
@@ -2309,23 +2466,30 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto connectivity = tlvSet[tlv::Type::kNetworkDiagConnectivity])
     {
-        SuccessOrExit(error = DecodeConnectivity(diagData.mConnectivity, connectivity->GetValue()));
+        error = DecodeConnectivity(diagData.mConnectivity, connectivity->GetValue());
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Connectivity: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kConnectivityBit;
     }
 
     if (auto batteryLevel = tlvSet[tlv::Type::kNetworkDiagBatteryLevel])
     {
-        uint8_t value;
-        value                  = utils::Decode<uint8_t>(batteryLevel->GetValue());
-        diagData.mBatteryLevel = value;
+        if (batteryLevel->GetLength() >= 1)
+        {
+            diagData.mBatteryLevel = utils::Decode<uint8_t>(batteryLevel->GetValue());
+        }
         diagData.mPresentFlags |= NetDiagData::kBatteryLevelBit;
     }
 
     if (auto supplyVoltage = tlvSet[tlv::Type::kNetworkDiagSupplyVoltage])
     {
-        uint16_t value;
-        value                   = utils::Decode<uint16_t>(supplyVoltage->GetValue());
-        diagData.mSupplyVoltage = value;
+        if (supplyVoltage->GetLength() >= 2)
+        {
+            diagData.mSupplyVoltage = utils::Decode<uint16_t>(supplyVoltage->GetValue());
+        }
         diagData.mPresentFlags |= NetDiagData::kSupplyVoltageBit;
     }
 
@@ -2345,17 +2509,19 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto maxChildTimeout = tlvSet[tlv::Type::kNetworkDiagMaxChildTimeout])
     {
-        uint32_t value;
-        value                     = utils::Decode<uint32_t>(maxChildTimeout->GetValue());
-        diagData.mMaxChildTimeout = value;
+        if (maxChildTimeout->GetLength() >= 4)
+        {
+            diagData.mMaxChildTimeout = utils::Decode<uint32_t>(maxChildTimeout->GetValue());
+        }
         diagData.mPresentFlags |= NetDiagData::kMaxChildTimeoutBit;
     }
 
     if (auto version = tlvSet[tlv::Type::kNetworkDiagVersion])
     {
-        uint16_t value;
-        value             = utils::Decode<uint16_t>(version->GetValue());
-        diagData.mVersion = value;
+        if (version->GetLength() >= 2)
+        {
+            diagData.mVersion = utils::Decode<uint16_t>(version->GetValue());
+        }
         diagData.mPresentFlags |= NetDiagData::kVersionBit;
     }
 
@@ -2390,7 +2556,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     {
         for (const auto &tlv : tlvList)
         {
-            SuccessOrExit(error = DecodeChild(diagData.mChild, tlv.GetValue()));
+            error = DecodeChild(diagData.mChild, tlv.GetValue());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Child: {}", error.ToString());
+                ExitNow();
+            }
         }
         diagData.mPresentFlags |= NetDiagData::kChildBit;
     }
@@ -2402,14 +2573,24 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
     {
         for (const auto &tlv : tlvList)
         {
-            SuccessOrExit(error = DecodeRouterNeighbor(diagData.mRouterNeighbor, tlv.GetValue()));
+            error = DecodeRouterNeighbor(diagData.mRouterNeighbor, tlv.GetValue());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Router Neighbor: {}", error.ToString());
+                ExitNow();
+            }
         }
         diagData.mPresentFlags |= NetDiagData::kRouterNeighborBit;
     }
 
     if (auto mleCounters = tlvSet[tlv::Type::kNetworkDiagMleCounters])
     {
-        SuccessOrExit(error = internal::DecodeMleCounters(diagData.mMleCounters, mleCounters->GetValue()));
+        error = internal::DecodeMleCounters(diagData.mMleCounters, mleCounters->GetValue());
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode MLE Counters: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kMleCountersBit;
     }
 
@@ -2421,8 +2602,12 @@ Error internal::DecodeNetDiagData(NetDiagData &aNetDiagData, const ByteArray &aP
 
     if (auto channelsMask = tlvSet[tlv::Type::kNetworkDiagNonPreferredChannelsMask])
     {
-        SuccessOrExit(error = internal::DecodeNonPreferredChannelsMask(diagData.mNonPreferredChannelsMask,
-                                                                       channelsMask->GetValue()));
+        error = internal::DecodeNonPreferredChannelsMask(diagData.mNonPreferredChannelsMask, channelsMask->GetValue());
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "failed to decode Non-Preferred Channels Mask: {}", error.ToString());
+            ExitNow();
+        }
         diagData.mPresentFlags |= NetDiagData::kNonPreferredChannelsMaskBit;
     }
 
@@ -2434,18 +2619,44 @@ exit:
 
 Error internal::DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf)
 {
-    Error        error;
-    tlv::TlvList tlvList;
+    Error  error;
+    size_t offset = 0;
 
-    SuccessOrExit(error =
-                      tlv::GetTlvListByType(tlvList, aBuf, tlv::Type::kNetworkDataPrefix, tlv::Scope::kNetworkData));
-    if (tlvList.size() > 0)
+    aNetworkData.mRawValue = aBuf;
+
+    while (offset < aBuf.size())
     {
-        for (const auto &tlv : tlvList)
+        tlv::TlvPtr tlv = tlv::Tlv::Deserialize(error, offset, aBuf, tlv::Scope::kNetworkData);
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to parse TLV: {}", error.ToString());
+            ExitNow();
+        }
+
+        if (tlv->GetType() == tlv::Type::kNetworkDataPrefix)
         {
             PrefixEntry prefixEntry;
-            SuccessOrExit(error = DecodePrefixEntry(prefixEntry, tlv.GetValue()));
+            error = DecodePrefixEntry(prefixEntry, tlv->GetValue());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to decode Prefix Entry: {}",
+                          error.ToString());
+                continue;
+            }
+            prefixEntry.mIsStable = tlv->IsStable();
             aNetworkData.mPrefixList.emplace_back(prefixEntry);
+        }
+        else if (tlv->GetType() == tlv::Type::kNetworkDataService)
+        {
+            ServiceEntry serviceEntry;
+            error = DecodeService(serviceEntry, tlv->GetValue(), tlv->IsStable());
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeNetworkData: failed to decode Service Entry: {}",
+                          error.ToString());
+                continue;
+            }
+            aNetworkData.mServiceList.emplace_back(serviceEntry);
         }
     }
 
@@ -2455,11 +2666,10 @@ exit:
 
 Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aBuf)
 {
-    Error       error;
-    size_t      length = aBuf.size();
-    uint8_t     offset = 0;
-    ByteArray   subTlv;
-    tlv::TlvSet tlvSet;
+    Error     error;
+    size_t    length = aBuf.size();
+    size_t    offset = 0;
+    ByteArray subTlv;
 
     VerifyOrExit(length >= kPrefixBytes, error = ERROR_BAD_FORMAT("premature end of Prefix"));
     offset += kPrefixBytes;
@@ -2473,28 +2683,47 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
     {
         subTlv = {aBuf.begin() + offset, aBuf.end()};
 
-        // Get the 6LowPan context
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
-        if (auto context = tlvSet[tlv::Type::kNetworkData6LowPanContext])
-        {
-            const ByteArray &value = context->GetValue();
-            SuccessOrExit(error = DecodeContext(aPrefixEntry.mSixLowPanContext, value));
-        }
+        // Parse sub-TLVs
+        size_t subOffset = 0;
 
-        // Get the HasRoute
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
-        if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
+        while (subOffset < subTlv.size())
         {
-            const ByteArray &value = hasRoute->GetValue();
-            SuccessOrExit(error = DecodeHasRoute(aPrefixEntry.mHasRouteList, value));
-        }
+            tlv::TlvPtr tlv = tlv::Tlv::Deserialize(error, subOffset, subTlv, tlv::Scope::kNetworkData);
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to parse sub-TLV: {}", error.ToString());
+                ExitNow();
+            }
 
-        // Get the BorderRouter
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
-        if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
-        {
-            const ByteArray &value = borderRouter->GetValue();
-            SuccessOrExit(error = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, value));
+            if (tlv->GetType() == tlv::Type::kNetworkData6LowPanContext)
+            {
+                error = DecodeContext(aPrefixEntry.mSixLowPanContext, tlv->GetValue());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode Context: {}", error.ToString());
+                    ExitNow();
+                }
+            }
+            else if (tlv->GetType() == tlv::Type::kNetworkDataHasRoute)
+            {
+                error = DecodeHasRoute(aPrefixEntry.mHasRouteList, tlv->GetValue(), tlv->IsStable());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode HasRoute: {}",
+                              error.ToString());
+                    ExitNow();
+                }
+            }
+            else if (tlv->GetType() == tlv::Type::kNetworkDataBorderRouter)
+            {
+                error = DecodeBorderRouter(aPrefixEntry.mBorderRouterList, tlv->GetValue(), tlv->IsStable());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodePrefixEntry: failed to decode BorderRouter: {}",
+                              error.ToString());
+                    ExitNow();
+                }
+            }
         }
     }
 
@@ -2502,7 +2731,7 @@ exit:
     return error;
 }
 
-Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf)
+Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf, bool aIsStable)
 {
     Error         error;
     size_t        length = aBuf.size();
@@ -2514,7 +2743,9 @@ Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const 
     {
         hasRouteEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data() + offset, kRloc16Bytes);
         offset += kRloc16Bytes;
-        hasRouteEntry.mIsNat64          = (aBuf[offset] >> 5) & 0x01;
+        hasRouteEntry.mIsNat64 = (aBuf[offset] >> 5) & 0x01;
+        // mIsStable is set from TLV header in caller
+        hasRouteEntry.mIsStable         = aIsStable;
         hasRouteEntry.mRouterPreference = (aBuf[offset] >> 6) & 0x03;
         offset += 1;
         aHasRouteList.emplace_back(hasRouteEntry);
@@ -2524,7 +2755,9 @@ exit:
     return error;
 }
 
-Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf)
+Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList,
+                                   const ByteArray                &aBuf,
+                                   bool                            aIsStable)
 {
     Error             error;
     size_t            length = aBuf.size();
@@ -2547,6 +2780,8 @@ Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouter
         offset += 1;
         borderRouterEntry.mIsNdDns = (aBuf[offset] >> 7) & 0x01;
         borderRouterEntry.mIsDp    = (aBuf[offset] >> 6) & 0x01;
+        // mIsStable is set from TLV header in caller
+        borderRouterEntry.mIsStable = aIsStable;
         offset += 1;
         aBorderRouterList.emplace_back(borderRouterEntry);
     }
@@ -2564,6 +2799,87 @@ Error internal::DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArr
     aSixLowPanContext.mIsCompress    = (aBuf[0] >> 4) & 0x01;
     aSixLowPanContext.mContextId     = aBuf[0] & 0x0F;
     aSixLowPanContext.mContextLength = aBuf[1];
+
+exit:
+    return error;
+}
+
+Error internal::DecodeService(ServiceEntry &aServiceEntry, const ByteArray &aBuf, bool aIsStable)
+{
+    Error     error;
+    size_t    length = aBuf.size();
+    size_t    offset = 0;
+    uint8_t   serviceDataLength;
+    ByteArray subTlv;
+
+    VerifyOrExit(length >= 2, error = ERROR_BAD_FORMAT("premature end of Service"));
+
+    // T (bit 7), S (bit 6), ID (bits 5-0)
+    aServiceEntry.mIsThread = (aBuf[offset] >> 7) & 0x01;
+    // mIsStable is set from TLV header in caller
+    aServiceEntry.mIsStable = aIsStable;
+    aServiceEntry.mId       = aBuf[offset] & 0x3F;
+    offset += 1;
+
+    // Enterprise Number (4 bytes)
+    VerifyOrExit(offset + 4 <= length, error = ERROR_BAD_FORMAT("premature end of Service Body"));
+    aServiceEntry.mEnterpriseNumber = utils::Decode<uint32_t>(aBuf.data() + offset, 4);
+    offset += 4;
+
+    // Service Data Length (1 byte)
+    VerifyOrExit(offset + 1 <= length, error = ERROR_BAD_FORMAT("premature end of Service Body"));
+    serviceDataLength = aBuf[offset];
+    offset += 1;
+
+    // Service Data
+    VerifyOrExit(offset + serviceDataLength <= length, error = ERROR_BAD_FORMAT("premature end of Service Data"));
+    aServiceEntry.mServiceData.assign(aBuf.begin() + offset, aBuf.begin() + offset + serviceDataLength);
+    offset += serviceDataLength;
+
+    // Sub-TLVs (Server)
+    if (length > offset)
+    {
+        subTlv           = {aBuf.begin() + offset, aBuf.end()};
+        size_t subOffset = 0;
+
+        while (subOffset < subTlv.size())
+        {
+            tlv::TlvPtr tlv = tlv::Tlv::Deserialize(error, subOffset, subTlv, tlv::Scope::kNetworkData);
+            if (error != ErrorCode::kNone)
+            {
+                LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeService: failed to parse sub-TLV: {}", error.ToString());
+                ExitNow();
+            }
+
+            if (tlv->GetType() == tlv::Type::kNetworkDataServer)
+            {
+                ServerEntry serverEntry;
+                error = DecodeServer(serverEntry, tlv->GetValue());
+                if (error != ErrorCode::kNone)
+                {
+                    LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeService: failed to decode Server Entry: {}",
+                              error.ToString());
+                    ExitNow();
+                }
+                // ServerEntry does not have mIsStable member
+                aServiceEntry.mServerList.emplace_back(serverEntry);
+            }
+        }
+    }
+
+exit:
+    return error;
+}
+
+Error internal::DecodeServer(ServerEntry &aServerEntry, const ByteArray &aBuf)
+{
+    Error  error;
+    size_t length = aBuf.size();
+
+    VerifyOrExit(length >= kRloc16Bytes, error = ERROR_BAD_FORMAT("premature end of Server TLV"));
+
+    aServerEntry.mRloc16 = utils::Decode<uint16_t>(aBuf.data(), kRloc16Bytes);
+    aServerEntry.mServerData.assign(aBuf.begin() + kRloc16Bytes, aBuf.end());
 
 exit:
     return error;
@@ -2594,6 +2910,11 @@ Error internal::DecodeChildIpv6AddressList(std::vector<ChildIpv6AddrInfo> &aChil
     Error             error;
     size_t            length = aBuf.size();
     ChildIpv6AddrInfo childIpv6AddrsInfo;
+
+    if (length == 0)
+    {
+        ExitNow();
+    }
 
     VerifyOrExit((length % kIpv6AddressBytes) == kRloc16Bytes,
                  error = ERROR_BAD_FORMAT("premature end of Child IPv6 Address"));
@@ -2650,8 +2971,13 @@ Error internal::DecodeChildTable(std::vector<ChildTableEntry> &aChildTable, cons
                      error = ERROR_BAD_FORMAT("premature end of Child Table"));
         entry.mTimeout             = 1 << (((aBuf[offset] & 0xF8) >> 3) - 4);
         entry.mIncomingLinkQuality = (aBuf[offset] & 0x06) >> 1;
-        entry.mChildId             = ((aBuf[offset] & 0x01) << 9) | aBuf[offset + 1];
-        SuccessOrExit(error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3}));
+        entry.mChildId             = ((aBuf[offset] & 0x01) << 8) | aBuf[offset + 1];
+        error = DecodeModeData(entry.mModeData, {aBuf.begin() + offset + 2, aBuf.begin() + offset + 3});
+        if (error != ErrorCode::kNone)
+        {
+            LOG_ERROR(LOG_REGION_MESHDIAG, "DecodeChildTable: failed to decode mode data: {}", error.ToString());
+            ExitNow();
+        }
         aChildTable.emplace_back(entry);
         offset += kChildTableEntryBytes;
     }
@@ -2728,7 +3054,9 @@ Error internal::DecodeMacCounters(MacCounters &aMacCounters, const ByteArray &aB
 {
     Error  error;
     size_t length = aBuf.size();
-    VerifyOrExit(length == kMacCountersBytes, error = ERROR_BAD_FORMAT("incorrect size of MacCounters"));
+    VerifyOrExit(length >= kMacCountersBytes,
+                 error = ERROR_BAD_FORMAT("incorrect size of MacCounters (expected >= {}, actual {})",
+                                          kMacCountersBytes, length));
     aMacCounters.mIfInUnknownProtos  = utils::Decode<uint32_t>(aBuf.data(), 4);
     aMacCounters.mIfInErrors         = utils::Decode<uint32_t>(aBuf.data() + 4, 4);
     aMacCounters.mIfOutErrors        = utils::Decode<uint32_t>(aBuf.data() + 8, 4);
@@ -2778,7 +3106,8 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     int8_t         pp;
 
     // A valid Connectivity TLV must have a minimum length of 7 bytes.
-    VerifyOrExit(length >= 7, error = {ErrorCode::kBadFormat, "invalid connectivity tlv length"});
+    VerifyOrExit(length >= 7,
+                 error = ERROR_BAD_FORMAT("invalid connectivity tlv length (expected >= 7, actual {})", length));
 
     // Byte 0: Parent Priority and Reserved bits
     byte0 = *cur++;
@@ -2813,7 +3142,7 @@ Error internal::DecodeConnectivity(Connectivity &aConnectivity, const ByteArray 
     // Ensure we have consumed all bytes of the TLV.
     if (cur != end)
     {
-        LOG_WARN(LOG_REGION_MESHDIAG, "malformed connectivity tlv, {} trailing bytes", std::distance(cur, end));
+        LOG_DEBUG(LOG_REGION_MESHDIAG, "malformed connectivity tlv, {} trailing bytes", std::distance(cur, end));
     }
 
 exit:
@@ -2826,7 +3155,14 @@ Error internal::DecodeChild(std::vector<Child> &aChild, const ByteArray &aBuf)
     Child   childInfo;
     uint8_t flags;
 
-    VerifyOrExit(aBuf.size() >= kChildBytes, error = {ErrorCode::kBadFormat, "invalid child tlv length"});
+    if (aBuf.empty())
+    {
+        ExitNow();
+    }
+
+    VerifyOrExit(
+        aBuf.size() >= kChildBytes,
+        error = ERROR_BAD_FORMAT("invalid child tlv length (expected >= {}, actual {})", kChildBytes, aBuf.size()));
 
     // Flags (1 byte at offset 0)
     flags                         = aBuf[0];
@@ -2866,8 +3202,14 @@ Error internal::DecodeRouterNeighbor(std::vector<RouterNeighbor> &aRouterNeighbo
     RouterNeighbor neighborInfo;
     uint8_t        flags;
 
+    if (aBuf.empty())
+    {
+        ExitNow();
+    }
+
     VerifyOrExit(aBuf.size() >= kRouterNeighborBytes,
-                 error = {ErrorCode::kBadFormat, "invalid router neighbor tlv length"});
+                 error = ERROR_BAD_FORMAT("invalid router neighbor tlv length (expected >= {}, actual {})",
+                                          kRouterNeighborBytes, aBuf.size()));
 
     flags                            = aBuf[0];
     neighborInfo.mSupportsErrorRates = (flags & 0x80) != 0;
@@ -2892,7 +3234,14 @@ Error internal::DecodeMleCounters(MleCounters &aCounters, const ByteArray &aBuf)
 {
     Error error;
 
-    VerifyOrExit(aBuf.size() >= kMleCountersBytes, error = {ErrorCode::kBadFormat, "invalid mle counters tlv length"});
+    if (aBuf.empty())
+    {
+        ExitNow();
+    }
+
+    VerifyOrExit(aBuf.size() >= kMleCountersBytes,
+                 error = ERROR_BAD_FORMAT("invalid mle counters tlv length (expected >= {}, actual {})",
+                                          kMleCountersBytes, aBuf.size()));
 
     aCounters.mRadioDisabledCounter                 = utils::Decode<uint16_t>(aBuf.data() + 0, 2);
     aCounters.mDetachedRoleCounter                  = utils::Decode<uint16_t>(aBuf.data() + 2, 2);

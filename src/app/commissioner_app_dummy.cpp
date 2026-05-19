@@ -513,6 +513,8 @@ const DiagAnsDataMap &CommissionerApp::GetNetDiagTlvs() const
     return sDiagAnsDataMap;
 }
 
+void CommissionerApp::ClearNetDiagTlvs() {}
+
 Error CommissionerApp::CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagTlvFlags)
 {
     UNUSED(aAddr);
@@ -526,6 +528,8 @@ Error CommissionerApp::CommandDiagReset(const std::string &aAddr, uint64_t aDiag
     UNUSED(aDiagTlvFlags);
     return Error{};
 }
+
+void CommissionerApp::TraverseNetwork(Commissioner::TraverseHandler &aHandler) { UNUSED(aHandler); }
 
 } // namespace commissioner
 

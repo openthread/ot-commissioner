@@ -50,6 +50,9 @@ add_library(commissioner
     mbedtls_error.hpp
     message.hpp
     network_data.cpp
+    network_diag_data.cpp
+    network_traverser.cpp
+    network_traverser.hpp
     openthread/bloom_filter.cpp
     openthread/bloom_filter.hpp
     openthread/crc16.cpp
@@ -162,6 +165,7 @@ if (OT_COMM_TEST)
         socket_test.cpp
         token_manager.hpp
         token_manager_test.cpp
+        network_traverser_test.cpp
         $<TARGET_OBJECTS:commissioner-common-test>
     )
 

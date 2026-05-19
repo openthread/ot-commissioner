@@ -42,11 +42,14 @@
 #include <commissioner/network_data.hpp>
 #include <commissioner/network_diag_data.hpp>
 #include <commissioner/commissioner.hpp>
+
+
 %}
 
 %include <std_shared_ptr.i>
 %include <std_string.i>
 %include <std_vector.i>
+%include <std_map.i>
 %include <stl.i>
 %include <typemaps.i>
 
@@ -83,7 +86,7 @@
 %apply const unsigned long long & { const uint64_t & };
 
 // Remove the 'm' prefix of all members.
-%rename("%(regex:/^(m)(.*)/\\2/)s") "";
+%rename("%(regex:/^(m)([A-Z].*)/\\2/)s") "";
 
 // Convert first character of function names to lowercase.
 %rename("%(firstlowercase)s", %$isfunction) "";
@@ -102,8 +105,10 @@
 
 %feature("director") ot::commissioner::CommissionerHandler;
 %feature("director") ot::commissioner::Logger;
+%feature("director") ot::commissioner::Commissioner::TraverseHandler;
 
 %template(ChannelMask) std::vector<ot::commissioner::ChannelMaskEntry>;
+%template(NetDiagDataMap) std::map<std::string, ot::commissioner::NetDiagData>;
 %template(StringVector) std::vector<std::string>;
 %template(ChildIpv6AddrInfoVector) std::vector<ot::commissioner::ChildIpv6AddrInfo>;
 %template(ChildTableEntryVector) std::vector<ot::commissioner::ChildTableEntry>;
@@ -112,7 +117,7 @@
 %template(RouteDataEntryVector) std::vector<ot::commissioner::RouteDataEntry>;
 %template(HasRouteEntryVector) std::vector<ot::commissioner::HasRouteEntry>;
 %template(BorderRouterEntryVector) std::vector<ot::commissioner::BorderRouterEntry>;
-%template(PrefixEntryVector) std::vector<ot::commissioner::PrefixEntry>;
+
 
 %typemap(jstype) std::string& OUTPUT "String[]"
 %typemap(jtype)  std::string& OUTPUT "String[]"
@@ -188,6 +193,7 @@ namespace commissioner {
                                            const std::string    &aAddr,
                                            uint64_t              aDiagDataFlags);
 
+
     // Remove operators and move constructor of Error.
     %ignore Error::operator=(const Error &aError);
     %ignore Error::Error(Error &&aError) noexcept;
@@ -208,4 +214,11 @@ namespace commissioner {
 %include <commissioner/network_data.hpp>
 %include <commissioner/network_diag_data.hpp>
 %include <commissioner/commissioner.hpp>
-%include <commissioner/commissioner.hpp>
+
+%template(ServerEntryVector) std::vector<ot::commissioner::ServerEntry>;
+%template(ServiceEntryVector) std::vector<ot::commissioner::ServiceEntry>;
+%template(PrefixEntryVector) std::vector<ot::commissioner::PrefixEntry>;
+
+
+
+

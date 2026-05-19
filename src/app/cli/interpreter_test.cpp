@@ -42,6 +42,8 @@
 
 #include "app/border_agent.hpp"
 #include "app/border_agent_functions_mock.hpp"
+#include "commissioner/commissioner.hpp"
+#include "fmt/format.h"
 
 #define private public
 
