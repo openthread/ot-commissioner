@@ -194,7 +194,7 @@ TEST(CommissionerImplTest, ValidInput_DecodeNetDiagData)
     std::string threadStackVersion = "ThreadStackVersion";
 
     EXPECT_EQ(error, ErrorCode::kNone);
-    EXPECT_EQ(diagData.mPresentFlags, 268435455);
+    EXPECT_EQ(diagData.mPresentFlags, 268435071);
     EXPECT_EQ(diagData.mExtMacAddr, extMacAddrBytes);
     EXPECT_EQ(diagData.mMacAddr, macAddr);
     EXPECT_EQ(diagData.mTimeout, timeout);
