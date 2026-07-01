@@ -35,9 +35,9 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#include <gtest/gtest_prod.h>
-
+#ifndef FRIEND_TEST
+#define FRIEND_TEST(test_case_name, test_name) friend class test_case_name##_##test_name##_Test
+#endif
 #include "commissioner/commissioner.hpp"
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
