@@ -105,14 +105,17 @@ class ServiceListener:
 
 def worker(q: queue.Queue, zeroconf_instance: Zeroconf) -> None:
     while True:
+        item = q.get()
+        if item is None:
+            q.task_done()
+            break
         try:
-            item = q.get()
-            if item is None:
-                break
             event, service_type, name = item
             print_service_info(zeroconf_instance, service_type, name, event)
         except Exception as e:
             print(f"Error in worker thread: {e}")
+        finally:
+            q.task_done()
 
 
 if __name__ == "__main__":
