@@ -292,6 +292,25 @@ Error CommissionerSafe::GetActiveDataset(ActiveOperationalDataset &aDataset, uin
     return pro.get_future().get();
 }
 
+Error CommissionerSafe::GetActiveDataset(ActiveOperationalDataset &aDataset,
+                                         ByteArray &aRawDataset,
+                                         uint16_t aDatasetFlags)
+{
+    std::promise<Error> pro;
+    auto wait = [&pro, &aDataset, &aRawDataset](const ActiveOperationalDataset *dataset,
+                                               const ByteArray *rawDataset,
+                                               Error error) {
+        if (dataset != nullptr) aDataset = *dataset;
+        if (rawDataset != nullptr) aRawDataset = *rawDataset;
+        pro.set_value(error);
+    };
+
+    PushAsyncRequest([this, wait, aDatasetFlags]() {
+        mImpl->GetActiveDatasetAndRaw(wait, aDatasetFlags);
+    });
+    return pro.get_future().get();
+}
+
 void CommissionerSafe::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags)
 {
     PushAsyncRequest([=]() { mImpl->GetRawActiveDataset(aHandler, aDatasetFlags); });

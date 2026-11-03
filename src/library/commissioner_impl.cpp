@@ -449,6 +449,35 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
     GetRawActiveDataset(rawDatasetHandler, aDatasetFlags);
 }
 
+void CommissionerImpl::GetActiveDatasetAndRaw(ActiveDatasetAndRawHandler aHandler,
+                                                uint16_t aDatasetFlags)
+{
+    GetRawActiveDataset(
+        [aHandler](const ByteArray *aRawDataset, Error aError) {
+            if (aError != ErrorCode::kNone)
+            {
+                aHandler(nullptr, nullptr, aError);
+                return;
+            }
+            if (aRawDataset == nullptr)
+            {
+                aHandler(nullptr, nullptr, ERROR_BAD_FORMAT("missing raw Active Dataset response"));
+                return;
+            }
+
+            ActiveOperationalDataset dataset;
+            Error error = DecodeActiveOperationalDataset(dataset, *aRawDataset);
+            if (error != ErrorCode::kNone)
+            {
+                aHandler(nullptr, nullptr, error);
+                return;
+            }
+
+            aHandler(&dataset, aRawDataset, error);
+        },
+        aDatasetFlags);
+}
+
 void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags)
 {
     Error         error;

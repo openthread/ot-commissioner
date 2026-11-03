@@ -668,6 +668,19 @@ public:
     virtual Error GetActiveDataset(ActiveOperationalDataset &aDataset, uint16_t aDatasetFlags) = 0;
 
     /**
+     * @brief Synchronously get the parsed and raw Active Operational Dataset in one request.
+     *
+     * @param[out] aDataset       Parsed Active Operational Dataset.
+     * @param[out] aRawDataset    Original TLV payload returned by the Border Agent.
+     * @param[in]  aDatasetFlags  Active Operational Dataset flags indicating which TLVs are wanted.
+     *
+     * @return Error::kNone, succeed; otherwise, failed.
+     */
+    virtual Error GetActiveDataset(ActiveOperationalDataset &aDataset,
+                                   ByteArray &aRawDataset,
+                                   uint16_t aDatasetFlags) = 0;
+
+    /**
      * @brief Asynchronously get the raw Active Operational Dataset as a binary blob (in format of Thread TLV).
      *
      * Get the uninterpreted Active Operational Dataset in MGMT_ACTIVE_GET.rsp.
