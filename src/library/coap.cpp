@@ -500,7 +500,7 @@ Coap::RequestHolder::RequestHolder(const RequestPtr &aRequest, ResponseHandler a
 }
 
 Coap::Coap(struct event_base *aEventBase, Endpoint &aEndpoint)
-    : mMessageId(0)
+    : mMessageId(random::non_crypto::GetUint16())
     , mRequestsCache(aEventBase, [this](Timer &aTimer) { Retransmit(aTimer); })
     , mResponsesCache(aEventBase, std::chrono::seconds(kExchangeLifetime))
     , mDefaultHandler(nullptr)
