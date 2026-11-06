@@ -573,11 +573,7 @@ exit:
 
 Error Coap::SendResponse(const Request &aRequest, Response &aResponse)
 {
-    // Set message id to request's id
-    if (aResponse.GetMessageId() == 0)
-    {
-        aResponse.SetMessageId(aRequest.GetMessageId());
-    }
+    aResponse.SetMessageId(aResponse.GetType() == Type::kAcknowledgment ? aRequest.GetMessageId() : AllocMessageId());
 
     // Set the token to request's token
     aResponse.SetToken(aRequest.GetToken());
@@ -810,13 +806,11 @@ Error Coap::SendHeaderResponse(Code aCode, const Request &aRequest)
     case Type::kConfirmable:
         response.SetType(Type::kAcknowledgment);
         response.SetCode(aCode);
-        response.SetMessageId(aRequest.GetMessageId());
         break;
 
     case Type::kNonConfirmable:
         response.SetType(Type::kNonConfirmable);
         response.SetCode(aCode);
-        response.SetMessageId(AllocMessageId());
         break;
 
     default:

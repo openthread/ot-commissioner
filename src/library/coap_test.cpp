@@ -303,6 +303,145 @@ TEST(CoapTest, CoapMessagePayload_NonEmptyPayloadSerializationAndDeserialization
     EXPECT_EQ(msg->GetPayloadAsString(), "hello");
 }
 
+class MessageIdEndpoint : public Endpoint
+{
+public:
+    Error Send(const ByteArray &aBuf, MessageSubType) override
+    {
+        Error error;
+        mMessage = Message::Deserialize(error, aBuf);
+        return error;
+    }
+
+    Address GetPeerAddr() const override { return {}; }
+
+    uint16_t GetPeerPort() const override { return 5683; }
+
+    std::shared_ptr<Message> mMessage;
+};
+
+class CoapMessageIdTest : public testing::Test
+{
+protected:
+    void SetUp() override { ASSERT_NE(mEventBase, nullptr); }
+
+    std::unique_ptr<event_base, decltype(&event_base_free)> mEventBase{event_base_new(), event_base_free};
+    MessageIdEndpoint                                       mEndpoint;
+};
+
+TEST_F(CoapMessageIdTest, SequentialRequests)
+{
+    Coap    coap{mEventBase.get(), mEndpoint};
+    Request request{Type::kNonConfirmable, Code::kGet};
+
+    coap.SendRequest(request, nullptr);
+    ASSERT_NE(mEndpoint.mMessage, nullptr);
+    uint16_t messageId = mEndpoint.mMessage->GetMessageId();
+
+    for (uint32_t i = 0; i <= UINT16_MAX; ++i)
+    {
+        coap.SendRequest(request, nullptr);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+        EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), static_cast<uint16_t>(messageId + 1));
+        messageId = mEndpoint.mMessage->GetMessageId();
+    }
+}
+
+TEST_F(CoapMessageIdTest, RandomizedInitialMessageIds)
+{
+    uint16_t firstMessageId = 0;
+    bool     different      = false;
+
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        Coap    coap{mEventBase.get(), mEndpoint};
+        Request request{Type::kNonConfirmable, Code::kGet};
+
+        coap.SendRequest(request, nullptr);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+
+        if (i == 0)
+        {
+            firstMessageId = mEndpoint.mMessage->GetMessageId();
+        }
+        else if (mEndpoint.mMessage->GetMessageId() != firstMessageId)
+        {
+            different = true;
+        }
+    }
+
+    EXPECT_TRUE(different);
+}
+
+TEST_F(CoapMessageIdTest, ResponseMessageIds)
+{
+    Coap    coap{mEventBase.get(), mEndpoint};
+    Request request{Type::kNonConfirmable, Code::kGet};
+
+    coap.SendRequest(request, nullptr);
+    ASSERT_NE(mEndpoint.mMessage, nullptr);
+    uint16_t messageId = mEndpoint.mMessage->GetMessageId();
+
+    Error error;
+    auto  receivedRequest = Message::Deserialize(error, ByteArray{0x40, 0x01, 0x12, 0x34});
+    ASSERT_EQ(error, ErrorCode::kNone);
+    ASSERT_NE(receivedRequest, nullptr);
+
+    for (Type type : {Type::kAcknowledgment, Type::kConfirmable, Type::kNonConfirmable})
+    {
+        Response response{type, Code::kContent};
+
+        ASSERT_EQ(coap.SendResponse(*receivedRequest, response), ErrorCode::kNone);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+
+        if (type == Type::kAcknowledgment)
+        {
+            EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), receivedRequest->GetMessageId());
+        }
+        else
+        {
+            EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), static_cast<uint16_t>(++messageId));
+        }
+    }
+
+    request.SetType(Type::kConfirmable);
+    ASSERT_EQ(coap.SendHeaderResponse(Code::kContent, request), ErrorCode::kNone);
+    ASSERT_NE(mEndpoint.mMessage, nullptr);
+    EXPECT_EQ(mEndpoint.mMessage->GetType(), Type::kAcknowledgment);
+    EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), 0);
+}
+
+TEST_F(CoapMessageIdTest, NonConfirmableResponseWrapsToZero)
+{
+    Coap    coap{mEventBase.get(), mEndpoint};
+    Request request{Type::kNonConfirmable, Code::kGet};
+
+    for (uint32_t i = 0; i <= UINT16_MAX; ++i)
+    {
+        coap.SendRequest(request, nullptr);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+        if (mEndpoint.mMessage->GetMessageId() == UINT16_MAX)
+        {
+            break;
+        }
+    }
+    ASSERT_EQ(mEndpoint.mMessage->GetMessageId(), UINT16_MAX);
+
+    Error error;
+    auto  receivedRequest = Message::Deserialize(error, ByteArray{0x50, 0x01, 0x12, 0x34});
+    ASSERT_EQ(error, ErrorCode::kNone);
+    ASSERT_NE(receivedRequest, nullptr);
+    ASSERT_EQ(coap.SendHeaderResponse(Code::kContent, *receivedRequest), ErrorCode::kNone);
+    ASSERT_NE(mEndpoint.mMessage, nullptr);
+    EXPECT_EQ(mEndpoint.mMessage->GetType(), Type::kNonConfirmable);
+    EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), 0);
+
+    Response response{Type::kNonConfirmable, Code::kContent};
+    ASSERT_EQ(coap.SendResponse(*receivedRequest, response), ErrorCode::kNone);
+    ASSERT_NE(mEndpoint.mMessage, nullptr);
+    EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), 1);
+}
+
 class MockEndpoint : public Endpoint
 {
 public:

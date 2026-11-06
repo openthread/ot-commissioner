@@ -34,6 +34,7 @@
 #include "library/openthread/random.hpp"
 
 #include <cstdint>
+#include <mutex>
 #include <random>
 
 namespace ot {
@@ -44,14 +45,15 @@ namespace random {
 
 namespace non_crypto {
 
-static std::random_device sRandomDevice;
+uint32_t GetUint32(void)
+{
+    static std::mt19937_64                         sRng(std::random_device{}());
+    static std::uniform_int_distribution<uint32_t> sUniform;
+    static std::mutex                              sMutex;
+    std::lock_guard<std::mutex>                    lock(sMutex);
 
-// Mersenne Twister 19937 (64 bits)
-static std::mt19937_64 sRng(sRandomDevice());
-
-static std::uniform_int_distribution<uint32_t> sUniform;
-
-uint32_t GetUint32(void) { return sUniform(sRng); }
+    return sUniform(sRng);
+}
 
 } // namespace non_crypto
 
