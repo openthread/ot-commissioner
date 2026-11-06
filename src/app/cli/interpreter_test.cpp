@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>

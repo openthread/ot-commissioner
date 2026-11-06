@@ -2223,7 +2223,8 @@ Interpreter::Value Interpreter::ProcessOpDatasetJob(CommissionerAppPtr &aCommiss
         // Update network from active opdataset (no error there, log messages only)
         do
         {
-            Network nwk;
+            std::lock_guard<std::mutex> lock(mRegistryMutex);
+            Network                     nwk;
             // Get network object for the opdataset object
             if ((dataset.mPresentFlags & ActiveOperationalDataset::kExtendedPanIdBit) != 0)
             {
