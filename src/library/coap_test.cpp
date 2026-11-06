@@ -442,6 +442,74 @@ TEST_F(CoapMessageIdTest, NonConfirmableResponseWrapsToZero)
     EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), 1);
 }
 
+TEST_F(CoapMessageIdTest, SeparateResponseIsNotReplayedForPeerRequest)
+{
+    for (Type type : {Type::kConfirmable, Type::kNonConfirmable})
+    {
+        SCOPED_TRACE(static_cast<int>(type));
+        Coap     coap{mEventBase.get(), mEndpoint};
+        uint32_t handled = 0;
+
+        coap.SendRequest(Request{Type::kNonConfirmable, Code::kGet}, nullptr);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+        uint16_t peerMessageId = static_cast<uint16_t>(mEndpoint.mMessage->GetMessageId() + 2);
+
+        coap.SetDefaultHandler([&](const Request &aRequest) {
+            Response response{type, ++handled == 1 ? Code::kContent : Code::kChanged};
+            EXPECT_EQ(coap.SendResponse(aRequest, response), ErrorCode::kNone);
+        });
+
+        ByteArray request{0x41, 0x01, 0x00, 0x00, 0xaa, 0xb4, 't', 'e', 's', 't'};
+        request[2] = static_cast<uint8_t>(peerMessageId >> 8);
+        request[3] = static_cast<uint8_t>(peerMessageId);
+        coap.Receive(request);
+        ASSERT_EQ(handled, 1);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+
+        peerMessageId = mEndpoint.mMessage->GetMessageId();
+        request[2]    = static_cast<uint8_t>(peerMessageId >> 8);
+        request[3]    = static_cast<uint8_t>(peerMessageId);
+        request[4]    = 0xbb;
+        mEndpoint.mMessage.reset();
+        coap.Receive(request);
+
+        EXPECT_EQ(handled, 2);
+        ASSERT_NE(mEndpoint.mMessage, nullptr);
+        EXPECT_EQ(mEndpoint.mMessage->GetToken(), ByteArray{0xbb});
+        EXPECT_EQ(mEndpoint.mMessage->GetCode(), Code::kChanged);
+        EXPECT_EQ(coap.GetCachedResponsesNum(), 0);
+    }
+}
+
+TEST_F(CoapMessageIdTest, AcknowledgmentIsReplayedForDuplicateRequest)
+{
+    Coap            coap{mEventBase.get(), mEndpoint};
+    uint32_t        handled = 0;
+    const ByteArray request{0x41, 0x01, 0x12, 0x34, 0xaa, 0xb4, 't', 'e', 's', 't'};
+
+    coap.SetDefaultHandler([&](const Request &aRequest) {
+        ++handled;
+        Response response{Type::kAcknowledgment, Code::kContent};
+        response.Append("cached");
+        EXPECT_EQ(coap.SendResponse(aRequest, response), ErrorCode::kNone);
+    });
+
+    coap.Receive(request);
+    ASSERT_EQ(handled, 1);
+    ASSERT_EQ(coap.GetCachedResponsesNum(), 1);
+
+    mEndpoint.mMessage.reset();
+    coap.Receive(request);
+
+    EXPECT_EQ(handled, 1);
+    ASSERT_NE(mEndpoint.mMessage, nullptr);
+    EXPECT_EQ(mEndpoint.mMessage->GetType(), Type::kAcknowledgment);
+    EXPECT_EQ(mEndpoint.mMessage->GetMessageId(), 0x1234);
+    EXPECT_EQ(mEndpoint.mMessage->GetToken(), ByteArray{0xaa});
+    EXPECT_EQ(mEndpoint.mMessage->GetPayloadAsString(), "cached");
+    EXPECT_EQ(coap.GetCachedResponsesNum(), 1);
+}
+
 class MockEndpoint : public Endpoint
 {
 public:

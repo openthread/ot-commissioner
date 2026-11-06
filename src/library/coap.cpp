@@ -581,8 +581,10 @@ Error Coap::SendResponse(const Request &aRequest, Response &aResponse)
     // Set message info
     aResponse.SetEndpoint(aRequest.GetEndpoint());
 
-    // Enqueue response
-    mResponsesCache.Put(aResponse);
+    if (aResponse.IsAck())
+    {
+        mResponsesCache.Put(aResponse);
+    }
 
     return Send(aResponse);
 }
