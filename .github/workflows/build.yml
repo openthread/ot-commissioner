@@ -134,7 +134,7 @@ jobs:
           ./tests/interpreter-test
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -159,7 +159,9 @@ jobs:
           ./tests/commissioner-test
           ./tests/commissioner-app-test
           ./tests/job-manager-test
-          ./tests/interpreter-test
+          # macos-15 runners block outbound mDNS due to macOS Local Network
+          # Privacy (https://github.com/actions/runner-images/issues/10924).
+          ./tests/interpreter-test --gtest_filter=-InterpreterTestSuite.IESV_SingleExportFileMustPass:InterpreterTestSuite.PC_BrScanExport:InterpreterTestSuite.PC_BrScanExportDirAbsent
 
   android-ndk:
     runs-on: ubuntu-22.04
@@ -184,7 +186,7 @@ jobs:
           ANDROID_ABI=arm64-v8a ./build-commissioner-libs.sh
 
   java-binding:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
