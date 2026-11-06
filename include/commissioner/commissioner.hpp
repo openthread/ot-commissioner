@@ -36,6 +36,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -550,6 +551,66 @@ public:
      * @param[in]      aDatasetFlags  Commissioner Dataset flags indicate which TLVs are wanted.
      */
     virtual void GetCommissionerDataset(Handler<CommissionerDataset> aHandler, uint16_t aDatasetFlags) = 0;
+
+    /**
+     * @brief Handler for network traversal events.
+     */
+    class TraverseHandler
+    {
+    public:
+        virtual ~TraverseHandler() = default;
+
+        /**
+         * @brief Called when the total number of routers is known (after collecting Leader data).
+         *
+         * @param[in] aRouterCount  The expected number of routers.
+         */
+        virtual void OnTotalRoutersCount(size_t aRouterCount) { (void)aRouterCount; }
+
+        /**
+         * @brief Called when a device (Router or Child) has responded with diagnostic data.
+         *
+         * @param[in] aAddr   The address of the device.
+         * @param[in] aData   The collected diagnostic data.
+         * @param[in] aError  The error of the response (None on success).
+         */
+        virtual void OnDeviceResponded(const std::string &aAddr, const NetDiagData *aData, Error aError)
+        {
+            (void)aAddr;
+            (void)aData;
+            (void)aError;
+        }
+
+        /**
+         * @brief Called when the total number of children is known (after querying all routers).
+         *
+         * @param[in] aChildCount   The expected number of children.
+         */
+        virtual void OnTotalChildrenCount(size_t aChildCount) { (void)aChildCount; }
+
+        /**
+         * @brief Called when the traversal is finished.
+         *
+         * @param[in] aReport  The full traversal report. The key of the map is the string representation of the
+         * device's IPv6 address.
+         * @param[in] aError   The error code (if any).
+         */
+        virtual void OnFinished(const std::map<std::string, NetDiagData> *aReport, Error aError)
+        {
+            (void)aReport;
+            (void)aError;
+        }
+    };
+
+    /**
+     * @brief Traverse the Thread network to collect diagnostic data.
+     *
+     * This method discovers the leader, routers, and children in the network.
+     * All errors (including start errors) are reported through the handler.
+     *
+     * @param[in] aHandler  The handler for traversal events.
+     */
+    virtual void TraverseNetwork(TraverseHandler &aHandler) = 0;
 
     /**
      * @brief Synchronously get the Commissioner Dataset.

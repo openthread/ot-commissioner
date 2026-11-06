@@ -36,6 +36,8 @@
 #include <string>
 #include <vector>
 
+#include <gtest/gtest_prod.h>
+
 #include "commissioner/commissioner.hpp"
 #include "commissioner/defines.hpp"
 #include "commissioner/error.hpp"
@@ -47,6 +49,7 @@
 #include "library/coap.hpp"
 #include "library/coap_secure.hpp"
 #include "library/joiner_session.hpp"
+#include "library/network_traverser.hpp"
 #include "library/timer.hpp"
 #include "library/tlv.hpp"
 #include "library/token_manager.hpp"
@@ -201,6 +204,8 @@ public:
     void  CommandDiagReset(ErrorHandler aHandler, const std::string &aAddr, uint64_t aDiagDataFlags) override;
     Error CommandDiagReset(const std::string &, uint64_t) override { return ERROR_UNIMPLEMENTED(""); }
 
+    void TraverseNetwork(TraverseHandler &aHandler) override;
+
     Error SetToken(const ByteArray &aSignedToken) override;
 
     struct event_base *GetEventBase() { return mEventBase; }
@@ -260,6 +265,7 @@ private:
     void HandleRlyRx(const coap::Request &aRlyRx);
 
     void HandleJoinerSessionTimer(Timer &aTimer);
+    void HandleDiagQueryCleanupTimer(Timer &aTimer);
 
     void HandleDiagGetAnswer(const coap::Request &aRequest);
 
@@ -299,8 +305,22 @@ private:
     coap::Resource mResourcePanIdConflict;
     coap::Resource mResourceEnergyReport;
 
-    coap::Resource mResourceDiagAns;
-    NetDiagData    mDiagAnsTlvs;
+    coap::Resource                                        mResourceDiagAns;
+    NetDiagData                                           mDiagAnsTlvs;
+    std::map<uint16_t, std::pair<NetDiagData, TimePoint>> mPendingDiagQueries;
+    Timer                                                 mDiagQueryCleanupTimer;
+    uint16_t                                              mNextQueryId = 0;
+
+    NetworkTraverser mNetworkTraverser;
+
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToSendToJoinerIfJoinerSessionExists);
+    FRIEND_TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Implicit);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_SinglePacketWithQueryId_Explicit);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_Legacy);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_MultiPacket_ThreeFragments);
+    FRIEND_TEST(CommissionerImplFragmentTest, FragmentedDiagResponse_Timeout);
 };
 
 /*

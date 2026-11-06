@@ -177,10 +177,13 @@ enum class Type : uint8_t
     kNetworkDiagNonPreferredChannelsMask = 36,
 
     // Network Data TLVs
-    kNetworkDataHasRoute       = 0,
-    kNetworkDataPrefix         = 1,
-    kNetworkDataBorderRouter   = 2,
-    kNetworkData6LowPanContext = 3,
+    kNetworkDataHasRoute          = 0,
+    kNetworkDataPrefix            = 1,
+    kNetworkDataBorderRouter      = 2,
+    kNetworkData6LowPanContext    = 3,
+    kNetworkDataCommissioningData = 4,
+    kNetworkDataService           = 5,
+    kNetworkDataServer            = 6,
 };
 
 using TlvPtr      = std::shared_ptr<Tlv>;
@@ -211,6 +214,7 @@ public:
     uint16_t GetTotalLength() const;
 
     // It is the caller that make sure the tlv is valid.
+    bool             IsStable() const;
     int8_t           GetValueAsInt8() const;
     uint16_t         GetValueAsUint8() const;
     uint16_t         GetValueAsUint16() const;
@@ -221,6 +225,7 @@ public:
 private:
     Scope     mScope = Scope::kMeshCoP;
     Type      mType;
+    bool      mIsStable = false;
     ByteArray mValue;
 };
 

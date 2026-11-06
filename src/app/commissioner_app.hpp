@@ -43,6 +43,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -235,6 +236,7 @@ public:
     // Network Diagnostic
     MOCKABLE Error CommandDiagGetQuery(const std::string &aAddr, uint64_t aDiagDataFlags);
     MOCKABLE Error CommandDiagReset(const std::string &aAddr, uint64_t aDiagDataFlags);
+    MOCKABLE void  TraverseNetwork(Commissioner::TraverseHandler &aHandler);
 
     /*
      * BBR Dataset APIs
@@ -282,6 +284,7 @@ public:
 
     const std::string    &GetDomainName() const;
     const DiagAnsDataMap &GetNetDiagTlvs() const;
+    MOCKABLE void         ClearNetDiagTlvs();
 
 protected:
     CommissionerApp() = default;
@@ -333,6 +336,7 @@ private:
     CommissionerDataset             mCommDataset;
     BbrDataset                      mBbrDataset;
     DiagAnsDataMap                  mDiagAnsDataMap;
+    mutable std::mutex              mMutex;
 };
 
 Error CommissionerAppCreate(std::shared_ptr<CommissionerApp> &aCommApp, const Config &aConfig);

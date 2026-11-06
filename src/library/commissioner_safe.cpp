@@ -569,6 +569,18 @@ Error CommissionerSafe::CommandDiagReset(const std::string &aAddr, uint64_t aDia
     return pro.get_future().get();
 }
 
+void CommissionerSafe::TraverseNetwork(TraverseHandler &aHandler)
+{
+    std::promise<void> pro;
+
+    PushAsyncRequest([&pro, &aHandler, this]() {
+        mImpl->TraverseNetwork(aHandler);
+        pro.set_value();
+    });
+
+    pro.get_future().wait();
+}
+
 void CommissionerSafe::PushAsyncRequest(AsyncRequest &&aAsyncRequest)
 {
     std::lock_guard<std::mutex> _(mInvokeMutex);

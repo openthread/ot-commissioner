@@ -34,10 +34,19 @@
 #ifndef OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 #define OT_COMM_APP_CLI_JOB_MANAGER_HPP_
 
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 #include "app/cli/interpreter.hpp"
 #include "app/cli/job.hpp"
 #include "app/commissioner_app.hpp"
+#include "app/ps/registry.hpp"
 #include "app/ps/registry_entries.hpp"
+#include "commissioner/commissioner.hpp"
+#include "commissioner/defines.hpp"
+#include "commissioner/error.hpp"
 
 namespace ot {
 

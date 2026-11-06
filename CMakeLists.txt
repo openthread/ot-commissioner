@@ -27,6 +27,7 @@
 #
 
 cmake_minimum_required(VERSION 3.20.1)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 project(ot-commissioner VERSION 0.2.0)
 
 option(OT_COMM_ANDROID           "Build with Android NDK" OFF)

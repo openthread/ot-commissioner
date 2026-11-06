@@ -311,6 +311,7 @@ struct HasRouteEntry
     uint16_t mRloc16           = 0;
     uint8_t  mRouterPreference = 0;
     bool     mIsNat64          = false;
+    bool     mIsStable         = false;
 };
 
 /**
@@ -328,6 +329,7 @@ struct BorderRouterEntry
     bool     mIsOnMesh         = false;
     bool     mIsNdDns          = false;
     bool     mIsDp             = false;
+    bool     mIsStable         = false;
 };
 
 /**
@@ -351,6 +353,29 @@ struct PrefixEntry
     std::vector<HasRouteEntry>     mHasRouteList;
     std::vector<BorderRouterEntry> mBorderRouterList;
     SixLowPanContext               mSixLowPanContext;
+    bool                           mIsStable = false;
+};
+
+/**
+ * @brief Server Data
+ */
+struct ServerEntry
+{
+    uint16_t  mRloc16 = 0;
+    ByteArray mServerData;
+};
+
+/**
+ * @brief Service Data
+ */
+struct ServiceEntry
+{
+    uint8_t                  mId               = 0;
+    uint32_t                 mEnterpriseNumber = 0;
+    ByteArray                mServiceData;
+    std::vector<ServerEntry> mServerList;
+    bool                     mIsStable = false;
+    bool                     mIsThread = false; // T bit
 };
 
 /**
@@ -358,7 +383,9 @@ struct PrefixEntry
  */
 struct NetworkData
 {
-    std::vector<PrefixEntry> mPrefixList;
+    std::vector<PrefixEntry>  mPrefixList;
+    std::vector<ServiceEntry> mServiceList;
+    ByteArray                 mRawValue;
 };
 
 /**

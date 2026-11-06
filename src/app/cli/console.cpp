@@ -33,10 +33,12 @@
 
 #include "app/cli/console.hpp"
 
+#include <cstring>
 #include <iostream>
 
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <string>
 
 namespace ot {
 
@@ -62,7 +64,14 @@ std::string Console::Read()
     return line;
 }
 
-void Console::Write(const std::string &aLine, Color aColor)
+void Console::Write(const std::string &aLine, Color aColor) { std::cout << Format(aLine, aColor) << std::endl; }
+
+void Console::WriteNoNewline(const std::string &aLine, Color aColor)
+{
+    std::cout << Format(aLine, aColor) << std::flush;
+}
+
+std::string Console::Format(const std::string &aLine, Color aColor)
 {
     static const std::string kResetCode = "\u001b[0m";
     std::string              colorCode;
@@ -95,7 +104,7 @@ void Console::Write(const std::string &aLine, Color aColor)
         break;
     }
 
-    std::cout << colorCode << aLine << kResetCode << std::endl;
+    return colorCode + aLine + kResetCode;
 }
 
 } // namespace commissioner

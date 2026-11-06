@@ -33,7 +33,6 @@
 
 #include "library/joiner_session.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -380,6 +379,7 @@ int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen, uint16_t 
             {
                 LOG_WARN(LOG_REGION_JOINER_SESSION, "session(={}) insufficient buffer size {}, {} needed",
                          static_cast<void *>(&mJoinerSession), aMaxLen, buf.size());
+                mRecvBufs.pop();
                 return MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL;
             }
             rval = aMaxLen;

@@ -53,6 +53,7 @@ static constexpr uint8_t kSixLowPanContextBytes = 2;
 static constexpr uint8_t kChildBytes            = 43;
 static constexpr uint8_t kRouterNeighborBytes   = 24;
 static constexpr uint8_t kMleCountersBytes      = 66;
+static constexpr uint8_t kServiceDataBytes      = 6; // Minimal service header
 
 namespace internal {
 
@@ -74,9 +75,11 @@ ByteArray ExtractRouterIds(const ByteArray &aMask);
 
 Error DecodeNetworkData(NetworkData &aNetworkData, const ByteArray &aBuf);
 Error DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aBuf);
-Error DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf);
-Error DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf);
+Error DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const ByteArray &aBuf, bool aIsStable);
+Error DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouterList, const ByteArray &aBuf, bool aIsStable);
 Error DecodeContext(SixLowPanContext &aSixLowPanContext, const ByteArray &aBuf);
+Error DecodeService(ServiceEntry &aServiceEntry, const ByteArray &aBuf, bool aIsStable);
+Error DecodeServer(ServerEntry &aServerEntry, const ByteArray &aBuf);
 
 } // namespace internal
 

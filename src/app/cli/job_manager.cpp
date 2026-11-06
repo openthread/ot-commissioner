@@ -31,6 +31,7 @@
  *   The file implements command job manager.
  */
 
+#include <cstdint>
 #include <exception>
 #include <string>
 #include <vector>

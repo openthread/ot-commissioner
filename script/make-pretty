@@ -133,6 +133,11 @@ do_markdown_format()
     echo -e '     format markdown'
     echo -e '========================================'
 
+    if ! command -v npx &>/dev/null; then
+        echo "npx could not be found, skipping markdown formatting"
+        return
+    fi
+
     git ls-files "${OT_MARKDOWN_SOURCES[@]}" | grep -v -E "^($(echo "${OT_EXCLUDE_DIRS[@]}" | tr ' ' '|'))" \
         | xargs -n10 -P"$OT_BUILD_JOBS" npx prettier@2.0.4 --write
 }
@@ -142,6 +147,11 @@ do_markdown_check()
     echo -e '========================================'
     echo -e '     check markdown'
     echo -e '========================================'
+
+    if ! command -v npx &>/dev/null; then
+        echo "npx could not be found, skipping markdown check"
+        return
+    fi
 
     git ls-files "${OT_MARKDOWN_SOURCES[@]}" | grep -v -E "^($(echo "${OT_EXCLUDE_DIRS[@]}" | tr ' ' '|'))" \
         | xargs -n10 -P"$OT_BUILD_JOBS" npx prettier@2.0.4 --check

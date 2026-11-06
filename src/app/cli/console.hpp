@@ -64,11 +64,15 @@ public:
 
     // Write to the console
     static void Write(const std::string &aLine, Color aColor = Color::kDefault);
+    static void WriteNoNewline(const std::string &aLine, Color aColor = Color::kDefault);
 
     static void SetPrompt(const std::string &aPrompt);
 
 protected:
     static std::string mPrompt;
+
+private:
+    static std::string Format(const std::string &aLine, Color aColor);
 };
 
 /**

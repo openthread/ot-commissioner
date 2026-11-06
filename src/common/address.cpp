@@ -181,6 +181,81 @@ Address Address::FromString(const std::string &aAddr)
 
 bool Address::IsMulticast() const { return IsIpv6() && mBytes[0] == kMulticastPrefix; }
 
+std::string Address::GetTypeAnnotation(const ByteArray &aMeshLocalPrefix) const
+{
+    std::string annotation = "";
+
+    if (IsIpv6())
+    {
+        if (mBytes[0] == 0xFF)
+        {
+            annotation = "MC"; // Multicast
+        }
+        else if (mBytes[0] == 0xFE && (mBytes[1] & 0xC0) == 0x80)
+        {
+            annotation = "LL"; // Link-Local
+        }
+        else if (mBytes[0] == 0xFD || mBytes[0] == 0xFC)
+        {
+            if (aMeshLocalPrefix.size() == 8 &&
+                std::equal(aMeshLocalPrefix.begin(), aMeshLocalPrefix.end(), mBytes.begin()))
+            {
+                // Check for RLOC/ALOC pattern in IID: 0000:00ff:fe00:XXXX
+                if (mBytes[8] == 0x00 && mBytes[9] == 0x00 && mBytes[10] == 0x00 && mBytes[11] == 0xff &&
+                    mBytes[12] == 0xfe && mBytes[13] == 0x00)
+                {
+                    if (mBytes[14] == 0xfc)
+                    {
+                        annotation = "ALOC"; // Anycast Locator
+                    }
+                    else
+                    {
+                        annotation = "RLOC"; // Routing Locator
+                    }
+                }
+                else
+                {
+                    annotation = "ML-EID"; // Mesh-Local Endpoint Identifier
+                }
+            }
+            else
+            {
+                annotation = "ULA"; // Unique Local Address
+            }
+        }
+        else if ((mBytes[0] & 0xE0) == 0x20)
+        {
+            annotation = "GUA"; // Global Unicast Address (2000::/3)
+        }
+        else
+        {
+            // Check for Loopback (::1) and Unspecified (::)
+            bool allZeros = true;
+            for (size_t i = 0; i < 15; ++i)
+            {
+                if (mBytes[i] != 0)
+                {
+                    allZeros = false;
+                    break;
+                }
+            }
+            if (allZeros)
+            {
+                if (mBytes[15] == 1)
+                {
+                    annotation = "Loopback";
+                }
+                else if (mBytes[15] == 0)
+                {
+                    annotation = "Unspecified";
+                }
+            }
+        }
+    }
+
+    return annotation;
+}
+
 } // namespace commissioner
 
 } // namespace ot
