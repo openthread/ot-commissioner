@@ -33,6 +33,7 @@
 
 #include "library/coap.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <string>
@@ -1249,7 +1250,7 @@ void Message::SetToken(const ByteArray &aToken)
 {
     auto len             = std::min(sizeof(mHeader.mToken), aToken.size());
     mHeader.mTokenLength = len;
-    memcpy(mHeader.mToken, &aToken[0], len);
+    std::copy_n(aToken.begin(), len, mHeader.mToken);
 }
 
 void Message::SetToken(uint8_t aTokenLength)

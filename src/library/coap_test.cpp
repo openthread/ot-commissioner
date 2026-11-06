@@ -607,6 +607,43 @@ TEST(CoapTest, CoapMessageConfirmable_Timeout)
     event_base_free(eventBase);
 }
 
+class CaptureEndpoint : public Endpoint
+{
+public:
+    Error Send(const ByteArray &aBuf, MessageSubType) override
+    {
+        mSent = aBuf;
+        return ERROR_NONE;
+    }
+
+    Address GetPeerAddr() const override { return {}; }
+
+    uint16_t GetPeerPort() const override { return 5683; }
+
+    ByteArray mSent;
+};
+
+TEST(CoapTest, CoapResponse_RequestWithoutToken)
+{
+    std::unique_ptr<event_base, decltype(&event_base_free)> eventBase{event_base_new(), event_base_free};
+    CaptureEndpoint                                         endpoint;
+    Coap                                                    coap{eventBase.get(), endpoint};
+    Error                                                   error;
+
+    auto request = Message::Deserialize(error, ByteArray{0x40, 0x01, 0x12, 0x34});
+    ASSERT_NE(request, nullptr);
+    ASSERT_EQ(error, ErrorCode::kNone);
+    ASSERT_EQ(request->GetToken(), ByteArray{});
+
+    Response response{Type::kAcknowledgment, Code::kContent};
+    EXPECT_EQ(coap.SendResponse(*request, response), ErrorCode::kNone);
+
+    auto sent = Message::Deserialize(error, endpoint.mSent);
+    ASSERT_NE(sent, nullptr);
+    EXPECT_EQ(sent->GetMessageId(), 0x1234);
+    EXPECT_EQ(sent->GetToken(), ByteArray{});
+}
+
 // TODO(wgtdkp): test with multiple outstanding requests / pressure tests.
 
 // TODO(wgtdkp): add test cases to cover all CoAP APIs.
