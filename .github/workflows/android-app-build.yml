@@ -44,7 +44,7 @@ jobs:
       matrix:
         android-api: [26, 34]
         android-abi: [x86_64]
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
     steps:
       - name: Free Disk Space
         uses: AdityaGarg8/remove-unwanted-software@90e01b21170618765a73370fcc3abbd1684a7793 # v5
@@ -76,6 +76,11 @@ jobs:
           ANDROID_ABI=${{ matrix.android-abi }} ./build-commissioner-libs.sh
           cd openthread_commissioner
           ./gradlew build
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - name: Tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:

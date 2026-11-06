@@ -59,7 +59,7 @@ jobs:
 
   gcc-build:
     name: gcc-${{ matrix.gcc_ver }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         gcc_ver: [5, 6, 7, 8, 9, 10]
@@ -69,13 +69,11 @@ jobs:
           persist-credentials: false
       - name: Install CMake 3.20.1
         run: |
-          wget https://cmake.org/files/v3.20/cmake-3.20.1.zip
-          unzip cmake-3.20.1
-          cd cmake-3.20.1
-          cmake .
-          make -j4
-          sudo make install
-          cmake --version
+          wget -q https://cmake.org/files/v3.20/cmake-3.20.1-linux-x86_64.tar.gz
+          sudo mkdir -p /opt/cmake-3.20.1
+          sudo tar -xzf cmake-3.20.1-linux-x86_64.tar.gz --strip-components=1 -C /opt/cmake-3.20.1
+          echo "/opt/cmake-3.20.1/bin" >> "$GITHUB_PATH"
+          /opt/cmake-3.20.1/bin/cmake --version
       - name: Bootstrap
         run: |
           script/bootstrap.sh
@@ -101,7 +99,7 @@ jobs:
 
   clang-build:
     name: clang-${{ matrix.clang_ver }}-${{ matrix.build_type }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         clang_ver: [5, 6, 7, 8, 9, 10, 11]
@@ -119,6 +117,7 @@ jobs:
           mkdir build && cd build
           cmake -GNinja                                     \
                 -DBUILD_SHARED_LIBS=ON                      \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5          \
                 -DCMAKE_CXX_STANDARD=11                     \
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON            \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -164,7 +163,7 @@ jobs:
           ./tests/interpreter-test --gtest_filter=-InterpreterTestSuite.IESV_SingleExportFileMustPass:InterpreterTestSuite.PC_BrScanExport:InterpreterTestSuite.PC_BrScanExportDirAbsent
 
   android-ndk:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -216,7 +215,7 @@ jobs:
           ninja
 
   fmt-format-check:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -227,12 +226,13 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -GNinja                           \
-                -DBUILD_SHARED_LIBS=ON            \
-                -DCMAKE_CXX_STANDARD=14           \
-                -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
-                -DCMAKE_BUILD_TYPE=Release        \
-                -DCMAKE_INSTALL_PREFIX=/usr/local \
-                -DOT_COMM_WARNING_AS_ERROR=ON     \
+          cmake -GNinja                            \
+                -DBUILD_SHARED_LIBS=ON             \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+                -DCMAKE_CXX_STANDARD=14            \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON   \
+                -DCMAKE_BUILD_TYPE=Release         \
+                -DCMAKE_INSTALL_PREFIX=/usr/local  \
+                -DOT_COMM_WARNING_AS_ERROR=ON      \
                 ..
           ninja

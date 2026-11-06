@@ -439,7 +439,7 @@ Registry::Status Registry::GetNetworksByAliases(const StringArray &aAliases,
                                                 NetworkArray      &aRet,
                                                 StringArray       &aUnresolved)
 {
-    Registry::Status status;
+    Registry::Status status = Registry::Status::kNotFound;
     NetworkArray     networks;
 
     if (aAliases.size() == 0)
@@ -482,8 +482,8 @@ Registry::Status Registry::GetNetworksByAliases(const StringArray &aAliases,
         else
         {
             Network  nwk;
-            uint64_t xpid;
-            uint16_t pid;
+            uint64_t xpid = 0;
+            uint16_t pid  = 0;
 
             status = Registry::Status::kNotFound;
             if (utils::ParseInteger(xpid, alias) == ERROR_NONE)
