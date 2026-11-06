@@ -40,6 +40,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -259,8 +260,9 @@ private:
     static std::string       BaAvailabilityToString(uint32_t aAvailability);
 
 private:
-    std::shared_ptr<JobManager> mJobManager                  = nullptr;
-    std::shared_ptr<Registry>   mRegistry                    = nullptr;
+    std::shared_ptr<JobManager> mJobManager = nullptr;
+    std::shared_ptr<Registry>   mRegistry   = nullptr;
+    std::mutex                  mRegistryMutex;
     std::string                 mThreadAdministratorPasscode = "";
 
     bool mShouldExit = false;

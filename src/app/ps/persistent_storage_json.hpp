@@ -37,6 +37,7 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -196,7 +197,8 @@ public:
 
 private:
     std::string                  mFileName;    /**< name of the file */
-    nlohmann::json               mCache;       /**< internal chache */
+    nlohmann::json               mCache;       /**< internal cache */
+    std::recursive_mutex         mCacheMutex;  /**< lock to sync in-process cache access */
     ot::os::semaphore::Semaphore mStorageLock; /**< lock to sync file access */
 
     /**
@@ -228,6 +230,8 @@ private:
     template <typename V, typename I>
     Status AddOne(V const &aValue, I &aRetId, std::string aSeqName, std::string aArrName)
     {
+        std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
         if (CacheFromFile() != Status::kSuccess)
         {
             return Status::kError;
@@ -249,6 +253,13 @@ private:
      */
     template <typename V, typename I> Status DelId(I const &aId, std::string aArrName)
     {
+        std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
+        if (CacheFromFile() != Status::kSuccess)
+        {
+            return Status::kError;
+        }
+
         auto itEnd = std::remove_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]),
                                     [&aId](const V &el) { return el.mId.mId == aId.mId; });
         mCache[aArrName].erase(itEnd, std::end(mCache[aArrName]));
@@ -261,6 +272,8 @@ private:
      */
     template <typename V, typename I> Status GetId(I const &aId, V &aRet, std::string aArrName)
     {
+        std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
         auto itValue = std::find_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]),
                                     [&aId](V const &el) { return el.mId.mId == aId.mId; });
         if (itValue == std::end(mCache[aArrName]))
@@ -278,6 +291,13 @@ private:
      */
     template <typename V> Status UpdId(V const &aNewValue, std::string aArrName)
     {
+        std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
+        if (CacheFromFile() != Status::kSuccess)
+        {
+            return Status::kError;
+        }
+
         auto itValue = std::find_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]),
                                     [&aNewValue](const V &el) { return el.mId.mId == aNewValue.mId.mId; });
         if (itValue == std::end(mCache[aArrName]))
@@ -296,6 +316,8 @@ private:
     template <typename V>
     Status LookupPred(std::function<bool(V const &)> aPred, std::vector<V> &aRet, std::string aArrName)
     {
+        std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
         size_t prevSize = aRet.size();
         std::copy_if(std::begin(mCache[aArrName]), std::end(mCache[aArrName]), std::back_inserter(aRet), aPred);
 
