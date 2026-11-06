@@ -39,7 +39,7 @@ permissions:
 
 jobs:
   integration-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       INSTALL_PREFIX: "/usr/local"
     steps:
@@ -52,15 +52,16 @@ jobs:
       - name: Build
         run: |
           mkdir build && cd build
-          cmake -GNinja                           \
-                -DCMAKE_CXX_STANDARD=11           \
-                -DCMAKE_CXX_STANDARD_REQUIRED=ON  \
-                -DCMAKE_BUILD_TYPE=Release        \
+          cmake -GNinja                                  \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5       \
+                -DCMAKE_CXX_STANDARD=11                  \
+                -DCMAKE_CXX_STANDARD_REQUIRED=ON         \
+                -DCMAKE_BUILD_TYPE=Release               \
                 -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
-                -DOT_COMM_COVERAGE=ON             \
-                -DOT_COMM_REFERENCE_DEVICE=ON     \
-                -DOT_COMM_CCM=OFF                 \
-                -DOT_COMM_WARNING_AS_ERROR=ON     \
+                -DOT_COMM_COVERAGE=ON                    \
+                -DOT_COMM_REFERENCE_DEVICE=ON            \
+                -DOT_COMM_CCM=OFF                        \
+                -DOT_COMM_WARNING_AS_ERROR=ON            \
                 ..
           ninja
           sudo ninja install
@@ -81,6 +82,10 @@ jobs:
           ./run_tests.sh
       - name: Upload coverage to Codecov
         run: |
-          lcov --directory build/ --capture --output-file coverage.info
-          lcov --list coverage.info
+          lcov_args=()
+          if [[ $(lcov --version 2>/dev/null) =~ version[[:space:]]+([0-9]+)\. ]] && ((BASH_REMATCH[1] >= 2)); then
+            lcov_args+=(--ignore-errors gcov,mismatch,inconsistent,negative,corrupt,empty,unused)
+          fi
+          lcov "${lcov_args[@]}" --directory build/ --capture --output-file coverage.info
+          lcov "${lcov_args[@]}" --list coverage.info
           bash <(curl -s https://codecov.io/bash) -f coverage.info
