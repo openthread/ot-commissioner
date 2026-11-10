@@ -79,8 +79,7 @@ class CommissionerImpl : public Commissioner
     friend class CommissionerTestPeer;
 
 public:
-    using ActiveDatasetAndRawHandler =
-        std::function<void(const ActiveOperationalDataset *, const ByteArray *, Error)>;
+    using ActiveDatasetAndRawHandler = std::function<void(const ActiveOperationalDataset *, const ByteArray *, Error)>;
 
     explicit CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase);
 

@@ -297,11 +297,12 @@ Error CommissionerSafe::GetActiveDataset(ActiveOperationalDataset &aDataset,
                                          uint16_t aDatasetFlags)
 {
     std::promise<Error> pro;
-    auto wait = [&pro, &aDataset, &aRawDataset](const ActiveOperationalDataset *dataset,
-                                               const ByteArray *rawDataset,
-                                               Error error) {
-        if (dataset != nullptr) aDataset = *dataset;
-        if (rawDataset != nullptr) aRawDataset = *rawDataset;
+    auto wait = [&pro, &aDataset, &aRawDataset](const ActiveOperationalDataset *dataset, const ByteArray *rawDataset,
+                                                Error error) {
+        if (dataset != nullptr)
+            aDataset = *dataset;
+        if (rawDataset != nullptr)
+            aRawDataset = *rawDataset;
         pro.set_value(error);
     };
 
