@@ -305,9 +305,7 @@ Error CommissionerSafe::GetActiveDataset(ActiveOperationalDataset &aDataset,
         pro.set_value(error);
     };
 
-    PushAsyncRequest([this, wait, aDatasetFlags]() {
-        mImpl->GetActiveDatasetAndRaw(wait, aDatasetFlags);
-    });
+    PushAsyncRequest([this, wait, aDatasetFlags]() { mImpl->GetActiveDatasetAndRaw(wait, aDatasetFlags); });
     return pro.get_future().get();
 }
 

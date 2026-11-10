@@ -677,8 +677,8 @@ public:
      * @return Error::kNone, succeed; otherwise, failed.
      */
     virtual Error GetActiveDataset(ActiveOperationalDataset &aDataset,
-                                   ByteArray &aRawDataset,
-                                   uint16_t aDatasetFlags) = 0;
+                                   ByteArray                &aRawDataset,
+                                   uint16_t                  aDatasetFlags) = 0;
 
     /**
      * @brief Asynchronously get the raw Active Operational Dataset as a binary blob (in format of Thread TLV).

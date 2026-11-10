@@ -130,7 +130,7 @@ public:
 
     void  GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetActiveDataset(ActiveOperationalDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
-    void GetActiveDatasetAndRaw(ActiveDatasetAndRawHandler aHandler, uint16_t aDatasetFlags);
+    void  GetActiveDatasetAndRaw(ActiveDatasetAndRawHandler aHandler, uint16_t aDatasetFlags);
     Error GetActiveDataset(ActiveOperationalDataset &, ByteArray &, uint16_t) override
     {
         return ERROR_UNIMPLEMENTED("");
