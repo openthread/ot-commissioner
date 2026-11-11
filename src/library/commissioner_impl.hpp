@@ -75,12 +75,11 @@ class CommissionerTestPeer;
 //
 class CommissionerImpl : public Commissioner
 {
+    friend class Commissioner;
     friend class JoinerSession;
     friend class CommissionerTestPeer;
 
 public:
-    using ActiveDatasetAndRawHandler = std::function<void(const ActiveOperationalDataset *, const ByteArray *, Error)>;
-
     explicit CommissionerImpl(CommissionerHandler &aHandler, struct event_base *aEventBase);
 
     CommissionerImpl(const CommissionerImpl &aCommissioner)                  = delete;
@@ -129,11 +128,6 @@ public:
 
     void  GetActiveDataset(Handler<ActiveOperationalDataset> aHandler, uint16_t aDatasetFlags) override;
     Error GetActiveDataset(ActiveOperationalDataset &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }
-    void  GetActiveDatasetAndRaw(ActiveDatasetAndRawHandler aHandler, uint16_t aDatasetFlags);
-    Error GetActiveDataset(ActiveOperationalDataset &, ByteArray &, uint16_t) override
-    {
-        return ERROR_UNIMPLEMENTED("");
-    }
 
     void  GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags) override;
     Error GetRawActiveDataset(ByteArray &, uint16_t) override { return ERROR_UNIMPLEMENTED(""); }

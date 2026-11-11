@@ -128,6 +128,11 @@ ByteArray Commissioner::ComputeJoinerId(uint64_t aEui64)
     return joinerId;
 }
 
+Error Commissioner::DecodeActiveDataset(ActiveOperationalDataset &aDataset, const ByteArray &aRawDataset)
+{
+    return CommissionerImpl::DecodeActiveOperationalDataset(aDataset, aRawDataset);
+}
+
 void Commissioner::AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerId)
 {
     if (aSteeringData.size() != kMaxSteeringDataLength)
@@ -436,7 +441,7 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
         ActiveOperationalDataset dataset;
 
         SuccessOrExit(error = aError);
-        SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, *aRawDataset));
+        SuccessOrExit(error = Commissioner::DecodeActiveDataset(dataset, *aRawDataset));
 
         aHandler(&dataset, error);
     exit:
@@ -447,34 +452,6 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
     };
 
     GetRawActiveDataset(rawDatasetHandler, aDatasetFlags);
-}
-
-void CommissionerImpl::GetActiveDatasetAndRaw(ActiveDatasetAndRawHandler aHandler, uint16_t aDatasetFlags)
-{
-    GetRawActiveDataset(
-        [aHandler](const ByteArray *aRawDataset, Error aError) {
-            if (aError != ErrorCode::kNone)
-            {
-                aHandler(nullptr, nullptr, aError);
-                return;
-            }
-            if (aRawDataset == nullptr)
-            {
-                aHandler(nullptr, nullptr, ERROR_BAD_FORMAT("missing raw Active Dataset response"));
-                return;
-            }
-
-            ActiveOperationalDataset dataset;
-            Error                    error = DecodeActiveOperationalDataset(dataset, *aRawDataset);
-            if (error != ErrorCode::kNone)
-            {
-                aHandler(nullptr, nullptr, error);
-                return;
-            }
-
-            aHandler(&dataset, aRawDataset, error);
-        },
-        aDatasetFlags);
 }
 
 void CommissionerImpl::GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags)
@@ -1624,7 +1601,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto channelMask = tlvSet[tlv::Type::kChannelMask])
     {
-        SuccessOrExit(DecodeChannelMask(dataset.mChannelMask, channelMask->GetValue()));
+        SuccessOrExit(error = DecodeChannelMask(dataset.mChannelMask, channelMask->GetValue()));
         dataset.mPresentFlags |= ActiveOperationalDataset::kChannelMaskBit;
     }
 
