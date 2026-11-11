@@ -50,8 +50,8 @@ jobs:
           sudo apt update
           script/bootstrap.sh
           sudo bash script/install-llvm.sh
+          sudo apt-get --no-install-recommends install -y shfmt
           python3 -m pip install yapf==0.43.0
-          sudo snap install shfmt
           npm install prettier@2.0.4
       - name: Check
         run: |
