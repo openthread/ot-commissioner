@@ -75,6 +75,7 @@ class CommissionerTestPeer;
 //
 class CommissionerImpl : public Commissioner
 {
+    friend class Commissioner;
     friend class JoinerSession;
     friend class CommissionerTestPeer;
 

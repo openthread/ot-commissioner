@@ -677,7 +677,8 @@ public:
      * It always returns immediately without waiting for the completion.
      *
      * @param[in, out] aHandler       A handler of the response and errors; Guaranteed to be called.
-     * @param[in]      aDatasetFlags  Active Operational Dataset flags indicating which TLVs are wanted.
+     * @param[in]      aDatasetFlags  Active Operational Dataset flags indicating which TLVs are wanted. Pass 0 to
+     *                                request all TLVs, including TLVs unknown to this API.
      */
     virtual void GetRawActiveDataset(Handler<ByteArray> aHandler, uint16_t aDatasetFlags) = 0;
 
@@ -690,8 +691,9 @@ public:
      * by sending MGMT_ACTIVE_GET.req message.
      * It will not return until errors happened, timeouted or succeed.
      *
-     * @param[out] aDataset       A Active Operational Dataset returned by the leader.
-     * @param[in]  aDatasetFlags  Active Operational Dataset flags indicate which TLVs are wanted.
+     * @param[out] aRawDataset    The raw Active Operational Dataset returned by the leader.
+     * @param[in]  aDatasetFlags  Active Operational Dataset flags indicating which TLVs are wanted. Pass 0 to
+     *                            request all TLVs, including TLVs unknown to this API.
      *
      * @return Error::kNone, succeed; otherwise, failed;
      */
@@ -1152,6 +1154,16 @@ public:
                               const std::string &aPassphrase,
                               const std::string &aNetworkName,
                               const ByteArray   &aExtendedPanId);
+
+    /**
+     * @brief Decode an Active Operational Dataset from its raw TLV encoding.
+     *
+     * @param[out] aDataset     The decoded Active Operational Dataset.
+     * @param[in]  aRawDataset  The raw Active Operational Dataset TLVs (e.g. from GetRawActiveDataset()).
+     *
+     * @return Error::kNone, succeed; otherwise, failed.
+     */
+    static Error DecodeActiveDataset(ActiveOperationalDataset &aDataset, const ByteArray &aRawDataset);
 
     /**
      * @brief Compute joiner ID with its IEEE EUI-64 value.
