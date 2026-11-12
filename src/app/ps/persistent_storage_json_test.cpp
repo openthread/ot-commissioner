@@ -680,3 +680,49 @@ TEST(PersistentStorageJsonTestSuite, LookupNetwork)
 
     EXPECT_TRUE(psj.Close() == PersistentStorage::Status::kSuccess);
 }
+
+TEST(PersistentStorageJsonTestSuite, ReloadBeforeUpdateAndDelete)
+{
+    unlink("./tmp/test_reload.json");
+
+    PersistentStorageJson psj1("./tmp/test_reload.json");
+    ASSERT_EQ(psj1.Open(), PersistentStorage::Status::kSuccess);
+
+    NetworkId id0;
+    NetworkId id1;
+    ASSERT_EQ(
+        psj1.Add(Network{EMPTY_ID, EMPTY_ID, "nwk0", 0xFFFFFFFFFFFFFFF0ULL, 11, 0xFFF0, "2000:aaa0::0/64", 0}, id0),
+        PersistentStorage::Status::kSuccess);
+    ASSERT_EQ(
+        psj1.Add(Network{EMPTY_ID, EMPTY_ID, "nwk1", 0xFFFFFFFFFFFFFFF1ULL, 12, 0xFFF1, "2000:aaa1::0/64", 0}, id1),
+        PersistentStorage::Status::kSuccess);
+
+    NetworkId id2;
+    {
+        PersistentStorageJson psj2("./tmp/test_reload.json");
+        ASSERT_EQ(psj2.Open(), PersistentStorage::Status::kSuccess);
+        ASSERT_EQ(
+            psj2.Add(Network{EMPTY_ID, EMPTY_ID, "nwk2", 0xFFFFFFFFFFFFFFF2ULL, 13, 0xFFF2, "2000:aaa2::0/64", 0}, id2),
+            PersistentStorage::Status::kSuccess);
+        ASSERT_EQ(psj2.Close(), PersistentStorage::Status::kSuccess);
+    }
+
+    Network updated{id0, EMPTY_ID, "nwk0_upd", 0xFFFFFFFFFFFFFFF0ULL, 15, 0xFFF0, "2000:aaa0::0/64", 0};
+    EXPECT_EQ(psj1.Update(updated), PersistentStorage::Status::kSuccess);
+    EXPECT_EQ(psj1.Del(id1), PersistentStorage::Status::kSuccess);
+    EXPECT_EQ(psj1.Close(), PersistentStorage::Status::kSuccess);
+
+    PersistentStorageJson verifyPsj("./tmp/test_reload.json");
+    ASSERT_EQ(verifyPsj.Open(), PersistentStorage::Status::kSuccess);
+
+    Network got;
+    EXPECT_EQ(verifyPsj.Get(id0, got), PersistentStorage::Status::kSuccess);
+    EXPECT_EQ(got.mName, "nwk0_upd");
+    EXPECT_EQ(got.mChannel, 15U);
+    EXPECT_EQ(verifyPsj.Get(id1, got), PersistentStorage::Status::kNotFound);
+    EXPECT_EQ(verifyPsj.Get(id2, got), PersistentStorage::Status::kSuccess);
+    EXPECT_EQ(got.mName, "nwk2");
+
+    EXPECT_EQ(verifyPsj.Close(), PersistentStorage::Status::kSuccess);
+    unlink("./tmp/test_reload.json");
+}
