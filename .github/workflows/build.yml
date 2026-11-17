@@ -102,25 +102,34 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        clang_ver: [5, 6, 7, 8, 9, 10, 11]
+        clang_ver: [17, 18, 19]
         build_type: ["Debug", "Release"]
+    env:
+      CC: clang-${{ matrix.clang_ver }}
+      CXX: clang++-${{ matrix.clang_ver }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Bootstrap
+        env:
+          CLANG_VER: ${{ matrix.clang_ver }}
         run: |
           script/bootstrap.sh
+          sudo apt-get --no-install-recommends install -y "clang-${CLANG_VER}" "libclang-rt-${CLANG_VER}-dev"
       - name: Build
+        env:
+          BUILD_TYPE: ${{ matrix.build_type }}
         run: |
-          clang --version
+          "${CC}" --version
+          "${CXX}" --version
           mkdir build && cd build
           cmake -GNinja                                     \
                 -DBUILD_SHARED_LIBS=ON                      \
                 -DCMAKE_POLICY_VERSION_MINIMUM=3.5          \
                 -DCMAKE_CXX_STANDARD=11                     \
                 -DCMAKE_CXX_STANDARD_REQUIRED=ON            \
-                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"          \
                 -DCMAKE_INSTALL_PREFIX=/usr/local           \
                 -DOT_COMM_WARNING_AS_ERROR=ON               \
                 ..
