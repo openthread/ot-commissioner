@@ -30,9 +30,11 @@
  * @file Job manager unit tests
  */
 
+#include <atomic>
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -303,8 +305,8 @@ TEST_F(JobManagerTestSuite, StartCancel)
         EXPECT_CALL(*commissionerAppMocks[camIdx], Start(_, _, _)).WillOnce(Return(Error{}));
         EXPECT_CALL(*commissionerAppMocks[camIdx], CancelRequests()).Times(1);
     }
-    volatile bool wasThreadRunning = false;
-    volatile bool shouldStop       = false;
+    std::atomic_bool wasThreadRunning{false};
+    std::atomic_bool shouldStop{false};
     EXPECT_CALL(*commissionerAppMocks[2], Start(_, _, _)).Times(1).WillOnce(Invoke([&]() {
         wasThreadRunning = true;
         while (!shouldStop)
