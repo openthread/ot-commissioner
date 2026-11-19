@@ -80,7 +80,7 @@ jobs:
           cd tests/integration
           ./bootstrap.sh
           ./run_tests.sh
-      - name: Upload coverage to Codecov
+      - name: Generate coverage
         run: |
           lcov_args=()
           if [[ $(lcov --version 2>/dev/null) =~ version[[:space:]]+([0-9]+)\. ]] && ((BASH_REMATCH[1] >= 2)); then
@@ -88,4 +88,12 @@ jobs:
           fi
           lcov "${lcov_args[@]}" --directory build/ --capture --output-file coverage.info
           lcov "${lcov_args[@]}" --list coverage.info
-          bash <(curl -s https://codecov.io/bash) -f coverage.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: coverage.info
+          disable_search: true
+          plugins: noop
+          fail_ci_if_error: ${{ secrets.CODECOV_TOKEN != '' && github.repository == 'openthread/ot-commissioner' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
