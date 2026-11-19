@@ -32,6 +32,7 @@
  */
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "commissioner/commissioner.hpp"
@@ -41,17 +42,36 @@ namespace ot {
 
 namespace commissioner {
 
-static std::shared_ptr<Logger> sLogger = nullptr;
+// The logger is shared by all commissioner instances and may be replaced
+// by one instance while the event loop threads of others are logging.
+static std::mutex              sLoggerMutex;
+static std::shared_ptr<Logger> sLogger;
 
-void InitLogger(std::shared_ptr<Logger> aLogger) { sLogger = aLogger; }
+void InitLogger(std::shared_ptr<Logger> aLogger)
+{
+    {
+        std::lock_guard<std::mutex> lock(sLoggerMutex);
 
-std::shared_ptr<Logger> GetLogger(void) { return sLogger; }
+        sLogger.swap(aLogger);
+    }
+
+    // Release the previous logger (now in `aLogger`) outside of the lock.
+}
+
+std::shared_ptr<Logger> GetLogger(void)
+{
+    std::lock_guard<std::mutex> lock(sLoggerMutex);
+
+    return sLogger;
+}
 
 void Log(LogLevel aLevel, const std::string &aRegion, const std::string &aMessage)
 {
-    if (GetLogger())
+    std::shared_ptr<Logger> logger = GetLogger();
+
+    if (logger != nullptr)
     {
-        GetLogger()->Log(aLevel, aRegion, aMessage);
+        logger->Log(aLevel, aRegion, aMessage);
     }
 }
 

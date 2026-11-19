@@ -58,6 +58,22 @@ namespace ot {
 
 namespace commissioner {
 
+namespace {
+
+// libevent requires threading to be enabled once per process, before any
+// event base is created, and `evthread_use_pthreads()` is not thread-safe.
+bool EnableEventThreading(void)
+{
+    static std::once_flag sOnceFlag;
+    static bool           sEnabled = false;
+
+    std::call_once(sOnceFlag, []() { sEnabled = (evthread_use_pthreads() == 0); });
+
+    return sEnabled;
+}
+
+} // namespace
+
 std::shared_ptr<Commissioner> Commissioner::Create(CommissionerHandler &aHandler)
 {
     return std::make_shared<CommissionerSafe>(aHandler);
@@ -71,10 +87,10 @@ Error CommissionerSafe::Init(const Config &aConfig)
     // The default timeout value (1 day) for non-IO events (events with fd < 0).
     constexpr struct timeval kDefaultNonIoEventTimeout = {3600 * 24, 0};
 
+    VerifyOrExit(EnableEventThreading(), error = ERROR_UNKNOWN("failed to enable libevent threading"));
     VerifyOrExit(mEventBase.Get() != nullptr, error = ERROR_OUT_OF_MEMORY("failed to create event base"));
 
     error = ERROR_UNKNOWN("failed to initialize event base");
-    VerifyOrExit(evthread_use_pthreads() == 0);
     VerifyOrExit(evthread_make_base_notifiable(mEventBase.Get()) == 0);
     VerifyOrExit(event_assign(&mInvokeEvent, mEventBase.Get(), -1, EV_PERSIST, Invoke, this) == 0);
 
@@ -593,11 +609,17 @@ CommissionerSafe::AsyncRequest CommissionerSafe::PopAsyncRequest()
 }
 
 CommissionerSafe::EventBaseHolder::EventBaseHolder()
-    : mEventBase(event_base_new())
+    : mEventBase(EnableEventThreading() ? event_base_new() : nullptr)
 {
 }
 
-CommissionerSafe::EventBaseHolder::~EventBaseHolder() { event_base_free(mEventBase); }
+CommissionerSafe::EventBaseHolder::~EventBaseHolder()
+{
+    if (mEventBase != nullptr)
+    {
+        event_base_free(mEventBase);
+    }
+}
 
 struct event_base *CommissionerSafe::EventBaseHolder::Get() { return mEventBase; }
 

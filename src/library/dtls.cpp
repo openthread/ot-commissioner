@@ -41,6 +41,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
 #include <string>
 
 #include "commissioner/commissioner.hpp"
@@ -100,6 +101,14 @@ static void HandleMbedtlsDebug(void *, int level, const char *file, int line, co
         LOG_DEBUG(LOG_REGION_MBEDTLS, "{}, {}: {}", file, line, str);
         break;
     }
+}
+
+// The mbedtls debug threshold is process-wide and read by all DTLS sessions.
+static void SetMbedtlsDebugThreshold(void)
+{
+    static std::once_flag sOnceFlag;
+
+    std::call_once(sOnceFlag, []() { mbedtls_debug_set_threshold(10); });
 }
 
 DtlsConfig GetDtlsConfig(const Config &aConfig)
@@ -168,7 +177,7 @@ Error DtlsSession::Init(const DtlsConfig &aConfig)
     mbedtls_ssl_conf_authmode(&mConfig, kAuthMode);
 
     // Debug
-    mbedtls_debug_set_threshold(10);
+    SetMbedtlsDebugThreshold();
 
     if (aConfig.mEnableDebugLogging)
     {

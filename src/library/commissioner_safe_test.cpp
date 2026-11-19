@@ -36,8 +36,12 @@
 #include <tuple>
 #include <unistd.h>
 
+#include <atomic>
+#include <memory>
 #include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -68,6 +72,50 @@ TEST(CommissionerSafeTest, StopImmediatelyAfterStarting)
     auto commissioner = Commissioner::Create(dummyHandler);
     EXPECT_NE(commissioner, nullptr);
     EXPECT_EQ(commissioner->Init(config), ErrorCode::kNone);
+}
+
+TEST(CommissionerSafeTest, ConcurrentInstancesInMultipleThreads)
+{
+    class NullLogger : public Logger
+    {
+    public:
+        void Log(LogLevel, const std::string &, const std::string &) override {}
+    };
+
+    constexpr int kNumThreads    = 8;
+    constexpr int kNumIterations = 10;
+
+    std::atomic<int>         numInitialized{0};
+    std::vector<std::thread> threads;
+
+    for (int i = 0; i < kNumThreads; ++i)
+    {
+        threads.emplace_back([&numInitialized]() {
+            for (int j = 0; j < kNumIterations; ++j)
+            {
+                CommissionerHandler dummyHandler;
+                Config              config;
+
+                config.mEnableCcm = false;
+                config.mPSKc      = ByteArray(16);
+                config.mLogger    = std::make_shared<NullLogger>();
+
+                auto commissioner = Commissioner::Create(dummyHandler);
+
+                if (commissioner != nullptr && commissioner->Init(config) == ErrorCode::kNone)
+                {
+                    ++numInitialized;
+                }
+            }
+        });
+    }
+
+    for (auto &thread : threads)
+    {
+        thread.join();
+    }
+
+    EXPECT_EQ(numInitialized, kNumThreads * kNumIterations);
 }
 
 TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage)
