@@ -566,7 +566,9 @@ void CommissionerSafe::Invoke(evutil_socket_t, short, void *aContext)
 
     VerifyOrDie(commissionerSafe != nullptr);
 
-    if (auto asyncReq = commissionerSafe->PopAsyncRequest())
+    // Requests pushed before this callback runs activate the event only once,
+    // so all queued requests must be run here.
+    while (auto asyncReq = commissionerSafe->PopAsyncRequest())
     {
         asyncReq();
     }
