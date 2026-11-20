@@ -36,6 +36,7 @@
 
 #include "library/commissioner_impl.hpp"
 #include "library/commissioner_impl_internal.hpp"
+#include "library/tlv.hpp"
 
 #include <gtest/gtest.h>
 
@@ -90,6 +91,28 @@ TEST(PskcTest, InvalidArgs_NetworkNameIsTooLong)
 
     EXPECT_EQ(Commissioner::GeneratePSKc(pskc, passphrase, networkName, extendedPanId).GetCode(),
               ErrorCode::kInvalidArgs);
+}
+
+TEST(ActiveDatasetTest, DecodeValidRawDataset)
+{
+    tlv::Tlv networkName{tlv::Type::kNetworkName, std::string{"Thread network"}};
+    ByteArray rawDataset;
+    networkName.Serialize(rawDataset);
+
+    ActiveOperationalDataset dataset;
+    EXPECT_EQ(Commissioner::DecodeActiveDataset(dataset, rawDataset).GetCode(), ErrorCode::kNone);
+    EXPECT_EQ(dataset.mNetworkName, "Thread network");
+    EXPECT_NE(dataset.mPresentFlags & ActiveOperationalDataset::kNetworkNameBit, 0);
+}
+
+TEST(ActiveDatasetTest, RejectMalformedChannelMask)
+{
+    tlv::Tlv channelMask{tlv::Type::kChannelMask, ByteArray{0x00, 0x02, 0xFF}};
+    ByteArray rawDataset;
+    channelMask.Serialize(rawDataset);
+
+    ActiveOperationalDataset dataset;
+    EXPECT_EQ(Commissioner::DecodeActiveDataset(dataset, rawDataset).GetCode(), ErrorCode::kBadFormat);
 }
 
 TEST(CommissionerImpl, NotImplementedApis)

@@ -128,6 +128,11 @@ ByteArray Commissioner::ComputeJoinerId(uint64_t aEui64)
     return joinerId;
 }
 
+Error Commissioner::DecodeActiveDataset(ActiveOperationalDataset &aDataset, const ByteArray &aRawDataset)
+{
+    return CommissionerImpl::DecodeActiveOperationalDataset(aDataset, aRawDataset);
+}
+
 void Commissioner::AddJoiner(ByteArray &aSteeringData, const ByteArray &aJoinerId)
 {
     if (aSteeringData.size() != kMaxSteeringDataLength)
@@ -436,7 +441,7 @@ void CommissionerImpl::GetActiveDataset(Handler<ActiveOperationalDataset> aHandl
         ActiveOperationalDataset dataset;
 
         SuccessOrExit(error = aError);
-        SuccessOrExit(error = DecodeActiveOperationalDataset(dataset, *aRawDataset));
+        SuccessOrExit(error = Commissioner::DecodeActiveDataset(dataset, *aRawDataset));
 
         aHandler(&dataset, error);
     exit:
@@ -1596,7 +1601,7 @@ Error CommissionerImpl::DecodeActiveOperationalDataset(ActiveOperationalDataset 
 
     if (auto channelMask = tlvSet[tlv::Type::kChannelMask])
     {
-        SuccessOrExit(DecodeChannelMask(dataset.mChannelMask, channelMask->GetValue()));
+        SuccessOrExit(error = DecodeChannelMask(dataset.mChannelMask, channelMask->GetValue()));
         dataset.mPresentFlags |= ActiveOperationalDataset::kChannelMaskBit;
     }
 
