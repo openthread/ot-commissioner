@@ -2457,7 +2457,7 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
 {
     Error       error;
     size_t      length = aBuf.size();
-    uint8_t     offset = 0;
+    size_t      offset = 0;
     ByteArray   subTlv;
     tlv::TlvSet tlvSet;
 
@@ -2472,25 +2472,20 @@ Error internal::DecodePrefixEntry(PrefixEntry &aPrefixEntry, const ByteArray &aB
     if (length > offset)
     {
         subTlv = {aBuf.begin() + offset, aBuf.end()};
-
-        // Get the 6LowPan context
         SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
+
         if (auto context = tlvSet[tlv::Type::kNetworkData6LowPanContext])
         {
             const ByteArray &value = context->GetValue();
             SuccessOrExit(error = DecodeContext(aPrefixEntry.mSixLowPanContext, value));
         }
 
-        // Get the HasRoute
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
         if (auto hasRoute = tlvSet[tlv::Type::kNetworkDataHasRoute])
         {
             const ByteArray &value = hasRoute->GetValue();
             SuccessOrExit(error = DecodeHasRoute(aPrefixEntry.mHasRouteList, value));
         }
 
-        // Get the BorderRouter
-        SuccessOrExit(error = tlv::GetTlvSet(tlvSet, subTlv, tlv::Scope::kNetworkData));
         if (auto borderRouter = tlvSet[tlv::Type::kNetworkDataBorderRouter])
         {
             const ByteArray &value = borderRouter->GetValue();
@@ -2506,7 +2501,7 @@ Error internal::DecodeHasRoute(std::vector<HasRouteEntry> &aHasRouteList, const 
 {
     Error         error;
     size_t        length = aBuf.size();
-    uint8_t       offset = 0;
+    size_t        offset = 0;
     HasRouteEntry hasRouteEntry;
 
     VerifyOrExit((length % kHasRouteBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of HasRoute"));
@@ -2528,7 +2523,7 @@ Error internal::DecodeBorderRouter(std::vector<BorderRouterEntry> &aBorderRouter
 {
     Error             error;
     size_t            length = aBuf.size();
-    uint8_t           offset = 0;
+    size_t            offset = 0;
     BorderRouterEntry borderRouterEntry;
 
     VerifyOrExit((length % kBorderRouterBytes == 0), error = ERROR_BAD_FORMAT("incorrect size of BorderRouter"));

@@ -208,7 +208,7 @@ public:
     void     SetValue(const uint8_t *aBuf, size_t aLength);
     void     SetValue(const ByteArray &aValue);
     uint16_t GetLength() const;
-    uint16_t GetTotalLength() const;
+    size_t   GetTotalLength() const;
 
     // It is the caller that make sure the tlv is valid.
     int8_t           GetValueAsInt8() const;

@@ -107,22 +107,40 @@ Tlv::Tlv(Type aType, uint64_t aValue, Scope aScope)
     mValue = utils::Encode(aValue);
 }
 
-bool IsExtendedTlv(Type aType)
+static bool IsExtendedTlv(Type aType, Scope aScope)
 {
-    switch (aType)
+    bool isExtended = false;
+
+    if (aScope == Scope::kMeshCoP)
     {
-    case Type::kUdpEncapsulation:
-    case Type::kCommissionerToken:
-    case Type::kJoinerDtlsEncapsulation:
-        return true;
-    default:
-        return false;
+        switch (aType)
+        {
+        case Type::kUdpEncapsulation:
+        case Type::kCommissionerToken:
+        case Type::kJoinerDtlsEncapsulation:
+            isExtended = true;
+            break;
+        default:
+            break;
+        }
     }
+    else if (aScope == Scope::kThread)
+    {
+        isExtended = (aType == Type::kThreadCommissionerToken);
+    }
+
+    return isExtended;
+}
+
+static bool UseExtendedLength(Type aType, Scope aScope, size_t aLength)
+{
+    return (aScope != Scope::kNetworkData) && (IsExtendedTlv(aType, aScope) || aLength >= kEscapeLength);
 }
 
 void Tlv::Serialize(ByteArray &aBuf) const
 {
     ASSERT(IsValid());
+    ASSERT(mScope != Scope::kNetworkData);
 
     utils::Encode(aBuf, utils::to_underlying(GetType()));
 
@@ -130,9 +148,8 @@ void Tlv::Serialize(ByteArray &aBuf) const
     // the base TLV format if its length does not exceed
     // 254 bytes. But OpenThread currently does not support
     // this kind of encoding.
-    if (IsExtendedTlv(mType))
+    if (UseExtendedLength(mType, mScope, GetLength()))
     {
-        // if (GetLength() >= kEscapeLength) {
         utils::Encode(aBuf, kEscapeLength);
         utils::Encode(aBuf, GetLength());
     }
@@ -164,7 +181,8 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
         type = aBuf[offset++];
     }
     length = aBuf[offset++];
-    if (length == kEscapeLength)
+    // Network Data TLVs (Thread spec 5.18) use an 8-bit length field without an extended length escape.
+    if (aScope != Scope::kNetworkData && length == kEscapeLength)
     {
         VerifyOrExit(offset + 2 <= aBuf.size(),
                      error = ERROR_BAD_FORMAT("premature end of Extended TLV(type={})", type));
@@ -177,7 +195,7 @@ TlvPtr Tlv::Deserialize(Error &aError, size_t &aOffset, const ByteArray &aBuf, S
                  error = ERROR_BAD_FORMAT("premature end of TLV(type={}, length={})", type, length));
 
     tlv = std::make_shared<Tlv>(utils::from_underlying<Type>(type), aScope);
-    tlv->SetValue(&aBuf[offset], length);
+    tlv->SetValue(aBuf.data() + offset, length);
 
     offset += length;
 
@@ -305,6 +323,11 @@ bool Tlv::IsValid() const
     }
     else if (mScope == Scope::kNetworkData)
     {
+        if (length > UINT8_MAX)
+        {
+            return false;
+        }
+
         switch (mType)
         {
         // Network Data TLVs
@@ -446,10 +469,12 @@ void Tlv::SetValue(const ByteArray &aValue) { mValue = aValue; }
 
 uint16_t Tlv::GetLength() const { return static_cast<uint16_t>(mValue.size()); }
 
-uint16_t Tlv::GetTotalLength() const
+size_t Tlv::GetTotalLength() const
 {
-    uint16_t valueLength = GetLength();
-    return sizeof(Type) + (valueLength >= kEscapeLength ? 3 : 1) + valueLength;
+    size_t valueLength = GetLength();
+    size_t lengthSize  = UseExtendedLength(mType, mScope, valueLength) ? 3 : 1;
+
+    return sizeof(Type) + lengthSize + valueLength;
 }
 
 int8_t Tlv::GetValueAsInt8() const
