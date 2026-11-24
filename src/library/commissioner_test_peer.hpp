@@ -53,6 +53,11 @@ public:
     {
         return aImpl.mJoinerSessions;
     }
+
+    static void HandleJoinerSessionTimer(CommissionerImpl &aImpl)
+    {
+        aImpl.HandleJoinerSessionTimer(aImpl.mJoinerSessionTimer);
+    }
 };
 
 } // namespace commissioner
