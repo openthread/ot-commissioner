@@ -158,6 +158,8 @@ if (OT_COMM_TEST)
         cose_test.cpp
         dtls.hpp
         dtls_test.cpp
+        joiner_session.hpp
+        joiner_session_test.cpp
         socket.hpp
         socket_test.cpp
         token_manager.hpp

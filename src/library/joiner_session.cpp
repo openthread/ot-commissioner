@@ -85,25 +85,15 @@ JoinerSession::JoinerSession(CommissionerImpl  &aCommImpl,
         mRelaySocket->SetEventHandler([this](short aFlags) {
             if (aFlags & EV_READ)
             {
-                // TODO(bukepo) use a more accurate buffer size
-                constexpr uint16_t kMaxPayload = 1280;
+                ByteArray packet;
+                uint16_t  port = 0;
 
-                uint8_t  buf[kMaxPayload];
-                uint16_t port;
-
-                while (true)
+                while (mRelaySocket->Receive(packet, port))
                 {
-                    int len = mRelaySocket->Receive(buf, sizeof(buf), port);
                     LOG_DEBUG(LOG_REGION_JOINER_SESSION, "Forwarding joiner({}) message(port={})",
                               utils::Hex(mJoinerId), port);
 
-                    if (len < 0)
-                    {
-                        break;
-                    }
-
-                    ByteArray pkt(&buf[0], &buf[len]);
-                    mCommImpl.mCommissionerHandler.OnJoinerMessage(mJoinerId, port, pkt);
+                    mCommImpl.mCommissionerHandler.OnJoinerMessage(mJoinerId, port, packet);
                 }
             }
         });
@@ -370,20 +360,7 @@ int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen, uint16_t 
 
         aUdpPort = packet.second;
 
-        if (aMaxLen >= buf.size())
-        {
-            rval = buf.size();
-        }
-        else
-        {
-            if (mJoinerSession.IsProxyMode())
-            {
-                LOG_WARN(LOG_REGION_JOINER_SESSION, "session(={}) insufficient buffer size {}, {} needed",
-                         static_cast<void *>(&mJoinerSession), aMaxLen, buf.size());
-                return MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL;
-            }
-            rval = aMaxLen;
-        }
+        rval = static_cast<int>(std::min(aMaxLen, buf.size()));
 
         memcpy(aBuf, buf.data(), rval);
 
@@ -399,6 +376,21 @@ int JoinerSession::RelaySocket::Receive(uint8_t *aBuf, size_t aMaxLen, uint16_t 
 
 exit:
     return rval;
+}
+
+bool JoinerSession::RelaySocket::Receive(ByteArray &aBuf, uint16_t &aUdpPort)
+{
+    bool received = false;
+
+    VerifyOrExit(!mRecvBufs.empty());
+
+    aBuf     = std::move(mRecvBufs.front().first);
+    aUdpPort = mRecvBufs.front().second;
+    mRecvBufs.pop();
+    received = true;
+
+exit:
+    return received;
 }
 
 void JoinerSession::RelaySocket::RecvJoinerDtlsRecords(const ByteArray &aRecords, uint16_t aJoinerUdpPort)

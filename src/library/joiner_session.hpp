@@ -134,6 +134,7 @@ private:
         int Send(const uint8_t *aBuf, size_t aLen, uint16_t aPort);
         int Receive(uint8_t *aBuf, size_t aMaxLen, uint16_t &aUdpPort);
 
+        bool Receive(ByteArray &aBuf, uint16_t &aUdpPort);
         void RecvJoinerDtlsRecords(const ByteArray &aRecords, uint16_t aJoinerUdpPort);
 
     private:
