@@ -3189,10 +3189,10 @@ void CommissionerImpl::HandleJoinerSessionTimer(Timer &aTimer)
 
         if (now >= session.GetExpirationTime())
         {
-            it = mJoinerSessions.erase(it);
-
             LOG_INFO(LOG_REGION_JOINER_SESSION, "joiner session (joiner ID={}) removed",
                      utils::Hex(session.GetJoinerId()));
+
+            it = mJoinerSessions.erase(it);
         }
         else
         {

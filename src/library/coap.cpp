@@ -913,9 +913,9 @@ void Coap::ResponsesCache::Eliminate()
         {
             break;
         }
-        mContainer.erase(earliest);
         LOG_INFO(LOG_REGION_COAP, "server(={}) remove response cache: token={}, messageId={}",
                  static_cast<void *>(this), utils::Hex(response.GetToken()), response.GetMessageId());
+        mContainer.erase(earliest);
     }
 }
 

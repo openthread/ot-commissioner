@@ -37,14 +37,32 @@
 #include "library/commissioner_impl.hpp"
 #include "library/commissioner_impl_internal.hpp"
 
+#include <string>
+#include <tuple>
+#include <utility>
+
 #include <gtest/gtest.h>
 
 #include "commissioner/defines.hpp"
+#include "common/address.hpp"
 #include "common/utils.hpp"
+#include "library/commissioner_test_peer.hpp"
+#include "library/joiner_session.hpp"
 
 namespace ot {
 
 namespace commissioner {
+
+static JoinerSession &AddJoinerSession(CommissionerImpl &aImpl, const ByteArray &aJoinerId)
+{
+    auto &sessions = CommissionerTestPeer::GetJoinerSessions(aImpl);
+
+    return sessions
+        .emplace(
+            std::piecewise_construct, std::forward_as_tuple(aJoinerId),
+            std::forward_as_tuple(aImpl, aJoinerId, std::string(), 12345, 0x1200, Address(), 12344, Address(), 12343))
+        .first->second;
+}
 
 // This teat case is from section 8.4.1.2.2 of the Thread 1.2.0 specification.
 TEST(PskcTest, PskcTestVectorFromThread12Spec)
@@ -141,6 +159,38 @@ TEST(CommissionerImpl, NotImplementedApis)
 
     ByteArray signedToken;
     EXPECT_EQ(commImpl.RequestToken(signedToken, "fdaa:bb::de6", 5684), ErrorCode::kUnimplemented);
+
+    event_base_free(eventBase);
+}
+
+TEST(CommissionerImplTest, JoinerSessionTimerRemovesOnlyExpiredSessions)
+{
+    const ByteArray kExpiredJoinerId{1, 2, 3, 4, 5, 6, 7, 8};
+    const ByteArray kActiveJoinerId{8, 7, 6, 5, 4, 3, 2, 1};
+
+    Config config;
+    config.mEnableCcm = false;
+    config.mProxyMode = true;
+    config.mPSKc      = ByteArray(16);
+
+    CommissionerHandler dummyHandler;
+    struct event_base  *eventBase = event_base_new();
+
+    {
+        CommissionerImpl commImpl(dummyHandler, eventBase);
+        EXPECT_EQ(commImpl.Init(config), ErrorCode::kNone);
+
+        auto &sessions = CommissionerTestPeer::GetJoinerSessions(commImpl);
+
+        // A session that is never started expires immediately.
+        AddJoinerSession(commImpl, kExpiredJoinerId);
+        AddJoinerSession(commImpl, kActiveJoinerId).Start();
+
+        CommissionerTestPeer::HandleJoinerSessionTimer(commImpl);
+
+        EXPECT_EQ(sessions.size(), 1);
+        EXPECT_EQ(sessions.count(kActiveJoinerId), 1);
+    }
 
     event_base_free(eventBase);
 }
