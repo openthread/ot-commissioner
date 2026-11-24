@@ -37,6 +37,8 @@
 #include <unistd.h>
 
 #include <atomic>
+#include <chrono>
+#include <future>
 #include <memory>
 #include <string>
 #include <thread>
@@ -116,6 +118,65 @@ TEST(CommissionerSafeTest, ConcurrentInstancesInMultipleThreads)
     }
 
     EXPECT_EQ(numInitialized, kNumThreads * kNumIterations);
+}
+
+TEST(CommissionerSafeTest, ShouldRunAllRequestsQueuedWhileEventLoopIsBusy)
+{
+    // Requests queued while the event loop thread is busy activate the invoke
+    // event only once. If only one of them ran per activation, the request
+    // queued by the destructor to stop the event loop would be left behind and
+    // the destructor would block until the invoke event times out (24 hours).
+    constexpr auto kTimeout = std::chrono::seconds(10);
+
+    auto              done       = std::make_shared<std::promise<void>>();
+    std::future<void> doneFuture = done->get_future();
+
+    std::thread thread([done]() {
+        CommissionerHandler           dummyHandler;
+        Config                        config;
+        std::shared_ptr<Commissioner> commissioner = Commissioner::Create(dummyHandler);
+        std::promise<void>            busy;
+        std::promise<void>            release;
+        std::future<void>             releaseFuture = release.get_future();
+        Error                         error;
+
+        config.mEnableCcm = false;
+        config.mPSKc      = ByteArray(16);
+
+        error = commissioner->Init(config);
+        EXPECT_EQ(error, ErrorCode::kNone);
+
+        if (error == ErrorCode::kNone)
+        {
+            // The handler is called in the event loop thread right away since
+            // the commissioner is not connected.
+            commissioner->GetActiveDataset(
+                [&busy, &releaseFuture](const ActiveOperationalDataset *, Error) {
+                    busy.set_value();
+                    releaseFuture.wait();
+                },
+                0xFFFF);
+            busy.get_future().wait();
+
+            commissioner->Disconnect();
+            commissioner->CancelRequests();
+            release.set_value();
+        }
+
+        commissioner.reset();
+        done->set_value();
+    });
+
+    if (doneFuture.wait_for(kTimeout) == std::future_status::ready)
+    {
+        thread.join();
+    }
+    else
+    {
+        // Leak the blocked thread so that the test fails instead of hanging.
+        thread.detach();
+        FAIL() << "the commissioner was not destroyed within " << kTimeout.count() << " seconds";
+    }
 }
 
 TEST(CommissionerSafeTestProxyMode, ShouldBeAbleToReceiveJoinerMessage)
