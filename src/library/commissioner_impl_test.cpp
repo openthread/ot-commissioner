@@ -48,6 +48,7 @@
 #include "common/utils.hpp"
 #include "library/commissioner_test_peer.hpp"
 #include "library/joiner_session.hpp"
+#include "library/tlv.hpp"
 
 namespace ot {
 
@@ -655,6 +656,102 @@ TEST(CommissionerImplTest, DecodeNonPreferredChannelsMaskTlv)
 
         error = ot::commissioner::internal::DecodeNonPreferredChannelsMask(channelMask, buf);
         EXPECT_EQ(error.GetCode(), ErrorCode::kBadFormat);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeHasRouteAndBorderRouterLargeLength)
+{
+    {
+        std::vector<HasRouteEntry> hasRouteList;
+        ByteArray                  buf(258, 0);
+
+        EXPECT_EQ(ot::commissioner::internal::DecodeHasRoute(hasRouteList, buf), ErrorCode::kNone);
+        EXPECT_EQ(hasRouteList.size(), 86u);
+    }
+
+    {
+        std::vector<BorderRouterEntry> borderRouterList;
+        ByteArray                      buf(256, 0);
+
+        EXPECT_EQ(ot::commissioner::internal::DecodeBorderRouter(borderRouterList, buf), ErrorCode::kNone);
+        EXPECT_EQ(borderRouterList.size(), 64u);
+    }
+}
+
+TEST(CommissionerImplTest, DecodeNetDiagDataNetworkDataTlvLength)
+{
+    // Network Data sub-TLVs do not support extended 16-bit lengths (0xFF escape).
+    {
+        ByteArray   buf;
+        NetDiagData diagData;
+        std::string hex = "07ff010c02ff0108000000ff0102" + std::string(258 * 2, '0');
+
+        EXPECT_EQ(utils::Hex(buf, hex), ErrorCode::kNone);
+        EXPECT_EQ(ot::commissioner::internal::DecodeNetDiagData(diagData, buf).GetCode(), ErrorCode::kBadFormat);
+    }
+
+    {
+        ByteArray   buf;
+        NetDiagData diagData;
+        std::string hex = "07ff010a02ff0106000004ff0100" + std::string(256 * 2, '0');
+
+        EXPECT_EQ(utils::Hex(buf, hex), ErrorCode::kNone);
+        EXPECT_EQ(ot::commissioner::internal::DecodeNetDiagData(diagData, buf).GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Normal-length Prefix TLV containing an extended-length (0xFF) HasRoute sub-TLV.
+    {
+        ByteArray   buf;
+        NetDiagData diagData;
+        std::string hex = "070b0209000000ff0003000000";
+
+        EXPECT_EQ(utils::Hex(buf, hex), ErrorCode::kNone);
+        EXPECT_EQ(ot::commissioner::internal::DecodeNetDiagData(diagData, buf).GetCode(), ErrorCode::kBadFormat);
+    }
+
+    // Valid Network Data Prefix TLV with 8-bit length 0xFF (255 bytes):
+    // 2-byte prefix header + HasRoute sub-TLV (2 + 249 bytes) + empty BorderRouter sub-TLV (2 bytes).
+    {
+        ByteArray   buf;
+        NetDiagData diagData;
+        std::string hex = "07ff010102ff000000f9" + std::string(249 * 2, '0') + "0400";
+
+        EXPECT_EQ(utils::Hex(buf, hex), ErrorCode::kNone);
+        EXPECT_EQ(ot::commissioner::internal::DecodeNetDiagData(diagData, buf), ErrorCode::kNone);
+        ASSERT_EQ(diagData.mNetworkData.mPrefixList.size(), 1u);
+        EXPECT_EQ(diagData.mNetworkData.mPrefixList[0].mHasRouteList.size(), 83u);
+    }
+
+    // Tlv::IsValid() rejects Network Data TLVs longer than UINT8_MAX, and GetTotalLength() uses a 1-byte length.
+    {
+        tlv::Tlv maxHasRoute(tlv::Type::kNetworkDataHasRoute, ByteArray(255, 0), tlv::Scope::kNetworkData);
+
+        EXPECT_TRUE(maxHasRoute.IsValid());
+        EXPECT_EQ(maxHasRoute.GetTotalLength(), 257u);
+        EXPECT_FALSE(tlv::Tlv(tlv::Type::kNetworkDataHasRoute, ByteArray(258, 0), tlv::Scope::kNetworkData).IsValid());
+        EXPECT_TRUE(
+            tlv::Tlv(tlv::Type::kNetworkDataBorderRouter, ByteArray(252, 0), tlv::Scope::kNetworkData).IsValid());
+        EXPECT_FALSE(
+            tlv::Tlv(tlv::Type::kNetworkDataBorderRouter, ByteArray(256, 0), tlv::Scope::kNetworkData).IsValid());
+        EXPECT_TRUE(tlv::Tlv(tlv::Type::kNetworkDataPrefix, ByteArray(255, 0), tlv::Scope::kNetworkData).IsValid());
+        EXPECT_FALSE(tlv::Tlv(tlv::Type::kNetworkDataPrefix, ByteArray(256, 0), tlv::Scope::kNetworkData).IsValid());
+        EXPECT_TRUE(
+            tlv::Tlv(tlv::Type::kNetworkData6LowPanContext, ByteArray(255, 0), tlv::Scope::kNetworkData).IsValid());
+        EXPECT_FALSE(
+            tlv::Tlv(tlv::Type::kNetworkData6LowPanContext, ByteArray(256, 0), tlv::Scope::kNetworkData).IsValid());
+    }
+
+    // Extended TLV GetTotalLength() matches Serialize() and does not overflow uint16_t.
+    {
+        tlv::Tlv  shortExtended(tlv::Type::kUdpEncapsulation, ByteArray(10, 0), tlv::Scope::kMeshCoP);
+        ByteArray serialized;
+
+        shortExtended.Serialize(serialized);
+        EXPECT_EQ(shortExtended.GetTotalLength(), serialized.size());
+        EXPECT_EQ(shortExtended.GetTotalLength(), 14u);
+
+        tlv::Tlv maxExtended(tlv::Type::kUdpEncapsulation, ByteArray(UINT16_MAX, 0), tlv::Scope::kMeshCoP);
+        EXPECT_EQ(maxExtended.GetTotalLength(), static_cast<size_t>(UINT16_MAX) + 4u);
     }
 }
 
