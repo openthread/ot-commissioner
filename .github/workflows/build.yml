@@ -49,8 +49,8 @@ jobs:
         run: |
           sudo apt update
           script/bootstrap.sh
+          sudo apt-get --no-install-recommends install -y ca-certificates curl shfmt xz-utils
           sudo bash script/install-llvm.sh
-          sudo apt-get --no-install-recommends install -y shfmt
           python3 -m pip install yapf==0.43.0
           npm install prettier@2.0.4
       - name: Check
