@@ -101,6 +101,8 @@ json PersistentStorageJson::JsonDefault()
 
 bool PersistentStorageJson::CacheStructValidation()
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     json base = JsonDefault();
 
     for (auto &el : base.items())
@@ -117,6 +119,8 @@ bool PersistentStorageJson::CacheStructValidation()
 
 PersistentStorage::Status PersistentStorageJson::CacheFromFile()
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     if (mFileName.empty())
     {
         // No persistence, nothing to do
@@ -177,6 +181,8 @@ PersistentStorage::Status PersistentStorageJson::CacheFromFile()
 
 PersistentStorage::Status PersistentStorageJson::CacheToFile()
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     if (mFileName.empty())
     {
         // No persistence, nothing to do
@@ -201,6 +207,8 @@ PersistentStorage::Status PersistentStorageJson::CacheToFile()
 
 PersistentStorage::Status PersistentStorageJson::Open()
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     if (mFileName.empty())
     {
         // No persistence, use default contents
@@ -269,6 +277,8 @@ PersistentStorage::Status PersistentStorageJson::Get(NetworkId const &aId, Netwo
 
 PersistentStorage::Status PersistentStorageJson::Get(BorderRouterId const &aId, BorderRouter &aRetValue)
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     Status status = GetId<BorderRouter, BorderRouterId>(aId, aRetValue, JSON_BR);
 
     if (status == Status::kSuccess && aRetValue.mNetworkId.mId != EMPTY_ID)
@@ -532,6 +542,8 @@ PersistentStorage::Status PersistentStorageJson::LookupAny(BorderRouter const &a
 
 PersistentStorage::Status PersistentStorageJson::SetCurrentNetwork(const NetworkId &aNwkId)
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     if (CacheFromFile() != PersistentStorage::Status::kSuccess)
     {
         return PersistentStorage::Status::kError;
@@ -544,6 +556,8 @@ PersistentStorage::Status PersistentStorageJson::SetCurrentNetwork(const Network
 
 PersistentStorage::Status PersistentStorageJson::GetCurrentNetwork(NetworkId &aNwkId)
 {
+    std::lock_guard<std::recursive_mutex> lock(mCacheMutex);
+
     if (!mCache.contains(JSON_CURR_NWK))
     {
         aNwkId                = NetworkId{};
