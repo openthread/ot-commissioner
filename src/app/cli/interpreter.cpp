@@ -738,19 +738,26 @@ Error Interpreter::ReParseMultiNetworkSyntax(const Expression &aExpr, Expression
         ST_DOMAIN,
         ST_EXPORT,
         ST_IMPORT,
-        ST_CMD_KEYS
+        ST_CMD_KEYS,
+        ST_COUNT
     };
-    StringArray *arrays[] = {[ST_COMMAND]  = &aRetExpr,
-                             [ST_NETWORK]  = &mContext.mNwkAliases,
-                             [ST_DOMAIN]   = &mContext.mDomAliases,
-                             [ST_EXPORT]   = &mContext.mExportFiles,
-                             [ST_IMPORT]   = &mContext.mImportFiles,
-                             [ST_CMD_KEYS] = &mContext.mCommandKeys};
+    StringArray *arrays[ST_COUNT] = {};
     Error        error;
+    uint8_t      state = ST_COMMAND;
+    bool         inKey = false;
+    std::string  lastKey;
 
-    uint8_t     state = ST_COMMAND;
-    bool        inKey = false;
-    std::string lastKey;
+    arrays[ST_COMMAND]  = &aRetExpr;
+    arrays[ST_NETWORK]  = &mContext.mNwkAliases;
+    arrays[ST_DOMAIN]   = &mContext.mDomAliases;
+    arrays[ST_EXPORT]   = &mContext.mExportFiles;
+    arrays[ST_IMPORT]   = &mContext.mImportFiles;
+    arrays[ST_CMD_KEYS] = &mContext.mCommandKeys;
+
+    for (StringArray *arr : arrays)
+    {
+        VerifyOrDie(arr != nullptr);
+    }
 
     for (const auto &word : aExpr)
     {

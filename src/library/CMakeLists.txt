@@ -130,6 +130,8 @@ install(FILES
         $<TARGET_FILE:mbedtls>
         $<TARGET_FILE:mbedx509>
         $<TARGET_FILE:mbedcrypto>
+        $<$<TARGET_EXISTS:everest>:$<TARGET_FILE:everest>>
+        $<$<TARGET_EXISTS:p256m>:$<TARGET_FILE:p256m>>
         $<TARGET_FILE:fmt::fmt>
         $<TARGET_FILE:${EVENT_CORE}>
         $<TARGET_FILE:${EVENT_PTHREADS}>
